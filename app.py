@@ -2,8 +2,8 @@
 
 from ultrasonics import webapp
 from ultrasonics import plugins
-from ultrasonics import database
+# from ultrasonics import database
 
+# database.connect()
 plugins.gather_plugins()
-database.connect()
 webapp.start_server()

@@ -7,10 +7,10 @@ handshake = {
     "auth": True,
     "version": 1,
     "colour": "#333333",
-    "settings": [
-        "persistent1",
-        "persistent2",
-    ]
+    "settings": {
+        "persistent1": "text",
+        "persistent2": "text"
+    }
 }
 
 

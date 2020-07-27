@@ -9,15 +9,8 @@ sio = SocketIO(app, async_mode='eventlet')
 # --- INITIALISATION ---
 
 
-def serve():
-    pass
-
-
 def start_server():
     sio.run(app, host="0.0.0.0", use_reloader=True)
-    # thread = Thread(target=serve)
-    # thread.start()
-    print("Webserver started")
 
 # --- SEND COMMANDS ---
 

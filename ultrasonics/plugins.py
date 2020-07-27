@@ -16,6 +16,10 @@ def gather_plugins():
     """
     Used to find all variables within the ./plugins directory, and saves them to the 'found' dictionary.
     """
+
+    from ultrasonics import database
+    database.connect()
+
     plugins = os.listdir("./plugins")
 
     for item in plugins:
@@ -39,3 +43,8 @@ def gather_plugins():
             # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
             handshakes.append(plugin.handshake)
             found[title] = plugin
+
+            # If a database table is not found, create one
+            if not database.table_exists(title):
+                # settings = 
+                database.create_plugin_table(title, settings)
