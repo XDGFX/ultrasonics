@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template
 from flask_socketio import SocketIO, send, emit
+from json import dumps, loads
 
 app = Flask(__name__)
 
@@ -33,6 +34,7 @@ def html_new():
 # --- WEBSOCKET ROUTES ---
 
 
-@sio.on('my event')
-def test_message(message):
-    emit('my response', {'data': 'got it!'})
+@sio.on('get_handshakes')
+def get_handshakes():
+    from ultrasonics.plugins import handshakes
+    emit('get_handshakes', dumps(handshakes))

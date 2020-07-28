@@ -5,11 +5,15 @@ handshake = {
     "description": "the default ultrasonics plugin",
     "type": "input",
     "auth": True,
-    "version": 1,
+    "version": 0.1,
     "colour": "#333333",
     "settings": {
         "persistent1": "text",
-        "persistent2": "text"
+        "persistent2": "text",
+        "options1": [
+            "option1",
+            "option2",
+        ]
     }
 }
 

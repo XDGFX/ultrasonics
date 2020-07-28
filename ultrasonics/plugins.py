@@ -3,6 +3,7 @@
 import importlib
 import os
 import re
+import json
 
 # Initialise variables
 found = {}
@@ -34,6 +35,8 @@ def gather_plugins():
                 "plugins." + prefix + title, ".")
 
             handshake_name = plugin.handshake["name"]
+            handshake_version = plugin.handshake["version"]
+            handshake_settings = json.dumps(plugin.handshake["settings"])
 
             # Verify that the name in the plugin handshake matches the filename
             if handshake_name != title:
@@ -44,7 +47,48 @@ def gather_plugins():
             handshakes.append(plugin.handshake)
             found[title] = plugin
 
-            # If a database table is not found, create one
-            if not database.table_exists(title):
-                # settings = 
-                database.create_plugin_table(title, settings)
+            # If a database entry is not found for the plugin and version, create one
+            if not (handshake_version in database.plugin_entry_exists(title)):
+                database.plugin_create_entry(
+                    title, handshake_version, handshake_settings)
+
+
+def gather_applets():
+    """
+    Gather the list of existing applets.
+    """
+    pass
+
+
+def applet_add_plugin(plugin, settings):
+    """
+    Function which takes a plugin as an input and adds it to the current applet.
+    """
+    pass
+
+
+def applet_remove_plugin(plugin):
+    """
+    Function which removes a plugin from the current applet.
+    """
+    pass
+
+
+def applet_clear():
+    """
+    Clears the current applet to start from fresh.
+    """
+    pass
+
+
+def applet_load(applet):
+    """
+    Load an existing applet to be edited.
+    """
+
+
+def applet_build():
+    """
+    Function which takes the current applet and builds the config, and saves it to the database. It will update if the applet came from applet_load.
+    """
+    pass

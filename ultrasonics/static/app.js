@@ -1,8 +1,12 @@
 var sio = io();
+
 sio.on('connect', function () {
-    sio.emit('my event', { data: 'I\'m connected!' });
+
+    // Initial data requests
+    sio.emit('get_handshakes');
 });
 
-sio.on('my response', data => {
-    console.log(data);
+
+sio.on('get_handshakes', data => {
+    document.getElementById("handshakes").innerHTML = data
 });

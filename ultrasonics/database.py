@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sqlite3
+import uuid
 
 db_file = "ultrasonics/ultrasonics.db"
 conn = None
@@ -14,28 +15,29 @@ def connect():
         cursor = conn.cursor()
         print("Database connection successful")
 
-        # Create persistent settings table if needed
-        if not table_exists("persistent_settings"):
-            try:
-                query = "CREATE TABLE persistent_settings (plugin text, settings text)"
-                cursor.execute(query)
-                conn.commit()
-                print("Table created")
+        try:
+            # Create persistent settings table if needed
+            query = "CREATE TABLE IF NOT EXISTS plugins (id INTEGER PRIMARY KEY, plugin TEXT, version FLOAT, settings TEXT)"
+            cursor.execute(query)
 
-            except sqlite3.Error as e:
-                print("Error while creating table", e)
+            # Create applet table if needed
+            query = "CREATE TABLE IF NOT EXISTS applets (id INTEGER PRIMARY KEY, description TEXT, data TEXT)"
+            cursor.execute(query)
+
+            conn.commit()
+            print("Table created")
+
+        except sqlite3.Error as e:
+            print("Error while creating table", e)
 
     except Error as e:
         print(e)
-    finally:
-        if conn:
-            conn.close()
 
 
-def create_plugin_entry(plugin, settings):
+def plugin_create_entry(plugin, version, settings):
     try:
-        query = "INSERT INTO persistent_settings VALUES(?,?)"
-        cursor.execute(query, (str(plugin), str(settings)))
+        query = "INSERT INTO plugins(plugin, version, settings) VALUES(?,?,?)"
+        cursor.execute(query, (str(plugin), str(version), str(settings)))
         conn.commit()
         print("Plugin database entry created")
 
@@ -43,9 +45,9 @@ def create_plugin_entry(plugin, settings):
         print("Error while creating database entry", e)
 
 
-def update_plugin_entry(plugin, settings):
+def plugin_update_entry(plugin, settings):
     try:
-        query = "UPDATE persistent_settings SET settings = ? WHERE plugin = ?"
+        query = "UPDATE plugins SET settings = ? WHERE plugin = ?"
         cursor.execute(query, (str(settings), str(plugin)))
         conn.commit()
         print("Plugin database entry updated")
@@ -54,19 +56,37 @@ def update_plugin_entry(plugin, settings):
         print("Error while updating database entry", e)
 
 
-def table_exists(plugin):
+def plugin_entry_exists(title):
     try:
-        query = """
-        SELECT COUNT(*)
-        FROM information_schema.tables
-        WHERE table_name = '{0}'
-        """ .format(plugin.replace('\'', '\'\''))
+        query = "SELECT version FROM plugins WHERE plugin = ?"
+        cursor.execute(query, (title,))
+        rows = cursor.fetchall()
 
-        cursor.execute(query)
-        if cursor.fetchone()[0] == 1:
-            return True
-
-        return False
+        if len(rows) > 0:
+            versions = list()
+            for item in rows:
+                versions.append(item[0])
+            return versions
+        else:
+            return [False]
 
     except sqlite3.Error as e:
-        print("Error while searching for table", e)
+        print("Error while checking for plugin entry", e)
+
+
+# def table_exists(table):
+#     try:
+#         query = """
+#         SELECT name
+#         FROM sqlite_master
+#         WHERE name = '{table}'
+#         """
+
+#         cursor.execute(query)
+#         if cursor.fetchone()[0] == 1:
+#             return True
+
+#         return False
+
+#     except sqlite3.Error as e:
+#         print("Error while searching for table", e)
