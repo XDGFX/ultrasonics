@@ -4,6 +4,9 @@ import importlib
 import os
 import re
 import json
+from ultrasonics import logs, database
+
+log = logs.create_log(__name__)
 
 # Initialise variables
 found = {}
@@ -13,12 +16,11 @@ handshakes = []
 prefix = "up_"
 
 
-def gather_plugins():
+def plugins_gather():
     """
     Used to find all variables within the ./plugins directory, and saves them to the 'found' dictionary.
     """
 
-    from ultrasonics import database
     database.connect()
 
     plugins = os.listdir("./plugins")
@@ -53,42 +55,38 @@ def gather_plugins():
                     title, handshake_version, handshake_settings)
 
 
-def gather_applets():
+def plugins_builder(name, version):
+    plugin_settings = database.plugin_load_entry(name, version)
+    plugin_settings = json.loads(plugin_settings)
+
+    settings_dict = found[name].builder(plugin_settings)
+
+    return settings_dict
+
+
+def applet_gather():
     """
     Gather the list of existing applets.
     """
-    pass
+    return applet_list
 
 
-def applet_add_plugin(plugin, settings):
-    """
-    Function which takes a plugin as an input and adds it to the current applet.
-    """
-    pass
-
-
-def applet_remove_plugin(plugin):
-    """
-    Function which removes a plugin from the current applet.
-    """
-    pass
-
-
-def applet_clear():
-    """
-    Clears the current applet to start from fresh.
-    """
-    pass
-
-
-def applet_load(applet):
+def applet_load(applet_name):
     """
     Load an existing applet to be edited.
     """
+    return applet_plans
 
 
-def applet_build():
+def applet_build(applet_plans):
     """
-    Function which takes the current applet and builds the config, and saves it to the database. It will update if the applet came from applet_load.
+    Function which takes input data from the frontend to build a new applet. If the applet ID matches an existing one, it will be updated.
+    """
+    pass
+
+
+def applet_delete(applet_name):
+    """
+    Remove an applet from the database.
     """
     pass

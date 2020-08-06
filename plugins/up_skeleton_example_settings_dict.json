@@ -1,0 +1,36 @@
+[
+    {
+        "type": "text",
+        "label": "Search Term",
+        "name": "searchterm",
+        "value": "Flume"
+    },
+    {
+        "type": "radio",
+        "label": "Category",
+        "name": "category",
+        "options": [
+            "Track",
+            "Artist",
+            "Album"
+        ]
+    },
+    {
+        "type": "select",
+        "label": "Number of Plays",
+        "name": "plays",
+        "options": [
+            "<1000",
+            "1000-10,000",
+            "10,000-100,000",
+            "100,000+"
+        ]
+    },
+    {
+        "type": "checkbox",
+        "label": "Include Non-English Results",
+        "name": "nonenglish",
+        "value": "nonenglish",
+        "id": "nonenglish"
+    }
+]

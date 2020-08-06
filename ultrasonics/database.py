@@ -2,10 +2,15 @@
 
 import sqlite3
 import uuid
+from ultrasonics import logs
+
+log = logs.create_log(__name__)
 
 db_file = "ultrasonics/ultrasonics.db"
 conn = None
 cursor = None
+
+# --- GENERAL ---
 
 
 def connect():
@@ -13,7 +18,7 @@ def connect():
     try:
         conn = sqlite3.connect(db_file)
         cursor = conn.cursor()
-        print("Database connection successful")
+        log.info("Database connection successful")
 
         try:
             # Create persistent settings table if needed
@@ -25,41 +30,43 @@ def connect():
             cursor.execute(query)
 
             conn.commit()
-            print("Table created")
+            log.info("Table created")
 
         except sqlite3.Error as e:
-            print("Error while creating table", e)
+            log.info("Error while creating table", e)
 
     except Error as e:
-        print(e)
+        log.info(e)
+
+# --- PLUGINS ---
 
 
-def plugin_create_entry(plugin, version, settings):
+def plugin_create_entry(name, version, settings):
     try:
         query = "INSERT INTO plugins(plugin, version, settings) VALUES(?,?,?)"
-        cursor.execute(query, (str(plugin), str(version), str(settings)))
+        cursor.execute(query, (str(name), str(version), str(settings)))
         conn.commit()
-        print("Plugin database entry created")
+        log.info("Plugin database entry created")
 
     except sqlite3.Error as e:
-        print("Error while creating database entry", e)
+        log.info("Error while creating database entry", e)
 
 
-def plugin_update_entry(plugin, settings):
+def plugin_update_entry(name, settings):
     try:
         query = "UPDATE plugins SET settings = ? WHERE plugin = ?"
-        cursor.execute(query, (str(settings), str(plugin)))
+        cursor.execute(query, (str(settings), str(name)))
         conn.commit()
-        print("Plugin database entry updated")
+        log.info("Plugin database entry updated")
 
     except sqlite3.Error as e:
-        print("Error while updating database entry", e)
+        log.info("Error while updating database entry", e)
 
 
-def plugin_entry_exists(title):
+def plugin_entry_exists(name):
     try:
         query = "SELECT version FROM plugins WHERE plugin = ?"
-        cursor.execute(query, (title,))
+        cursor.execute(query, (name,))
         rows = cursor.fetchall()
 
         if len(rows) > 0:
@@ -71,8 +78,18 @@ def plugin_entry_exists(title):
             return [False]
 
     except sqlite3.Error as e:
-        print("Error while checking for plugin entry", e)
+        log.info("Error while checking for plugin entry", e)
 
+
+def plugin_load_entry(name, version):
+    try:
+        query = "SELECT settings FROM plugins WHERE plugin = ? AND version = ?"
+        cursor.execute(query, (name, version))
+        rows = cursor.fetchall()
+        return rows[0][0]
+
+    except sqlite3.Error as e:
+        log.info("Error while loading plugin database entry", e)
 
 # def table_exists(table):
 #     try:
@@ -89,4 +106,4 @@ def plugin_entry_exists(title):
 #         return False
 
 #     except sqlite3.Error as e:
-#         print("Error while searching for table", e)
+#         log.info("Error while searching for table", e)

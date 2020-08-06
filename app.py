@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-from ultrasonics import webapp, plugins
+from ultrasonics import webapp, plugins, logs
 
-plugins.gather_plugins()
-webapp.start_server()
+log = logs.create_log(__name__)
+
+plugins.plugins_gather()
+webapp.server_start()

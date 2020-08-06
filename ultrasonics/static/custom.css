@@ -1,0 +1,11 @@
+#div_service_select {
+    flex-wrap: wrap;
+}
+
+.height-is-200 {
+    height: 200px;
+}
+
+.has-text-centered.p {
+    width: 100%;
+}
