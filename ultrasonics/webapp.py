@@ -34,7 +34,36 @@ def html_index():
 
 @app.route('/new')
 def html_new():
-    return render_template('new.html')
+    from ultrasonics.plugins import handshakes
+
+    textColour = list()
+
+    for handshake in handshakes:
+        hexcolour = handshake["colour"]
+
+        # If a leading '#' is provided, remove it
+        if hexcolour[0] == '#':
+            hexcolour = hexcolour[1:]
+
+        # If a three-character hexcode, make six-character
+        if len(hexcolour) == 3:
+            hexcolour = hexcolour[0] * 2 + hexcolour[1] * 2 + hexcolour[2] * 2
+
+        # Convert to RGB value
+        r = int(hexcolour[0:2], 16)
+        g = int(hexcolour[2:4], 16)
+        b = int(hexcolour[4:6], 16)
+
+        # Get YIQ ratio
+        yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
+
+        # Check contrast
+        if yiq >= 128:
+            textColour = "#333333"
+        else:
+            textColour = "#ffffff"
+
+    return render_template('new.html', handshakes=handshakes, textColour=textColour)
 
 # --- WEBSOCKET ROUTES ---
 

@@ -1,6 +1,5 @@
-
 function html_plugin_builder(settings_dict) {
-    html = "<form action=\"submit_plugin_build()\">"
+    html = "<form id='form_plugins_builder'>"
 
     for (var i = 0; i < settings_dict.length; i++) {
 
@@ -77,10 +76,15 @@ function html_plugin_builder(settings_dict) {
         }
     }
 
-    html = html.concat("</form>")
+    html = html.concat(`
+    <div class="control">
+        <button type="submit" class="button is-primary">Submit</button>
+    </div>
+    </form>`)
 
     // Minify html code
     html = html.replace(/^\s+|\r\n|\n|\r|(>)\s+(<)|\s+$/gm, '$1$2')
 
     return html
 }
+
