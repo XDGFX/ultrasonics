@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 from flask_socketio import SocketIO, send, emit
 from json import dumps, loads
 from ultrasonics import logs
@@ -30,34 +30,71 @@ def send(event, data):
 # Homepage
 @app.route('/')
 def html_index():
+    if request.args.get('action') == 'applet_build':
+        from ultrasonics import plugins
+
+        # Send applet plans to builder and reset to default
+        plugins.applet_build(Applet.current_plans)
+        Applet.current_plans = Applet.default_plans
+
     return render_template('index.html')
 
 
 class Applet:
 
-    current_applet = {
+    default_plans = {
         "applet_id": "",
-        
+        "inputs": [],
+        "modifiers": [],
+        "outputs": [],
+        "triggers": []
     }
 
-    # Create Applet Page
-    @app.route('/new_applet')
-    def html_new_applet(self):
+    current_plans = {
+        "applet_id": "",
+        "inputs": [],
+        "modifiers": [],
+        "outputs": [],
+        "triggers": []
+    }
 
-        if not request.args.get('action'):
-            # If opening the page for the first time, generate a new applet
-            import uuid
-            from ultrasonics import plugins
 
-            applet_id = uuid.uuid4()
+# Create Applet Page
+@app.route('/new_applet')
+def html_new_applet():
+    from ultrasonics import plugins
 
-            # TODO Implement check for UUID already in database, and create a new one if so
-            # applets = plugins.applet_gather()
+    # Applet has not been created on the backend
+    if Applet.current_plans["applet_id"] == "":
+        # If opening the page for the first time, generate a new applet
+        import uuid
 
-            return render_template('new_applet.html', applet_id=applet_id)
-        elif request.args.get('action') == 'add':
-            log.info("Argument passed")
-            return render_template('new_applet.html')
+        applet_id = str(uuid.uuid4())
+
+        # TODO Implement check for UUID already in database, and create a new one if so
+        # applets = plugins.applet_gather()
+
+        Applet.current_plans["applet_id"] = applet_id
+
+        # Redirect to remove url parameters
+        return redirect(request.path, code=302)
+
+    # A request to add a component
+    elif request.args.get('action') == 'add':
+
+        component = {
+            "plugin": request.args.get('plugin'),
+            "version": request.args.get('version'),
+            "data": {key: value for key, value in request.args.to_dict().items() if key not in [
+                'action', 'plugin', 'version', 'component']}
+        }
+
+        Applet.current_plans[request.args.get('component')].append(component)
+
+        # Redirect to remove url parameters, so that refreshing won't keep adding more plugin instances
+        return redirect(request.path, code=302)
+
+    return render_template('new_applet.html', current_plans=Applet.current_plans)
 
 
 # Select Plugin Page
@@ -108,23 +145,24 @@ def html_select_plugin():
 
             selected_handshakes.append(handshake)
 
-    return render_template('select_plugin.html', handshakes=selected_handshakes)
+    return render_template('select_plugin.html', handshakes=selected_handshakes, component=component)
 
 
 # Configure Plugin page
 @app.route('/configure_plugin')
 def html_configure_plugin():
-    import ultrasonics.plugins
+    from ultrasonics import plugins
 
     plugin = request.args.get('plugin')
     version = request.args.get('version')
+    component = request.args.get('component')
 
     if not plugin:
         log.error("Plugin not supplied as argument")
 
-    settings = ultrasonics.plugins.plugins_builder(plugin, version)
+    settings = plugins.plugins_builder(plugin, version)
 
-    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version)
+    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component)
 
 # --- WEBSOCKET ROUTES ---
 

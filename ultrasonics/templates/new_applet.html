@@ -34,19 +34,51 @@
         <div class="container">
 
             <h1 class="title">new applet</h1>
+            <p class="subheading">{{ current_plans["applet_id"] }}</p>
 
             <h2 class="subtitle">inputs</h2>
             <a href="/select_plugin?component=inputs">+</a>
 
+            {% for component in current_plans["inputs"] %}
+            <p>{{ component }}</p>
+            {% endfor %}
+
+
             <h2 class="subtitle">modifiers</h2>
             <a href="/select_plugin?component=modifiers">+</a>
+
+            {% for component in current_plans["modifiers"] %}
+            <p>{{ component }}</p>
+            {% endfor %}
+
 
             <h2 class="subtitle">outputs</h2>
             <a href="/select_plugin?component=outputs">+</a>
 
+            {% for component in current_plans["outputs"] %}
+            <p>{{ component }}</p>
+            {% endfor %}
+
+
             <h2 class="subtitle">triggers</h2>
             <a href="/select_plugin?component=triggers">+</a>
 
+            {% for component in current_plans["triggers"] %}
+            <p>{{ component }}</p>
+            {% endfor %}
+
+            <div class="field is-grouped">
+                <p class="control">
+                    <a href="/?action=applet_build" class="button is-link">
+                        Save changes
+                    </a>
+                </p>
+                <p class="control">
+                    <a class="button">
+                        Cancel
+                    </a>
+                </p>
+            </div>
 
         </div>
     </section>

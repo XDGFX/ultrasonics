@@ -58,7 +58,7 @@
                     {% for handshake in handshakes %}
                     <a class="button plugin"
                         style="background-color: {{ handshake.colour }}; color: {{ handshake.textColour }};"
-                        href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}">
+                        href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}">
                         <p>{{ handshake.name }}</p>
                     </a>
                     {% endfor %}
