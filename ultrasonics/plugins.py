@@ -56,6 +56,9 @@ def plugins_gather():
 
 
 def plugins_builder(name, version):
+    """
+    Find the required settings for a plugin when building an applet.
+    """
     plugin_settings = database.plugin_load_entry(name, version)
     plugin_settings = json.loads(plugin_settings)
 
@@ -68,10 +71,11 @@ def applet_gather():
     """
     Gather the list of existing applets.
     """
+    applets_dict = database.applet_gather()
     return applet_list
 
 
-def applet_load(applet_name):
+def applet_load(applet_id):
     """
     Load an existing applet to be edited.
     """

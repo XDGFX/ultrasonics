@@ -24,7 +24,7 @@ def connect():
             cursor.execute(query)
 
             # Create applet table if needed
-            query = "CREATE TABLE IF NOT EXISTS applets (id INTEGER PRIMARY KEY, description TEXT, data TEXT)"
+            query = "CREATE TABLE IF NOT EXISTS applets (id INTEGER, description TEXT, data TEXT)"
             cursor.execute(query)
 
             conn.commit()
@@ -94,6 +94,37 @@ def plugin_load_entry(name, version):
 
         except sqlite3.Error as e:
             log.info("Error while loading plugin database entry", e)
+
+
+def applet_gather():
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "SELECT * FROM applets"
+            cursor.execute(query)
+            rows = cursor.fetchall()
+
+            if not rows:
+                return None
+            else:
+                return rows[0][0]
+
+        except sqlite3.Error as e:
+            log.info("Error while loading plugin database entry", e)
+
+
+def applet_create_entry(unique_id, description, data):
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "INSERT INTO applets(id, description, data) VALUES(?,?,?)"
+            cursor.execute(
+                query, (str(unique_id), str(description), str(data)))
+            conn.commit()
+            log.info("Applet database entry created")
+
+        except sqlite3.Error as e:
+            log.info("Error while creating database entry", e)
 
 # def table_exists(table):
 #     try:

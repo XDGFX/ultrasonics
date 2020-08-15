@@ -15,10 +15,10 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-checkradio/dist/css/bulma-checkradio.min.css">
     <link rel="stylesheet" href="/static/custom.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-    <script src="/static/handlers.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script> -->
+    <!-- <script src="/static/handlers.js"></script>
     <script src="/static/requesters.js"></script>
-    <script src="/static/builders.js"></script>
+    <script src="/static/builders.js"></script> -->
 </head>
 
 <body>
@@ -30,39 +30,24 @@
     </noscript>
 
 
-
-    <section class="section">
-        <div class="container">
-            <h1 class="title">ultrasonics</h1>
-            <p class="heading">Create a new applet to begin</p>
-
-        </div>
-
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <p id="handshakes"></p>
-        </div>
-
-
-
-
-
-    </section>
-
     <section class="section">
         <div class="container">
 
-            <button class="button" onclick="request_plugins_builder('skeleton', 0.1)">
-                plugin_builder skeleton
-            </button>
+            <h1 class="title">new applet</h1>
 
-            <div class="tile is-ancestor">
-                <a class="tile is-3 notification is-primary button" href=/new_applet>
-                    Create a new applet
-                </a>
-            </div>
+            <h2 class="subtitle">inputs</h2>
+            <a href="/select_plugin?component=inputs">+</a>
+
+            <h2 class="subtitle">modifiers</h2>
+            <a href="/select_plugin?component=modifiers">+</a>
+
+            <h2 class="subtitle">outputs</h2>
+            <a href="/select_plugin?component=outputs">+</a>
+
+            <h2 class="subtitle">triggers</h2>
+            <a href="/select_plugin?component=triggers">+</a>
+
+
         </div>
     </section>
 

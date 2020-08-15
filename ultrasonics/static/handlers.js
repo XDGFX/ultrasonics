@@ -16,6 +16,6 @@ sio.on('plugins_builder', data => {
 
     html = html_plugin_builder(settings_dict)
 
-    document.getElementById("plugin_builder").innerHTML = html
+    document.getElementById("plugin_builder_form").innerHTML = html
 
 });

@@ -5,12 +5,12 @@ from ultrasonics import logs
 log = logs.create_log(__name__)
 
 handshake = {
-    "name": "skeleton",
-    "description": "the default ultrasonics plugin",
+    "name": "skeleton2",
+    "description": "the second default ultrasonics plugin",
     "type": "inputs",
     "auth": True,
     "version": 0.1,
-    "colour": "#333333",
+    "colour": "#fcba03",
     "settings": {
         "persistent1": "text",
         "persistent2": "text",

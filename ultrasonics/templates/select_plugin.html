@@ -15,11 +15,11 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-checkradio/dist/css/bulma-checkradio.min.css">
     <link rel="stylesheet" href="/static/custom.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
     <script src="/static/handlers.js"></script>
     <script src="/static/requesters.js"></script>
-    <script src="/static/builders.js"></script>
+    <script src="/static/builders.js"></script> -->
 </head>
 
 <body>
@@ -39,15 +39,33 @@
             <div id="div_service_select" class="tile is-ancestor"></div>
 
             <div class="container">
-                <div id="plugin_builder">
+                <div class="plugin_builder_buttons" id="plugin_builder">
+
+                    <style>
+                        #plugin_builder .plugin {
+                            /* General Formatting */
+                            flex: none;
+                            width: 25%;
+                            height: 200px;
+                            margin-right: 0.75em;
+                        }
+
+                        #plugin_builder .plugin:not(:first-of-type) {
+                            margin-left: 0.75em;
+                        }
+                    </style>
 
                     {% for handshake in handshakes %}
-                    <div class="tile button has-text-centered notification is-3 height-is-200"
-                        style="background-color: {{ handshake.colour }}"
-                        onClick="request_plugins_builder('{{ handshake.name }}', '{{ handshake.version }}')">
-                        <p style="color: {{ textColour }}">{{ handshake.name }}</p>
-                    </div>
+                    <a class="button plugin"
+                        style="background-color: {{ handshake.colour }}; color: {{ handshake.textColour }};"
+                        href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}">
+                        <p>{{ handshake.name }}</p>
+                    </a>
                     {% endfor %}
+
+                </div>
+
+                <div id="plugin_builder_form">
 
                 </div>
             </div>
@@ -55,7 +73,6 @@
         </div>
 
     </section>
-    </div>
 
 </body>
 
