@@ -14,6 +14,9 @@ cursor = None
 
 
 def connect():
+    """
+    Initial connection to database to create tables.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         log.info("Database connection successful")
@@ -24,20 +27,22 @@ def connect():
             cursor.execute(query)
 
             # Create applet table if needed
-            query = "CREATE TABLE IF NOT EXISTS applets (id INTEGER, description TEXT, data TEXT)"
+            query = "CREATE TABLE IF NOT EXISTS applets (id INTEGER, name TEXT, data TEXT)"
             cursor.execute(query)
 
             conn.commit()
-            log.info("Table created")
 
         except sqlite3.Error as e:
-            log.info("Error while creating table", e)
+            log.info("Error while creating tables", e)
 
 
 # --- PLUGINS ---
 
 
 def plugin_create_entry(name, version, settings):
+    """
+    Create a database entry for a given plugin.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
@@ -51,6 +56,9 @@ def plugin_create_entry(name, version, settings):
 
 
 def plugin_update_entry(name, settings):
+    """
+    Update an existing plugin entry in the database.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
@@ -64,6 +72,9 @@ def plugin_update_entry(name, settings):
 
 
 def plugin_entry_exists(name):
+    """
+    Find plugins with a given name, and return the versions of plugins configured for the database.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
@@ -84,6 +95,9 @@ def plugin_entry_exists(name):
 
 
 def plugin_load_entry(name, version):
+    """
+    Load the settings from a specific plugin in the database.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
@@ -97,48 +111,87 @@ def plugin_load_entry(name, version):
 
 
 def applet_gather():
+    """
+    Return all the applets stored in the database.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "SELECT * FROM applets"
+            query = "SELECT id, name FROM applets"
             cursor.execute(query)
             rows = cursor.fetchall()
 
             if not rows:
                 return None
             else:
-                return rows[0][0]
+                return rows
 
         except sqlite3.Error as e:
-            log.info("Error while loading plugin database entry", e)
+            log.info("Error while loading applets from database", e)
 
 
-def applet_create_entry(unique_id, description, data):
+def applet_create_entry(applet_id, applet_name, data):
+    """
+    Create a new applet.
+    """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "INSERT INTO applets(id, description, data) VALUES(?,?,?)"
+            query = "INSERT INTO applets(id, name, data) VALUES(?,?,?)"
             cursor.execute(
-                query, (str(unique_id), str(description), str(data)))
+                query, (str(applet_id), str(applet_name), str(data)))
             conn.commit()
             log.info("Applet database entry created")
 
         except sqlite3.Error as e:
             log.info("Error while creating database entry", e)
 
-# def table_exists(table):
-#     try:
-#         query = """
-#         SELECT name
-#         FROM sqlite_master
-#         WHERE name = '{table}'
-#         """
 
-#         cursor.execute(query)
-#         if cursor.fetchone()[0] == 1:
-#             return True
+def applet_update_entry(applet_id, applet_name, data):
+    """
+    Update an existing applet.
+    """
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "UPDATE applets SET data = ? WHERE id = ?"
+            cursor.execute(query, (str(data), str(applet_id)))
+            query = "UPDATE applets SET name = ? WHERE id = ?"
+            cursor.execute(query, (str(applet_name), str(applet_id)))
+            conn.commit()
+            log.info("Applet database entry updated")
 
-#         return False
+        except sqlite3.Error as e:
+            log.info("Error while updating database entry", e)
 
-#     except sqlite3.Error as e:
-#         log.info("Error while searching for table", e)
+
+def applet_load_entry(applet_id):
+    """
+    Load an applet to be edited at the UI.
+    """
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "SELECT name, data FROM applets WHERE id = ?"
+            cursor.execute(query, (applet_id))
+            rows = cursor.fetchall()
+            return rows[0][0]
+
+        except sqlite3.Error as e:
+            log.info("Error while loading applet database entry", e)
+
+
+def applet_delete_entry(applet_id):
+    """
+    Delete an applet from the database.
+    """
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "DELETE FROM applets WHERE id = ?"
+            cursor.execute(query, (applet_id,))
+            conn.commit()
+            log.info("Applet database entry deleted")
+
+        except sqlite3.Error as e:
+            log.info("Error while attempting to delete applet database entry", e)

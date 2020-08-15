@@ -5,6 +5,7 @@
 
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>ultrasonics</title>
     <meta name="description" content="do more with your music">
@@ -14,7 +15,9 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-checkradio/dist/css/bulma-checkradio.min.css">
-    <link rel="stylesheet" href="/static/custom.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/static/css/custom.css">
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
     <script src="/static/handlers.js"></script>
     <script src="/static/requesters.js"></script>
@@ -30,42 +33,28 @@
     </noscript>
 
 
+    <div class="container">
 
-    <section class="section">
-        <div class="container">
-            <h1 class="title">ultrasonics</h1>
-            <p class="heading">Create a new applet to begin</p>
+        <section class="section">
+            <img src="/static/images/logo.svg">
 
-        </div>
+            <p class="buttons has-content-centered">
+                <a href="/new_applet" class="button">New Applet</a>
+            </p>
 
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <p id="handshakes"></p>
-        </div>
-
-
-
-
-
-    </section>
-
-    <section class="section">
-        <div class="container">
-
-            <button class="button" onclick="request_plugins_builder('skeleton', 0.1)">
-                plugin_builder skeleton
-            </button>
-
-            <div class="tile is-ancestor">
-                <a class="tile is-3 notification is-primary button" href=/new_applet>
-                    Create a new applet
+            {% for item in applet_list %}
+            <div class="tags has-addons">
+                <span class="tag is-medium is-primary">{{ item[1] }}</span>
+                <span class="tag is-medium data">uuid: {{ item[0] }}</span>
+                <a href="/?action=modify&applet_id={{ item[0] }}" class="tag is-edit is-medium">
+                    ✎
                 </a>
+                <a href="/?action=remove&applet_id={{ item[0] }}" class="tag is-delete is-medium"></a>
             </div>
-        </div>
-    </section>
+            {% endfor %}
+        </section>
 
+    </div>
 
 </body>
 

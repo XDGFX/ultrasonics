@@ -14,8 +14,6 @@ sio = SocketIO(app, async_mode='eventlet')
 
 
 # --- GENERAL ---
-
-
 def server_start():
     log.debug("Starting webserver")
     sio.run(app, host="0.0.0.0", debug=True)
@@ -24,23 +22,42 @@ def server_start():
 def send(event, data):
     sio.emit(str(event), {'data': data})
 
+
 # --- WEBSERVER ROUTES ---
-
-
 # Homepage
 @app.route('/')
 def html_index():
+    from ultrasonics import plugins
+    import copy
+
     if request.args.get('action') == 'applet_build':
-        from ultrasonics import plugins
+        # Catch statement if nothing was changed
+        if Applet.current_plans == Applet.default_plans:
+            log.warning(
+                "At request to submit applet plans was received, but the plans were not changed from defaults.")
+        else:
+            # Send applet plans to builder and reset to default
+            applet_name = request.args.get('applet_name')
+            plugins.applet_build(applet_name, Applet.current_plans)
+            Applet.current_plans = copy.deepcopy(Applet.default_plans)
+        return redirect(request.path, code=302)
 
-        # Send applet plans to builder and reset to default
-        plugins.applet_build(Applet.current_plans)
-        Applet.current_plans = Applet.default_plans
+    elif request.args.get('action') == 'applet_clear':
+        Applet.current_plans = copy.deepcopy(Applet.default_plans)
+        return redirect(request.path, code=302)
 
-    return render_template('index.html')
+    elif request.args.get('action') == 'remove':
+        applet_id = request.args.get('applet_id')
+        plugins.applet_delete(applet_id)
+        return redirect(request.path, code=302)
+
+    else:
+        applet_list = plugins.applet_gather()
+        return render_template('index.html', applet_list=applet_list)
 
 
 class Applet:
+    import copy
 
     default_plans = {
         "applet_id": "",
@@ -50,13 +67,7 @@ class Applet:
         "triggers": []
     }
 
-    current_plans = {
-        "applet_id": "",
-        "inputs": [],
-        "modifiers": [],
-        "outputs": [],
-        "triggers": []
-    }
+    current_plans = copy.deepcopy(default_plans)
 
 
 # Create Applet Page
@@ -92,6 +103,16 @@ def html_new_applet():
         Applet.current_plans[request.args.get('component')].append(component)
 
         # Redirect to remove url parameters, so that refreshing won't keep adding more plugin instances
+        return redirect(request.path, code=302)
+
+    elif request.args.get('action') == 'remove':
+        import ast
+        component = ast.literal_eval(request.args.get('component'))
+        component_type = request.args.get('component_type')
+
+        Applet.current_plans[component_type].remove(component)
+
+        # Redirect to update applet build on front end
         return redirect(request.path, code=302)
 
     return render_template('new_applet.html', current_plans=Applet.current_plans)
@@ -164,9 +185,8 @@ def html_configure_plugin():
 
     return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component)
 
+
 # --- WEBSOCKET ROUTES ---
-
-
 @sio.on('connect')
 def connect():
     log.info("Client connected over websocket")

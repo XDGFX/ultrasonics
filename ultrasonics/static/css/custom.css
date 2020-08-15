@@ -1,0 +1,96 @@
+:root {
+  --primary-1: #1ce5b5;
+  --primary-2: #e234ce;
+}
+
+.p1 {
+    color: var(--primary-1);
+}
+
+.p2 {
+    color: var(--primary-2);
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        background-color: #111111;
+    }
+}
+
+body {
+    background-image: url(/static/images/dirt.png);
+    min-height: 100vh;
+}
+
+body, button, input, select, textarea, .is-family-monospace {
+    font-family: 'Roboto Mono', monospace !important;
+}
+
+.has-content-centered {
+    justify-content: center;
+}
+
+.column.logo {
+    flex: none;
+    width: 41.66667%;
+    margin-bottom: -3%;
+}
+
+.column.logo img {
+    position: relative;
+    left: -2.5vw;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.tooltip.is-tooltip-danger::before {
+    background: var(--primary-2);
+}
+
+.tooltip.is-tooltip-danger.is-tooltip-right:not(.is-loading)::after {
+    border-color: transparent var(--primary-2) transparent transparent;
+}
+
+.tag.data {
+    flex: 1;
+    justify-content: left;
+    overflow: hidden;
+}
+
+.tags.data {
+    display: flex;
+}
+
+.tag.is-edit {
+    color: var(--primary-2);
+    background-color: white;
+    width: 2em;
+}
+
+.tag.is-edit:hover {
+    background-color: #171717;
+}
+
+a.tag:hover {
+    text-decoration: none;
+}
+
+.tag.is-delete {
+    color: white;
+    background-color: var(--primary-2);
+}
+
+/* #div_service_select {
+    flex-wrap: wrap;
+}
+
+.height-is-200 {
+    height: 200px;
+}
+
+.has-text-centered.p {
+    width: 100%;
+} */

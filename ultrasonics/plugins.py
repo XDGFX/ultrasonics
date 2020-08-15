@@ -12,7 +12,7 @@ log = logs.create_log(__name__)
 found = {}
 handshakes = []
 
-# Prefix for all plugins in plugins folder
+# Prefix for all plugins in plugins folder, up stands for ultrasonics plugin ;)
 prefix = "up_"
 
 
@@ -71,7 +71,7 @@ def applet_gather():
     """
     Gather the list of existing applets.
     """
-    applets_dict = database.applet_gather()
+    applet_list = database.applet_gather()
     return applet_list
 
 
@@ -82,15 +82,25 @@ def applet_load(applet_id):
     return applet_plans
 
 
-def applet_build(applet_plans):
+def applet_build(applet_name, applet_plans):
     """
     Function which takes input data from the frontend to build a new applet. If the applet ID matches an existing one, it will be updated.
     """
-    pass
+    applet_id = applet_plans["applet_id"]
+    applet_plans.pop("applet_id")
+
+    database.applet_create_entry(applet_id, applet_name, applet_plans)
 
 
-def applet_delete(applet_name):
+def applet_delete(applet_id):
     """
     Remove an applet from the database.
+    """
+    database.applet_delete_entry(applet_id)
+
+
+def applet_run(applet_id):
+    """
+    Run the requested applet.
     """
     pass

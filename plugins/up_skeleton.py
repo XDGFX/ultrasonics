@@ -11,14 +11,25 @@ handshake = {
     "auth": True,
     "version": 0.1,
     "colour": "#333333",
-    "settings": {
-        "persistent1": "text",
-        "persistent2": "text",
-        "options1": [
-            "option1",
-            "option2",
-        ]
-    }
+    "settings": [
+        {
+            "type": "text",
+            "label": "Persistent Setting 1",
+            "name": "persistent_setting_1",
+            "value": "Setting Value"
+        },
+        {
+            "type": "radio",
+            "label": "Radio Settings",
+            "name": "radio_settings",
+            "id": "radio_settings",
+            "options": [
+                "User",
+                "Email",
+                "Token"
+            ]
+        },
+    ]
 }
 
 
