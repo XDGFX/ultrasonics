@@ -20,9 +20,9 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script> -->
-    <!-- <script src="/static/handlers.js"></script>
-    <script src="/static/requesters.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="/static/js/handlers.js"></script>
+    <!-- <script src="/static/requesters.js"></script>
     <script src="/static/builders.js"></script> -->
 </head>
 
@@ -44,9 +44,11 @@
                 </div>
             </div>
 
-            <div class="content is-family-monospace">
-                <span class="p1">new applet</span><br>
-                <span class="p2">uuid:</span> {{ current_plans["applet_id"] }}</b>
+            <div class="content is-family-monospace has-grey-links">
+                <a href="/">home</a>
+                >
+                <span class="p1"><b>new applet</b></span><br>
+                <span class="p2">uuid:</span> {{ current_plans["applet_id"] }}
             </div>
 
             <form class="field" action="/">
@@ -83,9 +85,10 @@
                 <div class="field is-grouped">
                     <div class="control">
                         <input class="input" type="text" name="applet_name" placeholder="Applet Name" required
-                            pattern="([A-z0-9À-ž\s]){1,}">
+                            pattern="([A-z0-9À-ž\s]){1,}" value="{{ current_plans['applet_name'] }}"
+                            onchange="applet_update_name(this.value)">
                     </div>
-                    <p class="control">
+                    <p class=" control">
                         <input type="submit" value="Save Changes" class="button">
                     </p>
                     <p class="control">

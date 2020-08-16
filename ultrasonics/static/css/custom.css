@@ -1,6 +1,9 @@
 :root {
   --primary-1: #1ce5b5;
   --primary-2: #e234ce;
+  --dark: #111111;
+  --grey: #b5b5b5;
+  --grey-dark: #4a4a4a;
 }
 
 .p1 {
@@ -15,6 +18,21 @@
     html {
         background-color: #111111;
     }
+
+    select {
+        background: #111111 !important;
+        color: white !important;
+    }
+
+    .tag.is-edit {
+        color: var(--primary-2);
+        background-color: white;
+        width: 2em;
+    }
+
+    .tag.is-edit:hover {
+        background-color: #171717;
+    }
 }
 
 body {
@@ -24,6 +42,32 @@ body {
 
 body, button, input, select, textarea, .is-family-monospace {
     font-family: 'Roboto Mono', monospace !important;
+}
+
+#plugin_builder .plugin {
+    /* General Formatting */
+    flex: none;
+    width: 23.5%;
+    height: 200px;
+}
+#plugin_builder .plugin:not(:last-of-type) {
+    margin-right: 1%;
+}
+
+#plugin_builder .plugin:not(:first-of-type) {
+    margin-left: 1%;
+}
+
+.plugin:hover {
+    border-color: var(--primary-1);    
+}
+
+.plugin div {
+    max-width: 100%;
+}
+
+.plugin div p {
+    white-space: initial;
 }
 
 .has-content-centered {
@@ -71,7 +115,7 @@ body, button, input, select, textarea, .is-family-monospace {
 }
 
 .tag.is-edit:hover {
-    background-color: #171717;
+    background-color: var(--grey);
 }
 
 a.tag:hover {
@@ -81,6 +125,28 @@ a.tag:hover {
 .tag.is-delete {
     color: white;
     background-color: var(--primary-2);
+}
+
+.tag:not(body).is-primary {
+    background-color: var(--primary-1);
+    color: #111111;
+}
+
+.field:not(:last-child) {
+    margin-bottom: 1.5rem;
+}
+
+.input:active, .input:focus, .is-active.input, .is-active.textarea, .is-focused.input, .is-focused.textarea, .select select.is-active, .select select.is-focused, .select select:active, .select select:focus, .textarea:active, .textarea:focus {
+	border-color: var(--primary-1);
+	box-shadow: 0 0 0 .125em rgba(50,115,220,.25);
+}
+
+.has-grey-links a {
+    color: var(--grey);
+}
+
+.has-grey-links a:hover {
+    color: var(--grey-dark);
 }
 
 /* #div_service_select {

@@ -7,15 +7,7 @@ sio.on('connect', function () {
     console.log("Connected to backend with websocket!")
 });
 
+function applet_update_name(applet_name) {
+    sio.emit('applet_update_name', applet_name)
+}
 
-sio.on('plugins_builder', data => {
-    `
-    Receive a specific plugins settings_dict and return the required HTML to build the form.
-    `
-    settings_dict = JSON.parse(data["settings_dict"])
-
-    html = html_plugin_builder(settings_dict)
-
-    document.getElementById("plugin_builder_form").innerHTML = html
-
-});

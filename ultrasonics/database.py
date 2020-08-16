@@ -27,7 +27,7 @@ def connect():
             cursor.execute(query)
 
             # Create applet table if needed
-            query = "CREATE TABLE IF NOT EXISTS applets (id INTEGER, name TEXT, data TEXT)"
+            query = "CREATE TABLE IF NOT EXISTS applets (id TEXT PRIMARY KEY, name TEXT, data TEXT)"
             cursor.execute(query)
 
             conn.commit()
@@ -39,15 +39,15 @@ def connect():
 # --- PLUGINS ---
 
 
-def plugin_create_entry(name, version, settings):
+def plugin_create_entry(name, version):
     """
     Create a database entry for a given plugin.
     """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "INSERT INTO plugins(plugin, version, settings) VALUES(?,?,?)"
-            cursor.execute(query, (str(name), str(version), str(settings)))
+            query = "INSERT INTO plugins(plugin, version) VALUES(?,?)"
+            cursor.execute(query, (str(name), str(version)))
             conn.commit()
             log.info("Plugin database entry created")
 
@@ -55,15 +55,15 @@ def plugin_create_entry(name, version, settings):
             log.info("Error while creating database entry", e)
 
 
-def plugin_update_entry(name, settings):
+def plugin_update_entry(name, version, settings):
     """
     Update an existing plugin entry in the database.
     """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "UPDATE plugins SET settings = ? WHERE plugin = ?"
-            cursor.execute(query, (str(settings), str(name)))
+            query = "UPDATE plugins SET settings = ? WHERE plugin = ? AND version = ?"
+            cursor.execute(query, (str(settings), name, version))
             conn.commit()
             log.info("Plugin database entry updated")
 
@@ -101,10 +101,17 @@ def plugin_load_entry(name, version):
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
+            import ast
             query = "SELECT settings FROM plugins WHERE plugin = ? AND version = ?"
             cursor.execute(query, (name, version))
             rows = cursor.fetchall()
-            return rows[0][0]
+
+            settings = rows[0][0]
+
+            if settings != None:
+                settings = ast.literal_eval(settings)
+
+            return settings
 
         except sqlite3.Error as e:
             log.info("Error while loading plugin database entry", e)
@@ -117,12 +124,17 @@ def applet_gather():
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "SELECT id, name FROM applets"
+            import ast
+            query = "SELECT id, data FROM applets"
             cursor.execute(query)
             rows = cursor.fetchall()
 
-            if not rows:
-                return None
+            # Convert applet_plans from string to dict
+            rows = [[applet_id, ast.literal_eval(
+                applet_plans)] for applet_id, applet_plans in rows]
+
+            if rows == None:
+                return []
             else:
                 return rows
 
@@ -130,16 +142,16 @@ def applet_gather():
             log.info("Error while loading applets from database", e)
 
 
-def applet_create_entry(applet_id, applet_name, data):
+def applet_create_entry(applet_id, data):
     """
     Create a new applet.
     """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "INSERT INTO applets(id, name, data) VALUES(?,?,?)"
+            query = "REPLACE INTO applets(id, data) VALUES(?,?)"
             cursor.execute(
-                query, (str(applet_id), str(applet_name), str(data)))
+                query, (str(applet_id), str(data)))
             conn.commit()
             log.info("Applet database entry created")
 
@@ -147,22 +159,20 @@ def applet_create_entry(applet_id, applet_name, data):
             log.info("Error while creating database entry", e)
 
 
-def applet_update_entry(applet_id, applet_name, data):
-    """
-    Update an existing applet.
-    """
-    with sqlite3.connect(db_file) as conn:
-        cursor = conn.cursor()
-        try:
-            query = "UPDATE applets SET data = ? WHERE id = ?"
-            cursor.execute(query, (str(data), str(applet_id)))
-            query = "UPDATE applets SET name = ? WHERE id = ?"
-            cursor.execute(query, (str(applet_name), str(applet_id)))
-            conn.commit()
-            log.info("Applet database entry updated")
+# def applet_update_entry(applet_id, data):
+#     """
+#     Update an existing applet.
+#     """
+#     with sqlite3.connect(db_file) as conn:
+#         cursor = conn.cursor()
+#         try:
+#             query = "UPDATE applets SET data = ? WHERE id = ?"
+#             cursor.execute(query, (str(data), str(applet_id)))
+#             conn.commit()
+#             log.info("Applet database entry updated")
 
-        except sqlite3.Error as e:
-            log.info("Error while updating database entry", e)
+#         except sqlite3.Error as e:
+#             log.info("Error while updating database entry", e)
 
 
 def applet_load_entry(applet_id):
@@ -172,10 +182,15 @@ def applet_load_entry(applet_id):
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            query = "SELECT name, data FROM applets WHERE id = ?"
-            cursor.execute(query, (applet_id))
+            import ast
+            query = "SELECT data FROM applets WHERE id = ?"
+            cursor.execute(query, (applet_id, ))
             rows = cursor.fetchall()
-            return rows[0][0]
+
+            # Convert from string to dict
+            applet_plans = ast.literal_eval(rows[0][0])
+
+            return applet_plans
 
         except sqlite3.Error as e:
             log.info("Error while loading applet database entry", e)

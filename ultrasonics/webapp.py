@@ -30,23 +30,35 @@ def html_index():
     from ultrasonics import plugins
     import copy
 
-    if request.args.get('action') == 'applet_build':
-        # Catch statement if nothing was changed
-        if Applet.current_plans == Applet.default_plans:
-            log.warning(
-                "At request to submit applet plans was received, but the plans were not changed from defaults.")
-        else:
-            # Send applet plans to builder and reset to default
-            applet_name = request.args.get('applet_name')
-            plugins.applet_build(applet_name, Applet.current_plans)
-            Applet.current_plans = copy.deepcopy(Applet.default_plans)
+    action = request.args.get("action")
+
+    # Catch statement if nothing was changed, and action is build or modify
+    if action in ['applet_build', 'applet_modify'] and (Applet.current_plans == Applet.default_plans):
+        log.warning(
+            "At request to submit applet plans was received, but the plans were not changed from defaults.")
         return redirect(request.path, code=302)
 
-    elif request.args.get('action') == 'applet_clear':
+    if action == 'applet_build':
+        # Send applet plans to builder and reset to default
+        Applet.current_plans["applet_name"] = request.args.get(
+            'applet_name')
+        plugins.applet_build(Applet.current_plans)
         Applet.current_plans = copy.deepcopy(Applet.default_plans)
         return redirect(request.path, code=302)
 
-    elif request.args.get('action') == 'remove':
+    elif action == 'modify':
+        applet_id = request.args.get('applet_id')
+
+        # Load database plans into current plans
+        Applet.current_plans = plugins.applet_load(applet_id)
+
+        return redirect("/new_applet", code=302)
+
+    elif action == 'applet_clear':
+        Applet.current_plans = copy.deepcopy(Applet.default_plans)
+        return redirect(request.path, code=302)
+
+    elif action == 'remove':
         applet_id = request.args.get('applet_id')
         plugins.applet_delete(applet_id)
         return redirect(request.path, code=302)
@@ -60,6 +72,7 @@ class Applet:
     import copy
 
     default_plans = {
+        "applet_name": "",
         "applet_id": "",
         "inputs": [],
         "modifiers": [],
@@ -71,7 +84,7 @@ class Applet:
 
 
 # Create Applet Page
-@app.route('/new_applet')
+@app.route('/new_applet', methods=['GET', 'POST'])
 def html_new_applet():
     from ultrasonics import plugins
 
@@ -90,17 +103,17 @@ def html_new_applet():
         # Redirect to remove url parameters
         return redirect(request.path, code=302)
 
-    # A request to add a component
-    elif request.args.get('action') == 'add':
+    # A request to add a component - use 'form' not 'args' because this is a POST request
+    elif request.form.get('action') == 'add':
 
         component = {
-            "plugin": request.args.get('plugin'),
-            "version": request.args.get('version'),
-            "data": {key: value for key, value in request.args.to_dict().items() if key not in [
+            "plugin": request.form.get('plugin'),
+            "version": request.form.get('version'),
+            "data": {key: value for key, value in request.form.to_dict().items() if key not in [
                 'action', 'plugin', 'version', 'component']}
         }
 
-        Applet.current_plans[request.args.get('component')].append(component)
+        Applet.current_plans[request.form.get('component')].append(component)
 
         # Redirect to remove url parameters, so that refreshing won't keep adding more plugin instances
         return redirect(request.path, code=302)
@@ -139,30 +152,30 @@ def html_select_plugin():
             # Plugin is not the requested type
             continue
         else:
-            hexcolour = handshake["colour"]
+            # hexcolour = handshake["colour"]
 
-            # If a leading '#' is provided, remove it
-            if hexcolour[0] == '#':
-                hexcolour = hexcolour[1:]
+            # # If a leading '#' is provided, remove it
+            # if hexcolour[0] == '#':
+            #     hexcolour = hexcolour[1:]
 
-            # If a three-character hexcode, make six-character
-            if len(hexcolour) == 3:
-                hexcolour = hexcolour[0] * 2 + \
-                    hexcolour[1] * 2 + hexcolour[2] * 2
+            # # If a three-character hexcode, make six-character
+            # if len(hexcolour) == 3:
+            #     hexcolour = hexcolour[0] * 2 + \
+            #         hexcolour[1] * 2 + hexcolour[2] * 2
 
-            # Convert to RGB value
-            r = int(hexcolour[0:2], 16)
-            g = int(hexcolour[2:4], 16)
-            b = int(hexcolour[4:6], 16)
+            # # Convert to RGB value
+            # r = int(hexcolour[0:2], 16)
+            # g = int(hexcolour[2:4], 16)
+            # b = int(hexcolour[4:6], 16)
 
-            # Get YIQ ratio
-            yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
+            # # Get YIQ ratio
+            # yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
 
-            # Check contrast
-            if yiq >= 128:
-                handshake["textColour"] = "#333333"
-            else:
-                handshake["textColour"] = "#ffffff"
+            # # Check contrast
+            # if yiq >= 128:
+            #     handshake["textColour"] = "#333333"
+            # else:
+            #     handshake["textColour"] = "#ffffff"
 
             selected_handshakes.append(handshake)
 
@@ -170,20 +183,44 @@ def html_select_plugin():
 
 
 # Configure Plugin page
-@app.route('/configure_plugin')
+@app.route('/configure_plugin', methods=['GET', 'POST'])
 def html_configure_plugin():
+    """
+    Settings page for each instance for a plugin.
+    """
     from ultrasonics import plugins
 
-    plugin = request.args.get('plugin')
-    version = request.args.get('version')
-    component = request.args.get('component')
+    # Data received is to update persistent plugin settings
+    if request.form.get('action') == 'add':
 
-    if not plugin:
-        log.error("Plugin not supplied as argument")
+        plugin = request.form.get('plugin')
+        version = request.form.get('version')
+        data = {key: value for key, value in request.form.to_dict().items() if key not in [
+                'action', 'plugin', 'version', 'component']}
+        component = request.form.get('component')
+        persistent = False
 
-    settings = plugins.plugins_builder(plugin, version)
+        plugins.plugin_update(plugin, version, data)
 
-    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component)
+        # # Redirect to remove url parameters, so that refreshing won't keep adding more plugin instances
+        # return redirect(request.path, code=302)
+
+    else:
+        plugin = request.args.get('plugin')
+        version = request.args.get('version')
+        component = request.args.get('component')
+        persistent = request.args.get('persistent') != '0'
+
+    settings = plugins.plugin_build(plugin, version)
+
+    # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
+    persistent = persistent or (settings == None)
+
+    if persistent:
+        settings = [item["settings"] for item in plugins.handshakes if item["name"]
+                    == plugin and item["version"] == float(version)][0]
+
+    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent)
 
 
 # --- WEBSOCKET ROUTES ---
@@ -192,28 +229,10 @@ def connect():
     log.info("Client connected over websocket")
 
 
-# @sio.on('get_handshakes')
-# def get_handshakes():
-#     """
-#     Gets list of all handshakes from installed plugins and returns them in JSON format.
-#     """
-#     from ultrasonics.plugins import handshakes
-#     log.debug("Sending plugin handshakes to frontend")
-#     emit('get_handshakes', dumps(handshakes))
-
-
-# @sio.on('plugins_builder')
-# def plugins_builder(data):
-#     """
-#     Receives the request to add a plugin to an applet, and returns the required settings to build the plugin config page.
-#     """
-#     from ultrasonics import plugins
-
-#     data = json.loads(data)
-#     name = data["name"]
-#     version = data["version"]
-
-#     settings_dict = plugins.plugins_builder(name, version)
-#     settings_dict = json.dumps(settings_dict)
-
-#     emit('plugins_builder', {'name': name, 'settings_dict': settings_dict})
+@sio.on('applet_update_name')
+def applet_update_name(applet_name):
+    """
+    Receives and executes a request to update the plugin name in Applet.current_plans
+    """
+    log.debug(f"Updating applet name to {applet_name}")
+    Applet.current_plans["applet_name"] = applet_name

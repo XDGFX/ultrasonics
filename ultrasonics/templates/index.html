@@ -44,7 +44,7 @@
 
             {% for item in applet_list %}
             <div class="tags has-addons">
-                <span class="tag is-medium is-primary">{{ item[1] }}</span>
+                <span class="tag is-medium is-primary">{{ item[1]["applet_name"] }}</span>
                 <span class="tag is-medium data">uuid: {{ item[0] }}</span>
                 <a href="/?action=modify&applet_id={{ item[0] }}" class="tag is-edit is-medium">
                     ✎
@@ -54,7 +54,15 @@
             {% endfor %}
         </section>
 
+        <div class="section has-text-centered">
+            <p>
+                <strong>ultrasonics</strong> by <a class="p1" href="https://github.com/XDGFX">XDGFX</a>. do more with
+                your music.
+            </p>
+        </div>
+
     </div>
+
 
 </body>
 

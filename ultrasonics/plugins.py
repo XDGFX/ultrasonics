@@ -16,7 +16,7 @@ handshakes = []
 prefix = "up_"
 
 
-def plugins_gather():
+def plugin_gather():
     """
     Used to find all variables within the ./plugins directory, and saves them to the 'found' dictionary.
     """
@@ -38,7 +38,6 @@ def plugins_gather():
 
             handshake_name = plugin.handshake["name"]
             handshake_version = plugin.handshake["version"]
-            handshake_settings = json.dumps(plugin.handshake["settings"])
 
             # Verify that the name in the plugin handshake matches the filename
             if handshake_name != title:
@@ -52,19 +51,28 @@ def plugins_gather():
             # If a database entry is not found for the plugin and version, create one
             if not (handshake_version in database.plugin_entry_exists(title)):
                 database.plugin_create_entry(
-                    title, handshake_version, handshake_settings)
+                    title, handshake_version)
 
 
-def plugins_builder(name, version):
+def plugin_build(name, version):
     """
     Find the required settings for a plugin when building an applet.
     """
     plugin_settings = database.plugin_load_entry(name, version)
-    plugin_settings = json.loads(plugin_settings)
+
+    # Plugin has not yet been configured
+    if not plugin_settings:
+        return None
 
     settings_dict = found[name].builder(plugin_settings)
-
     return settings_dict
+
+
+def plugin_update(name, version, settings):
+    """
+    Send updated persistent plugin settings to the database.
+    """
+    database.plugin_update_entry(name, version, settings)
 
 
 def applet_gather():
@@ -79,17 +87,22 @@ def applet_load(applet_id):
     """
     Load an existing applet to be edited.
     """
+    applet_plans = database.applet_load_entry(applet_id)
+
+    # Add applet id back into plans dict
+    applet_plans["applet_id"] = applet_id
+
     return applet_plans
 
 
-def applet_build(applet_name, applet_plans):
+def applet_build(applet_plans):
     """
     Function which takes input data from the frontend to build a new applet. If the applet ID matches an existing one, it will be updated.
     """
     applet_id = applet_plans["applet_id"]
     applet_plans.pop("applet_id")
 
-    database.applet_create_entry(applet_id, applet_name, applet_plans)
+    database.applet_create_entry(applet_id, applet_plans)
 
 
 def applet_delete(applet_id):

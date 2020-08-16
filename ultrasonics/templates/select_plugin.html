@@ -15,6 +15,8 @@
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-checkradio/dist/css/bulma-checkradio.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
@@ -32,48 +34,53 @@
     </noscript>
 
 
-    <section class="section">
-        <div class="container">
-            <h1 class="title">ultrasonics</h1>
-            <p class="heading">new applet</p>
+    <div class="container">
+        <section class="section">
+
+            <div class="columns">
+                <div class="column logo">
+                    <img src="/static/images/logo.svg">
+                </div>
+            </div>
+
+            <div class="content is-family-monospace has-grey-links">
+                <a href="/">home</a>
+                >
+                <a href="/new_applet">new applet</a>
+                >
+                <span class="p1"><b>select plugin</b></span><br>
+                <span class="p2">component:</span> {{ component }}
+            </div>
 
             <div id="div_service_select" class="tile is-ancestor"></div>
 
             <div class="container">
-                <div class="plugin_builder_buttons" id="plugin_builder">
+                <div class="field">
+                    <div class="plugin_builder_buttons" id="plugin_builder">
 
-                    <style>
-                        #plugin_builder .plugin {
-                            /* General Formatting */
-                            flex: none;
-                            width: 25%;
-                            height: 200px;
-                            margin-right: 0.75em;
-                        }
+                        {% for handshake in handshakes %}
+                        <a class="button plugin"
+                            href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}&persistent=0">
+                            <div>
+                                <p><b>{{ handshake.name }} - <span class="p1">v{{ handshake.version }}</span></b></p>
+                                <p class="is-size-6">{{ handshake.description }}</p>
+                            </div>
+                        </a>
+                        {% endfor %}
 
-                        #plugin_builder .plugin:not(:first-of-type) {
-                            margin-left: 0.75em;
-                        }
-                    </style>
-
-                    {% for handshake in handshakes %}
-                    <a class="button plugin"
-                        style="background-color: {{ handshake.colour }}; color: {{ handshake.textColour }};"
-                        href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}">
-                        <p>{{ handshake.name }}</p>
-                    </a>
-                    {% endfor %}
-
+                    </div>
                 </div>
 
-                <div class="control">
-                    <button onclick="window.history.back()" class="button is-primary">Back</button>
+                <div class="field">
+                    <div class="control">
+                        <a href="/new_applet" class="button">Back</a>
+                    </div>
                 </div>
             </div>
 
-        </div>
+        </section>
+    </div>
 
-    </section>
 
 </body>
 

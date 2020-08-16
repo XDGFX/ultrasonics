@@ -4,5 +4,5 @@ from ultrasonics import webapp, plugins, logs
 
 log = logs.create_log(__name__)
 
-plugins.plugins_gather()
+plugins.plugin_gather()
 webapp.server_start()

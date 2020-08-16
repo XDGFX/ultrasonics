@@ -10,7 +10,6 @@ handshake = {
     "type": "inputs",
     "auth": True,
     "version": 0.1,
-    "colour": "#333333",
     "settings": [
         {
             "type": "text",
@@ -52,6 +51,10 @@ def builder(database):
     """
 
     settings_dict = [
+        {
+            "type": "string",
+            "value": "Welcome to Ultrasonics. This is a basic sample plugin to help with development of future plugins."
+        },
         {
             "type": "text",
             "label": "Search Term",
