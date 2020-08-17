@@ -189,14 +189,26 @@ def html_configure_plugin():
         component = request.args.get('component')
         persistent = request.args.get('persistent') != '0'
 
-    settings = plugins.plugin_build(plugin, version)
+    # Get persistent settings for the plugin
+    for item in plugins.handshakes:
+        if item["name"] == plugin and item["version"] == float(version):
+            persistent_settings = item["settings"]
 
-    # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
-    persistent = persistent or (settings == None)
+    # If persistent settings are supplied
+    if persistent_settings:
+        settings = plugins.plugin_build(plugin, version)
 
-    if persistent:
-        settings = [item["settings"] for item in plugins.handshakes if item["name"]
-                    == plugin and item["version"] == float(version)][0]
+        # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
+        persistent = persistent or (settings == None)
+
+        if persistent:
+            settings = persistent_settings
+
+    else:
+        # No persistent settings exist
+        settings = plugins.plugin_build(plugin, version, force=True)
+
+        persistent = -1
 
     return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent)
 

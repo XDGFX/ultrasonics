@@ -41,7 +41,7 @@ def plugin_gather():
 
                 # Verify that the name in the plugin handshake matches the filename
                 if handshake_name != title:
-                    print("Error: plugin name must match the filename!")
+                    log.error("Plugin name must match the filename!")
                     continue
 
                 # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
@@ -63,14 +63,14 @@ def plugin_load(name, version):
     return plugin_settings
 
 
-def plugin_build(name, version):
+def plugin_build(name, version, force=False):
     """
     Find the required settings for a plugin when building an applet.
     """
     plugin_settings = database.plugin_load_entry(name, version)
 
     # Plugin has not yet been configured
-    if not plugin_settings:
+    if not plugin_settings and not force:
         return None
 
     settings_dict = found_plugins[name].builder(plugin_settings)

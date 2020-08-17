@@ -6,31 +6,14 @@ log = logs.create_log(__name__)
 
 handshake = {
     "name": "local playlist",
-    "description": "the default ultrasonics plugin",
+    "description": "interface with a local .m3u playlist",
     "type": [
-        "inputs", "outputs"
+        "inputs",
+        "outputs"
     ],
-    "auth": True,
+    "auth": False,
     "version": 0.1,
-    "settings": [
-        {
-            "type": "text",
-            "label": "Persistent Setting 1",
-            "name": "persistent_setting_1",
-            "value": "Setting Value"
-        },
-        {
-            "type": "radio",
-            "label": "Radio Settings",
-            "name": "radio_settings",
-            "id": "radio_settings",
-            "options": [
-                "User",
-                "Email",
-                "Token"
-            ]
-        },
-    ]
+    "settings": False
 }
 
 

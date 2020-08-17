@@ -52,7 +52,7 @@
                         >
                         <a href="/select_plugin?component={{ component }}">select plugin</a>
                         >
-                        {% if persistent %}
+                        {% if persistent == 1 %}
                         <a onclick="history.back()">configure plugin</a>
                         >
                         <span class="p1"><b>persistent settings</b></span><br>
@@ -65,9 +65,9 @@
                 </div>
 
                 <div class="column is-narrow">
-                    {% if persistent %}
+                    {% if persistent == 1 %}
                     <div class="tag">Only modified settings will be updated.</div>
-                    {% else %}
+                    {% elif persistent == 0 %}
                     <a class="button"
                         href="/configure_plugin?plugin={{ plugin }}&version={{ version }}&component={{ component }}&persistent=1">Persistent
                         Settings</a>
