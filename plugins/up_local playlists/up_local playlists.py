@@ -24,7 +24,13 @@ def run(settings_dict, database=None, songs_dict=None):
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
     """
-    pass
+    if not songs_dict:
+        "Input mode"
+        print(settings_dict)
+
+    else:
+        "Output mode"
+        print(settings_dict)
 
 
 def builder(database=None):
@@ -37,43 +43,21 @@ def builder(database=None):
 
     settings_dict = [
         {
-            "type": "string",
-            "value": "Welcome to Ultrasonics. This is a basic sample plugin to help with development of future plugins."
-        },
-        {
             "type": "text",
-            "label": "Search Term",
-            "name": "searchterm",
-            "value": "Flume"
-        },
-        {
-            "type": "radio",
-            "label": "Category",
-            "name": "category",
-            "id": "category",
-            "options": [
-                "Track",
-                "Artist",
-                "Album"
-            ]
-        },
-        {
-            "type": "select",
-            "label": "Number of Plays",
-            "name": "plays",
-            "options": [
-                "<1000",
-                "1000-10,000",
-                "10,000-100,000",
-                "100,000+"
-            ]
+            "label": "Directory",
+            "name": "dir",
+            "value": "/mnt/music library/playlists"
         },
         {
             "type": "checkbox",
-            "label": "Include Non-English Results",
-            "name": "nonenglish",
-            "value": "nonenglish",
-            "id": "nonenglish"
+            "label": "Recursive",
+            "name": "recursive",
+            "value": "recursive",
+            "id": "recursive"
+        },
+        {
+            "type": "string",
+            "value": "Enabling recursive mode will search all subfolders for more playlists."
         }
     ]
 

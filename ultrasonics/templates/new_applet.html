@@ -55,7 +55,7 @@
             <form class="field" action="/">
 
                 <!-- Hidden inputs to store variables -->
-                <input type="hidden" name="action" value="applet_build">
+                <input type="hidden" name="action" value="build">
 
                 <!-- Loop over each type of component to build it's section -->
                 {% for type in ["inputs", "modifiers", "outputs", "triggers"] %}
@@ -93,7 +93,7 @@
                         <input type="submit" value="Save Changes" class="button">
                     </p>
                     <p class="control">
-                        <a href="/?action=applet_clear" class="button tooltip is-tooltip-danger is-tooltip-right"
+                        <a href="/?action=clear" class="button tooltip is-tooltip-danger is-tooltip-right"
                             data-tooltip="Discard Changes?">Cancel</a>
                     </p>
                 </div>

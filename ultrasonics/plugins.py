@@ -150,31 +150,38 @@ def applet_run(applet_id):
     """
     Run the requested applet in full.
     """
+    log.info(f"Running applet: {applet_id}")
+
     applet_plans = database.applet_load_entry(applet_id)
 
-    songs_dict = []
+    if not applet_plans["inputs"] or not applet_plans["outputs"]:
+        log.error(
+            f"An input or output plugin is missing for applet {applet_id} - will not run.")
 
-    def get_info(pluign):
-        name = plugin["plugin"]
-        version = plugin["version"]
-        data = plugin["data"]
+    else:
+        songs_dict = []
 
-        return name, version, data
+        def get_info(pluign):
+            name = plugin["plugin"]
+            version = plugin["version"]
+            data = plugin["data"]
 
-    "Inputs"
-    # Get new songs from input, append to songs list
-    for plugin in applet_plans["inputs"]:
-        songs_dict.append(plugin_run(get_info(plugin)))
+            return name, version, data
 
-    "Modifiers"
-    # Replace songs with output from modifier plugin
-    for plugin in applet_plans["modifiers"]:
-        songs_dict = plugin_run(get_info(plugin), songs_dict=songs_dict)
+        "Inputs"
+        # Get new songs from input, append to songs list
+        for plugin in applet_plans["inputs"]:
+            songs_dict.append(plugin_run(get_info(plugin)))
 
-    "Outputs"
-    # Submit songs dict to output plugin
-    for plugin in applet_plans["outputs"]:
-        plugin_run(get_info(plugin), songs_dict=songs_dict)
+        "Modifiers"
+        # Replace songs with output from modifier plugin
+        for plugin in applet_plans["modifiers"]:
+            songs_dict = plugin_run(get_info(plugin), songs_dict=songs_dict)
+
+        "Outputs"
+        # Submit songs dict to output plugin
+        for plugin in applet_plans["outputs"]:
+            plugin_run(get_info(plugin), songs_dict=songs_dict)
 
 
 def applet_trigger_run(applet_id):
@@ -182,6 +189,11 @@ def applet_trigger_run(applet_id):
     Run the trigger function from the requested applet.
     """
     applet_plans = database.applet_load_entry(applet_id)
+
+    if not applet_plans["triggers"]:
+        log.error(
+            f"No trigger is supplied for applet {applet_id} - will not run automatically.")
+        raise Exception
 
     for trigger in applet_plans["triggers"]:
         name = trigger["plugin"]

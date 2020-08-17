@@ -48,6 +48,9 @@
             <div class="tags has-addons">
                 <span class="tag is-medium is-primary">{{ item[1]["applet_name"] }}</span>
                 <span class="tag is-medium data">uuid: {{ item[0] }}</span>
+                <a href="/?action=run&applet_id={{ item[0] }}" class="tag is-run is-medium">
+                    ▶
+                </a>
                 <a href="/?action=modify&applet_id={{ item[0] }}" class="tag is-edit is-medium">
                     ✎
                 </a>

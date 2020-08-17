@@ -38,7 +38,11 @@ def scheduler_applet_loop(applet_id):
 
     while True:
         # Wait for trigger to complete
-        plugins.applet_trigger_run(applet_id)
+        try:
+            plugins.applet_trigger_run(applet_id)
+        except Exception as e:
+            log.error(e)
+            break
 
         # Check if applet still exists in the database
         if database.applet_load_entry(applet_id) != None:

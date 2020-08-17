@@ -31,13 +31,13 @@ def html_index():
 
     action = request.args.get("action")
 
-    # Catch statement if nothing was changed, and action is build or modify
-    if action in ['applet_build', 'applet_modify'] and (Applet.current_plans == Applet.default_plans):
+    # Catch statement if nothing was changed, and action is build
+    if action in ['build'] and (Applet.current_plans == Applet.default_plans):
         log.warning(
             "At request to submit applet plans was received, but the plans were not changed from defaults.")
         return redirect(request.path, code=302)
 
-    if action == 'applet_build':
+    if action == 'build':
         # Send applet plans to builder and reset to default
         Applet.current_plans["applet_name"] = request.args.get(
             'applet_name')
@@ -53,13 +53,19 @@ def html_index():
 
         return redirect("/new_applet", code=302)
 
-    elif action == 'applet_clear':
+    elif action == 'clear':
         Applet.current_plans = copy.deepcopy(Applet.default_plans)
         return redirect(request.path, code=302)
 
     elif action == 'remove':
         applet_id = request.args.get('applet_id')
         plugins.applet_delete(applet_id)
+        return redirect(request.path, code=302)
+
+    elif action == 'run':
+        applet_id = request.args.get('applet_id')
+
+        plugins.applet_run(applet_id)
         return redirect(request.path, code=302)
 
     else:
