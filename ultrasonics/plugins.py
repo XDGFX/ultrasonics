@@ -42,11 +42,14 @@ def plugin_gather():
                 # Verify that the name in the plugin handshake matches the filename
                 if handshake_name != title:
                     log.error("Plugin name must match the filename!")
+                    log.error(plugin)
                     continue
 
                 # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
                 handshakes.append(plugin.handshake)
                 found_plugins[title] = plugin
+
+                log.info(f"Found plugin: {plugin}")
 
                 # If a database entry is not found for the plugin and version, create one
                 if not (handshake_version in database.plugin_entry_exists(title)):

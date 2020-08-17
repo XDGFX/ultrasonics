@@ -1,25 +1,64 @@
 [
     {
-        "name": "Never Be Like You",
-        "artists": [
-            "Flume",
-            "Kai"
-        ],
-        "album": "Skin",
-        "release_date": "2016-05-27",
-        "isrc": "AUFF01500784",
-        "location": "/media/music/Flume/Skin/Never Be Like You.m4a",
-        "id": "https://open.spotify.com/track/476j7IDRIDRvv1Xu71EVc8"
+        "name": "New Music",
+        "songs": [
+            {
+                "name": "Never Be Like You",
+                "artists": [
+                    "Flume",
+                    "Kai"
+                ],
+                "album": "Skin",
+                "release_date": "2016-05-27",
+                "isrc": "AUFF01500784",
+                "location": "/media/music/Flume/Skin/Never Be Like You.m4a",
+                "id": "https://open.spotify.com/track/476j7IDRIDRvv1Xu71EVc8"
+            },
+            {
+                "name": "Lovers",
+                "artists": [
+                    "Anna of the North"
+                ],
+                "album": "Lovers",
+                "release_date": "2017-09-08",
+                "isrc": "USLGZ1700007",
+                "location": "/media/music/Anna of the North/Lovers/Lovers.mp3",
+                "id": "6bZuZKR8hoyzZXNh1IW2Bu"
+            }
+        ]
     },
     {
-        "name": "Lovers",
-        "artists": [
-            "Anna of the North"
-        ],
-        "album": "Lovers",
-        "release_date": "2017-09-08",
-        "isrc": "USLGZ1700007",
-        "location": "/media/music/Anna of the North/Lovers/Lovers.mp3",
-        "id": "6bZuZKR8hoyzZXNh1IW2Bu"
+        "name": "Noisia",
+        "songs": [
+            {
+                "name": "Hold Your Colour - Noisia Remix",
+                "artists": [
+                    "Noisia",
+                    "Pendulum"
+                ],
+                "album": "The Reworks",
+                "release_date": "2018-06-29",
+                "isrc": "UKNKE1800001"
+            },
+            {
+                "name": "Tentacles",
+                "artists": [
+                    "Noisia"
+                ],
+                "album": "Outer Edges",
+                "release_date": "2016-08-05",
+                "isrc": "NLCK41032641"
+            },
+            {
+                "name": "Arrakis - Noisia Remix",
+                "artists": [
+                    "Noisia",
+                    "Black Sun Empire"
+                ],
+                "album": "Variations on Black",
+                "release_date": "2013-11-04",
+                "isrc": "USA2P1360180"
+            }
+        ]
     }
 ]

@@ -175,6 +175,10 @@ a.tag:hover {
     color: var(--grey-dark);
 }
 
+.button.is-static {
+    background-color: var(--dark);
+}
+
 /* #div_service_select {
     flex-wrap: wrap;
 }

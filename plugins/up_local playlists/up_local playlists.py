@@ -5,13 +5,15 @@ from ultrasonics import logs
 log = logs.create_log(__name__)
 
 handshake = {
-    "name": "local playlist",
-    "description": "interface with a local .m3u playlist",
+    "name": "local playlists",
+    "description": "interface with all local .m3u playlists in a directory",
     "type": [
         "inputs",
         "outputs"
     ],
-    "auth": False,
+    "mode": [
+        "playlists"
+    ],
     "version": 0.1,
     "settings": False
 }
@@ -22,9 +24,7 @@ def run(settings_dict, database=None, songs_dict=None):
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
     """
-
-    # if handshake["type"] != "output":
-    #     return songs_dict
+    pass
 
 
 def builder(database=None):

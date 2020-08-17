@@ -7,8 +7,12 @@ log = logs.create_log(__name__)
 handshake = {
     "name": "skeleton",
     "description": "the default ultrasonics plugin",
-    "type": ["inputs"],
-    "auth": True,
+    "type": [
+        "inputs"
+    ],
+    "mode": [
+        "songs"
+    ],
     "version": 0.1,
     "settings": [
         {
@@ -37,9 +41,7 @@ def run(settings_dict, database=None, songs_dict=None):
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
     """
-
-    # if handshake["type"] != "output":
-    #     return songs_dict
+    pass
 
 
 def builder(database=None):
@@ -93,10 +95,3 @@ def builder(database=None):
     ]
 
     return settings_dict
-
-
-def auth():
-    """
-    Used to return a dedicated /auth page to authorise applications which need it. Only run if handshake.auth = True.
-    """
-    return auth_html

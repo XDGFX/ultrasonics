@@ -38,9 +38,11 @@
         <section class="section">
             <img src="/static/images/logo.svg">
 
-            <p class="buttons has-content-centered">
-                <a href="/new_applet" class="button">New Applet</a>
-            </p>
+            <div class="buttons has-addons is-centered">
+                <button class="button is-static">new applet</button>
+                <a href="/new_applet?mode=songs" class="button">songs</a>
+                <a href="/new_applet?mode=playlists" class="button">playlists</a>
+            </div>
 
             {% for item in applet_list %}
             <div class="tags has-addons">
