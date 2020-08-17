@@ -5,9 +5,11 @@ from ultrasonics import logs
 log = logs.create_log(__name__)
 
 handshake = {
-    "name": "skeleton2",
-    "description": "the second default ultrasonics plugin",
-    "type": ["inputs"],
+    "name": "local playlist",
+    "description": "the default ultrasonics plugin",
+    "type": [
+        "inputs", "outputs"
+    ],
     "auth": True,
     "version": 0.1,
     "settings": [
@@ -32,7 +34,7 @@ handshake = {
 }
 
 
-def run(database, settings_dict, songs_dict):
+def run(settings_dict, database=None, songs_dict=None):
     """
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
@@ -42,7 +44,7 @@ def run(database, settings_dict, songs_dict):
     #     return songs_dict
 
 
-def builder(database):
+def builder(database=None):
     """
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case
@@ -51,6 +53,10 @@ def builder(database):
     """
 
     settings_dict = [
+        {
+            "type": "string",
+            "value": "Welcome to Ultrasonics. This is a basic sample plugin to help with development of future plugins."
+        },
         {
             "type": "text",
             "label": "Search Term",
@@ -89,10 +95,3 @@ def builder(database):
     ]
 
     return settings_dict
-
-
-def auth():
-    """
-    Used to return a dedicated /auth page to authorise applications which need it. Only run if handshake.auth = True.
-    """
-    return auth_html

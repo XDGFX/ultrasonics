@@ -144,38 +144,8 @@ def html_select_plugin():
     handshakes = ultrasonics.plugins.handshakes
     selected_handshakes = list()
 
-    # Determine text colour
     for handshake in handshakes:
-
-        if handshake["type"] != component:
-            # Plugin is not the requested type
-            continue
-        else:
-            # hexcolour = handshake["colour"]
-
-            # # If a leading '#' is provided, remove it
-            # if hexcolour[0] == '#':
-            #     hexcolour = hexcolour[1:]
-
-            # # If a three-character hexcode, make six-character
-            # if len(hexcolour) == 3:
-            #     hexcolour = hexcolour[0] * 2 + \
-            #         hexcolour[1] * 2 + hexcolour[2] * 2
-
-            # # Convert to RGB value
-            # r = int(hexcolour[0:2], 16)
-            # g = int(hexcolour[2:4], 16)
-            # b = int(hexcolour[4:6], 16)
-
-            # # Get YIQ ratio
-            # yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000
-
-            # # Check contrast
-            # if yiq >= 128:
-            #     handshake["textColour"] = "#333333"
-            # else:
-            #     handshake["textColour"] = "#ffffff"
-
+        if component in handshake["type"]:
             selected_handshakes.append(handshake)
 
     return render_template('select_plugin.html', handshakes=selected_handshakes, component=component)

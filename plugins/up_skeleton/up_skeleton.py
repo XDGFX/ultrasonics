@@ -7,7 +7,7 @@ log = logs.create_log(__name__)
 handshake = {
     "name": "skeleton",
     "description": "the default ultrasonics plugin",
-    "type": "inputs",
+    "type": ["inputs"],
     "auth": True,
     "version": 0.1,
     "settings": [
