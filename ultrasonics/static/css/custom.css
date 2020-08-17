@@ -1,3 +1,4 @@
+/* Variables */
 :root {
   --primary-1: #1ce5b5;
   --primary-2: #e234ce;
@@ -14,6 +15,7 @@
     color: var(--primary-2);
 }
 
+/* Light and dark mode */
 @media (prefers-color-scheme: dark) {
     html {
         background-color: #111111;
@@ -33,11 +35,23 @@
     .tag.is-edit:hover {
         background-color: #171717;
     }
+
+    body {
+        background-image: url(/static/images/static.png);
+    }
 }
 
+@media (prefers-color-scheme: light) {
+
+    body {
+        background-image: url(/static/images/static-invert.png);
+    }
+
+}
+
+/* App-wide changes */
 body {
     min-height: 100vh;
-    background-image: url(/static/images/static.png);
 }
 
 body.has-background-animated {
@@ -55,6 +69,7 @@ body, button, input, select, textarea, .is-family-monospace {
     font-family: 'Roboto Mono', monospace !important;
 }
 
+/* Specific elements */
 #plugin_builder .plugin {
     /* General Formatting */
     flex: none;

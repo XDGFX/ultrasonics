@@ -175,7 +175,7 @@ def applet_create_entry(applet_id, data):
 
 def applet_load_entry(applet_id):
     """
-    Load an applet to be edited at the UI.
+    Load an applet plans from it's unique id.
     """
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
@@ -185,10 +185,12 @@ def applet_load_entry(applet_id):
             cursor.execute(query, (applet_id, ))
             rows = cursor.fetchall()
 
-            # Convert from string to dict
-            applet_plans = ast.literal_eval(rows[0][0])
-
-            return applet_plans
+            if rows == None:
+                return None
+            else:
+                # Convert from string to dict
+                applet_plans = ast.literal_eval(rows[0][0])
+                return applet_plans
 
         except sqlite3.Error as e:
             log.info("Error while loading applet database entry", e)

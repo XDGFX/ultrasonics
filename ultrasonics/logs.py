@@ -14,7 +14,7 @@ def create_log(name):
 
     # Apply log formatting
     formatter = logging.Formatter(
-        '%(asctime)s: %(name)22s - %(levelname)7s - %(message)s')
+        '%(asctime)s: %(name)-22s - %(levelname)-7s - %(message)s')
     ch.setFormatter(formatter)
 
     log.addHandler(ch)

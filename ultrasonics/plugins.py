@@ -5,12 +5,12 @@ import json
 import os
 import re
 
-from ultrasonics import database, logs
+from ultrasonics import database, logs, scheduler
 
 log = logs.create_log(__name__)
 
 # Initialise variables
-found = {}
+found_plugins = {}
 handshakes = []
 
 # Prefix for all plugins in plugins folder, up stands for ultrasonics plugin ;)
@@ -19,40 +19,39 @@ prefix = "up_"
 
 def plugin_gather():
     """
-    Used to find all variables within the ./plugins directory, and saves them to the 'found' dictionary.
+    Used to find all variables within the ./plugins directory, and saves them to the 'found_plugins' dictionary.
     """
 
     database.connect()
 
-    plugins = os.listdir("./plugins")
+    for _, _, items in os.walk("./plugins"):
+        for item in items:
 
-    for item in plugins:
+            # Check if file has .py extension
+            if re.match(prefix + "([\w\W]+)\.py$", item):
 
-        # Check if file has .py extension
-        if re.match(prefix + "([\w\W]+)\.py", item):
+                # Extract name of file excluding extension
+                title = re.search(prefix + "([\w\W]+)\.py$", item)[1]
 
-            # Extract name of file excluding extension
-            title = re.search(prefix + "([\w\W]+)\.py", item)[1]
+                plugin = importlib.import_module(
+                    f"plugins.{prefix + title}.{prefix + title}", ".")
 
-            plugin = importlib.import_module(
-                "plugins." + prefix + title, ".")
+                handshake_name = plugin.handshake["name"]
+                handshake_version = plugin.handshake["version"]
 
-            handshake_name = plugin.handshake["name"]
-            handshake_version = plugin.handshake["version"]
+                # Verify that the name in the plugin handshake matches the filename
+                if handshake_name != title:
+                    print("Error: plugin name must match the filename!")
+                    continue
 
-            # Verify that the name in the plugin handshake matches the filename
-            if handshake_name != title:
-                print("Error: plugin name must match the filename!")
-                continue
+                # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
+                handshakes.append(plugin.handshake)
+                found_plugins[title] = plugin
 
-            # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
-            handshakes.append(plugin.handshake)
-            found[title] = plugin
-
-            # If a database entry is not found for the plugin and version, create one
-            if not (handshake_version in database.plugin_entry_exists(title)):
-                database.plugin_create_entry(
-                    title, handshake_version)
+                # If a database entry is not found for the plugin and version, create one
+                if not (handshake_version in database.plugin_entry_exists(title)):
+                    database.plugin_create_entry(
+                        title, handshake_version)
 
 
 def plugin_load(name, version):
@@ -74,7 +73,7 @@ def plugin_build(name, version):
     if not plugin_settings:
         return None
 
-    settings_dict = found[name].builder(plugin_settings)
+    settings_dict = found_plugins[name].builder(plugin_settings)
     return settings_dict
 
 
@@ -83,6 +82,27 @@ def plugin_update(name, version, settings):
     Send updated persistent plugin settings to the database.
     """
     database.plugin_update_entry(name, version, settings)
+
+
+def plugin_run(name, version, settings_dict, songs_dict=None):
+    """
+    Run a specific plugin.
+
+    INPUTS
+    name:            name of plugin
+    version:         version of plugin
+    settings_dict:   settings to run this specific instance of the plugin, taken from the applet
+    songs_dict:      passed to the plugin if not an input
+
+    OUTPUTS
+    response:        either a success message, or the new songs_dict
+    """
+    plugin_settings = database.plugin_load_entry(name, version)
+
+    response = found_plugins[name].run(
+        settings_dict, database=plugin_settings, songs_dict=songs_dict)
+
+    return response
 
 
 def applet_gather():
@@ -113,6 +133,7 @@ def applet_build(applet_plans):
     applet_plans.pop("applet_id")
 
     database.applet_create_entry(applet_id, applet_plans)
+    scheduler.applet_submit(applet_id)
 
 
 def applet_delete(applet_id):
@@ -124,6 +145,44 @@ def applet_delete(applet_id):
 
 def applet_run(applet_id):
     """
-    Run the requested applet.
+    Run the requested applet in full.
     """
-    pass
+    applet_plans = database.applet_load_entry(applet_id)
+
+    songs_dict = []
+
+    def get_info(pluign):
+        name = plugin["plugin"]
+        version = plugin["version"]
+        data = plugin["data"]
+
+        return name, version, data
+
+    "Inputs"
+    # Get new songs from input, append to songs list
+    for plugin in applet_plans["inputs"]:
+        songs_dict.append(plugin_run(get_info(plugin)))
+
+    "Modifiers"
+    # Replace songs with output from modifier plugin
+    for plugin in applet_plans["modifiers"]:
+        songs_dict = plugin_run(get_info(plugin), songs_dict=songs_dict)
+
+    "Outputs"
+    # Submit songs dict to output plugin
+    for plugin in applet_plans["outputs"]:
+        plugin_run(get_info(plugin), songs_dict=songs_dict)
+
+
+def applet_trigger_run(applet_id):
+    """
+    Run the trigger function from the requested applet.
+    """
+    applet_plans = database.applet_load_entry(applet_id)
+
+    for trigger in applet_plans["triggers"]:
+        name = trigger["plugin"]
+        version = trigger["version"]
+        data = trigger["data"]
+
+        plugin_run(name, version, data)
