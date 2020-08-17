@@ -36,8 +36,19 @@
 }
 
 body {
-    background-image: url(/static/images/dirt.png);
     min-height: 100vh;
+    background-image: url(/static/images/static.png);
+}
+
+body.has-background-animated {
+    background-image: url(/static/images/dirt.png);
+    background-size: 20vw 20vh;
+    animation: animatedBackground 40s linear infinite;
+}
+
+@keyframes animatedBackground {
+	from { background-position: 0 0; }
+	to { background-position: 100vw 100vh; }
 }
 
 body, button, input, select, textarea, .is-family-monospace {

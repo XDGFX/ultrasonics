@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-from flask import Flask, render_template, request, redirect
-from flask_socketio import SocketIO, send, emit
-from json import dumps, loads
+from flask import Flask, redirect, render_template, request
+from flask_socketio import SocketIO, emit, send
+
 from ultrasonics import logs
-import json
 
 log = logs.create_log(__name__)
 
@@ -195,8 +194,13 @@ def html_configure_plugin():
 
         plugin = request.form.get('plugin')
         version = request.form.get('version')
-        data = {key: value for key, value in request.form.to_dict().items() if key not in [
-                'action', 'plugin', 'version', 'component']}
+        new_data = {key: value for key, value in request.form.to_dict().items() if key not in [
+            'action', 'plugin', 'version', 'component']}
+
+        # Merge new settings with existing database settings
+        data = plugins.plugin_load(plugin, version)
+        data.update(new_data)
+
         component = request.form.get('component')
         persistent = False
 

@@ -2,6 +2,7 @@
 
 import sqlite3
 import uuid
+
 from ultrasonics import logs
 
 log = logs.create_log(__name__)

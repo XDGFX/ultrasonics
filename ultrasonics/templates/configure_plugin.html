@@ -64,13 +64,15 @@
                     </div>
                 </div>
 
-                {% if not persistent %}
                 <div class="column is-narrow">
+                    {% if persistent %}
+                    <div class="tag">Only modified settings will be updated.</div>
+                    {% else %}
                     <a class="button"
                         href="/configure_plugin?plugin={{ plugin }}&version={{ version }}&component={{ component }}&persistent=1">Persistent
                         Settings</a>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
 
 
@@ -95,7 +97,7 @@
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
                         <input class="input" type="text" name="{{ plugin + '_' + setting['name'] }}"
-                            placeholder="{{ setting['value'] }}" required>
+                            placeholder="{{ setting['value'] }}">
                     </div>
                 </div>
                 {% endif %}
@@ -107,7 +109,7 @@
 
                         {% for option in setting["options"] %}
                         <input class="is-checkradio" type="radio" name="{{ plugin + '_' + setting['name'] }}"
-                            id="{{ plugin + '_' + option }}" required>
+                            id="{{ plugin + '_' + option }}" value="{{ plugin + '_' + option }}">
                         <label for="{{ plugin + '_' + option }}">{{ option }}</label>
                         {% endfor %}
 

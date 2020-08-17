@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import importlib
+import json
 import os
 import re
-import json
-from ultrasonics import logs, database
+
+from ultrasonics import database, logs
 
 log = logs.create_log(__name__)
 
@@ -52,6 +53,15 @@ def plugin_gather():
             if not (handshake_version in database.plugin_entry_exists(title)):
                 database.plugin_create_entry(
                     title, handshake_version)
+
+
+def plugin_load(name, version):
+    """
+    Load plugin persistent settings.
+    """
+    plugin_settings = database.plugin_load_entry(name, version)
+
+    return plugin_settings
 
 
 def plugin_build(name, version):
