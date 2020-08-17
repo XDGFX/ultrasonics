@@ -76,7 +76,7 @@
             </div>
 
 
-            <form action="{% if persistent %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
+            <form action="{% if persistent == 1 %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
 
                 <!-- Hidden inputs to store variables for current plugin -->
                 <input type="hidden" name="action" value="add">
@@ -96,7 +96,7 @@
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
-                        <input class="input" type="text" name="{{ plugin + '_' + setting['name'] }}"
+                        <input class="input" type="text" name="{{ setting['name'] }}"
                             placeholder="{{ setting['value'] }}">
                     </div>
                 </div>
@@ -108,9 +108,9 @@
                     <div class="control">
 
                         {% for option in setting["options"] %}
-                        <input class="is-checkradio" type="radio" name="{{ plugin + '_' + setting['name'] }}"
-                            id="{{ plugin + '_' + option }}" value="{{ plugin + '_' + option }}">
-                        <label for="{{ plugin + '_' + option }}">{{ option }}</label>
+                        <input class="is-checkradio" type="radio" name="{{  setting['name'] }}" id="{{ option }}"
+                            value="{{ option }}">
+                        <label for="{{ option }}">{{ option }}</label>
                         {% endfor %}
 
                     </div>
@@ -122,7 +122,7 @@
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
                         <div class="select">
-                            <select name="{{ plugin + '_' + setting['name'] }}">
+                            <select name="{{ setting['name'] }}">
 
                                 {% for option in setting["options"] %}
                                 <option>{{ option }}</option>
@@ -136,9 +136,9 @@
 
                 {% if setting["type"] == "checkbox" %}
                 <div class="field">
-                    <input class="is-checkradio" type="checkbox" name="{{ plugin + '_' + setting['name'] }}"
-                        id="{{ plugin + '_' + setting['id'] }}" value="{{ plugin + '_' + setting['value'] }}">
-                    <label for="{{ plugin + '_' + setting['id'] }}" class="checkbox">{{ setting["label"] }}</label>
+                    <input class="is-checkradio" type="checkbox" name="{{ setting['name'] }}" id="{{ setting['id'] }}"
+                        value="{{ setting['value'] }}">
+                    <label for="{{ setting['id'] }}" class="checkbox">{{ setting["label"] }}</label>
                 </div>
                 {% endif %}
 

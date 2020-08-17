@@ -100,6 +100,7 @@ def plugin_run(name, version, settings_dict, songs_dict=None):
     OUTPUTS
     response:        either a success message, or the new songs_dict
     """
+    log.debug(f"Running plugin {name} v{version}")
     plugin_settings = database.plugin_load_entry(name, version)
 
     response = found_plugins[name].run(
@@ -171,17 +172,17 @@ def applet_run(applet_id):
         "Inputs"
         # Get new songs from input, append to songs list
         for plugin in applet_plans["inputs"]:
-            songs_dict.append(plugin_run(get_info(plugin)))
+            songs_dict.append(plugin_run(*get_info(plugin)))
 
         "Modifiers"
         # Replace songs with output from modifier plugin
         for plugin in applet_plans["modifiers"]:
-            songs_dict = plugin_run(get_info(plugin), songs_dict=songs_dict)
+            songs_dict = plugin_run(*get_info(plugin), songs_dict=songs_dict)
 
         "Outputs"
         # Submit songs dict to output plugin
         for plugin in applet_plans["outputs"]:
-            plugin_run(get_info(plugin), songs_dict=songs_dict)
+            plugin_run(*get_info(plugin), songs_dict=songs_dict)
 
 
 def applet_trigger_run(applet_id):
