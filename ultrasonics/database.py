@@ -11,9 +11,8 @@ db_file = "ultrasonics/ultrasonics.db"
 conn = None
 cursor = None
 
+
 # --- GENERAL ---
-
-
 def connect():
     """
     Initial connection to database to create tables.
@@ -38,8 +37,6 @@ def connect():
 
 
 # --- PLUGINS ---
-
-
 def plugin_create_entry(name, version):
     """
     Create a database entry for a given plugin.
