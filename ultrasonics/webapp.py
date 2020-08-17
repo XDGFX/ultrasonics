@@ -199,7 +199,11 @@ def html_configure_plugin():
 
         # Merge new settings with existing database settings
         data = plugins.plugin_load(plugin, version)
-        data.update(new_data)
+
+        if data == None:
+            data = new_data
+        else:
+            data.update(new_data)
 
         component = request.form.get('component')
         persistent = False
