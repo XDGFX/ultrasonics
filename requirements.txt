@@ -1,3 +1,7 @@
+# Main Program
 flask
 flask_socketio
 eventlet
+
+# Included Plugins
+mutagen

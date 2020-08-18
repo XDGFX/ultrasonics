@@ -9,7 +9,7 @@
                     "Kai"
                 ],
                 "album": "Skin",
-                "release_date": "2016-05-27",
+                "date": "2016-05-27",
                 "isrc": "AUFF01500784",
                 "location": "/media/music/Flume/Skin/Never Be Like You.m4a",
                 "id": "https://open.spotify.com/track/476j7IDRIDRvv1Xu71EVc8"
@@ -20,7 +20,7 @@
                     "Anna of the North"
                 ],
                 "album": "Lovers",
-                "release_date": "2017-09-08",
+                "date": "2017-09-08",
                 "isrc": "USLGZ1700007",
                 "location": "/media/music/Anna of the North/Lovers/Lovers.mp3",
                 "id": "6bZuZKR8hoyzZXNh1IW2Bu"
@@ -37,7 +37,7 @@
                     "Pendulum"
                 ],
                 "album": "The Reworks",
-                "release_date": "2018-06-29",
+                "date": "2018",
                 "isrc": "UKNKE1800001"
             },
             {
@@ -46,7 +46,7 @@
                     "Noisia"
                 ],
                 "album": "Outer Edges",
-                "release_date": "2016-08-05",
+                "date": "2016-08-05",
                 "isrc": "NLCK41032641"
             },
             {
@@ -56,7 +56,7 @@
                     "Black Sun Empire"
                 ],
                 "album": "Variations on Black",
-                "release_date": "2013-11-04",
+                "date": "2013",
                 "isrc": "USA2P1360180"
             }
         ]

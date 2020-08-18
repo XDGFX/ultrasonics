@@ -63,9 +63,12 @@ def html_index():
         return redirect(request.path, code=302)
 
     elif action == 'run':
+        from ultrasonics.scheduler import pool
+
         applet_id = request.args.get('applet_id')
 
-        plugins.applet_run(applet_id)
+        # plugins.applet_run(applet_id)
+        pool.submit(plugins.applet_run, applet_id)
         return redirect(request.path, code=302)
 
     else:
@@ -175,7 +178,7 @@ def html_configure_plugin():
         plugin = request.form.get('plugin')
         version = request.form.get('version')
         new_data = {key: value for key, value in request.form.to_dict().items() if key not in [
-            'action', 'plugin', 'version', 'component']}
+            'action', 'plugin', 'version', 'component'] and value != ""}
 
         # Merge new settings with existing database settings
         data = plugins.plugin_load(plugin, version)
