@@ -172,7 +172,8 @@ def applet_run(applet_id):
         "Inputs"
         # Get new songs from input, append to songs list
         for plugin in applet_plans["inputs"]:
-            songs_dict.append(plugin_run(*get_info(plugin)))
+            for item in plugin_run(*get_info(plugin)):
+                songs_dict.append(item)
 
         "Modifiers"
         # Replace songs with output from modifier plugin
