@@ -23,16 +23,6 @@ def connect():
         cursor = conn.cursor()
         log.info("Database connection successful")
 
-        # Version check
-        query = "SELECT value FROM ultrasonics WHERE key = 'version'"
-        cursor.execute(query)
-        rows = cursor.fetchall()
-        version = rows[0][0]
-
-        if version != _ultrasonics["version"]:
-            log.warning(
-                "Installed ultrasonics version does not match database version! Proceed with caution.")
-
         try:
             if new_install() == None:
 
@@ -54,6 +44,16 @@ def connect():
             cursor.execute(query)
 
             conn.commit()
+
+            # Version check
+            query = "SELECT value FROM ultrasonics WHERE key = 'version'"
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            version = rows[0][0]
+
+            if version != _ultrasonics["version"]:
+                log.warning(
+                    "Installed ultrasonics version does not match database version! Proceed with caution.")
 
         except sqlite3.Error as e:
             log.info("Error while creating tables", e)
