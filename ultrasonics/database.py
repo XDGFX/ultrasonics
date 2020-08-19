@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+database
+Handles all connections with the ultrasonics sqlite database.
+
+XDGFX, 2020
+"""
+
 import sqlite3
 import uuid
 

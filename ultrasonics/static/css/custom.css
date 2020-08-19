@@ -78,6 +78,10 @@ body, button, input, select, textarea, .is-family-monospace {
     font-family: 'Roboto Mono', monospace !important;
 }
 
+img {
+    pointer-events: none;
+}
+
 /* Specific elements */
 #plugin_builder .plugin {
     /* General Formatting */

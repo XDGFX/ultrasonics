@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+logs
+The default logging module for ultrasonics, which should be used for logging consistency.
+
+XDGFX, 2020
+"""
+
 import logging
 
 

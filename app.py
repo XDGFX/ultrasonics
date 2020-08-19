@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+app
+Main ultrasonics entrypoint. Run this to start ultrasonics.
+
+XDGFX, 2020
+"""
+
 from ultrasonics import scheduler, webapp, plugins, database, logs
 
 log = logs.create_log(__name__)

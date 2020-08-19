@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+plugins
+Handles all functions for interacting with plugins and applets.
+
+XDGFX, 2020
+"""
+
 import importlib
 import json
 import os

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+"""
+webapp
+Provides the webserver and all routes between the front-end and the rest of ultrasonics code.
+
+XDGFX, 2020
+"""
+
 import copy
 
 from flask import Flask, redirect, render_template, request
