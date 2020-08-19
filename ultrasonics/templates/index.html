@@ -16,6 +16,8 @@
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-checkradio/dist/css/bulma-checkradio.min.css">
     <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-tooltip/dist/css/bulma-tooltip.min.css">
+    <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
     <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
@@ -46,15 +48,32 @@
 
             {% for item in applet_list %}
             <div class="tags has-addons">
-                <span class="tag is-medium is-primary">{{ item[1]["applet_name"] }}</span>
-                <span class="tag is-medium data">uuid: {{ item[0] }}</span>
-                <a href="/?action=run&applet_id={{ item[0] }}" class="tag is-run is-medium">
+                {% if item['applet_lastrun'] %}
+                {% if item['applet_lastrun']['result'] %}
+                <span class="tag is-lastrun is-medium tooltip tooltip-multiline"
+                    data-tooltip="Last Run: Success!&#xa;{{ item['applet_lastrun']['time'] }}">
+                    ✓
+                </span>
+                {% else %}
+                <span class="tag is-lastrun is-medium tooltip tooltip-multiline"
+                    data-tooltip="Last Run: Failed.&#xa;{{ item['applet_lastrun']['time'] }}">
+                    ✗
+                </span>
+                {% endif %}
+                {% else %}
+                <span class="tag is-lastrun is-medium tooltip" data-tooltip="Last Run: Never">
+                    ?
+                </span>
+                {% endif %}
+                <span class=" tag is-medium is-primary">{{ item["applet_plans"]["applet_name"] }}</span>
+                <span class="tag is-medium data">uuid: {{ item["applet_id"] }}</span>
+                <a href="/?action=run&applet_id={{ item['applet_id'] }}" class="tag is-run is-medium">
                     ▶
                 </a>
-                <a href="/?action=modify&applet_id={{ item[0] }}" class="tag is-edit is-medium">
+                <a href="/?action=modify&applet_id={{ item['applet_id'] }}" class="tag is-edit is-medium">
                     ✎
                 </a>
-                <a href="/?action=remove&applet_id={{ item[0] }}" class="tag is-delete is-medium"></a>
+                <a href="/?action=remove&applet_id={{ item['applet_id'] }}" class="tag is-delete is-medium"></a>
             </div>
             {% endfor %}
         </section>

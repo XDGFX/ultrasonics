@@ -37,6 +37,10 @@
         background-color: #171717;
     }
 
+    .button.is-static {
+        background-color: var(--dark);
+    }
+
     body {
         background-image: url(/static/images/static.png);
     }
@@ -46,6 +50,10 @@
 
     body {
         background-image: url(/static/images/static-invert.png);
+    }
+
+    .button.is-static {
+        background-color: white;
     }
 
 }
@@ -125,6 +133,11 @@ body, button, input, select, textarea, .is-family-monospace {
     border-color: transparent var(--primary-2) transparent transparent;
 }
 
+.tooltip.tooltip-multiline::before {
+    white-space: pre;
+    text-align: center;
+}
+
 .tag.data {
     flex: 1;
     justify-content: left;
@@ -139,6 +152,10 @@ body, button, input, select, textarea, .is-family-monospace {
     width: 2em;
     color: white;
     background-color: var(--grey-darker);
+}
+
+.tag.is-lastrun {
+    width: 2.5em;
 }
 
 .tag:not(body).is-delete:hover {
@@ -179,10 +196,6 @@ a.tag:hover {
 
 .has-grey-links a:hover {
     color: var(--grey-dark);
-}
-
-.button.is-static {
-    background-color: var(--dark);
 }
 
 /* #div_service_select {

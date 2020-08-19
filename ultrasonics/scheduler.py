@@ -17,7 +17,7 @@ def scheduler_start():
     """
     applets = plugins.applet_gather()
     for applet in applets:
-        applet_id = applet[0]
+        applet_id = applet["applet_id"]
         applet_submit(applet_id)
 
 

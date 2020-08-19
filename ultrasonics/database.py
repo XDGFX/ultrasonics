@@ -18,22 +18,85 @@ def connect():
     Initial connection to database to create tables.
     """
     with sqlite3.connect(db_file) as conn:
+        from app import _ultrasonics
+
         cursor = conn.cursor()
         log.info("Database connection successful")
 
+        # Version check
+        query = "SELECT value FROM ultrasonics WHERE key = 'version'"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        version = rows[0][0]
+
+        if version != _ultrasonics["version"]:
+            log.warning(
+                "Installed ultrasonics version does not match database version! Proceed with caution.")
+
         try:
+            if new_install() == None:
+
+                _ultrasonics["new_install"] = True
+
+                # Create persistent settings table if needed
+                query = "CREATE TABLE IF NOT EXISTS ultrasonics (key TEXT, value TEXT)"
+                cursor.execute(query)
+
+                query = "INSERT INTO ultrasonics(key, value) VALUES(?, ?)"
+                cursor.executemany(query, list(_ultrasonics.items()))
+
             # Create persistent settings table if needed
             query = "CREATE TABLE IF NOT EXISTS plugins (id INTEGER PRIMARY KEY, plugin TEXT, version FLOAT, settings TEXT)"
             cursor.execute(query)
 
             # Create applet table if needed
-            query = "CREATE TABLE IF NOT EXISTS applets (id TEXT PRIMARY KEY, name TEXT, data TEXT)"
+            query = "CREATE TABLE IF NOT EXISTS applets (id TEXT PRIMARY KEY, lastrun TEXT, data TEXT)"
             cursor.execute(query)
 
             conn.commit()
 
         except sqlite3.Error as e:
             log.info("Error while creating tables", e)
+
+
+def new_install(update=False):
+    """
+    Check if this is a new installation of ultrasonics.
+    """
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        if update:
+            try:
+                query = "UPDATE ultrasonics SET value = 0 WHERE key = 'new_install'"
+                cursor.execute(query)
+                conn.commit()
+                log.info("Welcome to ultrasonics!")
+
+            except sqlite3.Error as e:
+                log.info("Error while updating database entry", e)
+        else:
+            try:
+                # Check if database exists
+                query = "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'ultrasonics'"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+
+                result = rows[0][0]
+
+                # Table does not exist
+                if not result:
+                    return None
+
+                query = "SELECT value FROM ultrasonics WHERE key = 'new_install'"
+                cursor.execute(query)
+                rows = cursor.fetchall()
+
+                result = rows[0][0]
+
+                return result == '1'
+
+            except sqlite3.Error as e:
+                log.info("Error while loading database entry", e)
 
 
 # --- PLUGINS ---
@@ -123,18 +186,32 @@ def applet_gather():
         cursor = conn.cursor()
         try:
             import ast
-            query = "SELECT id, data FROM applets"
+            query = "SELECT id, lastrun, data FROM applets"
             cursor.execute(query)
             rows = cursor.fetchall()
 
-            # Convert applet_plans from string to dict
-            rows = [[applet_id, ast.literal_eval(
-                applet_plans)] for applet_id, applet_plans in rows]
-
             if rows == None:
                 return []
-            else:
-                return rows
+
+            data = []
+
+            for applet_id, applet_lastrun, applet_plans in rows:
+                if applet_lastrun == None:
+                    data.append(
+                        {
+                            "applet_id": applet_id,
+                            "applet_plans": ast.literal_eval(applet_plans)
+                        }
+                    )
+                else:
+                    data.append(
+                        {
+                            "applet_id": applet_id,
+                            "applet_plans": ast.literal_eval(applet_plans),
+                            "applet_lastrun": ast.literal_eval(applet_lastrun)
+                        }
+                    )
+            return data
 
         except sqlite3.Error as e:
             log.info("Error while loading applets from database", e)
@@ -185,7 +262,7 @@ def applet_load_entry(applet_id):
             cursor.execute(query, (applet_id, ))
             rows = cursor.fetchall()
 
-            if rows == None:
+            if rows == []:
                 return None
             else:
                 # Convert from string to dict
@@ -210,3 +287,20 @@ def applet_delete_entry(applet_id):
 
         except sqlite3.Error as e:
             log.info("Error while attempting to delete applet database entry", e)
+
+
+def applet_update_lastrun(applet_id, data):
+    """
+    Update the lastrun column for an applet with the supplied data.
+    """
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "UPDATE applets SET lastrun = ? WHERE id = ?"
+            cursor.execute(
+                query, (str(data), str(applet_id)))
+            conn.commit()
+            log.info("Applet lastrun updated")
+
+        except sqlite3.Error as e:
+            log.info("Error while updating database entry", e)

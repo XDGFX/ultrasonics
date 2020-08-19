@@ -21,9 +21,6 @@ def plugin_gather():
     """
     Used to find all variables within the ./plugins directory, and saves them to the 'found_plugins' dictionary.
     """
-
-    database.connect()
-
     for _, _, items in os.walk("./plugins"):
         for item in items:
 
@@ -151,39 +148,59 @@ def applet_run(applet_id):
     """
     Run the requested applet in full.
     """
+    from datetime import datetime
+
+    runtime = datetime.now().strftime("%d-%m-%Y %H:%M")
+
     log.info(f"Running applet: {applet_id}")
 
-    applet_plans = database.applet_load_entry(applet_id)
+    try:
+        applet_plans = database.applet_load_entry(applet_id)
 
-    if not applet_plans["inputs"] or not applet_plans["outputs"]:
-        log.error(
-            f"An input or output plugin is missing for applet {applet_id} - will not run.")
+        if not applet_plans["inputs"] or not applet_plans["outputs"]:
+            raise Exception(
+                f"An input or output plugin is missing for applet {applet_id} - will not run.")
 
-    else:
-        songs_dict = []
+        else:
+            songs_dict = []
 
-        def get_info(pluign):
-            name = plugin["plugin"]
-            version = plugin["version"]
-            data = plugin["data"]
+            def get_info(pluign):
+                name = plugin["plugin"]
+                version = plugin["version"]
+                data = plugin["data"]
 
-            return name, version, data
+                return name, version, data
 
-        "Inputs"
-        # Get new songs from input, append to songs list
-        for plugin in applet_plans["inputs"]:
-            for item in plugin_run(*get_info(plugin)):
-                songs_dict.append(item)
+            "Inputs"
+            # Get new songs from input, append to songs list
+            for plugin in applet_plans["inputs"]:
+                for item in plugin_run(*get_info(plugin)):
+                    songs_dict.append(item)
 
-        "Modifiers"
-        # Replace songs with output from modifier plugin
-        for plugin in applet_plans["modifiers"]:
-            songs_dict = plugin_run(*get_info(plugin), songs_dict=songs_dict)
+            "Modifiers"
+            # Replace songs with output from modifier plugin
+            for plugin in applet_plans["modifiers"]:
+                songs_dict = plugin_run(
+                    *get_info(plugin), songs_dict=songs_dict)
 
-        "Outputs"
-        # Submit songs dict to output plugin
-        for plugin in applet_plans["outputs"]:
-            plugin_run(*get_info(plugin), songs_dict=songs_dict)
+            "Outputs"
+            # Submit songs dict to output plugin
+            for plugin in applet_plans["outputs"]:
+                plugin_run(*get_info(plugin), songs_dict=songs_dict)
+
+            success = True
+
+    except Exception as e:
+        log.error(e)
+
+        success = False
+
+    lastrun = {
+        "time": runtime,
+        "result": success
+    }
+
+    database.applet_update_lastrun(applet_id, lastrun)
 
 
 def applet_trigger_run(applet_id):

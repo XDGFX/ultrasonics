@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
+import copy
+
 from flask import Flask, redirect, render_template, request
 from flask_socketio import SocketIO, emit, send
 
-from ultrasonics import logs
+from ultrasonics import logs, plugins, database
 
 log = logs.create_log(__name__)
 
@@ -26,9 +28,6 @@ def send(event, data):
 # Homepage
 @app.route('/')
 def html_index():
-    from ultrasonics import plugins
-    import copy
-
     action = request.args.get("action")
 
     # Catch statement if nothing was changed, and action is build
@@ -71,14 +70,19 @@ def html_index():
         pool.submit(plugins.applet_run, applet_id)
         return redirect(request.path, code=302)
 
+    elif action == 'new_install':
+        database.new_install(update=True)
+        return redirect(request.path, code=302)
+
+    elif database.new_install():
+        return redirect("/welcome", code=302)
+
     else:
         applet_list = plugins.applet_gather()
         return render_template('index.html', applet_list=applet_list)
 
 
 class Applet:
-    import copy
-
     default_plans = {
         "applet_name": "",
         "applet_id": "",
@@ -95,17 +99,12 @@ class Applet:
 # Create Applet Page
 @app.route('/new_applet', methods=['GET', 'POST'])
 def html_new_applet():
-    from ultrasonics import plugins
-
     # Applet has not been created on the backend
     if Applet.current_plans["applet_id"] == "":
         # If opening the page for the first time, generate a new applet
         import uuid
 
-        applet_id = str(uuid.uuid4())
-
-        # TODO Implement check for UUID already in database, and create a new one if so
-        # applets = plugins.applet_gather()
+        applet_id = str(uuid.uuid1())
 
         Applet.current_plans["applet_id"] = applet_id
 
@@ -152,9 +151,7 @@ def html_select_plugin():
         log.error("Component not supplied as argument")
         raise RuntimeError
 
-    import ultrasonics.plugins
-
-    handshakes = ultrasonics.plugins.handshakes
+    handshakes = plugins.handshakes
     selected_handshakes = list()
 
     for handshake in handshakes:
@@ -170,7 +167,6 @@ def html_configure_plugin():
     """
     Settings page for each instance for a plugin.
     """
-    from ultrasonics import plugins
 
     # Data received is to update persistent plugin settings
     if request.form.get('action') == 'add':
@@ -226,7 +222,14 @@ def html_configure_plugin():
     return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent)
 
 
+# Welcome Page
+@app.route('/welcome')
+def html_welcome():
+    return render_template('welcome.html')
+
 # --- WEBSOCKET ROUTES ---
+
+
 @sio.on('connect')
 def connect():
     log.info("Client connected over websocket")
