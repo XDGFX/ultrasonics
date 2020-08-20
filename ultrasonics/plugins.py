@@ -40,6 +40,10 @@ def plugin_gather():
                 plugin = importlib.import_module(
                     f"plugins.{prefix + title}.{prefix + title}", ".")
 
+                for key in ["name", "description"]:
+                    plugin.handshake[key] = plugin.handshake[key].lower().strip(
+                        " .,")
+
                 handshake_name = plugin.handshake["name"]
                 handshake_version = plugin.handshake["version"]
 

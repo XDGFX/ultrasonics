@@ -62,8 +62,7 @@ handshake = {
             "label": "ultrasonics Prepend",
             "name": "ultrasonics_prepend",
             "value": "/mnt/music library/music"
-        },
-
+        }
     ]
 }
 
