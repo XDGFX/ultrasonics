@@ -204,11 +204,16 @@ def run(settings_dict, database, songs_dict=None):
                         temp_song_dict = {}
 
                         # Fetch the ID3 tag data from the music file, and save in a dictionary
-                        for field in ["title", "artist", "album", "date", "isrc", "tracknumber"]:
+                        for field in ["title", "album", "date", "isrc", "tracknumber"]:
                             try:
                                 temp_song_dict[field] = tags[field][0]
                             except KeyError:
                                 pass
+
+                        try:
+                            temp_song_dict["artists"] = tags["artist"]
+                        except KeyError:
+                            pass
 
                         # Let's use the below two for the local files matcher
                         # acoustid_id = tags["acoustid_id"]
@@ -222,11 +227,16 @@ def run(settings_dict, database, songs_dict=None):
                         temp_song_dict = {}
 
                         # Fetch the m4a tag data from the music file, and save in a dictionary
-                        for field, ident in {"title": "\xa9nam", "artist": "\xa9ART", "album": "\xa9alb", "date": "\xa9day"}.items():
+                        for field, ident in {"title": "\xa9nam", "album": "\xa9alb", "date": "\xa9day"}.items():
                             try:
                                 temp_song_dict[field] = tags[ident][0]
                             except KeyError:
                                 pass
+
+                        try:
+                            temp_song_dict["artists"] = tags["\xa9ART"]
+                        except KeyError:
+                            pass
 
                         # # Correct date format
                         # if temp_song_dict["date"]:

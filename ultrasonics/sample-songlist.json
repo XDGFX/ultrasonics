@@ -3,7 +3,7 @@
         "name": "New Music",
         "songs": [
             {
-                "name": "Never Be Like You",
+                "title": "Never Be Like You",
                 "artists": [
                     "Flume",
                     "Kai"
@@ -15,7 +15,7 @@
                 "id": "https://open.spotify.com/track/476j7IDRIDRvv1Xu71EVc8"
             },
             {
-                "name": "Lovers",
+                "title": "Lovers",
                 "artists": [
                     "Anna of the North"
                 ],
@@ -31,7 +31,7 @@
         "name": "Noisia",
         "songs": [
             {
-                "name": "Hold Your Colour - Noisia Remix",
+                "title": "Hold Your Colour - Noisia Remix",
                 "artists": [
                     "Noisia",
                     "Pendulum"
@@ -41,7 +41,7 @@
                 "isrc": "UKNKE1800001"
             },
             {
-                "name": "Tentacles",
+                "title": "Tentacles",
                 "artists": [
                     "Noisia"
                 ],
@@ -50,7 +50,7 @@
                 "isrc": "NLCK41032641"
             },
             {
-                "name": "Arrakis - Noisia Remix",
+                "title": "Arrakis - Noisia Remix",
                 "artists": [
                     "Noisia",
                     "Black Sun Empire"

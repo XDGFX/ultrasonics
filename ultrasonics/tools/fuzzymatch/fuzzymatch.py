@@ -19,6 +19,8 @@ It goes without saying that inaccurate music tags (such as from local files) may
 XDGFX, 2020
 """
 
+import re
+
 from fuzzywuzzy import fuzz, process
 
 from ultrasonics import logs
@@ -33,31 +35,65 @@ def match(song, song_list, threshold):
     """
     # Check exact matchers
     for key in ["location", "isrc", "id"]:
-        test_array = [item[key] for item in song_list]
+        if key in song:
+            test_array = [item[key] for item in song_list if (key in item)]
 
-        if song[key] in test_array:
-            return True
+            if song[key] in test_array:
+                return True
 
     # Check fuzzy matches
-    results = []
+    results = {}
     artist_string = " ".join(song["artists"])
+
+    # List of words and patterns to ignore when testing similarity
+    cutoff_regex = "[([](feat|ft|featuring|original|prod).+?\b(?<!remix)[)\]]"
 
     for item in song_list:
         # Name and album scores
-        for key in ["name", "album"]:
-            results[key] = fuzz.ratio(song[key], song_list[key])
+        for key in ["title", "album"]:
+
+            try:
+                a = re.sub(cutoff_regex, "", song[key], flags=re.IGNORECASE)
+                b = re.sub(cutoff_regex, "", item[key], flags=re.IGNORECASE)
+
+                results[key] = fuzz.ratio(a, b)
+
+            except KeyError:
+                pass
 
         # Date score
-        results["date"] = fuzz.token_set_ratio(song["date"], song_list["date"])
+        try:
+            results["date"] = fuzz.token_set_ratio(song["date"], item["date"])
+        except KeyError:
+            pass
 
         # Artist score can be a partial match; allowing missing artists
-        results["artist"] = fuzz.partial_ratio(
-            artist_string, " ".join(item["artists"]))
+        try:
+            results["artist"] = fuzz.partial_ratio(
+                artist_string, " ".join(item["artists"]))
+        except KeyError:
+            pass
 
-        total_score = results["name"] * 0.35 \
-            + results["artist"] * 0.35 \
-            + results["album"] * 0.2 \
-            + results["date"] * 0.1
+        weight = {
+            "title": 0.35,
+            "artist": 0.35,
+            "album": 0.2,
+            "date": 0.1
+        }
+
+        # Fix weightings if values are missing
+        corrector = 0
+        for key in weight.keys():
+            if key in results.keys():
+                corrector += weight[key]
+
+        if corrector == 0:
+            return False
+
+        # Weighted average all scores
+        total_score = sum([results[key] / 100 * weight[key]
+                           for key in results.keys()])
+        total_score = total_score / corrector
 
         # If threshold is surpassed, no need to keep testing
         if total_score > threshold:

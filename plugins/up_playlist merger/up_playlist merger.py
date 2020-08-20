@@ -37,21 +37,27 @@ handshake = {
         },
         {
             "type": "string",
-            "value": "This means that the titles 'You & Me - Flume Remix', and 'You & Me (Flume Remix)' will likely be flagged ⚠️ as duplicates [with a score of 91]. However, 'You, Me, & the Log Flume Ride' probably won't 🎢 [the score was 67]. The fuzzyness of this matching is determined with the below setting. A value of 100 means the strings must be identical to pass as duplicates. A value of 0 means any string will pass as a duplicate, even if they are completely different. 👽"
+            "value": "This means that the titles 'You & Me - Flume Remix', and 'You & Me (Flume Remix)' will likely be flagged ⚠️ as duplicates [with a score of 96.85 if all other fields are identical]. However, 'You, Me, & the Log Flume Ride' probably won't 🎢 [the score was 88.45 assuming *all* other fields are identical]. The fuzzyness of this matching is determined with the below setting. A value of 100 means the strings must be identical to pass as duplicates. A value of 0 means any string will pass as a duplicate, even if they are completely different. 👽"
         },
         {
             "type": "text",
             "label": "Fuzzy Ratio",
             "name": "fuzzy_ratio",
-            "value": "Recommended: 85"
+            "value": "Recommended: 90"
         }
     ]
 }
 
 
 def run(settings_dict, database, songs_dict):
-    fuzzy_ratio = (settings_dict["fuzzy_ratio"]
-                   or database["fuzzy_ratio"]) / 100
+    def try_float(string):
+        try:
+            return float(string)
+        except Exception:
+            return None
+
+    fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"])
+                   or try_float(database["fuzzy_ratio"])) / 100
 
     # Find duplicate playlists.
     # If there are more than two duplicates, the playlist name will show up n-1 times in duplicate_playlists.
@@ -62,7 +68,7 @@ def run(settings_dict, database, songs_dict):
         name = item["name"]
 
         if name not in seen:
-            seen[name] == 1
+            seen[name] = 1
         else:
             if seen[name] > 0:
                 duplicate_playlists.append(name)
@@ -78,12 +84,30 @@ def run(settings_dict, database, songs_dict):
         output_playlist = copy.deepcopy(playlist_b)
 
         for song in playlist_a:
-            duplicate = fuzzymatch.match(song, playlist_b, fuzzy_ratio)
+            is_duplicate = fuzzymatch.match(song, playlist_b, fuzzy_ratio)
 
-            if not duplicate:
+            if not is_duplicate:
                 output_playlist.append[song]
 
+        playlist_a = {
+            "name": duplicate,
+            "songs": playlist_a
+        }
+
+        playlist_b = {
+            "name": duplicate,
+            "songs": playlist_b
+        }
+
+        output_playlist = {
+            "name": duplicate,
+            "songs": output_playlist
+        }
+
         # Replace two previous playlists with one new playlist
+        songs_dict.remove(playlist_a)
+        songs_dict.remove(playlist_b)
+        songs_dict.append(output_playlist)
 
     return songs_dict
 
