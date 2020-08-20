@@ -29,7 +29,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": 1,
+    "version": 0.1,
     "settings": [
         {
             "type": "string",
