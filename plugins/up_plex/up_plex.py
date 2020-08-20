@@ -11,10 +11,13 @@ Can be used even if Plex is not running on the same machine as ultrasonics.
 XDGFX, 2020
 """
 
-import urllib.request
+import os
 from xml.etree import ElementTree
 
+import requests
+
 from ultrasonics import logs
+from ultrasonics.tools.local_tags import local_tags
 
 log = logs.create_log(__name__)
 
@@ -81,20 +84,137 @@ handshake = {
 }
 
 
-def run(settings_dict, database=None, songs_dict=None):
+def run(settings_dict, database, component, songs_dict=None):
 
-    pass
+    def fetch_playlists(key):
+        url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
+
+        resp = requests.get(url, timeout=30, verify=check_ssl)
+
+        if resp.status_code != 200:
+            raise Exception(
+                f"Unexpected status code received from Plex: {resp.status_code}")
+
+        root = ElementTree.fromstring(resp.text)
+
+        title = root.get("title")
+
+        playlist = []
+        for document in root.findall("Track"):
+            song = document[0][0].get('file')
+
+            # Convert path to be usable by ultrasonics
+            song_path = remove_prepend(song)
+            song_path = convert_path(song_path)
+            song_path = os.path.join(
+                database["ultrasonics_prepend"], song_path)
+
+            try:
+                song_dict = local_tags.tags(song_path)
+            except Exception as e:
+                log.error(f"Could not load tags from song: {song_path}")
+                log.error(e)
+
+            playlist.append(song_dict)
+
+        return title, playlist
+
+    def remove_prepend(path, invert=False):
+        """
+        Remove any prepend from Plex playlist song paths, so only the path relative to the user's music directory is left.
+        Default is Plex prepend, invert is ultrasonics prepend.
+        """
+
+        if not invert:
+            if database["plex_prepend"]:
+                return path.replace(database["plex_prepend"], '').lstrip("/").lstrip("\\")
+
+        else:
+            if database["ultrasonics_prepend"]:
+                return path.replace(database["ultrasonics_prepend"], '').lstrip("/").lstrip("\\")
+
+        # If no database prepends exist, return the same path
+        return path
+
+    def convert_path(path, invert=False):
+        """
+        Converts a path string into the system format.
+        """
+        if enable_convert_path:
+            unix = os.name != "nt"
+
+            if invert:
+                unix = not unix
+
+            if unix:
+                return path.replace("\\", "/")
+            else:
+                return path.replace("/", "\\")
+        else:
+            return path
+
+    url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
+    check_ssl = "check_ssl" in database.keys()
+
+    resp = requests.get(url, timeout=30, verify=check_ssl)
+
+    if resp.status_code != 200:
+        raise Exception(
+            f"Unexpected status code received from Plex: {resp.status_code}")
+
+    root = ElementTree.fromstring(resp.text)
+
+    keys = []
+    for document in root.findall("Playlist"):
+        if document.get('smart') == "0" and document.get('playlistType') == "audio":
+            keys.append(document.get('key'))
+
+    log.info(f"Found {len(keys)} playlists.")
+
+    enable_convert_path = False
+    ultrasonics_unix = database["ultrasonics_prepend"].startswith("/")
+    plex_unix = database["plex_prepend"].startswith("/")
+
+    if ultrasonics_unix != plex_unix:
+        log.debug(
+            "ultrasonics paths and Plex playlist paths do not use the same separators!")
+        enable_convert_path = True
+
+    if component == "inputs":
+        songs_dict = []
+
+        # Copies Plex playlists to .ultrasonics_tmp folder in music firectory
+        for key in keys:
+            name, playlist = fetch_playlists(key)
+
+            songs_dict_entry = {
+                "name": name,
+                "songs": playlist
+            }
+
+            songs_dict.append(songs_dict_entry)
+
+        return songs_dict
+
+    elif component == "outputs":
+        pass
 
 
-def builder(database):
-    plex_libraries = urllib.request.urlopen(
-        f"{database['server_url']}/library/sections/?X-Plex-Token={database['plex_token']}")
+def builder(database, component):
+    url = f"{database['server_url']}/library/sections/?X-Plex-Token={database['plex_token']}"
+    check_ssl = "check_ssl" in database.keys()
 
-    plex_libraries = ElementTree.parse(plex_libraries).getroot()
+    resp = requests.get(url, timeout=30, verify=check_ssl)
+
+    if resp.status_code != 200:
+        raise Exception(
+            f"Unexpected status code received from Plex: {resp.status_code}")
+
+    root = ElementTree.fromstring(resp.text)
 
     sections = []
 
-    for child in plex_libraries:
+    for child in root:
         title = child.attrib["title"].strip()
         section_id = child.attrib["key"]
         section_type = child.attrib["type"]

@@ -212,7 +212,7 @@ def html_configure_plugin():
 
     # If persistent settings are supplied
     if persistent_settings:
-        settings = plugins.plugin_build(plugin, version)
+        settings = plugins.plugin_build(plugin, version, component)
 
         # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
         persistent = persistent or (settings == None)
@@ -222,7 +222,7 @@ def html_configure_plugin():
 
     else:
         # No persistent settings exist
-        settings = plugins.plugin_build(plugin, version, force=True)
+        settings = plugins.plugin_build(plugin, version, component, force=True)
 
         persistent = -1
 

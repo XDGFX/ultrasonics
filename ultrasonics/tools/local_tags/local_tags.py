@@ -46,6 +46,9 @@ with sqlite3.connect(db_file) as conn:
 
 
 def tags(song_path):
+    """
+    Given an input path accessible by ultrasonics, metadata for the song will be read and returned in standard ultrasonics song_dict format.
+    """
     # Skip music files which are not supported
     _, ext = os.path.splitext(song_path)
     if ext not in supported_audio_extensions:

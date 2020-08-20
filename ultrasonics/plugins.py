@@ -74,7 +74,7 @@ def plugin_load(name, version):
     return plugin_settings
 
 
-def plugin_build(name, version, force=False):
+def plugin_build(name, version, component, force=False):
     """
     Find the required settings for a plugin when building an applet.
     """
@@ -84,7 +84,7 @@ def plugin_build(name, version, force=False):
     if not plugin_settings and not force:
         return None
 
-    settings_dict = found_plugins[name].builder(plugin_settings)
+    settings_dict = found_plugins[name].builder(plugin_settings, component)
     return settings_dict
 
 
@@ -95,7 +95,7 @@ def plugin_update(name, version, settings):
     database.plugin_update_entry(name, version, settings)
 
 
-def plugin_run(name, version, settings_dict, songs_dict=None):
+def plugin_run(name, version, settings_dict, songs_dict=None, component=None):
     """
     Run a specific plugin.
 
@@ -112,7 +112,7 @@ def plugin_run(name, version, settings_dict, songs_dict=None):
     plugin_settings = database.plugin_load_entry(name, version)
 
     response = found_plugins[name].run(
-        settings_dict, database=plugin_settings, songs_dict=songs_dict)
+        settings_dict, database=plugin_settings, songs_dict=songs_dict, component=component)
 
     return response
 
@@ -185,19 +185,20 @@ def applet_run(applet_id):
             "Inputs"
             # Get new songs from input, append to songs list
             for plugin in applet_plans["inputs"]:
-                for item in plugin_run(*get_info(plugin)):
+                for item in plugin_run(*get_info(plugin), component="inputs"):
                     songs_dict.append(item)
 
             "Modifiers"
             # Replace songs with output from modifier plugin
             for plugin in applet_plans["modifiers"]:
                 songs_dict = plugin_run(
-                    *get_info(plugin), songs_dict=songs_dict)
+                    *get_info(plugin), songs_dict=songs_dict, component="modifiers")
 
             "Outputs"
             # Submit songs dict to output plugin
             for plugin in applet_plans["outputs"]:
-                plugin_run(*get_info(plugin), songs_dict=songs_dict)
+                plugin_run(*get_info(plugin), songs_dict=songs_dict,
+                           component="outputs")
 
             success = True
 

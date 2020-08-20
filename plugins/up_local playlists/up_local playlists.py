@@ -71,7 +71,7 @@ supported_playlist_extensions = [
 ]
 
 
-def run(settings_dict, database, songs_dict=None):
+def run(settings_dict, database, component, songs_dict=None):
     """
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
@@ -108,6 +108,8 @@ def run(settings_dict, database, songs_dict=None):
                 return path.replace("\\", "/")
             else:
                 return path.replace("/", "\\")
+        else:
+            return path
 
     # Get path for playlist files
     path = settings_dict["dir"].rstrip("/").rstrip("\\")
@@ -120,7 +122,7 @@ def run(settings_dict, database, songs_dict=None):
 
     if ultrasonics_unix != local_unix:
         log.debug(
-            "Ultrasonics paths and local playlist paths do not use the same separators!")
+            "ultrasonics paths and local playlist paths do not use the same separators!")
         enable_convert_path = True
 
     # Create a dictionary 'playlists' of all playlists in the specified directory
@@ -152,9 +154,7 @@ def run(settings_dict, database, songs_dict=None):
     playlists = [item for item in playlists if os.path.splitext(item["path"])[
         1] in supported_playlist_extensions]
 
-    if not songs_dict:
-        "Input mode"
-
+    if component == "inputs":
         songs_dict = []
 
         for playlist in playlists:
@@ -208,9 +208,7 @@ def run(settings_dict, database, songs_dict=None):
 
         return songs_dict
 
-    else:
-        "Output mode"
-
+    elif component == "outputs":
         existing_playlist_titles = [item["name"] for item in playlists]
 
         for item in songs_dict:
