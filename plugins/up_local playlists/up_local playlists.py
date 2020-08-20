@@ -16,6 +16,7 @@ import os
 import io
 
 from ultrasonics import logs
+from ultrasonics.tools.local_tags import local_tags
 
 log = logs.create_log(__name__)
 
@@ -68,11 +69,6 @@ handshake = {
 
 supported_playlist_extensions = [
     ".m3u"
-]
-
-supported_audio_extensions = [
-    ".mp3",
-    ".m4a"
 ]
 
 
@@ -191,55 +187,12 @@ def run(settings_dict, database, songs_dict=None):
                     continue
 
                 try:
-                    # Skip music files which are not supported
-                    _, ext = os.path.splitext(song_path)
-                    if ext not in supported_audio_extensions:
-                        continue
+                    temp_song_dict = local_tags.tags(song_path)
 
-                    if ext == ".mp3":
-                        from mutagen.easyid3 import EasyID3
-
-                        tags = EasyID3(song_path)
-
-                        temp_song_dict = {}
-
-                        # Fetch the ID3 tag data from the music file, and save in a dictionary
-                        for field in ["title", "album", "date", "isrc", "tracknumber"]:
-                            try:
-                                temp_song_dict[field] = tags[field][0]
-                            except KeyError:
-                                pass
-
-                        try:
-                            temp_song_dict["artists"] = tags["artist"]
-                        except KeyError:
-                            pass
-
-                        # Let's use the below two for the local files matcher
-                        # acoustid_id = tags["acoustid_id"]
-                        # acoustid_fingerprint = tags["acoustid_fingerprint"]
-
-                    if ext == ".m4a":
-                        from mutagen.mp4 import MP4
-
-                        tags = MP4(song_path)
-
-                        temp_song_dict = {}
-
-                        # Fetch the m4a tag data from the music file, and save in a dictionary
-                        for field, ident in {"title": "\xa9nam", "album": "\xa9alb", "date": "\xa9day"}.items():
-                            try:
-                                temp_song_dict[field] = tags[ident][0]
-                            except KeyError:
-                                pass
-
-                        try:
-                            temp_song_dict["artists"] = tags["\xa9ART"]
-                        except KeyError:
-                            pass
-
-                        # # Correct date format
-                        # if temp_song_dict["date"]:
+                except NotImplementedError:
+                    log.warning(
+                        f"The file {song_path} is not a supported filetype")
+                    continue
 
                 except Exception as e:
                     log.error(f"Could not load tags from song: {song_path}")

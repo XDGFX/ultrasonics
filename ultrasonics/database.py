@@ -39,7 +39,7 @@ def connect():
                 query = "CREATE TABLE IF NOT EXISTS ultrasonics (key TEXT, value TEXT)"
                 cursor.execute(query)
 
-                query = "INSERT INTO ultrasonics(key, value) VALUES(?, ?)"
+                query = "INSERT INTO ultrasonics (key, value) VALUES(?, ?)"
                 cursor.executemany(query, list(_ultrasonics.items()))
 
             # Create persistent settings table if needed
@@ -169,7 +169,6 @@ def plugin_load_entry(name, version):
     with sqlite3.connect(db_file) as conn:
         cursor = conn.cursor()
         try:
-            import ast
             query = "SELECT settings FROM plugins WHERE plugin = ? AND version = ?"
             cursor.execute(query, (name, version))
             rows = cursor.fetchall()
@@ -177,6 +176,7 @@ def plugin_load_entry(name, version):
             settings = rows[0][0]
 
             if settings != None:
+                import ast
                 settings = ast.literal_eval(settings)
 
             return settings

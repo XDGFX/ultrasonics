@@ -157,7 +157,7 @@ def applet_run(applet_id):
     """
     from datetime import datetime
 
-    runtime = datetime.now().strftime("%d-%m-%Y %H:%M")
+    runtime = datetime.now()
 
     log.info(f"Running applet: {applet_id}")
 
@@ -202,8 +202,15 @@ def applet_run(applet_id):
 
         success = False
 
+    if success:
+        log.info(
+            f"Applet {applet_id} completed successfully in {datetime.now() - runtime}")
+    else:
+        log.info(
+            f"Applet {applet_id} failed in {datetime.now() - runtime}")
+
     lastrun = {
-        "time": runtime,
+        "time": runtime.strftime("%d-%m-%Y %H:%M"),
         "result": success
     }
 

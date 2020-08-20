@@ -132,6 +132,6 @@ dmypy.json
 # .vscode
 
 # Ultrasonics specifics
-ultrasonics.db
 .vscode/*
 !.vscode/launch.json
+*.db
