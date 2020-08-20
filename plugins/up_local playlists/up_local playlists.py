@@ -197,9 +197,6 @@ def run(settings_dict, database, component, songs_dict=None):
                     log.error(f"Could not load tags from song: {song_path}")
                     log.error(e)
 
-                # Add location of music file to dictionary
-                temp_song_dict["location"] = song_path
-
                 # Add entry to the full songs dict for this playlist
                 songs_dict_entry["songs"].append(temp_song_dict)
 

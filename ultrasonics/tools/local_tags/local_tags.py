@@ -114,6 +114,9 @@ def tags(song_path):
         # # Correct date format
         # if song_dict["date"]:
 
+    # Add location of music file to dictionary
+    song_dict["location"] = song_path
+
     # with sqlite3.connect(db_file) as conn:
     #     cursor = conn.cursor()
     #     try:

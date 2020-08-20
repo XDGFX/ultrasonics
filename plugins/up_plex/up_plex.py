@@ -11,7 +11,12 @@ Can be used even if Plex is not running on the same machine as ultrasonics.
 XDGFX, 2020
 """
 
+import io
 import os
+import re
+import shutil
+from collections import OrderedDict
+from urllib.parse import urlencode
 from xml.etree import ElementTree
 
 import requests
@@ -197,7 +202,72 @@ def run(settings_dict, database, component, songs_dict=None):
         return songs_dict
 
     elif component == "outputs":
-        pass
+        # Create temp sync folder
+        temp_path = os.path.join(
+            database["ultrasonics_prepend"], ".ultrasonics_tmp")
+
+        if os.path.isdir(temp_path):
+            try:
+                shutil.rmtree(temp_path)
+            except Exception as e:
+                raise Exception(
+                    "Could not remove temp folder: {temp_path}. Try deleting manually", e)
+
+        os.makedirs(temp_path)
+
+        for item in songs_dict:
+
+            # Create new playlist
+            playlist_path = os.path.join(temp_path, item["name"] + ".m3u")
+
+            f = io.open(playlist_path, "w", encoding="utf8")
+
+            # Get songs list for this playlist
+            songs = item["songs"]
+
+            for song in songs:
+
+                # Find location of song, and convert back to local playlists format
+                song_path = song["location"]
+                song_path = remove_prepend(song_path, invert=True)
+
+                prepend_path_converted = convert_path(
+                    database["plex_prepend"])
+
+                song_path = os.path.join(prepend_path_converted, song_path)
+                song_path = convert_path(song_path, invert=True)
+
+                # Write song to playlist terminated with newline character
+                f.write(song_path + '\n')
+
+            f.close()
+
+            url = f"{database['server_url']}/playlists/upload?"
+            headers = {'cache-control': "no-cache"}
+
+            temp_path_plex = os.path.join(
+                database["plex_prepend"], ".ultrasonics_tmp")
+
+            playlist_path_plex = os.path.join(
+                temp_path_plex, item["name"] + ".m3u")
+
+            playlist_path_plex = convert_path(playlist_path_plex, invert=True)
+
+            section_id = re.findall(
+                "\[(\d+)\]$", settings_dict["section_id"])[0]
+
+            querystring = urlencode(OrderedDict(
+                [("sectionID", section_id), ("path", playlist_path_plex), ("X-Plex-Token", database["plex_token"])]))
+
+            response = requests.post(
+                url, data="", headers=headers, params=querystring, verify=check_ssl)
+
+            # Should return nothing but if there's an issue there may be an error shown
+            if not response.text == '':
+                log.debug(response.text)
+
+        # Remove the temporary folder
+        shutil.rmtree(temp_path)
 
 
 def builder(database, component):
