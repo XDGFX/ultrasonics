@@ -6,3 +6,5 @@ eventlet
 # Included Plugins
 mutagen
 requests
+fuzzywuzzy
+python-Levenshtein

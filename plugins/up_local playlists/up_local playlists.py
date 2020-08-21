@@ -244,7 +244,7 @@ def run(settings_dict, database, component, songs_dict=None):
             f.close()
 
 
-def builder(database=None):
+def builder(database=None, component=None):
     """
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case.
@@ -256,7 +256,7 @@ def builder(database=None):
         {
             "type": "string",
             "value": f"""⚠️ Only {', '.join(supported_playlist_extensions)} extensions are supported for playlists,
-            and {', '.join(supported_audio_extensions)} extensions are supported for audio files.
+            and .mp3, m4a extensions are supported for audio files.
             Unsupported files will be ignored."""
         },
         {

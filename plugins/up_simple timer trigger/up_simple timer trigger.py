@@ -26,7 +26,7 @@ handshake = {
 }
 
 
-def run(settings_dict, database, songs_dict=None):
+def run(settings_dict, database, component=None, songs_dict=None):
     """
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
@@ -90,9 +90,7 @@ def run(settings_dict, database, songs_dict=None):
         json.dump(date_dict, outfile)
 
 
-
-
-def builder(database):
+def builder(database, component=None):
     """
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case

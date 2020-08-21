@@ -49,7 +49,7 @@ handshake = {
 }
 
 
-def run(settings_dict, database, songs_dict):
+def run(settings_dict, database, component, songs_dict):
     def try_float(string):
         try:
             return float(string)
@@ -112,7 +112,7 @@ def run(settings_dict, database, songs_dict):
     return songs_dict
 
 
-def builder(database):
+def builder(database, component):
     settings_dict = [
         {
             "type": "string",
