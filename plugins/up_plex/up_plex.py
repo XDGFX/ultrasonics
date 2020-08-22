@@ -182,7 +182,7 @@ def run(settings_dict, database, component, songs_dict=None):
 
     if ultrasonics_unix != plex_unix:
         log.debug(
-            "ultrasonics paths and Plex playlist paths do not use the same separators!")
+            "ultrasonics paths and Plex playlist paths do not use the same separators. Conversion will occur during sync.")
         enable_convert_path = True
 
     if component == "inputs":
@@ -270,18 +270,50 @@ def run(settings_dict, database, component, songs_dict=None):
         shutil.rmtree(temp_path)
 
 
-def test(settings_dict):
+def test(database):
     """
     Checks if Plex Media Server responds to API requests.
     """
-    url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
+    log.debug("Checking that Plex responds to API requests...")
+    url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
+    check_ssl = "check_ssl" in database.keys()
 
     resp = requests.get(url, timeout=30, verify=check_ssl)
 
     if resp.status_code == 200:
-        return True
+        log.debug("Test successful.")
     else:
-        return False
+        raise Exception(
+            "Did not successfully connect to Plex API. Check your server URL and token.")
+
+    log.debug["Testing music directories..."]
+    if database["plex_prepend"] and database["ultrasonics_prepend"] and os.path.isdir(database["ultrasonics_prepend"]):
+        log.debug("Plex and ultrasonics music paths detected successfully.")
+    else:
+        raise Exception(
+            "Either Plex or ultrasonics music directory paths are missing or don't exist.")
+
+    log.debug("Checking permissions...")
+    temp_path = os.path.join(
+        database["ultrasonics_prepend"], ".ultrasonics_tmp")
+
+    if os.path.isdir(temp_path):
+        try:
+            shutil.rmtree(temp_path)
+        except Exception as e:
+            raise Exception(
+                f"Could not remove temporary ultrasonics folder {temp_path}. Try removing manually.", e)
+
+    try:
+        os.makedirs(temp_path)
+        shutil.rmtree(temp_path)
+        log.debug(
+            "Successfully created and removed temporary ultrasonics sync directory.")
+    except Exception as e:
+        raise Exception(
+            f"Unable to create temporary ultrasonics sync directory {temp_path}. Check ultrasonics has the required permissions.")
+
+    log.info("Settings test successful.")
 
 
 def builder(database, component):

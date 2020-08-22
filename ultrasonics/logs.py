@@ -35,6 +35,8 @@ def create_log(name):
 def start_capture(name):
     """
     Start capturing logs for a given module.
+
+    @return: Logger for the selected plugin, should this be needed.
     """
     from io import StringIO
 
@@ -48,6 +50,8 @@ def start_capture(name):
     handler[name].setFormatter(formatter)
 
     log.addHandler(handler[name])
+
+    return log
 
 
 def stop_capture(name):

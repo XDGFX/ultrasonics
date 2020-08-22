@@ -44,6 +44,15 @@ def run(settings_dict, database=None, component=None, songs_dict=None):
     pass
 
 
+def test(settings_dict):
+    """
+    An optional test function. Used to validate persistent settings supplied in settings_dict.
+    Any errors raised will be caught and displayed to the user for debugging.
+    If this function is present, test failure will prevent the plugin being added.
+    """
+    pass
+
+
 def builder(database=None, component=None):
     """
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.

@@ -176,7 +176,7 @@ def html_configure_plugin():
     """
 
     # Data received is to update persistent plugin settings
-    if request.form.get('action') == 'add':
+    if request.form.get('action') in ['add', 'test']:
 
         plugin = request.form.get('plugin')
         version = request.form.get('version')
@@ -194,7 +194,11 @@ def html_configure_plugin():
         component = request.form.get('component')
         persistent = False
 
-        plugins.plugin_update(plugin, version, data)
+        if request.form.get('action') == 'test':
+            response = plugins.plugin_test(plugin, version, data, component)
+            sio.emit("plugin_test", response)
+        else:
+            plugins.plugin_update(plugin, version, data)
 
         # # Redirect to remove url parameters, so that refreshing won't keep adding more plugin instances
         # return redirect(request.path, code=302)
@@ -211,25 +215,34 @@ def html_configure_plugin():
             persistent_settings = item["settings"]
 
     # If persistent settings are supplied
-    if persistent_settings:
-        settings = plugins.plugin_build(plugin, version, component)
+    try:
+        if persistent_settings:
+            settings = plugins.plugin_build(plugin, version, component)
 
-        # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
-        persistent = persistent or (settings == None)
+            # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
+            persistent = persistent or (settings == None)
 
-        if persistent:
-            settings = persistent_settings
+            if persistent:
+                settings = persistent_settings
 
-    else:
-        # No persistent settings exist
-        settings = plugins.plugin_build(plugin, version, component, force=True)
+        else:
+            # No persistent settings exist
+            settings = plugins.plugin_build(
+                plugin, version, component, force=True)
 
-        persistent = -1
+            persistent = -1
+
+    except Exception as e:
+        log.error(
+            "Could not build plugin! Check your database settings are correct.")
+        return render_template('index.html')
 
     # Check if any settings are custom html strings
     custom_html = any([isinstance(setting, str) for setting in settings])
 
-    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html)
+    test_exists = plugins.plugin_test(plugin, version, component=component)
+
+    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html, test_exists=test_exists)
 
 
 # Welcome Page
