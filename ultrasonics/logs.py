@@ -9,6 +9,9 @@ XDGFX, 2020
 
 import logging
 
+buffer = {}
+handler = {}
+
 
 def create_log(name):
     # Create logger
@@ -27,3 +30,36 @@ def create_log(name):
     log.addHandler(ch)
 
     return log
+
+
+def start_capture(name):
+    """
+    Start capturing logs for a given module.
+    """
+    from io import StringIO
+
+    buffer[name] = StringIO()
+    log = logging.getLogger(name)
+
+    handler[name] = logging.StreamHandler(buffer[name])
+
+    formatter = logging.Formatter(
+        '%(levelname)-7s - %(message)s')
+    handler[name].setFormatter(formatter)
+
+    log.addHandler(handler[name])
+
+
+def stop_capture(name):
+    """
+    Stop capturing logs for a given module.
+
+    @return: Collected logs as string
+    """
+    log = logging.getLogger(name)
+    log.removeHandler(handler[name])
+
+    handler[name].flush()
+    buffer[name].flush()
+
+    return buffer[name].getvalue()

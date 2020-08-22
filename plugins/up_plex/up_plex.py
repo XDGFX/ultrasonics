@@ -270,6 +270,20 @@ def run(settings_dict, database, component, songs_dict=None):
         shutil.rmtree(temp_path)
 
 
+def test(settings_dict):
+    """
+    Checks if Plex Media Server responds to API requests.
+    """
+    url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
+
+    resp = requests.get(url, timeout=30, verify=check_ssl)
+
+    if resp.status_code == 200:
+        return True
+    else:
+        return False
+
+
 def builder(database, component):
     url = f"{database['server_url']}/library/sections/?X-Plex-Token={database['plex_token']}"
     check_ssl = "check_ssl" in database.keys()

@@ -117,6 +117,21 @@ def plugin_run(name, version, settings_dict, songs_dict=None, component=None):
     return response
 
 
+def plugin_test(name, version, settings_dict=None, component=None):
+    """
+    Get the test function from a specified plugin.
+    If settings_dict is None, will check if a test function exists for the plugin, returning True or False.
+    Otherwise, settings_dict contains the persistent settings (in standard database format) to validate.
+    Plugin test function should return True or False for pass and fail respectively.
+    """
+    if settings_dict:
+        log.debug(f"Running settings test for plugin {name} v{version}")
+
+    response = found_plugins[name].run(settings_dict)
+
+    return response
+
+
 def applet_gather():
     """
     Gather the list of existing applets.
