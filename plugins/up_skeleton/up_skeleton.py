@@ -100,6 +100,11 @@ def builder(database=None, component=None):
             "name": "nonenglish",
             "value": "nonenglish",
             "id": "nonenglish"
+        },
+        {
+            "type": "hidden",
+            "name": "random_id",
+            "value": "some_value"
         }
     ]
 
