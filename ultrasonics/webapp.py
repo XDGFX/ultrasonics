@@ -226,7 +226,10 @@ def html_configure_plugin():
 
         persistent = -1
 
-    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent)
+    # Check if any settings are custom html strings
+    custom_html = any([isinstance(setting, str) for setting in settings])
+
+    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html)
 
 
 # Welcome Page

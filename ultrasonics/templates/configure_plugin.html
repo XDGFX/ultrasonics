@@ -75,6 +75,13 @@
                 </div>
             </div>
 
+            {% if custom_html %}
+            <div class="content">
+                <div class="tag is-warning">This page contains custom HTML provided by the plugin. Make sure you trust
+                    it before entering any sensitive information!</div>
+            </div>
+            {% endif %}
+
 
             <form action="{% if persistent == 1 %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
 
@@ -86,13 +93,15 @@
 
                 {% for setting in settings %}
 
-                {% if setting["type"] == "string" %}
+                {% if setting is not mapping %}
+                {{ setting | safe }}
+
+                {% elif setting["type"] == "string" %}
                 <div class="field">
                     <label class="label">{{ setting["value"] }}</label>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "text" %}
+                {% elif setting["type"] == "text" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
@@ -100,9 +109,8 @@
                             placeholder="{{ setting['value'] }}">
                     </div>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "radio" %}
+                {% elif setting["type"] == "radio" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
@@ -115,9 +123,8 @@
 
                     </div>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "select" %}
+                {% elif setting["type"] == "select" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
@@ -132,9 +139,8 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "checkbox" %}
+                {% elif setting["type"] == "checkbox" %}
                 <div class="field">
                     <input class="is-checkradio" type="checkbox" name="{{ setting['name'] }}" id="{{ setting['id'] }}"
                         value="{{ setting['value'] }}">
