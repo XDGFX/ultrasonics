@@ -105,6 +105,11 @@
                 {% elif setting["type"] == "hidden" %}
                 <input type="hidden" name="{{ setting['name'] }}" value="{{ setting['value'] }}">
 
+                {% elif setting["type"] == "link" %}
+                <div class="field">
+                    <a href="{{ setting['value'] }}">{{ setting["value"] }}</a>
+                </div>
+
                 {% elif setting["type"] == "text" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>

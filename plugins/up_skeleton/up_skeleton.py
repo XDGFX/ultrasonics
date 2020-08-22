@@ -105,6 +105,10 @@ def builder(database=None, component=None):
             "type": "hidden",
             "name": "random_id",
             "value": "some_value"
+        },
+        {
+            "type": "link",
+            "value": "http://auth.spotify.com"
         }
     ]
 
