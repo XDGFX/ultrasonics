@@ -95,7 +95,7 @@ def plugin_update(name, version, settings):
     database.plugin_update_entry(name, version, settings)
 
 
-def plugin_run(name, version, settings_dict, songs_dict=None, component=None):
+def plugin_run(name, version, settings_dict, songs_dict=None, component=None, applet_id=None):
     """
     Run a specific plugin.
 
@@ -112,7 +112,7 @@ def plugin_run(name, version, settings_dict, songs_dict=None, component=None):
     plugin_settings = database.plugin_load_entry(name, version)
 
     response = found_plugins[name].run(
-        settings_dict, database=plugin_settings, songs_dict=songs_dict, component=component)
+        settings_dict, database=plugin_settings, songs_dict=songs_dict, component=component, applet_id=applet_id)
 
     return response
 
@@ -221,20 +221,20 @@ def applet_run(applet_id):
             "Inputs"
             # Get new songs from input, append to songs list
             for plugin in applet_plans["inputs"]:
-                for item in plugin_run(*get_info(plugin), component="inputs"):
+                for item in plugin_run(*get_info(plugin), component="inputs", applet_id=applet_id):
                     songs_dict.append(item)
 
             "Modifiers"
             # Replace songs with output from modifier plugin
             for plugin in applet_plans["modifiers"]:
                 songs_dict = plugin_run(
-                    *get_info(plugin), songs_dict=songs_dict, component="modifiers")
+                    *get_info(plugin), songs_dict=songs_dict, component="modifiers", applet_id=applet_id)
 
             "Outputs"
             # Submit songs dict to output plugin
             for plugin in applet_plans["outputs"]:
                 plugin_run(*get_info(plugin), songs_dict=songs_dict,
-                           component="outputs")
+                           component="outputs", applet_id=applet_id)
 
             success = True
 
