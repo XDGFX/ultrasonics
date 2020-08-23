@@ -82,6 +82,10 @@ img {
     pointer-events: none;
 }
 
+div[hidden] {
+  display: none;
+}
+
 /* Specific elements */
 #plugin_builder .plugin {
     /* General Formatting */

@@ -36,10 +36,28 @@ handshake = {
 }
 
 
-def run(settings_dict, database=None, component=None, songs_dict=None):
+def run(settings_dict, database=None, component=None, applet_id=None, songs_dict=None):
     """
-    if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
-    if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
+    The function called when the applet runs.
+
+    Inputs:
+    settings_dict      Settings specific to this plugin instance
+    database           Global persistent settings for this plugin
+    component          Either "inputs", "modifiers", "outputs", or "trigger"
+    applet_id          The unique identifier for this specific applet
+    songs_dict         If a modifier or output, the songs dictionary to be used
+
+    @return:
+    If an input or modifier, the new songs_dict must be returned.
+    """
+    pass
+
+
+def test(settings_dict):
+    """
+    An optional test function. Used to validate persistent settings supplied in settings_dict.
+    Any errors raised will be caught and displayed to the user for debugging.
+    If this function is present, test failure will prevent the plugin being added.
     """
     pass
 
@@ -49,7 +67,13 @@ def builder(database=None, component=None):
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case
 
-    Inputs: Persistent database settings for this plugin
+    Inputs: 
+    database           Persistent database settings for this plugin
+    component          Either "inputs", "modifiers", "outputs", or "trigger"
+
+    @return:
+    settings_dict      Used to build the settings page for this plugin instance
+
     """
 
     settings_dict = [
@@ -86,11 +110,13 @@ def builder(database=None, component=None):
             ]
         },
         {
-            "type": "checkbox",
-            "label": "Include Non-English Results",
-            "name": "nonenglish",
-            "value": "nonenglish",
-            "id": "nonenglish"
+            "type": "hidden",
+            "name": "random_id",
+            "value": "some_value"
+        },
+        {
+            "type": "link",
+            "value": "http://auth.spotify.com"
         }
     ]
 

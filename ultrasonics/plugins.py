@@ -95,7 +95,7 @@ def plugin_update(name, version, settings):
     database.plugin_update_entry(name, version, settings)
 
 
-def plugin_run(name, version, settings_dict, songs_dict=None, component=None):
+def plugin_run(name, version, settings_dict, songs_dict=None, component=None, applet_id=None):
     """
     Run a specific plugin.
 
@@ -112,9 +112,45 @@ def plugin_run(name, version, settings_dict, songs_dict=None, component=None):
     plugin_settings = database.plugin_load_entry(name, version)
 
     response = found_plugins[name].run(
-        settings_dict, database=plugin_settings, songs_dict=songs_dict, component=component)
+        settings_dict, database=plugin_settings, songs_dict=songs_dict, component=component, applet_id=applet_id)
 
     return response
+
+
+def plugin_test(name, version, database=None, component=None):
+    """
+    Get the test function from a specified plugin.
+    If settings_dict is None, will check if a test function exists for the plugin, returning True or False.
+    Otherwise, settings_dict contains the persistent settings (in standard database format) to validate.
+    Plugin test function should return True or False for pass and fail respectively.
+    """
+
+    if getattr(found_plugins[name], 'test', None) is None:
+        log.info(f"{name} does not have a test function.")
+        return False
+
+    elif database == {}:
+        return {"response": False, "logs": "ERROR   - No database values were received!"}
+
+    elif database:
+        logs_name = f"plugins.up_plex.up_plex"
+        plugin_log = logs.start_capture(logs_name)
+
+        plugin_log.debug(f"Running settings test for plugin {name} v{version}")
+
+        try:
+            found_plugins[name].test(database)
+            logs_string = logs.stop_capture(logs_name)
+            return {"response": True, "logs": logs_string}
+
+        except Exception as e:
+            plugin_log.error("Plugin test failed.")
+            plugin_log.error(e)
+            logs_string = logs.stop_capture(logs_name)
+            return {"response": False, "logs": logs_string}
+
+    else:
+        return True
 
 
 def applet_gather():
@@ -185,20 +221,20 @@ def applet_run(applet_id):
             "Inputs"
             # Get new songs from input, append to songs list
             for plugin in applet_plans["inputs"]:
-                for item in plugin_run(*get_info(plugin), component="inputs"):
+                for item in plugin_run(*get_info(plugin), component="inputs", applet_id=applet_id):
                     songs_dict.append(item)
 
             "Modifiers"
             # Replace songs with output from modifier plugin
             for plugin in applet_plans["modifiers"]:
                 songs_dict = plugin_run(
-                    *get_info(plugin), songs_dict=songs_dict, component="modifiers")
+                    *get_info(plugin), songs_dict=songs_dict, component="modifiers", applet_id=applet_id)
 
             "Outputs"
             # Submit songs dict to output plugin
             for plugin in applet_plans["outputs"]:
                 plugin_run(*get_info(plugin), songs_dict=songs_dict,
-                           component="outputs")
+                           component="outputs", applet_id=applet_id)
 
             success = True
 

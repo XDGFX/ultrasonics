@@ -93,14 +93,14 @@
 //     return html
 // }
 
-function plugin_builder_cancel(event, element) {
-    // Prevent form from submitting
-    event.preventDefault();
+// function plugin_builder_cancel(event, element) {
+//     // Prevent form from submitting
+//     event.preventDefault();
 
-    // Hide the form
-    element.closest("form").hidden = true
+//     // Hide the form
+//     element.closest("form").hidden = true
 
-    // Display the plugin selection buttons
-    element.closest(".plugin_builder_buttons").hidden = false
+//     // Display the plugin selection buttons
+//     element.closest(".plugin_builder_buttons").hidden = false
 
 }

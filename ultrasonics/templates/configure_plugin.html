@@ -18,9 +18,9 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 
-    <script src="/static/handlers.js"></script>
+    <!-- <script src="/static/handlers.js"></script>
     <script src="/static/requesters.js"></script>
     <script src="/static/builders.js"></script> -->
 </head>
@@ -75,24 +75,42 @@
                 </div>
             </div>
 
+            {% if custom_html %}
+            <div class="content">
+                <div class="tag is-warning">This page contains custom HTML provided by the plugin. Make sure you trust
+                    it before entering any sensitive information!</div>
+            </div>
+            {% endif %}
 
-            <form action="{% if persistent == 1 %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
+
+            <form id="configure_plugin"
+                action="{% if persistent == 1 %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
 
                 <!-- Hidden inputs to store variables for current plugin -->
-                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="action" value="add" id="configure_plugin_action">
                 <input type="hidden" name="plugin" value="{{ plugin }}">
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="component" value="{{ component }}">
 
                 {% for setting in settings %}
 
-                {% if setting["type"] == "string" %}
+                {% if setting is not mapping %}
+                {{ setting | safe }}
+
+                {% elif setting["type"] == "string" %}
                 <div class="field">
                     <label class="label">{{ setting["value"] }}</label>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "text" %}
+                {% elif setting["type"] == "hidden" %}
+                <input type="hidden" name="{{ setting['name'] }}" value="{{ setting['value'] }}">
+
+                {% elif setting["type"] == "link" %}
+                <div class="field">
+                    <a href="{{ setting['value'] }}">{{ setting["value"] }}</a>
+                </div>
+
+                {% elif setting["type"] == "text" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
@@ -100,9 +118,8 @@
                             placeholder="{{ setting['value'] }}">
                     </div>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "radio" %}
+                {% elif setting["type"] == "radio" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
@@ -115,9 +132,8 @@
 
                     </div>
                 </div>
-                {% endif %}
 
-                {% if setting["type"] == "select" %}
+                {% elif setting["type"] == "select" %}
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
@@ -134,27 +150,96 @@
                 </div>
                 {% endif %}
 
-                {% if setting["type"] == "checkbox" %}
-                <div class="field">
-                    <input class="is-checkradio" type="checkbox" name="{{ setting['name'] }}" id="{{ setting['id'] }}"
-                        value="{{ setting['value'] }}">
-                    <label for="{{ setting['id'] }}" class="checkbox">{{ setting["label"] }}</label>
-                </div>
-                {% endif %}
-
 
                 {% endfor %}
 
-                <div class="field is-grouped">
-                    <div class="control">
-                        <button type="submit" id="plugin_submit" class="button">Submit</button>
+                <div class="columns is-vcentered">
+                    <div class="column is-wide">
+                        <div class="field is-grouped">
+
+                            {% if test_exists and persistent %}
+                            <div class="control">
+                                <button type="submit" id="plugin_submit" class="button" disabled>Submit</button>
+                            </div>
+                            {% else %}
+                            <div class="control">
+                                <button type="submit" id="plugin_submit" class="button">Submit</button>
+                            </div>
+                            {% endif %}
+
+                            {% if test_exists and persistent %}
+                            <div class="control">
+                                <a class="button" onclick=plugin_test() id="configure_plugin_testbutton">Test</a>
+                            </div>
+
+                            <script>
+                                function plugin_test() {
+                                    // Update action data and button animation
+                                    action = document.getElementById("configure_plugin_action")
+                                    button_test = document.getElementById("configure_plugin_testbutton")
+
+                                    action.value = "test";
+                                    button_test.classList.add("is-loading")
+
+                                    // Submit form data
+                                    formData = new FormData(document.getElementById('configure_plugin'))
+                                    xhr = new XMLHttpRequest;
+                                    xhr.open('POST', '/configure_plugin', true);
+                                    xhr.send(formData);
+
+                                    // Reset action data
+                                    action.value = "add";
+                                }
+
+                                var sio = io();
+
+                                sio.on('plugin_test', function (data) {
+                                    `
+                                    Response from a plugin after testing.
+                                    `
+                                    console.log(data.logs)
+
+                                    button_test = document.getElementById("configure_plugin_testbutton")
+                                    tag_success = document.getElementById("configure_plugin_success")
+                                    tag_failed = document.getElementById("configure_plugin_failed")
+                                    button_submit = document.getElementById("plugin_submit")
+
+                                    button_test.classList.remove("is-loading")
+                                    tag_success.hidden = true
+                                    tag_failed.hidden = true
+
+                                    if (data.response) {
+                                        tag_success.hidden = false
+                                        button_submit.disabled = false
+                                    } else {
+                                        tag_failed.hidden = false
+                                        button_submit.disabled = true
+                                    }
+                                });
+                            </script>
+
+                            {% endif %}
+
+                            <div class="control">
+                                {% if persistent %}
+                                <a onclick="history.back()" class="button">Back</a>
+                                {% else %}
+                                <a href="/select_plugin?component={{ component }}" class="button">Back</a>
+                                {% endif %}
+                            </div>
+
+
+                        </div>
                     </div>
-                    <div class="control">
-                        {% if persistent %}
-                        <a onclick="history.back()" class="button">Back</a>
-                        {% else %}
-                        <a href="/select_plugin?component={{ component }}" class="button">Back</a>
-                        {% endif %}
+                    <div class="column">
+                        <div class="content">
+                            <div class="tag is-danger" id="configure_plugin_failed" hidden>Test failed. Plugin logs have
+                                been pushed to your browser
+                                console (press F12).</div>
+
+                            <div class="tag is-success" id="configure_plugin_success" hidden>Test completed
+                                successfully!</div>
+                        </div>
                     </div>
                 </div>
             </form>
