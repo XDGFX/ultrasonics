@@ -69,11 +69,14 @@ handshake = {
             "value": "Do you want to check SSL when connecting? If in doubt, just leave it unchecked."
         },
         {
-            "type": "checkbox",
+            "type": "radio",
             "label": "Check SSL",
             "name": "check_ssl",
-            "value": "check_ssl",
-            "id": "check_ssl"
+            "id": "check_ssl",
+            "options": [
+                "Yes",
+                "No"
+            ]
         },
         {
             "type": "string",
@@ -159,7 +162,7 @@ def run(settings_dict, database, component, songs_dict=None):
             return path
 
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
-    check_ssl = "check_ssl" in database.keys()
+    check_ssl = database["check_ssl"] == "Yes"
 
     resp = requests.get(url, timeout=30, verify=check_ssl)
 
@@ -276,7 +279,7 @@ def test(database):
     """
     log.debug("Checking that Plex responds to API requests...")
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
-    check_ssl = "check_ssl" in database.keys()
+    check_ssl = database["check_ssl"] == "Yes"
 
     resp = requests.get(url, timeout=30, verify=check_ssl)
 

@@ -148,13 +148,6 @@
                         </div>
                     </div>
                 </div>
-
-                {% elif setting["type"] == "checkbox" %}
-                <div class="field">
-                    <input class="is-checkradio" type="checkbox" name="{{ setting['name'] }}" id="{{ setting['id'] }}"
-                        value="{{ setting['value'] }}">
-                    <label for="{{ setting['id'] }}" class="checkbox">{{ setting["label"] }}</label>
-                </div>
                 {% endif %}
 
 
