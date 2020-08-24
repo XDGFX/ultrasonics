@@ -129,7 +129,7 @@ def run(settings_dict, database, component, songs_dict=None):
     # name is the playlist name
     # path is the full path to the playlist
     try:
-        if "recursive" in settings_dict:
+        if settings_dict["recursive"] == "Yes":
             # Recursive mode
             for root, _, files in os.walk(path):
                 for item in files:
@@ -255,9 +255,7 @@ def builder(database=None, component=None):
     settings_dict = [
         {
             "type": "string",
-            "value": f"""⚠️ Only {', '.join(supported_playlist_extensions)} extensions are supported for playlists,
-            and .mp3, m4a extensions are supported for audio files.
-            Unsupported files will be ignored."""
+            "value": f"⚠️ Only {', '.join(supported_playlist_extensions)} extensions are supported for playlists, and .mp3, m4a extensions are supported for audio files. Unsupported files will be ignored."
         },
         {
             "type": "text",
@@ -266,11 +264,14 @@ def builder(database=None, component=None):
             "value": "/mnt/music library/playlists"
         },
         {
-            "type": "checkbox",
+            "type": "radio",
             "label": "Recursive",
             "name": "recursive",
-            "value": "recursive",
-            "id": "recursive"
+            "id": "recursive",
+            "options": [
+                "Yes",
+                "No"
+            ]
         },
         {
             "type": "string",
