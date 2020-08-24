@@ -13,7 +13,7 @@ XDGFX, 2020
 
 import hashlib
 import os
-import sqlite3
+# import sqlite3
 
 from mutagen.easyid3 import EasyID3
 from mutagen.mp4 import MP4
@@ -27,22 +27,22 @@ supported_audio_extensions = [
     ".m4a"
 ]
 
-db_file = os.path.join(os.path.dirname(__file__), "local_tags.db")
+# db_file = os.path.join(os.path.dirname(__file__), "local_tags.db")
 
-log.debug("Loaded local_tags tool. Initialising database...")
+# log.debug("Loaded local_tags tool. Initialising database...")
 
-with sqlite3.connect(db_file) as conn:
-    cursor = conn.cursor()
+# with sqlite3.connect(db_file) as conn:
+#     cursor = conn.cursor()
 
-    try:
-        # Create tracks table if needed
-        query = "CREATE TABLE IF NOT EXISTS tracks (path TEXT PRIMARY KEY, checksum TEXT, tags TEXT)"
-        cursor.execute(query)
+#     try:
+#         # Create tracks table if needed
+#         query = "CREATE TABLE IF NOT EXISTS tracks (path TEXT PRIMARY KEY, checksum TEXT, tags TEXT)"
+#         cursor.execute(query)
 
-        conn.commit()
+#         conn.commit()
 
-    except sqlite3.Error as e:
-        log.info("Error while initialising local_tags database", e)
+#     except sqlite3.Error as e:
+#         log.info("Error while initialising local_tags database", e)
 
 
 def tags(song_path):
