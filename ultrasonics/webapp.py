@@ -85,6 +85,9 @@ def html_index():
         return redirect("/welcome", code=302)
 
     else:
+        # Clear applet plans anyway
+        Applet.current_plans = copy.deepcopy(Applet.default_plans)
+
         applet_list = plugins.applet_gather()
         return render_template('index.html', applet_list=applet_list)
 
