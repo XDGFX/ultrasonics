@@ -274,4 +274,4 @@ def applet_trigger_run(applet_id):
         version = trigger["version"]
         data = trigger["data"]
 
-        plugin_run(name, version, data)
+        plugin_run(name, version, data, applet_id=applet_id)
