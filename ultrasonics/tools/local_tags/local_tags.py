@@ -2,7 +2,7 @@
 
 """
 local_tags
-Fetches tags from local music files
+Fetches tags from local music files.
 
 Given an input path, the metadata tags will be returned in standard ultrasonics songlist format.
 This is done either by reading directly from the song file, or by reading from a cache if the song has not been modified since last read.

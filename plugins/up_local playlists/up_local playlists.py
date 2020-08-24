@@ -12,11 +12,12 @@ Upon saving playlists, it will update any existing playlists before creating new
 XDGFX, 2020
 """
 
-import os
 import io
+import os
 
 from ultrasonics import logs
 from ultrasonics.tools.local_tags import local_tags
+from ultrasonics.tools.name_filter import name_filter
 
 log = logs.create_log(__name__)
 
@@ -30,7 +31,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": 0.1,
+    "version": 0.2,
     "settings": [
         {
             "type": "string",
@@ -157,6 +158,9 @@ def run(settings_dict, database, component, songs_dict=None):
     if component == "inputs":
         songs_dict = []
 
+        # Apply regex filter to playlists
+        playlists = name_filter.filter_path(playlists, settings_dict["filter"])
+
         for playlist in playlists:
 
             # Initialise entry for this playlist
@@ -278,5 +282,25 @@ def builder(database=None, component=None):
             "value": "Enabling recursive mode will search all subfolders for more playlists."
         }
     ]
+
+    if component == "inputs":
+        settings_dict.extend(
+            [
+                {
+                    "type": "text",
+                    "label": "Filter",
+                    "name": "filter",
+                    "value": ""
+                },
+                {
+                    "type": "string",
+                    "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
+                },
+                {
+                    "type": "string",
+                    "value": "Leave it blank to sync everything 🤓."
+                }
+            ]
+        )
 
     return settings_dict
