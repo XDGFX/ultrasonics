@@ -14,7 +14,7 @@ from ultrasonics import logs
 
 log = logs.create_log(__name__)
 
-db_file = "ultrasonics/ultrasonics.db"
+db_file = "config/ultrasonics.db"
 conn = None
 cursor = None
 

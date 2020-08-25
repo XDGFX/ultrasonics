@@ -116,7 +116,11 @@ def builder(database=None, component=None):
         },
         {
             "type": "link",
-            "value": "http://auth.spotify.com"
+            "value": "https://spotify.com"
+        },
+        {
+            "type": "auth",
+            "value": "/spotify_auth_request"
         }
     ]
 
