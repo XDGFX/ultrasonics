@@ -19,9 +19,9 @@ handshake = {
         "playlists",
         "songs"
     ],
-    "version": 0.1,
+    "version": "0.1",
     "settings": [
-        
+
     ]
 }
 
@@ -31,7 +31,7 @@ def run(settings_dict, database, component=None, songs_dict=None):
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
     """
-    
+
     # Create a date_dict.json file if non exists and save the current date in it
     # This only happens on creation
     if not os.path.isfile(os.path.join(os.path.dirname(__file__), "date_dict.json")):
@@ -49,12 +49,14 @@ def run(settings_dict, database, component=None, songs_dict=None):
             json.dump(date_dict, outfile)
 
     # load the data stored in the JSON file
-    date_dict = json.load(io.open(os.path.join(os.path.dirname(__file__), "date_dict.json")))
-    # save it into a string 
+    date_dict = json.load(io.open(os.path.join(
+        os.path.dirname(__file__), "date_dict.json")))
+    # save it into a string
     #last_sync_datetime_str = date_dict['date'] + "," + date_dict['time'] + date_dict['time_zone']
     last_sync_datetime_str = (f"{date_dict['date']}, {date_dict['time']}")
     # create a datetime object from the string
-    last_sync_datetime_obj = datetime.strptime(last_sync_datetime_str, "%m/%d/%Y, %H:%M:%S")
+    last_sync_datetime_obj = datetime.strptime(
+        last_sync_datetime_str, "%m/%d/%Y, %H:%M:%S")
 
     # load the interval time selected from the settings_dict
     interval = settings_dict["sync_interval"]
@@ -67,7 +69,7 @@ def run(settings_dict, database, component=None, songs_dict=None):
     # create a timedelta object with the interval time in seconds
     interval_obj = timedelta(seconds=interval_seconds[interval])
 
-    #create object for current time
+    # create object for current time
     current_datetime = datetime.utcnow()
 
     # Main loop, refresh every 5 seconds
@@ -99,7 +101,7 @@ def builder(database, component=None):
     """
 
     settings_dict = [
-        
+
         {
             "type": "select",
             "label": "Sync time interval",
@@ -112,7 +114,7 @@ def builder(database, component=None):
                 "Once a Year"
             ]
         },
-        
+
     ]
 
     return settings_dict

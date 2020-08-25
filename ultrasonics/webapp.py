@@ -214,7 +214,7 @@ def html_configure_plugin():
 
     # Get persistent settings for the plugin
     for item in plugins.handshakes:
-        if item["name"] == plugin and item["version"] == float(version):
+        if item["name"] == plugin and item["version"] == version:
             persistent_settings = item["settings"]
 
     # If persistent settings are supplied

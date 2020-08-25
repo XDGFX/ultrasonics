@@ -18,7 +18,13 @@ def filter_list(playlists, regex):
     """
     Takes a list input of *playlist names* to filter.
     """
-    pass
+    new_playlists = []
+
+    for playlist in playlists:
+        if re.match(regex, playlist, re.IGNORECASE):
+            new_playlists.append(playlist)
+
+    return new_playlists
 
 
 def filter_path(playlists, regex):
@@ -31,7 +37,7 @@ def filter_path(playlists, regex):
         base_name = os.path.basename(path)
         playlist = os.path.splitext(base_name)[0]
 
-        if re.match(regex, playlist):
+        if re.match(regex, playlist, re.IGNORECASE):
             new_playlists.append(path)
 
     return new_playlists

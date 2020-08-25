@@ -31,7 +31,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": 0.2,
+    "version": "0.2",
     "settings": [
         {
             "type": "string",
@@ -72,7 +72,7 @@ supported_playlist_extensions = [
 ]
 
 
-def run(settings_dict, database, component, songs_dict=None):
+def run(settings_dict, database, component, applet_id, songs_dict=None):
     """
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
@@ -159,7 +159,12 @@ def run(settings_dict, database, component, songs_dict=None):
         songs_dict = []
 
         # Apply regex filter to playlists
-        playlists = name_filter.filter_path(playlists, settings_dict["filter"])
+        filter_titles = [item["name"] for item in playlists]
+        filter_titles = name_filter.filter_list(
+            filter_titles, settings_dict["filter"])
+
+        playlists = [
+            item for item in playlists if item["name"] in filter_titles]
 
         for playlist in playlists:
 

@@ -29,7 +29,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": 0.1,
+    "version": "0.1",
     "settings": [
         {
             "type": "string",
@@ -49,7 +49,7 @@ handshake = {
 }
 
 
-def run(settings_dict, database, component, songs_dict):
+def run(settings_dict, database, component, applet_id, songs_dict):
     def try_float(string):
         try:
             return float(string)

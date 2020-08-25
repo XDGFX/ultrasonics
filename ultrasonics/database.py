@@ -153,7 +153,7 @@ def plugin_entry_exists(name):
             if len(rows) > 0:
                 versions = list()
                 for item in rows:
-                    versions.append(item[0])
+                    versions.append(str(item[0]))
                 return versions
             else:
                 return [False]

@@ -59,10 +59,27 @@ def plugin_gather():
 
                 log.info(f"Found plugin: {plugin}")
 
+                existing_versions = database.plugin_entry_exists(title)
                 # If a database entry is not found for the plugin and version, create one
-                if not (handshake_version in database.plugin_entry_exists(title)):
-                    database.plugin_create_entry(
-                        title, handshake_version)
+                if not handshake_version in existing_versions:
+                    # Create new entry
+                    database.plugin_create_entry(title, handshake_version)
+
+                    # If an older minor version exists, migrate settings.
+                    if existing_versions != [False]:
+                        from ultrasonics.tools.version_check import version_check
+                        migration_version = version_check.check(
+                            handshake_version, existing_versions)
+
+                        if migration_version:
+                            log.info(
+                                f"Performing database migration from older version of {title}")
+                            log.info(
+                                f"{migration_version} >> {handshake_version}")
+                            old_settings = database.plugin_load_entry(
+                                title, migration_version)
+                            database.plugin_update_entry(
+                                title, handshake_version, old_settings)
 
 
 def plugin_load(name, version):
@@ -95,7 +112,7 @@ def plugin_update(name, version, settings):
     database.plugin_update_entry(name, version, settings)
 
 
-def plugin_run(name, version, settings_dict, songs_dict=None, component=None, applet_id=None):
+def plugin_run(name, version, settings_dict, component=None, applet_id=None, songs_dict=None):
     """
     Run a specific plugin.
 
@@ -112,7 +129,7 @@ def plugin_run(name, version, settings_dict, songs_dict=None, component=None, ap
     plugin_settings = database.plugin_load_entry(name, version)
 
     response = found_plugins[name].run(
-        settings_dict, database=plugin_settings, songs_dict=songs_dict, component=component, applet_id=applet_id)
+        settings_dict, database=plugin_settings, component=component, applet_id=applet_id, songs_dict=songs_dict)
 
     return response
 
@@ -233,8 +250,8 @@ def applet_run(applet_id):
             "Outputs"
             # Submit songs dict to output plugin
             for plugin in applet_plans["outputs"]:
-                plugin_run(*get_info(plugin), songs_dict=songs_dict,
-                           component="outputs", applet_id=applet_id)
+                plugin_run(*get_info(plugin), component="outputs",
+                           applet_id=applet_id, songs_dict=songs_dict)
 
             success = True
 

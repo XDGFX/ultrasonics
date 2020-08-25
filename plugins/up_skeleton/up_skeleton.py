@@ -13,7 +13,7 @@ handshake = {
     "mode": [
         "songs"
     ],
-    "version": 0.1,
+    "version": "0.1",  # Optionally, "0.1.0"
     "settings": [
         {
             "type": "text",
@@ -36,7 +36,7 @@ handshake = {
 }
 
 
-def run(settings_dict, database=None, component=None, applet_id=None, songs_dict=None):
+def run(settings_dict, database, component, applet_id, songs_dict=None):
     """
     The function called when the applet runs.
 
