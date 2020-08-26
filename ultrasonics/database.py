@@ -72,7 +72,7 @@ class Core:
             log.info("Database connection successful")
 
             try:
-                if self.new_install() == None:
+                if self.new_install() is None:
                     _ultrasonics["new_install"] = True
 
                     # Create tuple with default settings
@@ -277,7 +277,7 @@ class Plugin:
 
                 settings = rows[0][0]
 
-                if settings != None:
+                if settings is not None:
                     import ast
                     settings = ast.literal_eval(settings)
 
@@ -304,13 +304,13 @@ class Applet:
                 cursor.execute(query)
                 rows = cursor.fetchall()
 
-                if rows == None:
+                if rows is None:
                     return []
 
                 data = []
 
                 for applet_id, applet_lastrun, applet_plans in rows:
-                    if applet_lastrun == None:
+                    if applet_lastrun is None:
                         data.append(
                             {
                                 "applet_id": applet_id,

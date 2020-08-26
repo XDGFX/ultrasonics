@@ -189,7 +189,7 @@ def html_configure_plugin():
         # Merge new settings with existing database settings
         data = plugins.plugin_load(plugin, version)
 
-        if data == None:
+        if data is None:
             data = new_data
         else:
             data.update(new_data)
@@ -223,7 +223,7 @@ def html_configure_plugin():
             settings = plugins.plugin_build(plugin, version, component)
 
             # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
-            persistent = persistent or (settings == None)
+            persistent = persistent or settings is None
 
             if persistent:
                 settings = persistent_settings

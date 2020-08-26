@@ -62,7 +62,7 @@ def scheduler_applet_loop(applet_id):
             time.sleep(60)
 
             # Check if trigger has been removed
-            if applets_running[applet_id] == False:
+            if not applets_running[applet_id]:
                 return
 
         # If an error has occurred, future == True
@@ -70,7 +70,7 @@ def scheduler_applet_loop(applet_id):
             return
 
         # Check if applet still exists in the database
-        if database.Applet().get(applet_id) != None:
+        if database.Applet().get(applet_id) is not None:
             plugins.applet_run(applet_id)
         else:
             break

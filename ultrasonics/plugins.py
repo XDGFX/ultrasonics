@@ -65,7 +65,7 @@ def plugin_gather():
 
                 existing_versions = dbp.versions(title)
                 # If a database entry is not found for the plugin and version, create one
-                if not handshake_version in existing_versions:
+                if handshake_version not in existing_versions:
                     # Create new entry
                     dbp.new(title, handshake_version)
 
@@ -80,10 +80,8 @@ def plugin_gather():
                                 f"Performing database migration from older version of {title}")
                             log.info(
                                 f"{migration_version} >> {handshake_version}")
-                            old_settings = dbp.get(
-                                title, migration_version)
-                            dbp.set(
-                                title, handshake_version, old_settings)
+                            old_settings = dbp.get(title, migration_version)
+                            dbp.set(title, handshake_version, old_settings)
 
 
 def plugin_load(name, version):

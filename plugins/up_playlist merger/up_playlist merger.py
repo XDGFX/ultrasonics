@@ -56,8 +56,8 @@ def run(settings_dict, database, component, applet_id, songs_dict):
         except Exception:
             return None
 
-    fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"])
-                   or try_float(database["fuzzy_ratio"])) / 100
+    fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"]) or try_float(
+        database["fuzzy_ratio"])) / 100
 
     # Find duplicate playlists.
     # If there are more than two duplicates, the playlist name will show up n-1 times in duplicate_playlists.

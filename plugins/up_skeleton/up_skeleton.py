@@ -67,7 +67,7 @@ def builder(database=None, component=None):
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case
 
-    Inputs: 
+    Inputs:
     database           Persistent database settings for this plugin
     component          Either "inputs", "modifiers", "outputs", or "trigger"
 
