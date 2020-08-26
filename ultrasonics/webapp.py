@@ -78,10 +78,10 @@ def html_index():
         return redirect(request.path, code=302)
 
     elif action == 'new_install':
-        database.new_install(update=True)
+        database.Core().new_install(update=True)
         return redirect(request.path, code=302)
 
-    elif database.new_install():
+    elif database.Core().new_install():
         return redirect("/welcome", code=302)
 
     else:
@@ -258,11 +258,11 @@ def html_settings():
         data = [(value, key)
                 for key, value in request.form.to_dict().items() if key != "action"]
 
-        database.global_settings_save(data)
+        database.Core().save(data)
 
         return redirect("/", code=302)
 
-    settings = database.global_settings_load()
+    settings = database.Core().load()
 
     return render_template("settings.html", settings=settings)
 

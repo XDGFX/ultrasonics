@@ -41,7 +41,7 @@ handshake = {
         },
         {
             "type": "text",
-            "label": "Fuzzy Ratio",
+            "label": "Default Global Fuzzy Ratio",
             "name": "fuzzy_ratio",
             "value": "Recommended: 90"
         }

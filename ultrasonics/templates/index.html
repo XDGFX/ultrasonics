@@ -40,10 +40,26 @@
         <section class="section">
             <img src="/static/images/logo.svg">
 
-            <div class="buttons has-addons is-centered">
-                <button class="button is-static">new applet</button>
-                <a href="/new_applet?mode=songs" class="button">songs</a>
-                <a href="/new_applet?mode=playlists" class="button">playlists</a>
+            <div class="columns">
+                <div class="column"></div>
+
+                <div class="column">
+                    <div class="buttons has-addons is-centered">
+                        <button class="button is-static">new applet</button>
+                        <a href="/new_applet?mode=songs" class="button">songs</a>
+                        <a href="/new_applet?mode=playlists" class="button">playlists</a>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <div class="buttons has-addons is-right">
+                        <a href="/settings" class="button">
+                            <span class="icon">
+                                ⚙
+                            </span>
+                        </a>
+                    </div>
+                </div>
             </div>
 
             {% for item in applet_list %}

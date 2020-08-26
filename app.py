@@ -15,7 +15,7 @@ _ultrasonics = {
     "version": 0.1
 }
 
-database.connect()
+database.Core().connect()
 plugins.plugin_gather()
 scheduler.scheduler_start()
 webapp.server_start()

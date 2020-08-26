@@ -43,21 +43,10 @@
                         <span class="p1">settings</span>
                     </div>
                 </div>
-
-                <!-- <div class="column is-narrow">
-                    {% if persistent == 1 %}
-                    <div class="tag">Only modified settings will be updated.</div>
-                    {% elif persistent == 0 %}
-                    <a class="button"
-                        href="/configure_plugin?plugin={{ plugin }}&version={{ version }}&component={{ component }}&persistent=1">Persistent
-                        Settings</a>
-                    {% endif %}
-                </div> -->
             </div>
 
             <form id="settings" action="/settings" method="post">
 
-                <!-- Hidden inputs to store variables for current plugin -->
                 <input type="hidden" name="action" value="save">
 
                 {% for setting in settings %}
@@ -71,8 +60,8 @@
                 </div>
 
                 {% elif setting["type"] == "link" %}
-                <div class="field">
-                    <a href="{{ setting['value'] }}">{{ setting["value"] }}</a>
+                <div class="field has-grey-links">
+                    <p><span class="p1">>> </span><a href="{{ setting['value'] }}">{{ setting["value"] }}</a></p>
                 </div>
 
                 {% elif setting["type"] == "text" %}

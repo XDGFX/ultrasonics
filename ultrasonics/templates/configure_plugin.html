@@ -106,8 +106,8 @@
                 <input type="hidden" name="{{ setting['name'] }}" value="{{ setting['value'] }}">
 
                 {% elif setting["type"] == "link" %}
-                <div class="field">
-                    <a href="{{ setting['value'] }}">{{ setting["value"] }}</a>
+                <div class="field has-grey-links">
+                    <p><span class="p1">>> </span><a href="{{ setting['value'] }}">{{ setting["value"] }}</a></p>
                 </div>
 
                 {% elif setting["type"] == "text" %}
