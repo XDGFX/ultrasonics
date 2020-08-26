@@ -248,6 +248,25 @@ def html_configure_plugin():
     return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html, test_exists=test_exists)
 
 
+@app.route('/settings', methods=['GET', 'POST'])
+def html_settings():
+    """
+    Global ultrasonics settings page.
+    """
+    if request.form.get('action') == "save":
+        # Generate key, value tuples (reversed for database entry) from supplied form data
+        data = [(value, key)
+                for key, value in request.form.to_dict().items() if key != "action"]
+
+        database.global_settings_save(data)
+
+        return redirect("/", code=302)
+
+    settings = database.global_settings_load()
+
+    return render_template("settings.html", settings=settings)
+
+
 # Welcome Page
 @app.route('/welcome')
 def html_welcome():

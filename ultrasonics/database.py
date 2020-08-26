@@ -18,6 +18,33 @@ db_file = "config/ultrasonics.db"
 conn = None
 cursor = None
 
+# Global settings builder for the frontend settings page.
+# Values here are defaults, but will be overridden with database values if they exist.
+global_settings = [
+    {
+        "type": "string",
+        "value": "Many plugins utilise third party apis, which often require sensitive api keys 🔑 to access (Spotify, last.fm, Deezer, etc). The ultrasonics-api program acts as a proxy server for these apis, while keeping secret api keys... secret."
+    },
+    {
+        "type": "string",
+        "value": "You can host this yourself alongside ultrasonics, and set up all the required api keys for the services you want to use. Alternatively, use the official hosted server for faster setup."
+    },
+    {
+        "type": "string",
+        "value": "If you don't need / want to use any of these services, just leave the url empty 😊."
+    },
+    {
+        "type": "link",
+        "value": "https://github.com/XDGFX/ultrasonics-api"
+    },
+    {
+        "type": "text",
+        "label": "ultrasonics-api URL",
+        "name": "api_url",
+        "value": "https://ultrasonics-api.herokuapp.com/api/",
+    }
+]
+
 
 # --- GENERAL ---
 def connect():
@@ -32,8 +59,11 @@ def connect():
 
         try:
             if new_install() == None:
-
                 _ultrasonics["new_install"] = True
+
+                # Create tuple with default settings
+                global_settings_database = [(item["name"], item["value"])
+                                            for item in global_settings if item["type"] in ["text", "radio", "select"]]
 
                 # Create persistent settings table if needed
                 query = "CREATE TABLE IF NOT EXISTS ultrasonics (key TEXT, value TEXT)"
@@ -41,6 +71,9 @@ def connect():
 
                 query = "INSERT INTO ultrasonics (key, value) VALUES(?, ?)"
                 cursor.executemany(query, list(_ultrasonics.items()))
+
+                query = "INSERT INTO ultrasonics (key, value) VALUES(?, ?)"
+                cursor.executemany(query, global_settings_database)
 
             # Create persistent settings table if needed
             query = "CREATE TABLE IF NOT EXISTS plugins (id INTEGER PRIMARY KEY, plugin TEXT, version FLOAT, settings TEXT)"
@@ -104,6 +137,64 @@ def new_install(update=False):
 
             except sqlite3.Error as e:
                 log.info("Error while loading database entry", e)
+
+
+def global_settings_load(raw=False):
+    """
+    Return all the current global settings in full dict format.
+    If raw, return only key: value dict
+    """
+    import copy
+
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "SELECT key, value FROM ultrasonics"
+            cursor.execute(query)
+            rows = cursor.fetchall()
+
+            if raw:
+                data = {}
+
+                for key, value in rows:
+                    data[key] = value
+
+            else:
+                data = copy.deepcopy(global_settings)
+
+                db_compatible_settings = [
+                    item["name"] for item in data if item["type"] in ["text", "radio", "select"]]
+
+                for key, value in rows:
+                    # Check if database setting is to be displayed (excluding version, new_install)
+                    if key in db_compatible_settings:
+                        for i, item in enumerate(data):
+                            if "name" in item and item["name"] == key:
+                                # If setting matches database item, update the value
+                                item["value"] = value
+                                data[i] = item
+
+            return data
+
+        except sqlite3.Error as e:
+            log.info("Error while loading applets from database", e)
+
+
+def global_settings_save(settings):
+    """
+    Save a list of global settings tuples to the database.
+    """
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
+        try:
+            query = "UPDATE ultrasonics SET value = ? WHERE key = ?"
+            cursor.executemany(query, settings)
+
+            conn.commit()
+            log.info("Settings database updated")
+
+        except sqlite3.Error as e:
+            log.info("Error while updating settings database", e)
 
 
 # --- PLUGINS ---
