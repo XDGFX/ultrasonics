@@ -23,6 +23,10 @@ handshakes = []
 # Prefix for all plugins in plugins folder, up stands for ultrasonics plugin ;)
 prefix = "up_"
 
+# Setup databases
+dba = database.Applet()
+dbp = database.Plugin()
+
 
 def plugin_gather():
     """
@@ -59,11 +63,11 @@ def plugin_gather():
 
                 log.info(f"Found plugin: {plugin}")
 
-                existing_versions = database.Plugin().versions(title)
+                existing_versions = dbp.versions(title)
                 # If a database entry is not found for the plugin and version, create one
                 if not handshake_version in existing_versions:
                     # Create new entry
-                    database.Plugin().new(title, handshake_version)
+                    dbp.new(title, handshake_version)
 
                     # If an older minor version exists, migrate settings.
                     if existing_versions != [False]:
@@ -76,9 +80,9 @@ def plugin_gather():
                                 f"Performing database migration from older version of {title}")
                             log.info(
                                 f"{migration_version} >> {handshake_version}")
-                            old_settings = database.Plugin().get(
+                            old_settings = dbp.get(
                                 title, migration_version)
-                            database.Plugin().set(
+                            dbp.set(
                                 title, handshake_version, old_settings)
 
 
@@ -86,7 +90,7 @@ def plugin_load(name, version):
     """
     Load plugin persistent settings.
     """
-    plugin_settings = database.Plugin().get(name, version)
+    plugin_settings = dbp.get(name, version)
 
     return plugin_settings
 
@@ -95,7 +99,7 @@ def plugin_build(name, version, component, force=False):
     """
     Find the required settings for a plugin when building an applet.
     """
-    plugin_settings = database.Plugin().get(name, version)
+    plugin_settings = dbp.get(name, version)
 
     # Plugin has not yet been configured
     if not plugin_settings and not force:
@@ -109,7 +113,7 @@ def plugin_update(name, version, settings):
     """
     Send updated persistent plugin settings to the database.
     """
-    database.Plugin().set(name, version, settings)
+    dbp.set(name, version, settings)
 
 
 def plugin_run(name, version, settings_dict, component=None, applet_id=None, songs_dict=None):
@@ -126,7 +130,7 @@ def plugin_run(name, version, settings_dict, component=None, applet_id=None, son
     response:        either a success message, or the new songs_dict
     """
     log.debug(f"Running plugin {name} v{version}")
-    plugin_settings = database.Plugin().get(name, version)
+    plugin_settings = dbp.get(name, version)
 
     response = found_plugins[name].run(
         settings_dict, database=plugin_settings, component=component, applet_id=applet_id, songs_dict=songs_dict)
@@ -174,7 +178,7 @@ def applet_gather():
     """
     Gather the list of existing applets.
     """
-    applet_list = database.Applet().gather()
+    applet_list = dba.gather()
     return applet_list
 
 
@@ -182,7 +186,7 @@ def applet_load(applet_id):
     """
     Load an existing applet to be edited.
     """
-    applet_plans = database.Applet().get(applet_id)
+    applet_plans = dba.get(applet_id)
 
     # Add applet id back into plans dict
     applet_plans["applet_id"] = applet_id
@@ -197,7 +201,7 @@ def applet_build(applet_plans):
     applet_id = applet_plans["applet_id"]
     applet_plans.pop("applet_id")
 
-    database.Applet().set(applet_id, applet_plans)
+    dba.set(applet_id, applet_plans)
     scheduler.applet_submit(applet_id)
 
 
@@ -205,7 +209,7 @@ def applet_delete(applet_id):
     """
     Remove an applet from the database.
     """
-    database.Applet().remove(applet_id)
+    dba.remove(applet_id)
 
 
 def applet_run(applet_id):
@@ -219,7 +223,7 @@ def applet_run(applet_id):
     log.info(f"Running applet: {applet_id}")
 
     try:
-        applet_plans = database.Applet().get(applet_id)
+        applet_plans = dba.get(applet_id)
 
         if not applet_plans["inputs"] or not applet_plans["outputs"]:
             raise Exception(
@@ -272,14 +276,14 @@ def applet_run(applet_id):
         "result": success
     }
 
-    database.Applet().lastrun(applet_id, lastrun)
+    dba.lastrun(applet_id, lastrun)
 
 
 def applet_trigger_run(applet_id):
     """
     Run the trigger function from the requested applet.
     """
-    applet_plans = database.Applet().get(applet_id)
+    applet_plans = dba.get(applet_id)
 
     if not applet_plans["triggers"]:
         log.error(
