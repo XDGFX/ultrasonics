@@ -47,4 +47,10 @@ def filter(songs_dict, regex):
     """
     Takes a standard songs_dict to filter.
     """
-    pass
+    new_playlists = []
+
+    for playlist in songs_dict:
+        if re.match(regex, playlist["name"], re.IGNORECASE):
+            new_playlists.append(playlist)
+
+    return new_playlists

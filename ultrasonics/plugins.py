@@ -25,6 +25,7 @@ prefix = "up_"
 
 # Setup databases
 dba = database.Applet()
+dbc = database.Core()
 dbp = database.Plugin()
 
 
@@ -97,13 +98,15 @@ def plugin_build(name, version, component, force=False):
     """
     Find the required settings for a plugin when building an applet.
     """
-    plugin_settings = dbp.get(name, version)
+    database = dbp.get(name, version)
+    global_settings = dbc.load(raw=True)
 
     # Plugin has not yet been configured
-    if not plugin_settings and not force:
+    if not database and not force:
         return None
 
-    settings_dict = found_plugins[name].builder(plugin_settings, component)
+    settings_dict = found_plugins[name].builder(
+        database=database, global_settings=global_settings, component=component)
     return settings_dict
 
 
@@ -129,9 +132,10 @@ def plugin_run(name, version, settings_dict, component=None, applet_id=None, son
     """
     log.debug(f"Running plugin {name} v{version}")
     plugin_settings = dbp.get(name, version)
+    global_settings = dbc.load(raw=True)
 
     response = found_plugins[name].run(
-        settings_dict, database=plugin_settings, component=component, applet_id=applet_id, songs_dict=songs_dict)
+        settings_dict, database=plugin_settings, global_settings=global_settings, component=component, applet_id=applet_id, songs_dict=songs_dict)
 
     return response
 
@@ -158,7 +162,8 @@ def plugin_test(name, version, database=None, component=None):
         plugin_log.debug(f"Running settings test for plugin {name} v{version}")
 
         try:
-            found_plugins[name].test(database)
+            global_settings = dbc.load(raw=True)
+            found_plugins[name].test(database, global_settings=global_settings)
             logs_string = logs.stop_capture(logs_name)
             return {"response": True, "logs": logs_string}
 
@@ -230,7 +235,7 @@ def applet_run(applet_id):
         else:
             songs_dict = []
 
-            def get_info(pluign):
+            def get_info(plugin):
                 name = plugin["plugin"]
                 version = plugin["version"]
                 data = plugin["data"]

@@ -13,7 +13,7 @@ handshake = {
     "mode": [
         "songs"
     ],
-    "version": "0.1",  # Optionally, "0.1.0"
+    "version": "0.0",  # Optionally, "0.0.0"
     "settings": [
         {
             "type": "text",
@@ -36,13 +36,14 @@ handshake = {
 }
 
 
-def run(settings_dict, database, component, applet_id, songs_dict=None):
+def run(settings_dict, **kwargs):
     """
     The function called when the applet runs.
 
     Inputs:
     settings_dict      Settings specific to this plugin instance
     database           Global persistent settings for this plugin
+    global_settings    Global settings for ultrasonics (e.g. api proxy)
     component          Either "inputs", "modifiers", "outputs", or "trigger"
     applet_id          The unique identifier for this specific applet
     songs_dict         If a modifier or output, the songs dictionary to be used
@@ -50,19 +51,29 @@ def run(settings_dict, database, component, applet_id, songs_dict=None):
     @return:
     If an input or modifier, the new songs_dict must be returned.
     """
+
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+    applet_id = kwargs["applet_id"]
+    songs_dict = kwargs["songs_dict"]
+
     pass
 
 
-def test(settings_dict):
+def test(database, **kwargs):
     """
-    An optional test function. Used to validate persistent settings supplied in settings_dict.
+    An optional test function. Used to validate persistent settings supplied in database.
     Any errors raised will be caught and displayed to the user for debugging.
     If this function is present, test failure will prevent the plugin being added.
     """
+
+    global_settings = kwargs["global_settings"]
+
     pass
 
 
-def builder(database=None, component=None):
+def builder(**kwargs):
     """
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case
@@ -75,6 +86,10 @@ def builder(database=None, component=None):
     settings_dict      Used to build the settings page for this plugin instance
 
     """
+
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
 
     settings_dict = [
         {

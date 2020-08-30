@@ -29,17 +29,20 @@ def applet_submit(applet_id):
     if applet_id in applets_running.keys():
         # Signal that trigger should exit
         applets_running[applet_id] = False
-        time.sleep(60)
 
-    pool.submit(scheduler_applet_loop, applet_id)
-    applets_running[applet_id] = True
+        # Resubmit with a delay to allow the applet to exit
+        pool.submit(scheduler_applet_loop, applet_id, delay=60)
+    else:
+        pool.submit(scheduler_applet_loop, applet_id)
 
 
-def scheduler_applet_loop(applet_id):
+def scheduler_applet_loop(applet_id, delay=0):
     """
     Creates the main applet scheduler run loop.
     """
+    time.sleep(delay)
     log.debug(f"Submitted applet '{applet_id}' to thread pool")
+    applets_running[applet_id] = True
 
     def ExecThread(applet_id):
         try:

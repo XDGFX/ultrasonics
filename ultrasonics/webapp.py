@@ -12,7 +12,7 @@ import copy
 from flask import Flask, redirect, render_template, request
 from flask_socketio import SocketIO, emit, send
 
-from ultrasonics import logs, plugins, database
+from ultrasonics import database, logs, plugins
 
 log = logs.create_log(__name__)
 
@@ -183,6 +183,7 @@ def html_configure_plugin():
 
         plugin = request.form.get('plugin')
         version = request.form.get('version')
+        component = request.form.get('component')
         new_data = {key: value for key, value in request.form.to_dict().items() if key not in [
             'action', 'plugin', 'version', 'component'] and value != ""}
 
@@ -194,7 +195,6 @@ def html_configure_plugin():
         else:
             data.update(new_data)
 
-        component = request.form.get('component')
         persistent = False
 
         if request.form.get('action') == 'test':
@@ -239,6 +239,19 @@ def html_configure_plugin():
         log.error(
             "Could not build plugin! Check your database settings are correct.")
         return render_template('index.html')
+
+    if settings == "":
+        # No settings to configure, add plugin manually and redirect.
+
+        plugin_config = {
+            "plugin": plugin,
+            "version": version,
+            "data": "n/a"
+        }
+
+        Applet.current_plans[component].append(plugin_config)
+
+        return redirect("/new_applet", code=302)
 
     # Check if any settings are custom html strings
     custom_html = any([isinstance(setting, str) for setting in settings])

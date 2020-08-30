@@ -194,6 +194,10 @@ class Core:
         """
         Save a list of global settings tuples to the database.
         """
+        # Add trailing slash to auth url
+        if settings["api_url"][-1] != "/":
+            settings["api_url"] = settings["api_url"] + "/"
+
         with sqlite3.connect(db_file) as conn:
             cursor = conn.cursor()
             try:
