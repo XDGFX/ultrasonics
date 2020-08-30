@@ -201,6 +201,9 @@ def run(settings_dict, **kwargs):
                 "refresh_token": self.refresh_token
             }
 
+            log.info(
+                "Requesting a new Spotify token, this may take a few seconds...")
+
             # Request with a long timeout to account for free Heroku startup 😉
             resp = requests.post(url, data=data, timeout=60)
 
@@ -257,16 +260,34 @@ def run(settings_dict, **kwargs):
             for track in [track["track"] for track in tracks]:
                 artists = [artist["name"] for artist in track["artists"]]
 
+                try:
+                    album = track["album"]["name"]
+                except KeyError:
+                    album = None
+
+                try:
+                    date = track["album"]["release_date"]
+                except KeyError:
+                    date = None
+
+                try:
+                    isrc = track["external_ids"]["isrc"]
+                except KeyError:
+                    isrc = None
+
                 item = {
                     "title": track["name"],
                     "artists": artists,
-                    "album": track["album"]["name"],
-                    "date": track["album"]["release_date"],
-                    "isrc": track["external_ids"]["isrc"],
+                    "album": album,
+                    "date": date,
+                    "isrc": isrc,
                     "id": {
                         "spotify": track["id"]
                     }
                 }
+
+                # Remove any empty fields
+                item = {k: v for k, v in item.items() if v}
 
                 track_list.append(item)
 
