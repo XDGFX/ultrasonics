@@ -1,0 +1,25 @@
+{
+    "python.pythonPath": ".venv/bin/python",
+    "python.linting.enabled": true,
+    "cSpell.words": [
+        "attrib",
+        "deezer",
+        "heroku",
+        "isrc",
+        "playlists",
+        "plex",
+        "resp",
+        "socketio",
+        "uluru"
+    ],
+    "cSpell.ignoreWords": [
+        "centered",
+        "checkradio",
+        "fuzzyness",
+        "fuzzywuzzy",
+        "lastrun",
+        "strftime",
+        "testbutton",
+        "vcentered"
+    ]
+}

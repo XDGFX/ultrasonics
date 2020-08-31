@@ -196,7 +196,7 @@ def run(settings_dict, **kwargs):
     if component == "inputs":
         songs_dict = []
 
-        # Copies Plex playlists to .ultrasonics_tmp folder in music firectory
+        # Copies Plex playlists to .ultrasonics_tmp folder in music directory
         for key in keys:
             name, playlist = fetch_playlists(key)
 

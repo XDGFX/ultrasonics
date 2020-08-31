@@ -154,7 +154,7 @@ def run(settings_dict, **kwargs):
             log.info(
                 "Requesting a new Spotify token, this may take a few seconds...")
 
-            # Request with a long timeout to account for free Heroku startup 😉
+            # Request with a long timeout to account for free Heroku start-up 😉
             resp = requests.post(url, data=data, timeout=60)
 
             if resp.status_code == 200:
@@ -190,7 +190,7 @@ def run(settings_dict, **kwargs):
                     continue
 
             log.error(
-                "An error occured while trying to contact the Spotify api.")
+                "An error occurred while trying to contact the Spotify api.")
             raise Exception(e)
 
         def search(self, track):

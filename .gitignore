@@ -134,5 +134,6 @@ dmypy.json
 # Ultrasonics specifics
 .vscode/*
 !.vscode/launch.json
+!.vscode/settings.json
 *.db
 date_dict.json

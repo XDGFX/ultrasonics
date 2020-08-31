@@ -35,7 +35,7 @@ def check(version, tests):
 
     # Loop over each existing version, and find the latest old version
     for version in tests:
-        # Descrease test length if needed
+        # Decrease test length if needed
         test_length_min = min([test_length, len(version)])
 
         for i in range(test_length_min):

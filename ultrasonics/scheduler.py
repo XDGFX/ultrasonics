@@ -48,7 +48,7 @@ def scheduler_applet_loop(applet_id, delay=0):
         try:
             plugins.applet_trigger_run(applet_id)
         except Exception as e:
-            # An error has occured
+            # An error has occurred
             log.error(e)
             return True
         else:
