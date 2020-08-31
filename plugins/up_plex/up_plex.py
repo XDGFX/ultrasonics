@@ -92,7 +92,12 @@ handshake = {
 }
 
 
-def run(settings_dict, database, component, applet_id, songs_dict=None):
+def run(settings_dict, **kwargs):
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+    applet_id = kwargs["applet_id"]
+    songs_dict = kwargs["songs_dict"]
 
     def fetch_playlists(key):
         url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
@@ -273,10 +278,12 @@ def run(settings_dict, database, component, applet_id, songs_dict=None):
         shutil.rmtree(temp_path)
 
 
-def test(database):
+def test(database, **kwargs):
     """
     Checks if Plex Media Server responds to API requests.
     """
+    global_settings = kwargs["global_settings"]
+
     log.debug("Checking that Plex responds to API requests...")
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
     check_ssl = database["check_ssl"] == "Yes"
@@ -319,7 +326,11 @@ def test(database):
     log.info("Settings test successful.")
 
 
-def builder(database, component):
+def builder(**kwargs):
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+
     url = f"{database['server_url']}/library/sections/?X-Plex-Token={database['plex_token']}"
     check_ssl = "check_ssl" in database.keys()
 

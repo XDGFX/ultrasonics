@@ -72,11 +72,17 @@ supported_playlist_extensions = [
 ]
 
 
-def run(settings_dict, database, component, applet_id, songs_dict=None):
+def run(settings_dict, **kwargs):
     """
     if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
     if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
     """
+
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+    applet_id = kwargs["applet_id"]
+    songs_dict = kwargs["songs_dict"]
 
     def remove_prepend(path, invert=False):
         """
@@ -253,13 +259,17 @@ def run(settings_dict, database, component, applet_id, songs_dict=None):
             f.close()
 
 
-def builder(database=None, component=None):
+def builder(**kwargs):
     """
     This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
     It returns a dictionary containing the settings the user must input in this case.
 
     Inputs: Persistent database settings for this plugin
     """
+
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
 
     settings_dict = [
         {

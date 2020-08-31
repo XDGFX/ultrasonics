@@ -237,7 +237,7 @@ def html_configure_plugin():
 
     except Exception as e:
         log.error(
-            "Could not build plugin! Check your database settings are correct.")
+            "Could not build plugin! Check your database settings are correct.", e)
         return render_template('index.html')
 
     if settings == "":

@@ -84,7 +84,7 @@ def run(settings_dict, database, component, applet_id, songs_dict):
         output_playlist = copy.deepcopy(playlist_b)
 
         for song in playlist_a:
-            is_duplicate = fuzzymatch.match(song, playlist_b, fuzzy_ratio)
+            is_duplicate = fuzzymatch.duplicate(song, playlist_b, fuzzy_ratio)
 
             if not is_duplicate:
                 output_playlist.append[song]
