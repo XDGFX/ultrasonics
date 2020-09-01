@@ -96,7 +96,7 @@ class Applet:
     default_plans = {
         "applet_name": "",
         "applet_id": "",
-        "applet_mode": "",
+        # "applet_mode": "",
         "inputs": [],
         "modifiers": [],
         "outputs": [],
@@ -118,7 +118,7 @@ def html_new_applet():
 
         Applet.current_plans["applet_id"] = applet_id
 
-        Applet.current_plans["applet_mode"] = request.args.get('mode')
+        # Applet.current_plans["applet_mode"] = request.args.get('mode')
 
         # Redirect to remove url parameters
         return redirect(request.path, code=302)
@@ -155,7 +155,7 @@ def html_new_applet():
 @app.route('/select_plugin')
 def html_select_plugin():
     component = request.args['component']
-    mode = Applet.current_plans['applet_mode']
+    # mode = Applet.current_plans['applet_mode']
 
     if not component:
         log.error("Component not supplied as argument")
@@ -165,7 +165,7 @@ def html_select_plugin():
     selected_handshakes = list()
 
     for handshake in handshakes:
-        if component in handshake["type"] and mode in handshake["mode"]:
+        if component in handshake["type"]:  # and mode in handshake["mode"]:
             selected_handshakes.append(handshake)
 
     return render_template('select_plugin.html', handshakes=selected_handshakes, component=component)
