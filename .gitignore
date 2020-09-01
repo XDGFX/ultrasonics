@@ -137,4 +137,7 @@ dmypy.json
 !.vscode/settings.json
 *.db
 *.db-journal
-date_dict.json
+**/date_dict.json
+
+config/*
+plugins/*

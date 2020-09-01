@@ -5,6 +5,7 @@
 .env
 
 __pycache__
+**/__pycache__
 *.pyc
 *.pyo
 *.pyd
@@ -12,9 +13,15 @@ __pycache__
 
 *.md
 **/*~
-**/*.log
+*.log
 **/.DS_Store
 **/Thumbs.db
+*.db
+
+concepts
+**/date_dict.json
+**/sample_songlist.json
+
 
 config/*
 plugins/*
