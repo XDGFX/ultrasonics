@@ -8,6 +8,7 @@ XDGFX, 2020
 """
 
 import logging
+import logging.handlers
 
 buffer = {}
 handler = {}
@@ -22,12 +23,21 @@ def create_log(name):
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
 
+    # Add filehandler to logger
+    fh = logging.handlers.RotatingFileHandler(
+        f"logs/{name}.log",  maxBytes=1048576, backupCount=2)
+    fh.setLevel(logging.DEBUG)
+
     # Apply log formatting
     formatter = logging.Formatter(
         '%(asctime)s: %(name)-22s - %(levelname)-7s - %(message)s')
     ch.setFormatter(formatter)
+    fh.setFormatter(formatter)
 
     log.addHandler(ch)
+    log.addHandler(fh)
+
+    log.debug("--- Log created ---")
 
     return log
 
