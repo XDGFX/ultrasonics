@@ -11,6 +11,7 @@ import importlib
 import json
 import os
 import re
+from itertools import chain
 
 from ultrasonics import database, logs, scheduler
 
@@ -28,12 +29,15 @@ dba = database.Applet()
 dbc = database.Core()
 dbp = database.Plugin()
 
+# Possible plugin locations
+paths = ("./plugins", "./ultrasonics/official_plugins")
+
 
 def plugin_gather():
     """
-    Used to find all variables within the ./plugins directory, and saves them to the 'found_plugins' dictionary.
+    Used to find all modules within the plugins directories, and saves them to the 'found_plugins' dictionary.
     """
-    for _, _, items in os.walk("./plugins"):
+    for _, _, items in chain.from_iterable(os.walk(path) for path in paths):
         for item in items:
 
             # Check if file has .py extension
@@ -42,8 +46,14 @@ def plugin_gather():
                 # Extract name of file excluding extension
                 title = re.search(prefix + "([\w\W]+)\.py$", item)[1]
 
-                plugin = importlib.import_module(
-                    f"plugins.{prefix + title}.{prefix + title}", ".")
+                try:
+                    # First try to import from official plugins
+                    plugin = importlib.import_module(
+                        f"ultrasonics.official_plugins.{prefix + title}.{prefix + title}", ".")
+                except ModuleNotFoundError:
+                    # Then try to import from installed plugins
+                    plugin = importlib.import_module(
+                        f"plugins.{prefix + title}.{prefix + title}", ".")
 
                 for key in ["name", "description"]:
                     plugin.handshake[key] = plugin.handshake[key].lower().strip(
@@ -293,6 +303,7 @@ def applet_trigger_run(applet_id):
             f"No trigger is supplied for applet {applet_id} - will not run automatically.")
         raise Exception
 
+    # This needs to be fixed, currently both triggers must activate before the applet runs (AND not OR)
     for trigger in applet_plans["triggers"]:
         name = trigger["plugin"]
         version = trigger["version"]

@@ -136,4 +136,5 @@ dmypy.json
 !.vscode/launch.json
 !.vscode/settings.json
 *.db
+*.db-journal
 date_dict.json

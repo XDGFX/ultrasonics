@@ -17,9 +17,11 @@
         "checkradio",
         "fuzzyness",
         "fuzzywuzzy",
+        "itertools",
         "lastrun",
         "strftime",
         "testbutton",
         "vcentered"
-    ]
+    ],
+    "cSpell.enabled": false
 }

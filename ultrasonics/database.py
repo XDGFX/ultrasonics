@@ -210,6 +210,25 @@ class Core:
             except sqlite3.Error as e:
                 log.info("Error while updating settings database", e)
 
+    def get(self, key):
+        """
+        Get a specific value from the ultrasonics core database.
+        """
+        with sqlite3.connect(db_file) as conn:
+            cursor = conn.cursor()
+            try:
+                query = "SELECT value FROM ultrasonics WHERE key = ?"
+                cursor.execute(query, (key,))
+                rows = cursor.fetchall()
+
+                try:
+                    return rows[0][0]
+                except IndexError:
+                    return None
+
+            except sqlite3.Error as e:
+                log.info("Error while loading applets from database", e)
+
 
 class Plugin:
     """

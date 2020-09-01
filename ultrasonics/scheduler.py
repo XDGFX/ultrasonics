@@ -31,7 +31,8 @@ def applet_submit(applet_id):
         applets_running[applet_id] = False
 
         # Resubmit with a delay to allow the applet to exit
-        pool.submit(scheduler_applet_loop, applet_id, delay=60)
+        pool.submit(scheduler_applet_loop, applet_id,
+                    delay=trigger_poll())
     else:
         pool.submit(scheduler_applet_loop, applet_id)
 
@@ -62,7 +63,7 @@ def scheduler_applet_loop(applet_id, delay=0):
 
         # Wait for trigger to complete
         while not trigger_thread.done():
-            time.sleep(60)
+            time.sleep(trigger_poll())
 
             # Check if trigger has been removed
             if not applets_running[applet_id]:
@@ -77,3 +78,11 @@ def scheduler_applet_loop(applet_id, delay=0):
             plugins.applet_run(applet_id)
         else:
             break
+
+
+def trigger_poll():
+    """
+    Gets the trigger_poll value from the ultrasonics database.
+    """
+    trigger_poll = database.Core().get("trigger_poll")
+    return int(trigger_poll)

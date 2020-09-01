@@ -49,7 +49,14 @@ handshake = {
 }
 
 
-def run(settings_dict, database, component, applet_id, songs_dict):
+def run(settings_dict, **kwargs):
+
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+    applet_id = kwargs["applet_id"]
+    songs_dict = kwargs["songs_dict"]
+
     def try_float(string):
         try:
             return float(string)
@@ -75,8 +82,8 @@ def run(settings_dict, database, component, applet_id, songs_dict):
             seen[name] += 1
 
     for duplicate in duplicate_playlists:
-        playlists = [playlist["songs"]
-                     for playlist in songs_dict if playlist["name"] == duplicate]
+        playlists, ids = zip(*[(playlist["songs"], playlist["id"])
+                               for playlist in songs_dict if playlist["name"] == duplicate])
 
         playlist_a = playlists[0]
         playlist_b = playlists[1]
@@ -91,16 +98,19 @@ def run(settings_dict, database, component, applet_id, songs_dict):
 
         playlist_a = {
             "name": duplicate,
+            "id": ids[0],
             "songs": playlist_a
         }
 
         playlist_b = {
             "name": duplicate,
+            "id": ids[1],
             "songs": playlist_b
         }
 
         output_playlist = {
             "name": duplicate,
+            "id": {**ids[0], **ids[1]},
             "songs": output_playlist
         }
 
@@ -112,7 +122,12 @@ def run(settings_dict, database, component, applet_id, songs_dict):
     return songs_dict
 
 
-def builder(database, component):
+def builder(**kwargs):
+
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+
     settings_dict = [
         {
             "type": "string",

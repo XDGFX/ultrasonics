@@ -67,17 +67,10 @@ handshake = {
 
 def run(settings_dict, **kwargs):
     """
-    The function called when the applet runs.
+    Runs the up_spotify plugin.
 
-    Inputs:
-    settings_dict      Settings specific to this plugin instance
-    database           Global persistent settings for this plugin
-    component          Either "inputs", "modifiers", "outputs", or "trigger"
-    applet_id          The unique identifier for this specific applet
-    songs_dict         If a modifier or output, the songs dictionary to be used
-
-    @return:
-    If an input or modifier, the new songs_dict must be returned.
+    Important note: songs will only be appended to playlists if they are new!
+    No songs will be removed from existing playlists, nothing will be over-written.
     """
 
     database = kwargs["database"]
