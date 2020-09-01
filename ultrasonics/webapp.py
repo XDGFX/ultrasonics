@@ -8,6 +8,7 @@ XDGFX, 2020
 """
 
 import copy
+import os
 
 from flask import Flask, redirect, render_template, request
 from flask_socketio import SocketIO, emit, send
@@ -24,7 +25,7 @@ sio = SocketIO(app, async_mode='eventlet')
 # --- GENERAL ---
 def server_start():
     log.debug("Starting webserver")
-    sio.run(app, host="0.0.0.0", debug=True)
+    sio.run(app, host="0.0.0.0", debug=os.environ.get('FLASK_DEBUG') or False)
 
 
 def send(event, data):

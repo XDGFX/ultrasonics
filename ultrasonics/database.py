@@ -18,14 +18,14 @@ db_file = "config/ultrasonics.db"
 conn = None
 cursor = None
 
-# Global settings builder for the frontend settings page.
-# Values here are defaults, but will be overridden with database values if they exist.
-
 
 class Core:
     """
     Core ultrasonics database functions.
     """
+
+    # Global settings builder for the frontend settings page.
+    # Values here are defaults, but will be overridden with database values if they exist.
     settings = [
         {
             "type": "string",
