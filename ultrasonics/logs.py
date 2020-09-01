@@ -29,15 +29,18 @@ def create_log(name):
     fh.setLevel(logging.DEBUG)
 
     # Apply log formatting
-    formatter = logging.Formatter(
-        '%(asctime)s: %(name)-22s - %(levelname)-7s - %(message)s')
-    ch.setFormatter(formatter)
-    fh.setFormatter(formatter)
+    formatter = []
+    formatter.append(logging.Formatter(
+        '%(asctime)s: %(name)-22s - %(levelname)-7s - %(message)s'))
+    formatter.append(logging.Formatter(
+        '%(asctime)s: %(levelname)-7s - %(message)s'))
+    ch.setFormatter(formatter[0])
+    fh.setFormatter(formatter[1])
 
     log.addHandler(ch)
     log.addHandler(fh)
 
-    log.debug("--- Log created ---")
+    log.debug("LOG CREATED")
 
     return log
 

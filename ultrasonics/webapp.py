@@ -24,7 +24,7 @@ sio = SocketIO(app, async_mode='eventlet')
 # --- GENERAL ---
 def server_start():
     log.debug("Starting webserver")
---    sio.run(app, host="0.0.0.0", debug=True)
+    sio.run(app, host="0.0.0.0", debug=True)
 
 
 def send(event, data):
