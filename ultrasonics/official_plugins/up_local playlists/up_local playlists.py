@@ -177,6 +177,7 @@ def run(settings_dict, **kwargs):
             # Initialise entry for this playlist
             songs_dict_entry = {
                 "name": playlist["name"],
+                "id": {},
                 "songs": []
             }
 

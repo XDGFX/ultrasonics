@@ -202,6 +202,7 @@ def run(settings_dict, **kwargs):
 
             songs_dict_entry = {
                 "name": name,
+                "id": {},
                 "songs": playlist
             }
 
