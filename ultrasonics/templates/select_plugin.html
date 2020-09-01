@@ -57,17 +57,21 @@
             <div class="container">
                 <div class="field">
                     <div class="plugin_builder_buttons" id="plugin_builder">
-
-                        {% for handshake in handshakes %}
-                        <a class="button plugin"
-                            href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}&persistent=0">
-                            <div>
-                                <p><b>{{ handshake.name }} - <span class="p1">v{{ handshake.version }}</span></b></p>
-                                <p class="is-size-6">{{ handshake.description }}</p>
+                        <div class="columns is-multiline">
+                            {% for handshake in handshakes %}
+                            <div class="column is-3">
+                                <a class="button plugin"
+                                    href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}&persistent=0">
+                                    <div>
+                                        <p><b>{{ handshake.name }} - <span
+                                                    class="p1">v{{ handshake.version }}</span></b>
+                                        </p>
+                                        <p class="is-size-6">{{ handshake.description }}</p>
+                                    </div>
+                                </a>
                             </div>
-                        </a>
-                        {% endfor %}
-
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
 
