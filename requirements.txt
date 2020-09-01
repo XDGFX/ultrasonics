@@ -2,7 +2,6 @@
 Flask==1.1.2
 Flask-SocketIO==4.3.1
 eventlet==0.26.1
-gunicorn==20.0.4
 
 # Included Plugins
 mutagen==1.45.1

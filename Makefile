@@ -5,8 +5,3 @@ build:
 
 run:
 	docker run --detach --name $(app_name) -p 5000:5000 $(app_name)
-
-kill:
-	@echo 'Killing container...'
-	@docker ps | grep $(app_name) | awk '{print $$1}' | xargs docker
-	
