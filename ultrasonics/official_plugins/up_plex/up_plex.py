@@ -66,7 +66,7 @@ handshake = {
         },
         {
             "type": "string",
-            "value": "Do you want to check SSL when connecting? If in doubt, just leave it unchecked."
+            "value": "Do you want to check SSL when connecting?"
         },
         {
             "type": "radio",
@@ -288,7 +288,7 @@ def test(database, **kwargs):
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
     check_ssl = database["check_ssl"] == "Yes"
 
-    resp = requests.get(url, timeout=30, verify=check_ssl)
+    resp = requests.get(url, timeout=5, verify=check_ssl)
 
     if resp.status_code == 200:
         log.debug("Test successful.")
@@ -296,7 +296,7 @@ def test(database, **kwargs):
         raise Exception(
             "Did not successfully connect to Plex API. Check your server URL and token.")
 
-    log.debug["Testing music directories..."]
+    log.debug("Testing music directories...")
     if database["plex_prepend"] and database["ultrasonics_prepend"] and os.path.isdir(database["ultrasonics_prepend"]):
         log.debug("Plex and ultrasonics music paths detected successfully.")
     else:

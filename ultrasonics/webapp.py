@@ -200,6 +200,7 @@ def html_configure_plugin():
         if request.form.get('action') == 'test':
             response = plugins.plugin_test(plugin, version, data, component)
             sio.emit("plugin_test", response)
+            return
         else:
             plugins.plugin_update(plugin, version, data)
 

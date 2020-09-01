@@ -180,9 +180,13 @@
                                     // Update action data and button animation
                                     action = document.getElementById("configure_plugin_action")
                                     button_test = document.getElementById("configure_plugin_testbutton")
+                                    tag_success = document.getElementById("configure_plugin_success")
+                                    tag_failed = document.getElementById("configure_plugin_failed")
 
                                     action.value = "test";
                                     button_test.classList.add("is-loading")
+                                    tag_success.hidden = true
+                                    tag_failed.hidden = true
 
                                     // Submit form data
                                     formData = new FormData(document.getElementById('configure_plugin'))
@@ -234,7 +238,7 @@
 
                         </div>
                     </div>
-                    <div class="column">
+                    <div class="column is-narrow">
                         <div class="content">
                             <div class="tag is-danger" id="configure_plugin_failed" hidden>Test failed. Plugin logs have
                                 been pushed to your browser

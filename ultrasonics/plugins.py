@@ -48,12 +48,14 @@ def plugin_gather():
 
                 try:
                     # First try to import from official plugins
+                    plugin_path = f"ultrasonics.official_plugins.{prefix + title}.{prefix + title}"
                     plugin = importlib.import_module(
-                        f"ultrasonics.official_plugins.{prefix + title}.{prefix + title}", ".")
+                        plugin_path, ".")
                 except ModuleNotFoundError:
                     # Then try to import from installed plugins
+                    plugin_path = f"plugins.{prefix + title}.{prefix + title}"
                     plugin = importlib.import_module(
-                        f"plugins.{prefix + title}.{prefix + title}", ".")
+                        plugin_path, ".")
 
                 for key in ["name", "description"]:
                     plugin.handshake[key] = plugin.handshake[key].lower().strip(
@@ -71,6 +73,7 @@ def plugin_gather():
                 # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
                 handshakes.append(plugin.handshake)
                 found_plugins[title] = plugin
+                found_plugins[title].plugin_logs_path = plugin_path
 
                 log.info(f"Found plugin: {plugin}")
 
@@ -166,7 +169,7 @@ def plugin_test(name, version, database=None, component=None):
         return {"response": False, "logs": "ERROR   - No database values were received!"}
 
     elif database:
-        logs_name = f"plugins.up_plex.up_plex"
+        logs_name = found_plugins[name].plugin_logs_path
         plugin_log = logs.start_capture(logs_name)
 
         plugin_log.debug(f"Running settings test for plugin {name} v{version}")
