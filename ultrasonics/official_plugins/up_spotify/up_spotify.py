@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 
-import ast
-import io
+"""
+up_spotify
+
+Official input and output plugin for Spotify. Can access a user's public or private playlists,and read songs from, or save songs to them.
+Will not overwrite songs already in a playlist, so stuff like date added are kept accurate.
+
+XDGFX, 2020
+"""
+
+import bz2
+import json
 import os
+import pickle
 import re
 from urllib.parse import urlencode, urljoin
 
 import requests
 import spotipy
 
+from app import _ultrasonics
 from ultrasonics import logs
 from ultrasonics.tools.fuzzymatch import fuzzymatch
 from ultrasonics.tools.name_filter import name_filter
@@ -85,7 +96,15 @@ def run(settings_dict, **kwargs):
         """
 
         def __init__(self):
-            self.cache_file = os.path.join(os.path.dirname(__file__), ".cache")
+            self.cache_file = os.path.join(
+                _ultrasonics["config_dir"], "up_spotify", "up_spotify.bz2")
+
+            # Create the containing folder if it doesn't already exist
+            try:
+                os.mkdir(os.path.dirname(self.cache_file))
+            except FileExistsError:
+                # Folder already exists
+                pass
 
         def token_get(self, force=False):
             """
@@ -96,8 +115,8 @@ def run(settings_dict, **kwargs):
             If #2, the access token is saved to a .cache file.
             """
             if os.path.isfile(self.cache_file) and not force:
-                with io.open(self.cache_file, "r") as f:
-                    raw = ast.literal_eval(f.read())
+                with bz2.BZ2File(self.cache_file, "r") as f:
+                    raw = json.loads(pickle.load(f))
                     token = raw["access_token"]
 
                 # Checks that the cached token is valid
@@ -153,8 +172,8 @@ def run(settings_dict, **kwargs):
             if resp.status_code == 200:
                 log.debug(f"Spotify renew data: {resp.text}")
 
-                with io.open(self.cache_file, "w") as f:
-                    f.write(resp.text)
+                with bz2.BZ2File(self.cache_file, "w") as f:
+                    pickle.dump(resp.text, f)
 
                 token = resp.json()["access_token"]
 
@@ -395,7 +414,7 @@ def run(settings_dict, **kwargs):
 
     s.api_url = global_settings["api_url"]
 
-    auth = ast.literal_eval(database["auth"])
+    auth = json.loads(database["auth"])
     s.refresh_token = auth["refresh_token"]
 
     s.sp = spotipy.Spotify(auth=s.token_get())

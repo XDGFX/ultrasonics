@@ -276,7 +276,7 @@ def applet_run(applet_id):
             success = True
 
     except Exception as e:
-        log.error(e)
+        log.error(e, exc_info=True)
 
         success = False
 

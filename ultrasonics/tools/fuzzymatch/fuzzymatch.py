@@ -151,42 +151,50 @@ def similarity(a, b):
 
     # ISRC score
     try:
-        results["isrc"] = int(a["isrc"].strip() == b["isrc"].strip()) * 100
+        results["isrc"] = int(a["isrc"].strip().lower() ==
+                              b["isrc"].strip().lower()) * 100
+        isrc_match = results["isrc"] == 100
     except KeyError:
+        isrc_match = False
         pass
 
     # Name and album scores
     for key in ["title", "album"]:
+        if key == "title" and isrc_match:
+            # Don't bother matching title, only album
+            continue
         try:
             cleaned_a = re.sub(
                 cutoff_regex[0], "", a[key], flags=re.IGNORECASE) + "\n"
             cleaned_a = re.sub(
-                cutoff_regex[1], " ", cleaned_a, flags=re.IGNORECASE).strip()
+                cutoff_regex[1], " ", cleaned_a, flags=re.IGNORECASE).strip().lower()
 
             cleaned_b = re.sub(
                 cutoff_regex[0], "", b[key], flags=re.IGNORECASE) + "\n"
             cleaned_b = re.sub(
-                cutoff_regex[1], " ", cleaned_b, flags=re.IGNORECASE).strip()
+                cutoff_regex[1], " ", cleaned_b, flags=re.IGNORECASE).strip().lower()
 
             results[key] = fuzz.ratio(cleaned_a, cleaned_b)
 
         except KeyError:
             pass
 
-    # Date score
-    try:
-        results["date"] = fuzz.token_set_ratio(a["date"], b["date"])
-    except KeyError:
-        pass
+    if not isrc_match:
+        # Date score
+        try:
+            results["date"] = fuzz.token_set_ratio(a["date"], b["date"])
+        except KeyError:
+            pass
 
-    # Artist score can be a partial match; allowing missing artists
-    try:
-        artists_a = " ".join(a["artists"]).lower()
-        artists_b = " ".join(b["artists"]).lower()
+        # Artist score can be a partial match; allowing missing artists
+        try:
+            artists_a = " ".join(a["artists"]).lower()
+            artists_b = " ".join(b["artists"]).lower()
 
-        results["artist"] = fuzz.partial_token_sort_ratio(artists_a, artists_b)
-    except KeyError:
-        pass
+            results["artist"] = fuzz.partial_token_sort_ratio(
+                artists_a, artists_b)
+        except KeyError:
+            pass
 
     weight = {
         "isrc": 10,

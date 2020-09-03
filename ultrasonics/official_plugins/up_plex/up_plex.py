@@ -235,6 +235,9 @@ def run(settings_dict, **kwargs):
             songs = item["songs"]
 
             for song in songs:
+                # Skip songs without local file
+                if "location" not in song.keys():
+                    continue
 
                 # Find location of song, and convert back to local playlists format
                 song_path = song["location"]

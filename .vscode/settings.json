@@ -23,5 +23,8 @@
         "testbutton",
         "vcentered"
     ],
-    "cSpell.enabled": false
+    "cSpell.enabled": false,
+    "cSpell.enableFiletypes": [
+        "python"
+    ]
 }
