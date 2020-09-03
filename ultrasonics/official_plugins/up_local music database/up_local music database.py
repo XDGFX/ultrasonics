@@ -227,6 +227,7 @@ def run(settings_dict, **kwargs):
 
                 if ext not in supported_audio_extensions:
                     # Skip the file
+                    log.debug(item)
                     log.debug(
                         f"Unsupported extension for local music file: {ext}")
                     continue
@@ -243,7 +244,15 @@ def run(settings_dict, **kwargs):
                     # File already exists in database
                     continue
 
-                song = local_tags.tags(location)
+                try:
+                    song = local_tags.tags(location)
+                except NotImplementedError as e:
+                    # Skip the file
+                    log.debug(e)
+                    log.debug(
+                        f"Unsupported extension for local music file: {ext}")
+                    continue
+
                 songs.append(song)
                 mtimes.append(new_mtime)
 

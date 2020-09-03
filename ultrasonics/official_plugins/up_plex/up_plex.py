@@ -99,7 +99,7 @@ def run(settings_dict, **kwargs):
     applet_id = kwargs["applet_id"]
     songs_dict = kwargs["songs_dict"]
 
-    def fetch_playlists(key):
+    def fetch_playlist(key):
         url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
 
         resp = requests.get(url, timeout=30, verify=check_ssl)
@@ -180,7 +180,11 @@ def run(settings_dict, **kwargs):
     keys = []
     for document in root.findall("Playlist"):
         if document.get('smart') == "0" and document.get('playlistType') == "audio":
-            keys.append(document.get('key'))
+            title = document.get('title')
+
+            # Check if title matches regex setting
+            if re.match(settings_dict["filter"], title, re.IGNORECASE):
+                keys.append(document.get('key'))
 
     log.info(f"Found {len(keys)} playlists.")
 
@@ -198,7 +202,7 @@ def run(settings_dict, **kwargs):
 
         # Copies Plex playlists to .ultrasonics_tmp folder in music directory
         for key in keys:
-            name, playlist = fetch_playlists(key)
+            name, playlist = fetch_playlist(key)
 
             songs_dict_entry = {
                 "name": name,
@@ -368,5 +372,25 @@ def builder(**kwargs):
             "options": sections
         }
     ]
+
+    if component == "inputs":
+        settings_dict.extend(
+            [
+                {
+                    "type": "string",
+                    "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
+                },
+                {
+                    "type": "string",
+                    "value": "Leave it blank to sync everything 🤓."
+                },
+                {
+                    "type": "text",
+                    "label": "Filter",
+                    "name": "filter",
+                    "value": ""
+                }
+            ]
+        )
 
     return settings_dict
