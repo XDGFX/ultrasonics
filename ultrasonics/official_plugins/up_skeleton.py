@@ -58,6 +58,12 @@ def run(settings_dict, **kwargs):
     applet_id = kwargs["applet_id"]
     songs_dict = kwargs["songs_dict"]
 
+    log.debug("This is a debug message")
+    log.info("This is a info message")
+    log.warning("This is a warning message")
+    log.error("This is a error message")
+    log.critical("This is a critical message")
+
     pass
 
 

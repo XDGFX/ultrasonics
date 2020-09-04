@@ -16,8 +16,7 @@ import io
 import os
 
 from ultrasonics import logs
-from ultrasonics.tools import local_tags
-from ultrasonics.tools import name_filter
+from ultrasonics.tools import local_tags, name_filter
 
 log = logs.create_log(__name__)
 
@@ -71,11 +70,26 @@ supported_playlist_extensions = [
     ".m3u"
 ]
 
+log.info(
+    f"Supported playlist extensions include: {supported_playlist_extensions}")
+
 
 def run(settings_dict, **kwargs):
     """
-    if songs_dict is not supplied, this is an input plugin. it must return a songs_dict
-    if songs_dict is supplied, it can be a modifier (and also returns songs_dict) or an output (and does not return anything)
+    1. Checks for compatibility between unix / nt playlist paths.
+    2. Create a list of all playlists which already exist.
+
+    if input:
+        3. Read each playlist.
+        4. Convert the paths to work with ultrasonics.
+        5. Read matadata from each song and use to build the songs_dict.
+
+        @return: settings_dict
+
+    if output:
+        3. Either open an existing playlist, or create a new playlist with the provided playlist name.
+        4. Convert supplied path back to original playlist path style.
+        5. Update each playlist with the new data (overwrites any existing songs)
     """
 
     database = kwargs["database"]
@@ -264,15 +278,6 @@ def run(settings_dict, **kwargs):
 
 
 def builder(**kwargs):
-    """
-    This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
-    It returns a dictionary containing the settings the user must input in this case.
-
-    Inputs: Persistent database settings for this plugin
-    """
-
-    database = kwargs["database"]
-    global_settings = kwargs["global_settings"]
     component = kwargs["component"]
 
     settings_dict = [

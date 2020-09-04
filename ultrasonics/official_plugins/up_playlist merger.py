@@ -50,11 +50,14 @@ handshake = {
 
 
 def run(settings_dict, **kwargs):
+    """
+    1. Finds all duplicate playlists by title.
+    2. For each duplicate: merges playlist ids.
+    3. For each duplicate: merges all songs from both playlists into new single playlist.
 
+    @return: songs_dict
+    """
     database = kwargs["database"]
-    global_settings = kwargs["global_settings"]
-    component = kwargs["component"]
-    applet_id = kwargs["applet_id"]
     songs_dict = kwargs["songs_dict"]
 
     def try_float(string):
@@ -63,8 +66,10 @@ def run(settings_dict, **kwargs):
         except Exception:
             return None
 
+    # Selecting the requested fuzzy_ratio
     fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"]) or try_float(
-        database["fuzzy_ratio"])) / 100
+        database["fuzzy_ratio"]))
+    log.info(f"Using a fuzzy ratio of {fuzzy_ratio}")
 
     # Find duplicate playlists.
     # If there are more than two duplicates, the playlist name will show up n-1 times in duplicate_playlists.
@@ -81,7 +86,10 @@ def run(settings_dict, **kwargs):
                 duplicate_playlists.append(name)
             seen[name] += 1
 
+    log.info(f"Found {len(duplicate_playlists)} duplicate playlist(s)")
+
     for duplicate in duplicate_playlists:
+        log.info(f"De-duplicating: {duplicate}")
         playlists, ids = zip(*[(playlist["songs"], playlist["id"])
                                for playlist in songs_dict if playlist["name"] == duplicate])
 
@@ -94,7 +102,7 @@ def run(settings_dict, **kwargs):
             is_duplicate = fuzzymatch.duplicate(song, playlist_b, fuzzy_ratio)
 
             if not is_duplicate:
-                output_playlist.append[song]
+                output_playlist.append(song)
 
         playlist_a = {
             "name": duplicate,
@@ -123,10 +131,7 @@ def run(settings_dict, **kwargs):
 
 
 def builder(**kwargs):
-
     database = kwargs["database"]
-    global_settings = kwargs["global_settings"]
-    component = kwargs["component"]
 
     settings_dict = [
         {

@@ -11,16 +11,14 @@ Existing locations are left untouched.
 XDGFX, 2020
 """
 
+import json
 import math
 import os
-import json
 import sqlite3
 
 from app import _ultrasonics
 from ultrasonics import logs
-from ultrasonics.tools import local_tags
-from ultrasonics.tools import fuzzymatch
-from ultrasonics.tools import formatting
+from ultrasonics.tools import fuzzymatch, local_tags
 
 log = logs.create_log(__name__)
 
@@ -38,10 +36,9 @@ except FileExistsError:
     pass
 
 # Get supported files from local_tags library
-nl = "\n"
 supported_audio_extensions = local_tags.supported_audio_extensions
 log.debug(
-    f"Supported extensions for this plugin include:\n    {f'{nl}    '.join(supported_audio_extensions)}")
+    f"Supported extensions for this plugin include: {supported_audio_extensions}")
 
 # Known not-audio files to skip silently
 extension_skiplist = [".jpg", ".png", ".bak", ".dat", ".lrc",
@@ -131,6 +128,7 @@ class Database:
         """
         Save songs in a standard songs_dict to the database, with accompanying modified times.
         """
+        log.debug(f"Updating the database with {len(songs_dict)} new song(s)")
         fields = self.database_fields.split(",")
         sql_data = []
 
@@ -319,14 +317,15 @@ def run(settings_dict, **kwargs):
                 if found:
                     break
 
+            if not found:
+                log.info(f"No local match was found for {song}")
+
     return songs_dict
 
 
 def test(database, **kwargs):
     """
-    An optional test function. Used to validate persistent settings supplied in database.
-    Any errors raised will be caught and displayed to the user for debugging.
-    If this function is present, test failure will prevent the plugin being added.
+    Checks that the supplied music directory is a valid path.
     """
 
     if not os.path.isdir(database["music_dir"]):
@@ -336,25 +335,9 @@ def test(database, **kwargs):
             "Check you have appropriate permissions, and are using absolute paths.")
         raise Exception
 
+    log.info("The supplied music directory is valid.")
+
 
 def builder(**kwargs):
-    """
-    This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
-    It returns a dictionary containing the settings the user must input in this case
-
-    Inputs:
-    database           Persistent database settings for this plugin
-    component          Either "inputs", "modifiers", "outputs", or "trigger"
-
-    @return:
-    settings_dict      Used to build the settings page for this plugin instance
-
-    """
-
-    database = kwargs["database"]
-    global_settings = kwargs["global_settings"]
-    component = kwargs["component"]
-
-    settings_dict = ""
-
-    return settings_dict
+    # No plugin instance specific settings
+    return ""

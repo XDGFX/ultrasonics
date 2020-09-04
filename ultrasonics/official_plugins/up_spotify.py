@@ -21,8 +21,7 @@ import spotipy
 
 from app import _ultrasonics
 from ultrasonics import logs
-from ultrasonics.tools import fuzzymatch
-from ultrasonics.tools import name_filter
+from ultrasonics.tools import fuzzymatch, name_filter
 
 log = logs.create_log(__name__)
 
@@ -82,6 +81,7 @@ def run(settings_dict, **kwargs):
 
     Important note: songs will only be appended to playlists if they are new!
     No songs will be removed from existing playlists, nothing will be over-written.
+    This behaviour is different from some other plugins.
     """
 
     database = kwargs["database"]
@@ -99,6 +99,8 @@ def run(settings_dict, **kwargs):
             self.cache_file = os.path.join(
                 _ultrasonics["config_dir"], "up_spotify", "up_spotify.bz2")
 
+            log.info(f"Credentials will be cached in: {self.cache_file}")
+
             # Create the containing folder if it doesn't already exist
             try:
                 os.mkdir(os.path.dirname(self.cache_file))
@@ -114,6 +116,7 @@ def run(settings_dict, **kwargs):
 
             If #2, the access token is saved to a .cache file.
             """
+            log.debug("Fetching your Spotify token")
             if os.path.isfile(self.cache_file) and not force:
                 with bz2.BZ2File(self.cache_file, "r") as f:
                     raw = json.loads(pickle.load(f))
@@ -121,9 +124,11 @@ def run(settings_dict, **kwargs):
 
                 # Checks that the cached token is valid
                 if self.token_validate(token):
+                    log.debug("Returning cached token")
                     return token
 
             # In all other cases, renew the token
+            log.debug("Returning renewed token")
             return self.token_renew()
 
         def token_validate(self, token):
@@ -170,12 +175,13 @@ def run(settings_dict, **kwargs):
             resp = requests.post(url, data=data, timeout=60)
 
             if resp.status_code == 200:
-                log.debug(f"Spotify renew data: {resp.text}")
+                token = resp.json()["access_token"]
+
+                log.debug(
+                    f"Spotify renew data: {resp.text.replace(token, '***************')}")
 
                 with bz2.BZ2File(self.cache_file, "w") as f:
                     pickle.dump(resp.text, f)
-
-                token = resp.json()["access_token"]
 
                 return token
 
@@ -325,6 +331,8 @@ def run(settings_dict, **kwargs):
                 playlist_count = len(buffer)
                 i += 1
 
+            log.info(f"Found {len(playlists)} playlist(s) on Spotify.")
+
             return playlists
 
         def playlist_tracks(self, playlist_id):
@@ -466,7 +474,12 @@ def run(settings_dict, **kwargs):
                 if playlist["name"] in [item["name"] for item in current_playlists]:
                     playlist_id = [
                         item["id"] for item in current_playlists if item["name"] == playlist["name"]][0]
-            if not playlist_id:
+            if playlist_id:
+                log.info(
+                    f"Playlist {playlist['name']} already exists, updating that one.")
+            else:
+                log.info(
+                    f"Playlist {playlist['name']} does not exist, creating it now...")
                 # Playlist must be created
                 public = database["created_playlists"] == "Public"
                 description = "Created automatically by ultrasonics with 💖"
@@ -481,13 +494,20 @@ def run(settings_dict, **kwargs):
             # Get all tracks already in the playlist
             if "existing_tracks" not in vars():
                 existing_tracks = s.playlist_tracks(playlist_id)
+                existing_uris = ["spotify:track:" + item["id"]["spotify"]
+                                 for item in existing_tracks]
 
             # Add songs which don't already exist in the playlist
             uris = []
 
             for song in playlist["songs"]:
+                # First check for fuzzy duplicate without Spotify api search
                 if not fuzzymatch.duplicate(song, existing_tracks, database["fuzzy_ratio"]):
                     uri, confidence = s.search(song)
+
+                    if uri in existing_uris:
+                        # Song already exists
+                        continue
 
                     if confidence > float(database["fuzzy_ratio"]):
                         uris.append(uri)
@@ -508,34 +528,7 @@ def run(settings_dict, **kwargs):
                           playlist_id, uris)
 
 
-# def test(database, **kwargs):
-#     """
-#     An optional test function. Used to validate persistent settings supplied in settings_dict.
-#     Any errors raised will be caught and displayed to the user for debugging.
-#     If this function is present, test failure will prevent the plugin being added.
-#     """
-
-#     global_settings = kwargs["global_settings"]
-#     auth = ast.literal_eval(database["auth"])
-
-#     pass
-
-
 def builder(**kwargs):
-    """
-    This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
-    It returns a dictionary containing the settings the user must input in this case
-
-    Inputs:
-    database           Persistent database settings for this plugin
-    component          Either "inputs", "modifiers", "outputs", or "trigger"
-
-    @return:
-    settings_dict      Used to build the settings page for this plugin instance
-    """
-
-    database = kwargs["database"]
-    global_settings = kwargs["global_settings"]
     component = kwargs["component"]
 
     if component == "inputs":

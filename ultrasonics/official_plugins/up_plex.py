@@ -93,6 +93,12 @@ handshake = {
 
 
 def run(settings_dict, **kwargs):
+    """
+    Iteracts with playlists on Plex.
+    Songs must have a local path in order to be added.
+    Songs in existing playlists will be overwritten in Plex.
+    """
+
     database = kwargs["database"]
     global_settings = kwargs["global_settings"]
     component = kwargs["component"]
@@ -169,6 +175,9 @@ def run(settings_dict, **kwargs):
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
     check_ssl = database["check_ssl"] == "Yes"
 
+    log.info(
+        f"Requesting playlists from endpoint: {url.replace(database['plex_token'], '***********')}")
+
     resp = requests.get(url, timeout=30, verify=check_ssl)
 
     if resp.status_code != 200:
@@ -180,11 +189,7 @@ def run(settings_dict, **kwargs):
     keys = []
     for document in root.findall("Playlist"):
         if document.get('smart') == "0" and document.get('playlistType') == "audio":
-            title = document.get('title')
-
-            # Check if title matches regex setting
-            if re.match(settings_dict["filter"], title, re.IGNORECASE):
-                keys.append(document.get('key'))
+            keys.append(document.get('key'))
 
     log.info(f"Found {len(keys)} playlists.")
 
@@ -204,13 +209,17 @@ def run(settings_dict, **kwargs):
         for key in keys:
             name, playlist = fetch_playlist(key)
 
-            songs_dict_entry = {
-                "name": name,
-                "id": {},
-                "songs": playlist
-            }
+            # Check if title matches regex setting
+            if re.match(settings_dict["filter"], name, re.IGNORECASE):
+                log.info(f"Fetching playlist: {name}")
 
-            songs_dict.append(songs_dict_entry)
+                songs_dict_entry = {
+                    "name": name,
+                    "id": {},
+                    "songs": playlist
+                }
+
+                songs_dict.append(songs_dict_entry)
 
         return songs_dict
 
@@ -226,9 +235,11 @@ def run(settings_dict, **kwargs):
                 raise Exception(
                     "Could not remove temp folder: {temp_path}. Try deleting manually", e)
 
+        log.info("Creating temporary playlists to send to Plex.")
         os.makedirs(temp_path)
 
         for item in songs_dict:
+            log.info(f"Updating playlist: {item['name']}")
 
             # Create new playlist
             playlist_path = os.path.join(temp_path, item["name"] + ".m3u")
