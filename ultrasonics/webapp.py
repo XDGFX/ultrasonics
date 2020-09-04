@@ -275,11 +275,7 @@ def html_settings():
     Global ultrasonics settings page.
     """
     if request.form.get('action') == "save":
-        # Generate key, value tuples (reversed for database entry) from supplied form data
-        data = [(value, key)
-                for key, value in request.form.to_dict().items() if key != "action"]
-
-        database.Core().save(data)
+        database.Core().save(request.form.to_dict())
 
         return redirect("/", code=302)
 

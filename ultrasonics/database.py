@@ -52,7 +52,11 @@ class Core:
         },
         {
             "type": "string",
-            "value": "While applets are waiting on triggers, ultrasonics will occasionally poll the trigger database to see if you have changed any settings. Set the polling interval 🕗 here."
+            "value": "While applets are waiting on triggers, ultrasonics will poll them at a specified interval 🕗 to check if they have triggered or not. Higher values are less resource intensive, but mean a larger delay between a trigger activating and the applet running."
+        },
+        {
+            "type": "string",
+            "value": "Once an applet has triggered, it cannot be triggered again until this interval has passed."
         },
         {
             "type": "text",
@@ -183,10 +187,14 @@ class Core:
         if settings["api_url"][-1] != "/":
             settings["api_url"] = settings["api_url"] + "/"
 
+        # Generate key, value tuples (reversed for database entry) from supplied form data
+        data = [(value, key)
+                for key, value in settings.items() if key != "action"]
+
         with sqlite3.connect(db_file) as conn:
             cursor = conn.cursor()
             query = "UPDATE ultrasonics SET value = ? WHERE key = ?"
-            cursor.executemany(query, settings)
+            cursor.executemany(query, data)
 
             conn.commit()
             log.info("Settings database updated")
