@@ -21,7 +21,7 @@ import spotipy
 
 from app import _ultrasonics
 from ultrasonics import logs
-from ultrasonics.tools import fuzzymatch, name_filter
+from ultrasonics.tools import fuzzymatch, name_filter, api_key
 
 log = logs.create_log(__name__)
 
@@ -165,7 +165,8 @@ def run(settings_dict, **kwargs):
 
             url = urljoin(self.api_url, "spotify/auth/renew")
             data = {
-                "refresh_token": self.refresh_token
+                "refresh_token": self.refresh_token,
+                "ultrasonics_auth_hash": api_key.get_hash()
             }
 
             log.info(

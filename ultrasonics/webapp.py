@@ -25,7 +25,8 @@ sio = SocketIO(app, async_mode='eventlet')
 # --- GENERAL ---
 def server_start():
     log.debug("Starting webserver")
-    sio.run(app, host="0.0.0.0", debug=os.environ.get('FLASK_DEBUG') or False)
+    sio.run(app, host="0.0.0.0", debug=os.environ.get(
+        'FLASK_DEBUG') == "True" or False)
 
 
 def send(event, data):
