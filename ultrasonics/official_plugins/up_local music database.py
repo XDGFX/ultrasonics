@@ -18,28 +18,36 @@ import sqlite3
 
 from app import _ultrasonics
 from ultrasonics import logs
-from ultrasonics.tools.local_tags import local_tags
-from ultrasonics.tools.fuzzymatch import fuzzymatch
+from ultrasonics.tools import local_tags
+from ultrasonics.tools import fuzzymatch
+from ultrasonics.tools import formatting
+
+log = logs.create_log(__name__)
 
 # For storing library information
 db_file = os.path.join(_ultrasonics["config_dir"],
                        "up_local music database", "library.db")
+log.debug(f"Database file location: {db_file}")
 
 # Create the containing folder if it doesn't already exist
 try:
     os.mkdir(os.path.dirname(db_file))
+    log.debug("Successfully created database folder.")
 except FileExistsError:
     # Folder already exists
     pass
 
 # Get supported files from local_tags library
+nl = "\n"
 supported_audio_extensions = local_tags.supported_audio_extensions
+log.debug(
+    f"Supported extensions for this plugin include:\n    {f'{nl}    '.join(supported_audio_extensions)}")
 
 # Known not-audio files to skip silently
 extension_skiplist = [".jpg", ".png", ".bak", ".dat", ".lrc",
                       ".lyrics", ".m3u", ".sfk", ".snap", ".temp", ".tmp", ".txt"]
-
-log = logs.create_log(__name__)
+log.debug(
+    f"This plugin will automatically skip any files matching the following extensions: {extension_skiplist}")
 
 handshake = {
     "name": "local music database",

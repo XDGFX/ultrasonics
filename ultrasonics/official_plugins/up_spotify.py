@@ -21,8 +21,8 @@ import spotipy
 
 from app import _ultrasonics
 from ultrasonics import logs
-from ultrasonics.tools.fuzzymatch import fuzzymatch
-from ultrasonics.tools.name_filter import name_filter
+from ultrasonics.tools import fuzzymatch
+from ultrasonics.tools import name_filter
 
 log = logs.create_log(__name__)
 

@@ -16,7 +16,7 @@ XDGFX, 2020
 import copy
 
 from ultrasonics import logs
-from ultrasonics.tools.fuzzymatch import fuzzymatch
+from ultrasonics.tools import fuzzymatch
 
 log = logs.create_log(__name__)
 

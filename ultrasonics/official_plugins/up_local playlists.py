@@ -16,8 +16,8 @@ import io
 import os
 
 from ultrasonics import logs
-from ultrasonics.tools.local_tags import local_tags
-from ultrasonics.tools.name_filter import name_filter
+from ultrasonics.tools import local_tags
+from ultrasonics.tools import name_filter
 
 log = logs.create_log(__name__)
 

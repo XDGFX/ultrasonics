@@ -22,7 +22,7 @@ from xml.etree import ElementTree
 import requests
 
 from ultrasonics import logs
-from ultrasonics.tools.local_tags import local_tags
+from ultrasonics.tools import local_tags
 
 log = logs.create_log(__name__)
 

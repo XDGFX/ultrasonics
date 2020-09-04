@@ -46,14 +46,18 @@ def plugin_gather():
                 # Extract name of file excluding extension
                 title = re.search(prefix + "([\w\W]+)\.py$", item)[1]
 
+                if title == "skeleton":
+                    # Skip the included skeleton plugin.
+                    continue
+
                 try:
                     # First try to import from official plugins
-                    plugin_path = f"ultrasonics.official_plugins.{prefix + title}.{prefix + title}"
+                    plugin_path = f"ultrasonics.official_plugins.{prefix + title}"
                     plugin = importlib.import_module(
                         plugin_path, ".")
                 except ModuleNotFoundError:
                     # Then try to import from installed plugins
-                    plugin_path = f"plugins.{prefix + title}.{prefix + title}"
+                    plugin_path = f"plugins.{prefix + title}"
                     plugin = importlib.import_module(
                         plugin_path, ".")
 
@@ -85,7 +89,7 @@ def plugin_gather():
 
                     # If an older minor version exists, migrate settings.
                     if existing_versions != [False]:
-                        from ultrasonics.tools.version_check import version_check
+                        from ultrasonics.tools import version_check
                         migration_version = version_check.check(
                             handshake_version, existing_versions)
 
