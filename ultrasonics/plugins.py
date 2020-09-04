@@ -33,6 +33,13 @@ dbp = database.Plugin()
 paths = ("./plugins", "./ultrasonics/official_plugins")
 
 
+try:
+    os.mkdir("plugins")
+except FileExistsError:
+    # Folder already exists
+    pass
+
+
 def plugin_gather():
     """
     Used to find all modules within the plugins directories, and saves them to the 'found_plugins' dictionary.

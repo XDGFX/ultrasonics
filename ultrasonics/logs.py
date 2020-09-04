@@ -9,9 +9,16 @@ XDGFX, 2020
 
 import logging
 import logging.handlers
+import os
 
 buffer = {}
 handler = {}
+
+try:
+    os.mkdir("logs")
+except FileExistsError:
+    # Folder already exists
+    pass
 
 
 class CustomFormatter(logging.Formatter):
