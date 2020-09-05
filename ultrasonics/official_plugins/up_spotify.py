@@ -165,7 +165,7 @@ def run(settings_dict, **kwargs):
             url = urljoin(self.api_url, "spotify/auth/renew")
             data = {
                 "refresh_token": self.refresh_token,
-                "ultrasonics_auth_hash": api_key.get_hash()
+                "ultrasonics_auth_hash": api_key.get_hash(True)
             }
 
             log.info(
