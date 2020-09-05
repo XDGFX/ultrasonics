@@ -206,6 +206,11 @@ a.tag:hover {
     color: var(--grey-dark);
 }
 
+.button.auth {
+    width: 100%;
+    height: 5em;
+}
+
 /* #div_service_select {
     flex-wrap: wrap;
 }

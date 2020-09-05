@@ -161,43 +161,53 @@
 
                 {% elif setting["type"] == "auth" %}
                 <script>
-                    var myWindow
+                    function openWindow() {
+                        api_url = document.getElementById("auth_api_url").innerText;
+                        auth_path = document.getElementById("auth_path").innerText;
+                        auth_button = document.querySelector(".button.auth");
+                        auth_input = document.getElementById("auth_input");
 
-                    function openWindow(ultrasonicsApiUrl, path) {
-                        console.log("Window is open")
-                        console.log(ultrasonicsApiUrl + path)
-                        myWindow = window.open(ultrasonicsApiUrl + path, "ultrasonics-api", 'menubar=no,toolbar=no,location=no,directories=no,status=no,scrollbars=no,resizable=no,dependent');
+                        auth_button.classList.add("is-loading")
+                        auth_window = window.open(api_url + auth_path, "ultrasonics-api");
 
                         function receiveMessage(event) {
-                            // Do we trust the sender of this message?  (might be
-                            // different from what we originally opened, for example).
-                            if (event.origin !== ultrasonicsApiUrl) {
+                            auth_button.classList.remove("is-loading")
+
+                            error = false
+
+                            if (!api_url.includes(event.origin)) {
+                                console.error(`Invalid origin (${event.origin}) of message.`)
+                            } else if (event.data == "") {
+                                console.error("No authentication data received")
+                            } else {
+                                auth_input.value = event.data;
+
+                                console.log("Data received from ultrasonics-api.")
+                                console.log(event.data)
+                                auth_button.classList.add("is-static")
+                                auth_button.innerText = "✔️ Authenticated"
+
+                                auth_window.close()
                                 return;
+
                             }
 
-                            `
-                            1. Button to open ultrasonics-api request
-                            2. Wait for message
-                            3. On message, save data to hidden form input
-                            4. Say data recieved
-                            `
-
-                            console.log(event.data)
-                            myWindow.close()
+                            auth_button.innerText = "❌ An error occurred"
+                            auth_window.close()
                         }
 
-                        console.log("adding event listener")
                         window.addEventListener("message", receiveMessage);
                     }
-
                 </script>
 
                 <div class="field">
                     <label class="label">{{ setting["label"] }}</label>
-                    <a class="button" onclick="openWindow()">Open New Window</a>
+
+                    <a class="button auth" onclick="openWindow()">🔑 Authenticate</a>
+
                     <span hidden id="auth_api_url">{{ global_settings['api_url'] }}</span>
                     <span hidden id="auth_path">{{ setting['path'] }}</span>
-                    <input id="auth_input" type="hidden" name="auth">
+                    <input id="auth_input" type="hidden" name="auth" value="">
                 </div>
 
                 {% endif %}
