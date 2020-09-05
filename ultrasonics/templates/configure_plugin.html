@@ -173,14 +173,12 @@
                         function receiveMessage(event) {
                             auth_button.classList.remove("is-loading")
 
-                            error = false
-
                             if (!api_url.includes(event.origin)) {
                                 console.error(`Invalid origin (${event.origin}) of message.`)
                             } else if (event.data == "") {
                                 console.error("No authentication data received")
                             } else {
-                                auth_input.value = event.data;
+                                auth_input.value = atob(event.data);
 
                                 console.log("Data received from ultrasonics-api.")
                                 console.log(event.data)
@@ -189,7 +187,6 @@
 
                                 auth_window.close()
                                 return;
-
                             }
 
                             auth_button.innerText = "❌ An error occurred"
