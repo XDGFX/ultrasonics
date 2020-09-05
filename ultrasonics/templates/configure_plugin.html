@@ -160,7 +160,46 @@
                 </div>
 
                 {% elif setting["type"] == "auth" %}
-                <!-- Here goes the auth block -->
+                <script>
+                    var myWindow
+
+                    function openWindow(ultrasonicsApiUrl, path) {
+                        console.log("Window is open")
+                        console.log(ultrasonicsApiUrl + path)
+                        myWindow = window.open(ultrasonicsApiUrl + path, "ultrasonics-api", 'menubar=no,toolbar=no,location=no,directories=no,status=no,scrollbars=no,resizable=no,dependent');
+
+                        function receiveMessage(event) {
+                            // Do we trust the sender of this message?  (might be
+                            // different from what we originally opened, for example).
+                            if (event.origin !== ultrasonicsApiUrl) {
+                                return;
+                            }
+
+                            `
+                            1. Button to open ultrasonics-api request
+                            2. Wait for message
+                            3. On message, save data to hidden form input
+                            4. Say data recieved
+                            `
+
+                            console.log(event.data)
+                            myWindow.close()
+                        }
+
+                        console.log("adding event listener")
+                        window.addEventListener("message", receiveMessage);
+                    }
+
+                </script>
+
+                <div class="field">
+                    <label class="label">{{ setting["label"] }}</label>
+                    <a class="button" onclick="openWindow()">Open New Window</a>
+                    <span hidden id="auth_api_url">{{ global_settings['api_url'] }}</span>
+                    <span hidden id="auth_path">{{ setting['path'] }}</span>
+                    <input id="auth_input" type="hidden" name="auth">
+                </div>
+
                 {% endif %}
 
 

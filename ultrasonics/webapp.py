@@ -180,6 +180,8 @@ def html_configure_plugin():
     Settings page for each instance for a plugin.
     """
 
+    global_settings = database.Core().load(raw=True)
+
     # Data received is to update persistent plugin settings
     if request.form.get('action') in ['add', 'test']:
 
@@ -266,7 +268,7 @@ def html_configure_plugin():
 
     test_exists = plugins.plugin_test(plugin, version, component=component)
 
-    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html, test_exists=test_exists)
+    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html, test_exists=test_exists, global_settings=global_settings)
 
 
 @app.route('/settings', methods=['GET', 'POST'])

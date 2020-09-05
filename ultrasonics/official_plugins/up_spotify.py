@@ -38,10 +38,9 @@ handshake = {
     "version": "0.1",
     "settings": [
         {
-            "type": "text",
-            "label": "Auth",
-            "name": "auth",
-            "value": "Auth token goes here"
+            "type": "auth",
+            "label": "Authorise Spotify",
+            "path": "/spotify/auth/request"
         },
         {
             "type": "string",
