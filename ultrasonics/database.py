@@ -8,6 +8,7 @@ XDGFX, 2020
 """
 
 import ast
+import os
 import sqlite3
 import uuid
 
@@ -18,6 +19,12 @@ log = logs.create_log(__name__)
 db_file = "config/ultrasonics.db"
 conn = None
 cursor = None
+
+try:
+    os.mkdir("config")
+except FileExistsError:
+    # Folder already exists
+    pass
 
 
 class Core:
