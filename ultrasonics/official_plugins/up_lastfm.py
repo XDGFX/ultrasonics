@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+"""
+up_lastfm
+
+Integrate with your last.fm scrobbles. Take your loved music, your top tracks,
+or scrobbles from a specific time period and turn them into a playlist.
+
+XDGFX, 2020
+"""
+
+import json
+
 import requests
 
 from ultrasonics import logs
@@ -15,7 +26,7 @@ handshake = {
     "mode": [
         "songs"
     ],
-    "version": "0.1",  # Optionally, "0.0.0"
+    "version": "0.1",
     "settings": [
         {
             "type": "text",
@@ -29,18 +40,12 @@ handshake = {
 
 def run(settings_dict, **kwargs):
     """
-    The function called when the applet runs.
-
-    Inputs:
-    settings_dict      Settings specific to this plugin instance
-    database           Global persistent settings for this plugin
-    global_settings    Global settings for ultrasonics (e.g. api proxy)
-    component          Either "inputs", "modifiers", "outputs", or "trigger"
-    applet_id          The unique identifier for this specific applet
-    songs_dict         If a modifier or output, the songs dictionary to be used
-
-    @return:
-    If an input or modifier, the new songs_dict must be returned.
+    1. Determines which mode the plugin is running in:
+        - Loved songs
+        - Top songs
+        - Recent songs (time period)
+    2. Gets the songs from last.fm, up to the specified limit.
+    3. Converts the songs to ultrasonics songs_dict, making more requests for album data if needed.
     """
 
     database = kwargs["database"]
@@ -49,20 +54,199 @@ def run(settings_dict, **kwargs):
     applet_id = kwargs["applet_id"]
     songs_dict = kwargs["songs_dict"]
 
-    log.debug("This is a debug message")
-    log.info("This is a info message")
-    log.warning("This is a warning message")
-    log.error("This is a error message")
-    log.critical("This is a critical message")
+    url = global_settings["api_url"] + "lastfm"
 
-    pass
+    def get_songs(params):
+        """
+        Sends requests to the lastfm api to return a list of songs.
+        The number of songs will not exceed settings_dict["limit"].
+        Checks for invalid responses.
+
+        @return: list of songs in lastfm format
+        """
+        default_params = {
+            "user": database["username"],
+            "format": "json"
+        }
+
+        # Add params for all requests
+        params.update(default_params)
+
+        limit = int(settings_dict["limit"])
+
+        left = limit
+        page = 1
+
+        log.info(f"Song limit set to: {limit}")
+
+        tracks = []
+
+        while left > 0:
+            params["page"] = page
+            params["limit"] = 50
+
+            r = requests.get(url, params=params)
+
+            if r.status_code == 429:
+                import time
+                log.warning("Rate limit reached, sleeping for a while...")
+                time.sleep(60)
+                r = requests.get(url, params=params)
+
+            if r.status_code != 200:
+                log.error(f"Unexpected status code: {r.status_code}")
+                log.error(r.text)
+                raise Exception("Unexpected status code")
+
+            r = json.loads(r.content)
+
+            # Add all new songs to existing data list
+            new_songs = list(r.values())[0]["track"]
+
+            # Check for now playing, and remove if so
+            now_playing = new_songs[0].get("@attr", {}).get("nowplaying")
+            if now_playing:
+                new_songs.pop(0)
+                left += 1
+
+            # Update tracks list with required number of tracks
+            tracks_selection = left if left < 50 else 50
+            tracks.extend(new_songs[:tracks_selection])
+
+            # Check if there are no more songs left to get
+            if int(list(r.values())[0]["@attr"]["totalPages"]) <= page:
+                left = -1
+
+            left -= 50
+            page += 1
+
+        log.info(f"Found {len(tracks)} tracks.")
+        return tracks
+
+    def convert_songs(songs):
+        """
+        Converts a list of songs in lastfm format to ultrasonics format.
+
+        @return: list of songs in ultrasonics format.
+        """
+        params = {
+            "format": "json",
+            "method": "track.getinfo",
+            "autocorrect": "0"
+        }
+
+        new_songs = []
+
+        log.info("Getting updated tags for all songs from lastfm...")
+
+        for song in songs:
+            temp_dict = {
+                "title": song["name"],
+                "artists": [
+                    song["artist"].get("name") or song["artist"].get("#text"),
+                ],
+                "album": song.get("album", {}).get("#text"),
+                "id": {
+                    "lastfm": song["url"]
+                }
+            }
+
+            # Make request to get album info
+            if not temp_dict["album"]:
+                params["track"] = song["name"]
+                params["artist"] = temp_dict["artists"][0]
+
+                r = requests.get(url, params=params)
+
+                if r.status_code == 429:
+                    import time
+                    log.warning("Rate limit reached, sleeping for a while...")
+                    time.sleep(60)
+                    r = requests.get(url, params=params)
+
+                if r.status_code != 200:
+                    log.error(f"Unexpected status code: {r.status_code}")
+                    log.error(r.text)
+                    raise Exception("Unexpected status code")
+
+                album = json.loads(r.content)["track"].get(
+                    "album", {}).get("title")
+
+                if album:
+                    temp_dict["album"] = album
+
+            if not temp_dict["album"]:
+                del temp_dict["album"]
+
+            new_songs.append(temp_dict)
+
+        return new_songs
+
+    if settings_dict["select"] == "Loved Tracks":
+        log.info("Getting loved tracks from last.fm")
+        params = {
+            "method": "user.getlovedtracks"
+        }
+
+    elif settings_dict["select"] == "Recent Tracks":
+        log.info("Getting recent tracks from last.fm")
+        from datetime import datetime
+
+        converter = {
+            "Now": 0,
+            "1 Day": 86400,
+            "7 Days": 604800,
+            "1 Month": 2629800,
+            "3 Months": 7889400,
+            "6 Months": 15778800,
+            "1 Year": 31557600,
+            "2 Years": 62208000,
+        }
+
+        time_to = (datetime.utcnow() - datetime(1970, 1, 1)
+                   ).total_seconds() - converter[settings_dict["period-end"].rstrip(" Ago")]
+
+        duration = converter[settings_dict["period-duration"]]
+
+        time_from = time_to - duration
+
+        params = {
+            "method": "user.getrecenttracks",
+            "from": str(int(time_from)),
+            "to": str(int(time_to))
+        }
+
+    elif settings_dict["select"] == "Top Tracks":
+        log.info("Getting top tracks from last.fm")
+
+        # Get period and convert to valid parameter
+        period = settings_dict["period"]
+        period = period.lower().replace(" ", "").rstrip("s")
+
+        params = {
+            "method": "user.gettoptracks",
+            "period": period
+        }
+
+    else:
+        raise Exception(f"Invalid select option: {settings_dict['select']}")
+
+    songs = get_songs(params)
+    songs = convert_songs(songs)
+
+    songs_dict = [
+        {
+            "name": settings_dict.get("playlist_title") or "Last.fm Music",
+            "id": {},
+            "songs": songs
+        }
+    ]
+    return songs_dict
 
 
 def test(database, **kwargs):
     """
-    An optional test function. Used to validate persistent settings supplied in database.
-    Any errors raised will be caught and displayed to the user for debugging.
-    If this function is present, test failure will prevent the plugin being added.
+    Checks if the username entered exists on last.fm.
     """
 
     global_settings = kwargs["global_settings"]
@@ -91,19 +275,6 @@ def test(database, **kwargs):
 
 
 def builder(**kwargs):
-    """
-    This function is run when the plugin is selected within a flow. It may query names of playlists or how many recent songs to include in the list.
-    It returns a dictionary containing the settings the user must input in this case
-
-    Inputs:
-    database           Persistent database settings for this plugin
-    component          Either "inputs", "modifiers", "outputs", or "trigger"
-
-    @return:
-    settings_dict      Used to build the settings page for this plugin instance
-
-    """
-
     database = kwargs["database"]
     global_settings = kwargs["global_settings"]
     component = kwargs["component"]
@@ -114,7 +285,7 @@ def builder(**kwargs):
             "value": "Build a dedicated playlist based on your scrobbling history."
         },
         """
-<div class="field">
+    <div class="field">
         <label class="label">Selection</label>
         <div class="control">
             <input class="is-checkradio" type="radio" name="select" id="Loved Tracks" value="Loved Tracks" checked=true>
@@ -129,9 +300,9 @@ def builder(**kwargs):
     </div>
 
     <div class="field">
-        <label class="label">Song Limit</label>
+        <label class="label">Song Limit (Ordered by Most Recent)</label>
         <div class="control">
-            <input class="input" type="number" name="limit" step="1" min="-1" pattern="\d+" placeholder="-1">
+            <input class="input" type="number" name="limit" step="1" min="1" pattern="\d+" value="50">
         </div>
     </div>
 
@@ -146,17 +317,17 @@ def builder(**kwargs):
                         <option>1 Month</option>
                         <option>3 Months</option>
                         <option>6 Months</option>
-                        <option>1 Year</option>
+                        <option>12 Months</option>
                     </select>
                 </div>
             </div>
         </div>
 
         <div class="field shy recent-only">
-            <label class="label">Time Period Start</label>
+            <label class="label">Time Period End</label>
             <div class="control">
                 <div class="select">
-                    <select name="period-start">
+                    <select name="period-end">
                         <option>Now</option>
                         <option>7 Days Ago</option>
                         <option>1 Month Ago</option>
@@ -173,7 +344,7 @@ def builder(**kwargs):
             <label class="label">Time Period Duration</label>
             <div class="control">
                 <div class="select">
-                    <select name="period-end">
+                    <select name="period-duration">
                         <option>1 Day</option>
                         <option>7 Days</option>
                         <option>1 Month</option>
@@ -211,10 +382,12 @@ def builder(**kwargs):
                     unhide = []
                     break
                 case "Recent Tracks":
-                    unhide = document.querySelectorAll(".shy-elements .shy.recent-only")
+                    unhide = document.querySelectorAll(
+                        ".shy-elements .shy.recent-only")
                     break
                 case "Top Tracks":
-                    unhide = document.querySelectorAll(".shy-elements .shy.top-tracks-only")
+                    unhide = document.querySelectorAll(
+                        ".shy-elements .shy.top-tracks-only")
                     break
             }
 
@@ -227,7 +400,17 @@ def builder(**kwargs):
         }
 
     </script>
-        """
+        """,
+        {
+            "type": "string",
+            "value": "This plugin will pass the songs in playlist form. What would you like this playlist to be called?"
+        },
+        {
+            "type": "text",
+            "label": "Playlist Title",
+            "name": "playlist_title",
+            "value": "Last.fm Songs"
+        },
     ]
 
     return settings_dict
