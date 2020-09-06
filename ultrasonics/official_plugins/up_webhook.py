@@ -51,11 +51,7 @@ def run(settings_dict, **kwargs):
         log.info(f"Applet triggered: {applet_id}")
         return f"Applet triggered: {applet_id}"
 
-    try:
-        app.run(host="0.0.0.0", port=int(settings_dict["port"]))
-    except Exception:
-        # Remove exception for handler
-        pass
+    app.run(host="0.0.0.0", port=int(settings_dict["port"]))
 
 
 def builder(**kwargs):

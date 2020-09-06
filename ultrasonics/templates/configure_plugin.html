@@ -163,7 +163,7 @@
                 <script>
                     function openWindow() {
                         api_url = document.getElementById("auth_api_url").innerText;
-                        auth_path = document.getElementById("auth_path").innerText;
+                        auth_path = document.getElementById("auth_path").innerText.replace(/^\/+/, '');
                         auth_button = document.querySelector(".button.auth");
                         auth_input = document.getElementById("auth_input");
 

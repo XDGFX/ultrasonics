@@ -141,3 +141,4 @@ dmypy.json
 
 config/*
 plugins/*
+logs/*
