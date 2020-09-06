@@ -84,7 +84,8 @@ def plugin_gather():
                 # Add the plugin handshake to the list of handshakes, and the plugin to the list of found plugins
                 handshakes.append(plugin.handshake)
                 found_plugins[title] = plugin
-                found_plugins[title].plugin_logs_path = plugin_path
+                found_plugins[title].plugin_logs_path = plugin_path.replace(
+                    "ultrasonics.", "").replace("official_plugins.up_", "🎧 ").replace("plugins.up_", "🎤 ")
 
                 log.info(f"Found plugin: {plugin}")
 
