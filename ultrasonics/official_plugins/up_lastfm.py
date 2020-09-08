@@ -302,7 +302,7 @@ def builder(**kwargs):
     <div class="field">
         <label class="label">Song Limit (Ordered by Most Recent)</label>
         <div class="control">
-            <input class="input" type="number" name="limit" step="1" min="1" pattern="\d+" value="50">
+            <input class="input" type="text" name="limit" min="1" pattern="\d+" value="50">
         </div>
     </div>
 

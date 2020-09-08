@@ -275,6 +275,9 @@ def run(settings_dict, **kwargs):
 
     preferred_order = ["isrc", "title", "artists", "album"]
 
+    total_count = 0
+    matched_count = 0
+
     for i, playlist in enumerate(songs_dict):
         for j, song in enumerate(playlist["songs"]):
             if "location" in song.keys():
@@ -315,10 +318,15 @@ def run(settings_dict, **kwargs):
                     checked_songs.extend(resp)
 
                 if found:
+                    matched_count += 1
+                    total_count += 1
                     break
 
             if not found:
                 log.info(f"No local match was found for {song}")
+                total_count += 1
+
+    log.info(f"{matched_count} songs out of a total of {total_count} were matched with your local library, or already had a local path.")
 
     return songs_dict
 

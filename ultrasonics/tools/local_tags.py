@@ -51,7 +51,7 @@ def tags(song_path):
     """
     # Skip music files which are not supported
     _, ext = os.path.splitext(song_path)
-    if ext not in supported_audio_extensions:
+    if ext.lower() not in supported_audio_extensions:
         raise NotImplementedError(song_path)
 
     # song_mtime = os.stat(song_path).st_mtime

@@ -14,6 +14,7 @@ from flask import Flask, redirect, render_template, request
 from flask_socketio import SocketIO, emit, send
 
 from ultrasonics import database, logs, plugins
+from ultrasonics.tools import random_words
 
 log = logs.create_log(__name__)
 
@@ -48,7 +49,8 @@ def html_index():
     if action == 'build':
         # Send applet plans to builder and reset to default
         Applet.current_plans["applet_name"] = request.args.get(
-            'applet_name')
+            'applet_name') or random_words.words(3, "-")
+
         plugins.applet_build(Applet.current_plans)
         Applet.current_plans = copy.deepcopy(Applet.default_plans)
         return redirect(request.path, code=302)
