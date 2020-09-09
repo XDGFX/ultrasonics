@@ -57,8 +57,6 @@
                         <a onclick="history.back()">configure plugin</a>
                         >
                         <span class="p1"><b>persistent settings</b></span><br>
-                        {% elif persistent == 2 %}
-                        <span class="p1"><b>persistent settings</b></span><br>
                         {% else %}
                         <span class="p1"><b>configure plugin</b></span><br>
                         {% endif %}
@@ -68,14 +66,8 @@
                 </div>
 
                 <div class="column is-narrow has-text-right">
-                    {% if persistent in [1, 2] %}
+                    {% if persistent == 1 %}
                     <div class="tag">Only modified settings will be updated.</div>
-
-                    {% if persistent == 2 %}
-                    <div class="content">
-                        <div class="tag">This plugin only has persistent settings.</div>
-                    </div>
-                    {% endif %}
 
                     {% elif persistent == 0 %}
                     <a class="button"
@@ -94,13 +86,24 @@
 
 
             <form id="configure_plugin"
-                action="{% if persistent in [1, 2] %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
+                action="{% if persistent == 1 %}/configure_plugin{% else %}/new_applet{% endif %}" method="post">
 
                 <!-- Hidden inputs to store variables for current plugin -->
                 <input type="hidden" name="action" value="add" id="configure_plugin_action">
                 <input type="hidden" name="plugin" value="{{ plugin }}">
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="component" value="{{ component }}">
+
+                {% if not settings %}
+                <div class="field">
+                    <label class="label">🌈 There are no settings to configure for this plugin.</label>
+                </div>
+                <div class="field">
+                    <p class="title">
+                        🎧 🔊 🎧 🔊 🎧 🔊
+                    </p>
+                </div>
+                {% endif %}
 
                 {% for setting in settings %}
 
@@ -216,7 +219,7 @@
                     <div class="column is-wide">
                         <div class="field is-grouped">
 
-                            {% if test_exists and persistent in [1, 2] %}
+                            {% if test_exists and persistent %}
                             <div class="control">
                                 <button type="submit" id="plugin_submit" class="button" disabled>Submit</button>
                             </div>
@@ -226,7 +229,7 @@
                             </div>
                             {% endif %}
 
-                            {% if test_exists and persistent in [1, 2] %}
+                            {% if test_exists and persistent %}
                             <div class="control">
                                 <a class="button" onclick=plugin_test() id="configure_plugin_testbutton">Test</a>
                             </div>

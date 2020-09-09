@@ -247,24 +247,6 @@ def html_configure_plugin():
             "Could not build plugin! Check your database settings are correct.", e)
         return render_template('index.html')
 
-    if settings == "":
-        # Check if there are persistent settings to configure
-        if persistent_settings and request.form.get('action') != "add":
-            # There are persistent settings but no instance settings
-            settings = persistent_settings
-            persistent = 2
-        else:
-            # No settings to configure, add plugin manually and redirect.
-            plugin_config = {
-                "plugin": plugin,
-                "version": version,
-                "data": "n/a"
-            }
-
-            Applet.current_plans[component].append(plugin_config)
-
-            return redirect("/new_applet", code=302)
-
     # Check if any settings are custom html strings
     custom_html = any([isinstance(setting, str) for setting in settings])
 
