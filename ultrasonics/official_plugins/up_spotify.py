@@ -469,10 +469,10 @@ def run(settings_dict, **kwargs):
         # Get a list of current user playlists
         current_playlists = s.current_user_playlists()
 
-        playlist_id = ""
 
         for playlist in songs_dict:
             # Check the playlist already exists in Spotify
+            playlist_id = ""
             try:
                 if playlist["id"]["spotify"] in [item["id"] for item in current_playlists]:
                     playlist_id = playlist["id"]["spotify"]

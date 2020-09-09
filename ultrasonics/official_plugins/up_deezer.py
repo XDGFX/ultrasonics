@@ -396,10 +396,9 @@ def run(settings_dict, **kwargs):
         # Get a list of current user playlists
         current_playlists = dz.list_playlists()
 
-        playlist_id = ""
-
         for playlist in songs_dict:
             # Check the playlist already exists in Deezer
+            playlist_id = ""
             try:
                 if playlist["id"]["deezer"] in [item["id"] for item in current_playlists]:
                     playlist_id = playlist["id"]["deezer"]
