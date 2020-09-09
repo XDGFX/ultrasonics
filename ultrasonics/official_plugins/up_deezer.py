@@ -148,7 +148,7 @@ def run(settings_dict, **kwargs):
             # 1. Deezer ID
             try:
                 deezer_id = track["id"]["deezer"]
-                confidence = 1
+                confidence = 100
 
                 return deezer_id, confidence
 
@@ -350,7 +350,7 @@ def run(settings_dict, **kwargs):
                 "date": date,
                 "isrc": isrc,
                 "id": {
-                    "deezer": track["id"]
+                    "deezer": str(track["id"])
                 }
             }
 
@@ -445,7 +445,7 @@ def run(settings_dict, **kwargs):
             # Get all tracks already in the playlist
             if "existing_tracks" not in vars():
                 existing_tracks = dz.playlist_tracks(playlist_id)
-                existing_ids = [item["id"]["deezer"]
+                existing_ids = [str(item["id"]["deezer"])
                                 for item in existing_tracks]
 
             # Add songs which don't already exist in the playlist

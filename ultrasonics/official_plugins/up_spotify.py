@@ -230,7 +230,7 @@ def run(settings_dict, **kwargs):
             try:
                 spotify_id = track["id"]["spotify"]
                 spotify_uri = f"spotify:track:{spotify_id}"
-                confidence = 1
+                confidence = 100
 
                 return spotify_uri, confidence
 
@@ -400,7 +400,7 @@ def run(settings_dict, **kwargs):
                 "date": date,
                 "isrc": isrc,
                 "id": {
-                    "spotify": track["id"]
+                    "spotify": str(track["id"])
                 }
             }
 
@@ -501,8 +501,8 @@ def run(settings_dict, **kwargs):
             # Get all tracks already in the playlist
             if "existing_tracks" not in vars():
                 existing_tracks = s.playlist_tracks(playlist_id)
-                existing_uris = ["spotify:track:" + item["id"]["spotify"]
-                                 for item in existing_tracks]
+                existing_uris = [
+                    f"spotify:track:{item['id']['spotify']}" for item in existing_tracks]
 
             # Add songs which don't already exist in the playlist
             uris = []
