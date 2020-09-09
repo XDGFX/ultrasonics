@@ -52,7 +52,7 @@ def duplicate(song, song_list, threshold):
     if "id" in song:
         for key in song["id"]:
             test_array = [item["id"][key].strip()
-                          for item in song_list if ("id" in item)]
+                          for item in song_list if (key in item.get("id"))]
 
             if song["id"][key].strip() in test_array:
                 return True

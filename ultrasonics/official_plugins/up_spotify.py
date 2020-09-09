@@ -3,7 +3,7 @@
 """
 up_spotify
 
-Official input and output plugin for Spotify. Can access a user's public or private playlists,and read songs from, or save songs to them.
+Official input and output plugin for Spotify. Can access a user's public or private playlists, and read songs from, or save songs to them.
 Will not overwrite songs already in a playlist, so stuff like date added are kept accurate.
 
 XDGFX, 2020
@@ -18,10 +18,11 @@ from urllib.parse import urlencode, urljoin
 
 import requests
 import spotipy
+from tqdm import tqdm
 
 from app import _ultrasonics
 from ultrasonics import logs
-from ultrasonics.tools import fuzzymatch, name_filter, api_key
+from ultrasonics.tools import api_key, fuzzymatch, name_filter
 
 log = logs.create_log(__name__)
 
@@ -272,8 +273,9 @@ def run(settings_dict, **kwargs):
                     pass
 
                 try:
-                    queries.append(
-                        f"track:{title} artist:{track['artists'][0]}")
+                    for artist in track["artists"]:
+                        queries.append(
+                            f'track:"{title}" artist:"{artist}"')
                 except NameError:
                     pass
 
@@ -290,7 +292,9 @@ def run(settings_dict, **kwargs):
 
                 # Convert to ultrasonics format and append to results_list
                 for item in results["tracks"]["items"]:
-                    results_list.append(s.spotify_to_songs_dict(item))
+                    item = s.spotify_to_songs_dict(item)
+                    if item not in results_list:
+                        results_list.append(item)
 
             if not results_list:
                 # No items were found
@@ -361,7 +365,8 @@ def run(settings_dict, **kwargs):
             track_list = []
 
             # Convert from Spotify API format to ultrasonics format
-            for track in [track["track"] for track in tracks]:
+            log.info("Converting tracks to ultrasonics format.")
+            for track in tqdm([track["track"] for track in tracks], desc=f"Converting tracks in {playlist_id}"):
                 track_list.append(s.spotify_to_songs_dict(track))
 
             return track_list
@@ -447,7 +452,8 @@ def run(settings_dict, **kwargs):
         songs_dict = name_filter.filter(songs_dict, settings_dict["filter"])
 
         # 3. Fetch songs from each playlist, build songs_dict
-        for i, playlist in enumerate(songs_dict):
+        log.info("Building songs_dict for playlists...")
+        for i, playlist in tqdm(enumerate(songs_dict)):
             tracks = s.playlist_tracks(playlist["id"]["spotify"])
 
             songs_dict[i]["songs"] = tracks
@@ -490,6 +496,7 @@ def run(settings_dict, **kwargs):
                 playlist_id = response["id"]
 
                 existing_tracks = []
+                existing_uris = []
 
             # Get all tracks already in the playlist
             if "existing_tracks" not in vars():
@@ -500,7 +507,8 @@ def run(settings_dict, **kwargs):
             # Add songs which don't already exist in the playlist
             uris = []
 
-            for song in playlist["songs"]:
+            log.info("Searching for matching songs in Spotify.")
+            for song in tqdm(playlist["songs"], desc=f"Searching Spotify for songs from {playlist['name']}"):
                 # First check for fuzzy duplicate without Spotify api search
                 if not fuzzymatch.duplicate(song, existing_tracks, database["fuzzy_ratio"]):
                     uri, confidence = s.search(song)
