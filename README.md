@@ -1,5 +1,22 @@
 ![](https://raw.githubusercontent.com/XDGFX/ultrasonics/master/ultrasonics/static/images/logo.svg)
 
+
+- [Overview](#overview)
+- [Installation](#installation)
+  - [Option 1 (Manual Install)](#option-1-manual-install)
+  - [Option 2 (Docker)](#option-2-docker)
+- [Applets](#applets)
+    - [Inputs](#inputs)
+    - [Modifiers (Optional)](#modifiers-optional)
+    - [Outputs](#outputs)
+    - [Triggers](#triggers)
+- [Plugins](#plugins)
+- [Playlists Mode vs Songs Mode](#playlists-mode-vs-songs-mode)
+- [Contributing](#contributing)
+  - [Writing Your Own Plugin](#writing-your-own-plugin)
+  - [Improving ultrasonics Source Code](#improving-ultrasonics-source-code)
+
+
 # Overview
 
 Welcome to **ultrasonics**!
@@ -148,3 +165,15 @@ If a plugin only works in songs-mode, a warning will be displayed on the "select
 Adding a songs-mode plugin to an input will effectively work by adding a single playlist to the applet flow. This *should* work without an issue, as long as the plugin in question provides a name for this single playlist.
 
 Trying to feed multiple playlists into a single songs-mode output plugin will likely cause issues, it's not recommended.
+
+# Contributing
+
+So you want to help improve ultrasonics? First of all - thank you! As someone who is *not* a software engineer, this is one of the biggest projects I've worked on. Any help or suggestions are greatly appreciated!
+
+## Writing Your Own Plugin
+Expanding on the functionality of ultrasonics is easy! A plugin is a drag-and-drop installation, and so can greatly improve the project with minimal complexity. The best way to learn is [through the wiki](https://github.com/XDGFX/ultrasonics/wiki/Writing-a-Plugin). You can fork this project, or create your own repo specifically for your plugin. It can be kept separate, or if you feel it would benefit the community by making if a default plugin, let me know through a GitHub issue!
+
+## Improving ultrasonics Source Code
+I will put any future plans, known issues, or general improvements in the [issues](https://github.com/XDGFX/ultrasonics/issues). Also have a look at the [projects boards](https://github.com/XDGFX/ultrasonics/projects), which should show the issues that are high priority.
+
+Or, if you have a new idea, give it a go and let me know with a pull request or issue! 😇
