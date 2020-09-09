@@ -49,7 +49,7 @@ def html_index():
     if action == 'build':
         # Send applet plans to builder and reset to default
         Applet.current_plans["applet_name"] = request.args.get(
-            'applet_name') or random_words.words(3, "-")
+            'applet_name') or random_words.name()
 
         plugins.applet_build(Applet.current_plans)
         Applet.current_plans = copy.deepcopy(Applet.default_plans)
