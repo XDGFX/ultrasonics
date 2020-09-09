@@ -20,6 +20,7 @@ from urllib.parse import urlencode
 from xml.etree import ElementTree
 
 import requests
+from tqdm import tqdm
 
 from ultrasonics import logs
 from ultrasonics.tools import local_tags
@@ -119,7 +120,7 @@ def run(settings_dict, **kwargs):
         title = root.get("title")
 
         playlist = []
-        for document in root.findall("Track"):
+        for document in tqdm(root.findall("Track"), desc=f"Fetching songs from playlist: {title}"):
             song = document[0][0].get('file')
 
             # Convert path to be usable by ultrasonics

@@ -16,6 +16,8 @@ import math
 import os
 import sqlite3
 
+from tqdm import tqdm
+
 from app import _ultrasonics
 from ultrasonics import logs
 from ultrasonics.tools import fuzzymatch, local_tags
@@ -222,7 +224,7 @@ def run(settings_dict, **kwargs):
         mtimes = []
         songs_length = 0
         log.info("Searching your local music directory for music files...")
-        for root, _, files in os.walk(database["music_dir"]):
+        for root, _, files in tqdm(os.walk(database["music_dir"]), desc="Searching for new songs"):
             for item in files:
                 # Check extension is supported
                 _, ext = os.path.splitext(item)

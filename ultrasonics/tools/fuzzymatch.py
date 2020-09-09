@@ -51,8 +51,11 @@ def duplicate(song, song_list, threshold):
     # Check exact ID match
     if "id" in song:
         for key in song["id"]:
-            test_array = [item["id"][key].strip()
-                          for item in song_list if (key in item.get("id"))]
+            test_array = []
+
+            for item in song_list:
+                if "id" in item.keys() and key in item.get("id"):
+                    test_array.append(item["id"][key].strip())
 
             if song["id"][key].strip() in test_array:
                 return True
