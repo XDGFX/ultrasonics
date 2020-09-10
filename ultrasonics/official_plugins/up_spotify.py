@@ -544,27 +544,98 @@ def builder(**kwargs):
             <div class="field">
                 <label class="label">Input</label>
                 <div class="control">
-                    <input class="is-checkradio" type="radio" name="mode" id="Playlists" value="Playlists" checked=true>
-                    <label for="Loved Tracks">Playlists</label>
+                    <input class="is-checkradio" type="radio" name="mode" id="playlists" value="playlists" checked=true>
+                    <label for="playlists">Playlists</label>
 
-                    <input class="is-checkradio" type="radio" name="mode" id="New Saved Songs" value="New Saved Songs">
-                    <label for="Recent Tracks">New Saved Songs</label>
+                    <input class="is-checkradio" type="radio" name="mode" id="saved" value="saved">
+                    <label for="saved">Saved Songs</label>
                 </div>
             </div>
-            <div class="field">
-                <label class="label">You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'.</label>
-            </div>
 
-            <div class="field">
-                <label class="label">Leave it blank to sync everything 🤓.</label>
-            </div>
-
-            <div class="field">
-                <label class="label">Filter</label>
-                <div class="control">
-                    <input class="input" type="text" name="filter" placeholder="">
+            <div class="shy-elements field">
+                <div class="field shy playlists-only">
+                    <label class="label">You can use regex style filters to only select certain playlists. For example,
+                        'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which
+                        ended with the value '2020'.</label>
                 </div>
+
+                <div class="field shy playlists-only">
+                    <label class="label">Leave it blank to sync everything 🤓.</label>
+                </div>
+
+                <div class="field shy playlists-only">
+                    <label class="label">Filter</label>
+                    <div class="control">
+                        <input class="input" type="text" name="filter" placeholder="">
+                    </div>
+                </div>
+
+                <div class="field shy saved-only">
+                    <label class="label">Saved Songs mode will only save newly added songs. This is designed for output
+                        plugins which append tracks, as opposed to overwrite existing playlist songs.</label>
+                </div>
+
+                <div class="field shy saved-only">
+                    <label class="label">
+                        ⚠️ The playlist will only contain songs you've saved since the last run of this applet.
+                    </label>
+                </div>
+
+                <div class="field shy saved-only">
+                    <label class="label">
+                        This plugin will pass the songs in playlist form. What would you like this playlist to be
+                        called?</label>
+                </div>
+
+                <div class="field shy saved-only">
+                    <label class="label">Playlist Title</label>
+                    <div class="control">
+                        <input class="input" type="text" name="playlist_title" placeholder="Spotify Saved Songs">
+                    </div>
+                </div>
+
             </div>
+
+            <script type="text/javascript">
+
+                radios = document.querySelectorAll(".control input.is-checkradio")
+
+                for (i = 0; i < radios.length; i++) {
+                    radios[i].addEventListener("change", updateInputs)
+                }
+
+                updateInputs()
+
+                function updateInputs() {
+                    shyElements = document.querySelectorAll(".shy-elements .shy")
+                    for (i = 0; i < radios.length; i++) {
+                        if (radios[i].checked) {
+                            selected = radios[i].value;
+                        }
+                    }
+
+                    var unhide
+
+                    switch (selected) {
+                        case "playlists":
+                            unhide = document.querySelectorAll(
+                                ".shy-elements .shy.playlists-only")
+                            break
+                        case "saved":
+                            unhide = document.querySelectorAll(
+                                ".shy-elements .shy.saved-only")
+                            break
+                    }
+
+                    for (j = 0; j < shyElements.length; j++) {
+                        shyElements[j].style.display = "none"
+                    }
+                    for (k = 0; k < unhide.length; k++) {
+                        unhide[k].style.display = "block"
+                    }
+                }
+
+            </script>
             """
         ]
 

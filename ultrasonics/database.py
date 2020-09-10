@@ -37,7 +37,7 @@ class Core:
     settings = [
         {
             "type": "string",
-            "value": "Many plugins utilise third party apis, which often require sensitive api keys 🔑 to access (Spotify, last.fm, Deezer, etc). The ultrasonics-api program acts as a proxy server for these apis, while keeping secret api keys... secret."
+            "value": "Many plugins utilise third party apis, which often require sensitive api keys 🔑 to access (Spotify, Last.fm, Deezer, etc). The ultrasonics-api program acts as a proxy server for these apis, while keeping secret api keys... secret."
         },
         {
             "type": "string",
