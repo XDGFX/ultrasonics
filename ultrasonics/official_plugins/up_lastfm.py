@@ -12,6 +12,7 @@ XDGFX, 2020
 import json
 
 import requests
+from tqdm import tqdm
 
 from ultrasonics import logs
 
@@ -139,7 +140,7 @@ def run(settings_dict, **kwargs):
 
         log.info("Getting updated tags for all songs from lastfm...")
 
-        for song in songs:
+        for song in tqdm(songs):
             temp_dict = {
                 "title": song["name"],
                 "artists": [
@@ -169,7 +170,7 @@ def run(settings_dict, **kwargs):
                     log.error(r.text)
                     raise Exception("Unexpected status code")
 
-                album = json.loads(r.content)["track"].get(
+                album = json.loads(r.content).get("track", {}).get(
                     "album", {}).get("title")
 
                 if album:
