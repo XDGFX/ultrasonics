@@ -36,7 +36,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": "0.1",
+    "version": "0.2",
     "settings": [
         {
             "type": "auth",
@@ -469,7 +469,6 @@ def run(settings_dict, **kwargs):
         # Get a list of current user playlists
         current_playlists = s.current_user_playlists()
 
-
         for playlist in songs_dict:
             # Check the playlist already exists in Spotify
             playlist_id = ""
@@ -541,20 +540,32 @@ def builder(**kwargs):
 
     if component == "inputs":
         settings_dict = [
-            {
-                "type": "text",
-                "label": "Filter",
-                "name": "filter",
-                "value": ""
-            },
-            {
-                "type": "string",
-                "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
-            },
-            {
-                "type": "string",
-                "value": "Leave it blank to sync everything 🤓."
-            }
+            """
+            <div class="field">
+                <label class="label">Input</label>
+                <div class="control">
+                    <input class="is-checkradio" type="radio" name="mode" id="Playlists" value="Playlists" checked=true>
+                    <label for="Loved Tracks">Playlists</label>
+
+                    <input class="is-checkradio" type="radio" name="mode" id="New Saved Songs" value="New Saved Songs">
+                    <label for="Recent Tracks">New Saved Songs</label>
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'.</label>
+            </div>
+
+            <div class="field">
+                <label class="label">Leave it blank to sync everything 🤓.</label>
+            </div>
+
+            <div class="field">
+                <label class="label">Filter</label>
+                <div class="control">
+                    <input class="input" type="text" name="filter" placeholder="">
+                </div>
+            </div>
+            """
         ]
 
         return settings_dict
