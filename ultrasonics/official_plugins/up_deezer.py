@@ -14,7 +14,6 @@ import os
 import re
 import time
 
-import deezer
 import requests
 from tqdm import tqdm
 

@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # VSCode
-# .vscode
+.vscode
 
 # Ultrasonics specifics
 .vscode/*
