@@ -11,6 +11,7 @@
     <meta name="description" content="do more with your music">
     <meta name="author" content="Callum Morrison">
 
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet"
@@ -21,9 +22,7 @@
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-    <script src="/static/js/handlers.js"></script>
-    <!-- <script src="/static/requesters.js"></script>
-    <script src="/static/builders.js"></script> -->
+    <script src="/static/js/app.js"></script>
 </head>
 
 <body>
@@ -48,7 +47,7 @@
                 <a href="/">home</a>
                 >
                 <span class="p1"><b>new applet</b></span><br>
-                <span class="p2">mode:</span> {{ current_plans["applet_mode"] }}<br>
+                <!-- <span class="p2">mode:</span> {{ current_plans["applet_mode"] }}<br> -->
                 <span class="p2">uuid:</span> {{ current_plans["applet_id"] }}
             </div>
 
@@ -85,7 +84,7 @@
 
                 <div class="field is-grouped">
                     <div class="control">
-                        <input class="input" type="text" name="applet_name" placeholder="Applet Name" required
+                        <input class="input" type="text" name="applet_name" placeholder="Applet Name"
                             pattern="([A-z0-9À-ž\s]){1,}" value="{{ current_plans['applet_name'] }}"
                             onchange="applet_update_name(this.value)">
                     </div>

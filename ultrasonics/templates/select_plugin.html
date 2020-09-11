@@ -7,10 +7,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>ultrasonics - new</title>
+    <title>ultrasonics</title>
     <meta name="description" content="do more with your music">
     <meta name="author" content="Callum Morrison">
 
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet"
@@ -18,11 +19,6 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-
-    <script src="/static/handlers.js"></script>
-    <script src="/static/requesters.js"></script>
-    <script src="/static/builders.js"></script> -->
 </head>
 
 <body>
@@ -57,17 +53,24 @@
             <div class="container">
                 <div class="field">
                     <div class="plugin_builder_buttons" id="plugin_builder">
-
-                        {% for handshake in handshakes %}
-                        <a class="button plugin"
-                            href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}&persistent=0">
-                            <div>
-                                <p><b>{{ handshake.name }} - <span class="p1">v{{ handshake.version }}</span></b></p>
-                                <p class="is-size-6">{{ handshake.description }}</p>
+                        <div class="columns is-multiline">
+                            {% for handshake in handshakes %}
+                            <div class="column is-3">
+                                <a class="button plugin"
+                                    href="/configure_plugin?plugin={{ handshake.name }}&version={{ handshake.version }}&component={{ component }}&persistent=0">
+                                    <div>
+                                        <p><b>{{ handshake.name }} - <span
+                                                    class="p1">v{{ handshake.version }}</span></b>
+                                        </p>
+                                        {% if "playlists" not in handshake.mode %}
+                                        <p>⚠️ songs mode plugin ⚠️</p>
+                                        {% endif %}
+                                        <p class="is-size-6">{{ handshake.description }}</p>
+                                    </div>
+                                </a>
                             </div>
-                        </a>
-                        {% endfor %}
-
+                            {% endfor %}
+                        </div>
                     </div>
                 </div>
 

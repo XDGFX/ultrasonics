@@ -1,6 +1,9 @@
 [
     {
         "name": "New Music",
+        "id": {
+            "spotify": "57BFgrsiWpUyW0Yp81raiy"
+        },
         "songs": [
             {
                 "title": "Never Be Like You",
@@ -12,7 +15,10 @@
                 "date": "2016-05-27",
                 "isrc": "AUFF01500784",
                 "location": "/media/music/Flume/Skin/Never Be Like You.m4a",
-                "id": "https://open.spotify.com/track/476j7IDRIDRvv1Xu71EVc8"
+                "id": {
+                    "spotify": "476j7IDRIDRvv1Xu71EVc8",
+                    "deezer": "117176358"
+                }
             },
             {
                 "title": "Lovers",
@@ -23,12 +29,15 @@
                 "date": "2017-09-08",
                 "isrc": "USLGZ1700007",
                 "location": "/media/music/Anna of the North/Lovers/Lovers.mp3",
-                "id": "6bZuZKR8hoyzZXNh1IW2Bu"
+                "id": {
+                    "spotify": "6bZuZKR8hoyzZXNh1IW2Bu"
+                }
             }
         ]
     },
     {
         "name": "Noisia",
+        "id": {},
         "songs": [
             {
                 "title": "Hold Your Colour - Noisia Remix",

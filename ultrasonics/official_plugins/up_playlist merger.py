@@ -16,7 +16,7 @@ XDGFX, 2020
 import copy
 
 from ultrasonics import logs
-from ultrasonics.tools.fuzzymatch import fuzzymatch
+from ultrasonics.tools import fuzzymatch
 
 log = logs.create_log(__name__)
 
@@ -29,7 +29,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": 0.1,
+    "version": "0.1",
     "settings": [
         {
             "type": "string",
@@ -41,7 +41,7 @@ handshake = {
         },
         {
             "type": "text",
-            "label": "Fuzzy Ratio",
+            "label": "Default Global Fuzzy Ratio",
             "name": "fuzzy_ratio",
             "value": "Recommended: 90"
         }
@@ -49,15 +49,27 @@ handshake = {
 }
 
 
-def run(settings_dict, database, component, songs_dict):
+def run(settings_dict, **kwargs):
+    """
+    1. Finds all duplicate playlists by title.
+    2. For each duplicate: merges playlist ids.
+    3. For each duplicate: merges all songs from both playlists into new single playlist.
+
+    @return: songs_dict
+    """
+    database = kwargs["database"]
+    songs_dict = kwargs["songs_dict"]
+
     def try_float(string):
         try:
             return float(string)
         except Exception:
             return None
 
-    fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"])
-                   or try_float(database["fuzzy_ratio"])) / 100
+    # Selecting the requested fuzzy_ratio
+    fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"]) or try_float(
+        database["fuzzy_ratio"]))
+    log.info(f"Using a fuzzy ratio of {fuzzy_ratio}")
 
     # Find duplicate playlists.
     # If there are more than two duplicates, the playlist name will show up n-1 times in duplicate_playlists.
@@ -74,9 +86,12 @@ def run(settings_dict, database, component, songs_dict):
                 duplicate_playlists.append(name)
             seen[name] += 1
 
+    log.info(f"Found {len(duplicate_playlists)} duplicate playlist(s)")
+
     for duplicate in duplicate_playlists:
-        playlists = [playlist["songs"]
-                     for playlist in songs_dict if playlist["name"] == duplicate]
+        log.info(f"De-duplicating: {duplicate}")
+        playlists, ids = zip(*[(playlist["songs"], playlist["id"])
+                               for playlist in songs_dict if playlist["name"] == duplicate])
 
         playlist_a = playlists[0]
         playlist_b = playlists[1]
@@ -84,23 +99,26 @@ def run(settings_dict, database, component, songs_dict):
         output_playlist = copy.deepcopy(playlist_b)
 
         for song in playlist_a:
-            is_duplicate = fuzzymatch.match(song, playlist_b, fuzzy_ratio)
+            is_duplicate = fuzzymatch.duplicate(song, playlist_b, fuzzy_ratio)
 
             if not is_duplicate:
-                output_playlist.append[song]
+                output_playlist.append(song)
 
         playlist_a = {
             "name": duplicate,
+            "id": ids[0],
             "songs": playlist_a
         }
 
         playlist_b = {
             "name": duplicate,
+            "id": ids[1],
             "songs": playlist_b
         }
 
         output_playlist = {
             "name": duplicate,
+            "id": {**ids[0], **ids[1]},
             "songs": output_playlist
         }
 
@@ -112,7 +130,9 @@ def run(settings_dict, database, component, songs_dict):
     return songs_dict
 
 
-def builder(database, component):
+def builder(**kwargs):
+    database = kwargs["database"]
+
     settings_dict = [
         {
             "type": "string",

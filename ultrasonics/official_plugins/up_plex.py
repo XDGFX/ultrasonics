@@ -20,9 +20,10 @@ from urllib.parse import urlencode
 from xml.etree import ElementTree
 
 import requests
+from tqdm import tqdm
 
 from ultrasonics import logs
-from ultrasonics.tools.local_tags import local_tags
+from ultrasonics.tools import local_tags
 
 log = logs.create_log(__name__)
 
@@ -36,7 +37,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": 0.1,
+    "version": "0.1",
     "settings": [
         {
             "type": "string",
@@ -66,7 +67,7 @@ handshake = {
         },
         {
             "type": "string",
-            "value": "Do you want to check SSL when connecting? If in doubt, just leave it unchecked."
+            "value": "Do you want to check SSL when connecting?"
         },
         {
             "type": "radio",
@@ -92,9 +93,20 @@ handshake = {
 }
 
 
-def run(settings_dict, database, component, songs_dict=None):
+def run(settings_dict, **kwargs):
+    """
+    Iteracts with playlists on Plex.
+    Songs must have a local path in order to be added.
+    Songs in existing playlists will be overwritten in Plex.
+    """
 
-    def fetch_playlists(key):
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+    applet_id = kwargs["applet_id"]
+    songs_dict = kwargs["songs_dict"]
+
+    def fetch_playlist(key):
         url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
 
         resp = requests.get(url, timeout=30, verify=check_ssl)
@@ -108,7 +120,7 @@ def run(settings_dict, database, component, songs_dict=None):
         title = root.get("title")
 
         playlist = []
-        for document in root.findall("Track"):
+        for document in tqdm(root.findall("Track"), desc=f"Fetching songs from playlist: {title}"):
             song = document[0][0].get('file')
 
             # Convert path to be usable by ultrasonics
@@ -164,6 +176,9 @@ def run(settings_dict, database, component, songs_dict=None):
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
     check_ssl = database["check_ssl"] == "Yes"
 
+    log.info(
+        f"Requesting playlists from endpoint: {url.replace(database['plex_token'], '***********')}")
+
     resp = requests.get(url, timeout=30, verify=check_ssl)
 
     if resp.status_code != 200:
@@ -191,16 +206,21 @@ def run(settings_dict, database, component, songs_dict=None):
     if component == "inputs":
         songs_dict = []
 
-        # Copies Plex playlists to .ultrasonics_tmp folder in music firectory
+        # Copies Plex playlists to .ultrasonics_tmp folder in music directory
         for key in keys:
-            name, playlist = fetch_playlists(key)
+            name, playlist = fetch_playlist(key)
 
-            songs_dict_entry = {
-                "name": name,
-                "songs": playlist
-            }
+            # Check if title matches regex setting
+            if re.match(settings_dict["filter"], name, re.IGNORECASE):
+                log.info(f"Fetching playlist: {name}")
 
-            songs_dict.append(songs_dict_entry)
+                songs_dict_entry = {
+                    "name": name,
+                    "id": {},
+                    "songs": playlist
+                }
+
+                songs_dict.append(songs_dict_entry)
 
         return songs_dict
 
@@ -216,9 +236,11 @@ def run(settings_dict, database, component, songs_dict=None):
                 raise Exception(
                     "Could not remove temp folder: {temp_path}. Try deleting manually", e)
 
+        log.info("Creating temporary playlists to send to Plex.")
         os.makedirs(temp_path)
 
         for item in songs_dict:
+            log.info(f"Updating playlist: {item['name']}")
 
             # Create new playlist
             playlist_path = os.path.join(temp_path, item["name"] + ".m3u")
@@ -229,6 +251,9 @@ def run(settings_dict, database, component, songs_dict=None):
             songs = item["songs"]
 
             for song in songs:
+                # Skip songs without local file
+                if "location" not in song.keys():
+                    continue
 
                 # Find location of song, and convert back to local playlists format
                 song_path = song["location"]
@@ -273,15 +298,17 @@ def run(settings_dict, database, component, songs_dict=None):
         shutil.rmtree(temp_path)
 
 
-def test(database):
+def test(database, **kwargs):
     """
     Checks if Plex Media Server responds to API requests.
     """
+    global_settings = kwargs["global_settings"]
+
     log.debug("Checking that Plex responds to API requests...")
     url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
     check_ssl = database["check_ssl"] == "Yes"
 
-    resp = requests.get(url, timeout=30, verify=check_ssl)
+    resp = requests.get(url, timeout=5, verify=check_ssl)
 
     if resp.status_code == 200:
         log.debug("Test successful.")
@@ -289,7 +316,7 @@ def test(database):
         raise Exception(
             "Did not successfully connect to Plex API. Check your server URL and token.")
 
-    log.debug["Testing music directories..."]
+    log.debug("Testing music directories...")
     if database["plex_prepend"] and database["ultrasonics_prepend"] and os.path.isdir(database["ultrasonics_prepend"]):
         log.debug("Plex and ultrasonics music paths detected successfully.")
     else:
@@ -319,7 +346,11 @@ def test(database):
     log.info("Settings test successful.")
 
 
-def builder(database, component):
+def builder(**kwargs):
+    database = kwargs["database"]
+    global_settings = kwargs["global_settings"]
+    component = kwargs["component"]
+
     url = f"{database['server_url']}/library/sections/?X-Plex-Token={database['plex_token']}"
     check_ssl = "check_ssl" in database.keys()
 
@@ -353,5 +384,25 @@ def builder(database, component):
             "options": sections
         }
     ]
+
+    if component == "inputs":
+        settings_dict.extend(
+            [
+                {
+                    "type": "string",
+                    "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
+                },
+                {
+                    "type": "string",
+                    "value": "Leave it blank to sync everything 🤓."
+                },
+                {
+                    "type": "text",
+                    "label": "Filter",
+                    "name": "filter",
+                    "value": ""
+                }
+            ]
+        )
 
     return settings_dict

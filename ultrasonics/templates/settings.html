@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>ultrasonics</title>
+    <meta name="description" content="do more with your music">
+    <meta name="author" content="Callum Morrison">
+
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bulma-extensions@6.2.7/bulma-checkradio/dist/css/bulma-checkradio.min.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
+    <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+
+<body>
+    <div class="container">
+        <section class="section">
+
+            <div class="columns">
+                <div class="column logo">
+                    <img src="/static/images/logo.svg">
+                </div>
+            </div>
+
+            <div class="columns">
+                <div class="column">
+                    <div class="content is-family-monospace has-grey-links">
+                        <a href="/">home</a>
+                        >
+                        <span class="p1">settings</span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="settings" action="/settings" method="post">
+
+                <input type="hidden" name="action" value="save">
+
+                {% for setting in settings %}
+
+                {% if setting is not mapping %}
+                {{ setting | safe }}
+
+                {% elif setting["type"] == "string" %}
+                <div class="field">
+                    <label class="label">{{ setting["value"] }}</label>
+                </div>
+
+                {% elif setting["type"] == "link" %}
+                <div class="field has-grey-links">
+                    <p><span class="p1">>> </span><a href="{{ setting['value'] }}">{{ setting["value"] }}</a></p>
+                </div>
+
+                {% elif setting["type"] == "text" %}
+                <div class="field">
+                    <label class="label">{{ setting["label"] }}</label>
+                    <div class="control">
+                        <input class="input" type="text" name="{{ setting['name'] }}" value="{{ setting['value'] }}"
+                            placeholder="{{ setting['value'] }}">
+                    </div>
+                </div>
+
+                {% elif setting["type"] == "radio" %}
+                <div class="field">
+                    <label class="label">{{ setting["label"] }}</label>
+                    <div class="control">
+
+                        {% for option in setting["options"] %}
+                        <input class="is-checkradio" type="radio" name="{{  setting['name'] }}" id="{{ option }}"
+                            value="{{ option }}">
+                        <label for="{{ option }}">{{ option }}</label>
+                        {% endfor %}
+
+                    </div>
+                </div>
+
+                {% elif setting["type"] == "select" %}
+                <div class="field">
+                    <label class="label">{{ setting["label"] }}</label>
+                    <div class="control">
+                        <div class="select">
+                            <select name="{{ setting['name'] }}">
+
+                                {% for option in setting["options"] %}
+                                <option>{{ option }}</option>
+                                {% endfor %}
+
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {% endif %}
+
+                {% endfor %}
+
+                <div class="columns is-vcentered">
+                    <div class="column is-wide">
+                        <div class="field is-grouped">
+
+                            <div class="control">
+                                <button type="submit" class="button">Save</button>
+                            </div>
+
+                            <div class="control">
+                                <a onclick="history.back()" class="button">Back</a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </section>
+    </div>
+</body>
+
+</html>

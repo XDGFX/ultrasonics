@@ -7,15 +7,16 @@ Main ultrasonics entrypoint. Run this to start ultrasonics.
 XDGFX, 2020
 """
 
-from ultrasonics import scheduler, webapp, plugins, database, logs
+import os
 
-log = logs.create_log(__name__)
+from ultrasonics import database, plugins, scheduler, webapp
 
 _ultrasonics = {
-    "version": 0.1
+    "version": 0.1,
+    "config_dir": os.path.join(os.path.dirname(__file__), "config")
 }
 
-database.connect()
+database.Core().connect()
 plugins.plugin_gather()
 scheduler.scheduler_start()
 webapp.server_start()

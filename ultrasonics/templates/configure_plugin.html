@@ -7,10 +7,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>ultrasonics - new</title>
+    <title>ultrasonics</title>
     <meta name="description" content="do more with your music">
     <meta name="author" content="Callum Morrison">
 
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet"
@@ -19,10 +20,6 @@
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-
-    <!-- <script src="/static/handlers.js"></script>
-    <script src="/static/requesters.js"></script>
-    <script src="/static/builders.js"></script> -->
 </head>
 
 <body>
@@ -64,9 +61,10 @@
                     </div>
                 </div>
 
-                <div class="column is-narrow">
+                <div class="column is-narrow has-text-right">
                     {% if persistent == 1 %}
                     <div class="tag">Only modified settings will be updated.</div>
+
                     {% elif persistent == 0 %}
                     <a class="button"
                         href="/configure_plugin?plugin={{ plugin }}&version={{ version }}&component={{ component }}&persistent=1">Persistent
@@ -77,7 +75,7 @@
 
             {% if custom_html %}
             <div class="content">
-                <div class="tag is-warning">This page contains custom HTML provided by the plugin. Make sure you trust
+                <div class="tag is-warning">This page contains custom code provided by the plugin. Make sure you trust
                     it before entering any sensitive information!</div>
             </div>
             {% endif %}
@@ -91,6 +89,17 @@
                 <input type="hidden" name="plugin" value="{{ plugin }}">
                 <input type="hidden" name="version" value="{{ version }}">
                 <input type="hidden" name="component" value="{{ component }}">
+
+                {% if not settings %}
+                <div class="field">
+                    <label class="label">🌈 There are no settings to configure for this plugin.</label>
+                </div>
+                <div class="field">
+                    <p class="title">
+                        🎧 🔊 🎧 🔊 🎧 🔊
+                    </p>
+                </div>
+                {% endif %}
 
                 {% for setting in settings %}
 
@@ -106,8 +115,8 @@
                 <input type="hidden" name="{{ setting['name'] }}" value="{{ setting['value'] }}">
 
                 {% elif setting["type"] == "link" %}
-                <div class="field">
-                    <a href="{{ setting['value'] }}">{{ setting["value"] }}</a>
+                <div class="field has-grey-links">
+                    <p><span class="p1">>> </span><a href="{{ setting['value'] }}">{{ setting["value"] }}</a></p>
                 </div>
 
                 {% elif setting["type"] == "text" %}
@@ -148,6 +157,55 @@
                         </div>
                     </div>
                 </div>
+
+                {% elif setting["type"] == "auth" %}
+                <script>
+                    function openWindow() {
+                        api_url = document.getElementById("auth_api_url").innerText;
+                        auth_path = document.getElementById("auth_path").innerText.replace(/^\/+/, '');
+                        auth_button = document.querySelector(".button.auth");
+                        auth_input = document.getElementById("auth_input");
+
+                        auth_button.classList.add("is-loading")
+                        auth_window = window.open(api_url + auth_path, "ultrasonics-api");
+
+                        function receiveMessage(event) {
+                            auth_button.classList.remove("is-loading")
+
+                            if (!api_url.includes(event.origin)) {
+                                console.error(`Invalid origin (${event.origin}) of message.`)
+                            } else if (event.data == "") {
+                                console.error("No authentication data received")
+                            } else {
+                                auth_input.value = atob(event.data);
+
+                                console.log("Data received from ultrasonics-api.")
+                                console.log(event.data)
+                                auth_button.classList.add("is-static")
+                                auth_button.innerText = "✔️ Authenticated"
+
+                                auth_window.close()
+                                return;
+                            }
+
+                            auth_button.innerText = "❌ An error occurred"
+                            auth_window.close()
+                        }
+
+                        window.addEventListener("message", receiveMessage);
+                    }
+                </script>
+
+                <div class="field">
+                    <label class="label">{{ setting["label"] }}</label>
+
+                    <a class="button auth" onclick="openWindow()">🔑 Authenticate</a>
+
+                    <span hidden id="auth_api_url">{{ global_settings['api_url'] }}</span>
+                    <span hidden id="auth_path">{{ setting['path'] }}</span>
+                    <input id="auth_input" type="hidden" name="auth" value="">
+                </div>
+
                 {% endif %}
 
 
@@ -177,9 +235,13 @@
                                     // Update action data and button animation
                                     action = document.getElementById("configure_plugin_action")
                                     button_test = document.getElementById("configure_plugin_testbutton")
+                                    tag_success = document.getElementById("configure_plugin_success")
+                                    tag_failed = document.getElementById("configure_plugin_failed")
 
                                     action.value = "test";
                                     button_test.classList.add("is-loading")
+                                    tag_success.hidden = true
+                                    tag_failed.hidden = true
 
                                     // Submit form data
                                     formData = new FormData(document.getElementById('configure_plugin'))
@@ -231,7 +293,7 @@
 
                         </div>
                     </div>
-                    <div class="column">
+                    <div class="column is-narrow">
                         <div class="content">
                             <div class="tag is-danger" id="configure_plugin_failed" hidden>Test failed. Plugin logs have
                                 been pushed to your browser

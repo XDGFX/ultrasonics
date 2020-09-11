@@ -8,11 +8,13 @@ XDGFX, 2020
 """
 
 import copy
+import os
 
 from flask import Flask, redirect, render_template, request
 from flask_socketio import SocketIO, emit, send
 
-from ultrasonics import logs, plugins, database
+from ultrasonics import database, logs, plugins
+from ultrasonics.tools import random_words
 
 log = logs.create_log(__name__)
 
@@ -24,7 +26,8 @@ sio = SocketIO(app, async_mode='eventlet')
 # --- GENERAL ---
 def server_start():
     log.debug("Starting webserver")
-    sio.run(app, host="0.0.0.0", debug=True)
+    sio.run(app, host="0.0.0.0", debug=os.environ.get(
+        'FLASK_DEBUG') == "True" or False)
 
 
 def send(event, data):
@@ -46,7 +49,8 @@ def html_index():
     if action == 'build':
         # Send applet plans to builder and reset to default
         Applet.current_plans["applet_name"] = request.args.get(
-            'applet_name')
+            'applet_name') or random_words.name()
+
         plugins.applet_build(Applet.current_plans)
         Applet.current_plans = copy.deepcopy(Applet.default_plans)
         return redirect(request.path, code=302)
@@ -78,13 +82,16 @@ def html_index():
         return redirect(request.path, code=302)
 
     elif action == 'new_install':
-        database.new_install(update=True)
+        database.Core().new_install(update=True)
         return redirect(request.path, code=302)
 
-    elif database.new_install():
+    elif database.Core().new_install():
         return redirect("/welcome", code=302)
 
     else:
+        # Clear applet plans anyway
+        Applet.current_plans = copy.deepcopy(Applet.default_plans)
+
         applet_list = plugins.applet_gather()
         return render_template('index.html', applet_list=applet_list)
 
@@ -93,7 +100,7 @@ class Applet:
     default_plans = {
         "applet_name": "",
         "applet_id": "",
-        "applet_mode": "",
+        # "applet_mode": "",
         "inputs": [],
         "modifiers": [],
         "outputs": [],
@@ -115,7 +122,7 @@ def html_new_applet():
 
         Applet.current_plans["applet_id"] = applet_id
 
-        Applet.current_plans["applet_mode"] = request.args.get('mode')
+        # Applet.current_plans["applet_mode"] = request.args.get('mode')
 
         # Redirect to remove url parameters
         return redirect(request.path, code=302)
@@ -152,7 +159,7 @@ def html_new_applet():
 @app.route('/select_plugin')
 def html_select_plugin():
     component = request.args['component']
-    mode = Applet.current_plans['applet_mode']
+    # mode = Applet.current_plans['applet_mode']
 
     if not component:
         log.error("Component not supplied as argument")
@@ -162,7 +169,7 @@ def html_select_plugin():
     selected_handshakes = list()
 
     for handshake in handshakes:
-        if component in handshake["type"] and mode in handshake["mode"]:
+        if component in handshake["type"]:  # and mode in handshake["mode"]:
             selected_handshakes.append(handshake)
 
     return render_template('select_plugin.html', handshakes=selected_handshakes, component=component)
@@ -175,28 +182,31 @@ def html_configure_plugin():
     Settings page for each instance for a plugin.
     """
 
+    global_settings = database.Core().load(raw=True)
+
     # Data received is to update persistent plugin settings
     if request.form.get('action') in ['add', 'test']:
 
         plugin = request.form.get('plugin')
         version = request.form.get('version')
+        component = request.form.get('component')
         new_data = {key: value for key, value in request.form.to_dict().items() if key not in [
             'action', 'plugin', 'version', 'component'] and value != ""}
 
         # Merge new settings with existing database settings
         data = plugins.plugin_load(plugin, version)
 
-        if data == None:
+        if data is None:
             data = new_data
         else:
             data.update(new_data)
 
-        component = request.form.get('component')
         persistent = False
 
         if request.form.get('action') == 'test':
             response = plugins.plugin_test(plugin, version, data, component)
             sio.emit("plugin_test", response)
+            return
         else:
             plugins.plugin_update(plugin, version, data)
 
@@ -211,7 +221,7 @@ def html_configure_plugin():
 
     # Get persistent settings for the plugin
     for item in plugins.handshakes:
-        if item["name"] == plugin and item["version"] == float(version):
+        if item["name"] == plugin and item["version"] == version:
             persistent_settings = item["settings"]
 
     # If persistent settings are supplied
@@ -220,7 +230,7 @@ def html_configure_plugin():
             settings = plugins.plugin_build(plugin, version, component)
 
             # Force redirect to persistent settings if manually requested through url parameters, or if plugin has not been configured
-            persistent = persistent or (settings == None)
+            persistent = persistent or settings is None
 
             if persistent:
                 settings = persistent_settings
@@ -234,7 +244,7 @@ def html_configure_plugin():
 
     except Exception as e:
         log.error(
-            "Could not build plugin! Check your database settings are correct.")
+            "Could not build plugin! Check your database settings are correct.", e)
         return render_template('index.html')
 
     # Check if any settings are custom html strings
@@ -242,7 +252,22 @@ def html_configure_plugin():
 
     test_exists = plugins.plugin_test(plugin, version, component=component)
 
-    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html, test_exists=test_exists)
+    return render_template('configure_plugin.html', settings=settings, plugin=plugin, version=version, component=component, persistent=persistent, custom_html=custom_html, test_exists=test_exists, global_settings=global_settings)
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+def html_settings():
+    """
+    Global ultrasonics settings page.
+    """
+    if request.form.get('action') == "save":
+        database.Core().save(request.form.to_dict())
+
+        return redirect("/", code=302)
+
+    settings = database.Core().load()
+
+    return render_template("settings.html", settings=settings)
 
 
 # Welcome Page

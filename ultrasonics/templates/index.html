@@ -11,6 +11,7 @@
     <meta name="description" content="do more with your music">
     <meta name="author" content="Callum Morrison">
 
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.0/css/bulma.min.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/bulma-prefers-dark">
     <link rel="stylesheet"
@@ -20,10 +21,6 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-    <script src="/static/handlers.js"></script>
-    <script src="/static/requesters.js"></script>
-    <script src="/static/builders.js"></script> -->
 </head>
 
 <body class="has-background-animated">
@@ -40,10 +37,23 @@
         <section class="section">
             <img src="/static/images/logo.svg">
 
-            <div class="buttons has-addons is-centered">
-                <button class="button is-static">new applet</button>
-                <a href="/new_applet?mode=songs" class="button">songs</a>
-                <a href="/new_applet?mode=playlists" class="button">playlists</a>
+            <div class="columns">
+                <div class="column">
+                    <!-- Placeholder for future content -->
+                </div>
+
+                <div class="column">
+                    <div class="buttons has-addons is-centered">
+                        <a href="/new_applet" class="button">new applet</a>
+                        <a href="/settings" class="button">
+                            <span class="icon">⚙</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <!-- Placeholder for future content -->
+                </div>
             </div>
 
             {% for item in applet_list %}
