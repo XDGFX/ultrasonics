@@ -14,6 +14,8 @@ import json
 import os
 import pickle
 import re
+import sqlite3
+import time
 from urllib.parse import urlencode, urljoin
 
 import requests
@@ -339,9 +341,23 @@ def run(settings_dict, **kwargs):
 
             return playlists
 
+        def current_user_saved_tracks(self, page=0):
+            """
+            Wrapper for Spotipy `current_user_saved_tracks`, which allows page selection to get earlier tracks.
+            """
+            limit = 20
+            offset = limit * page
+
+            tracks = self.request(self.sp.current_user_saved_tracks,
+                                  limit=limit, offset=offset)["items"]
+
+            spotify_ids = [item["track"]["id"] for item in tracks]
+
+            return spotify_ids, tracks
+
         def playlist_tracks(self, playlist_id):
             """
-            Wrapper for Spotify `playlist_tracks` which overcomes the request item limit.
+            Wrapper for Spotipy `playlist_tracks` which overcomes the request item limit.
             """
             limit = 100
             fields = "items(track(album(name,release_date),artists,id,name,track_number,external_ids))"
@@ -416,14 +432,85 @@ def run(settings_dict, **kwargs):
             user_info = self.request(self.sp.current_user)
             self.user_id = user_info["id"]
 
-        def current_user_playlist_add_tracks(self, playlist_id, tracks):
+    class Database:
+        """
+        Class for interactions with the up_spotify database.
+        Currently used for storing info about saved songs.
+        """
+
+        def __init__(self):
+            # Create database if required
+            self.saved_songs_db = os.path.join(
+                _ultrasonics["config_dir"], "up_spotify", "saved_songs.db")
+
+            with sqlite3.connect(self.saved_songs_db) as conn:
+                cursor = conn.cursor()
+
+                # Create saved songs table if needed
+                query = "CREATE TABLE IF NOT EXISTS saved_songs (applet_id TEXT, spotify_id TEXT)"
+                cursor.execute(query)
+
+                # Create lastrun table if needed
+                query = "CREATE TABLE IF NOT EXISTS lastrun (applet_id TEXT PRIMARY KEY, time INTEGER)"
+                cursor.execute(query)
+
+                conn.commit()
+
+        def lastrun_get(self):
             """
-            Add a series of tracks to a playlist.
+            Gets the last run time for saved songs mode.
             """
-            # self.sp.user_playlist_add_tracks(self.user_id, playlist_id, tracks)
-            pass
+            with sqlite3.connect(self.saved_songs_db) as conn:
+                cursor = conn.cursor()
+
+                query = "SELECT time FROM lastrun WHERE applet_id = ?"
+                cursor.execute(query, (applet_id,))
+
+                rows = cursor.fetchone()
+
+                return None if not rows else rows[0]
+
+        def lastrun_set(self):
+            """
+            Updates the last run time for saved songs mode.
+            """
+            with sqlite3.connect(self.saved_songs_db) as conn:
+                cursor = conn.cursor()
+
+                query = "REPLACE INTO lastrun (time, applet_id) VALUES (?, ?)"
+                cursor.execute(query, (int(time.time()), applet_id))
+
+        def saved_songs_contains(self, spotify_id):
+            """
+            Checks if the input `spotify_id` is present in the saved songs database.
+            """
+            with sqlite3.connect(self.saved_songs_db) as conn:
+                cursor = conn.cursor()
+
+                query = "SELECT EXISTS(SELECT * FROM saved_songs WHERE applet_id = ? AND spotify_id = ?)"
+                cursor.execute(query, (applet_id, spotify_id))
+
+                rows = cursor.fetchone()
+
+                return rows[0]
+
+        def saved_songs_add(self, spotify_ids):
+            """
+            Adds all songs in a list of `spotify_ids` to the saved songs database for this applet.
+            """
+            with sqlite3.connect(self.saved_songs_db) as conn:
+                cursor = conn.cursor()
+
+                # Add saved songs to database
+                query = "INSERT INTO saved_songs (applet_id, spotify_id) VALUES (?, ?)"
+                values = [(applet_id, spotify_id)
+                          for spotify_id in spotify_ids]
+                cursor.executemany(query, values)
+
+                conn.commit()
 
     s = Spotify()
+    db = Database()
 
     s.api_url = global_settings["api_url"]
 
@@ -433,32 +520,92 @@ def run(settings_dict, **kwargs):
     s.sp = spotipy.Spotify(auth=s.token_get())
 
     if component == "inputs":
-        # 1. Get a list of users playlists
-        playlists = s.current_user_playlists()
+        if settings_dict["mode"] == "playlists":
+            # Playlists mode
 
-        songs_dict = []
+            # 1. Get a list of users playlists
+            playlists = s.current_user_playlists()
 
-        for playlist in playlists:
-            item = {
-                "name": playlist["name"],
-                "id": {
-                    "spotify": playlist["id"]
+            songs_dict = []
+
+            for playlist in playlists:
+                item = {
+                    "name": playlist["name"],
+                    "id": {
+                        "spotify": playlist["id"]
+                    }
                 }
-            }
 
-            songs_dict.append(item)
+                songs_dict.append(item)
 
-        # 2. Filter playlist titles
-        songs_dict = name_filter.filter(songs_dict, settings_dict["filter"])
+            # 2. Filter playlist titles
+            songs_dict = name_filter.filter(
+                songs_dict, settings_dict["filter"])
 
-        # 3. Fetch songs from each playlist, build songs_dict
-        log.info("Building songs_dict for playlists...")
-        for i, playlist in tqdm(enumerate(songs_dict)):
-            tracks = s.playlist_tracks(playlist["id"]["spotify"])
+            # 3. Fetch songs from each playlist, build songs_dict
+            log.info("Building songs_dict for playlists...")
+            for i, playlist in tqdm(enumerate(songs_dict)):
+                tracks = s.playlist_tracks(playlist["id"]["spotify"])
 
-            songs_dict[i]["songs"] = tracks
+                songs_dict[i]["songs"] = tracks
 
-        return songs_dict
+            return songs_dict
+
+        elif settings_dict["mode"] == "saved":
+            # Saved songs mode
+            if db.lastrun_get():
+                # Update songs
+                songs = []
+
+                reached_limit = False
+                page = 0
+
+                # Loop until a known saved song is found
+                while not reached_limit:
+                    spotify_ids, tracks = s.current_user_saved_tracks(
+                        page=page)
+
+                    for spotify_id, track in zip(spotify_ids, tracks):
+                        if db.saved_songs_contains(spotify_id):
+                            reached_limit = True
+                            break
+                        else:
+                            songs.append(
+                                s.spotify_to_songs_dict(track["track"]))
+
+                    page += 1
+
+                if not songs:
+                    log.info(
+                        "No new saved songs were found. Exiting this applet.")
+                    raise Exception(
+                        "No new saved songs found on this applet run.")
+
+                songs_dict = {
+                    "name": settings_dict["playlist_title"] or "Spotify Saved Songs",
+                    "id": {},
+                    "songs": songs
+                }
+
+                return songs_dict
+
+            else:
+                log.info(
+                    "This is the first time this applet plugin has run in saved songs mode.")
+                log.info(
+                    "This first run will be used to get the current state of saved songs, but will not pass any songs in songs_dict.")
+
+                # 1. Get some saved songs
+                spotify_ids, _ = s.current_user_saved_tracks()
+
+                # 2. Update database with saved songs
+                db.saved_songs_add(spotify_ids)
+
+                # 3. Update lastrun
+                db.lastrun_set()
+
+                raise Exception(
+                    "Initial run of this plugin will not return a songs_dict. Database is now updated. Next run will continue as normal.")
 
     else:
         "Outputs mode"

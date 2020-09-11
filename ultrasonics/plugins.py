@@ -296,7 +296,7 @@ def applet_run(applet_id):
         log.info(
             f"Applet {applet_id} completed successfully in {datetime.now() - runtime}")
     else:
-        log.info(
+        log.warning(
             f"Applet {applet_id} failed in {datetime.now() - runtime}")
 
     lastrun = {
