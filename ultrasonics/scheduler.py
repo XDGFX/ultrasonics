@@ -63,12 +63,12 @@ def scheduler_applet_loop(applet_id, delay=0):
             ExecThread, applet_id)
 
         # Wait for trigger to complete
-        while not trigger_thread.done():
+        while not trigger_thread.done() and applets_running[applet_id]:
             time.sleep(trigger_poll())
 
-            # Check if trigger has been removed
-            if not applets_running[applet_id]:
-                break
+        # Check if trigger has been removed
+        if not applets_running[applet_id]:
+            break
 
         # If an error has occurred, future == True
         if trigger_thread.result():
