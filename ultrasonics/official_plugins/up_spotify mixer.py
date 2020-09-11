@@ -364,6 +364,10 @@ def run(settings_dict, **kwargs):
         songs_dict[playlist_index]["name"] = new_title.strip(
         ) if new_title and new_title != "*" else playlist["name"]
 
+        # Remove spotify playlist id if updated title
+        if songs_dict[playlist_index]["name"] == new_title.strip():
+            del songs_dict[playlist_index]["id"]["spotify"]
+
         spotify_ids = []
 
         log.info("Searching for matching songs in Spotify.")
