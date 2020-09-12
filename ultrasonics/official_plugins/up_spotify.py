@@ -38,7 +38,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": "0.2",
+    "version": "0.3",
     "settings": [
         {
             "type": "auth",
@@ -387,6 +387,14 @@ def run(settings_dict, **kwargs):
 
             return track_list
 
+        def user_playlist_remove_all_occurrences_of_tracks(self, playlist_id, tracks):
+            """
+            Wrapper for the spotipy function of the same name.
+            Removes all `tracks` from the specified playlist. 
+            """
+            self.request(
+                self.sp.user_playlist_remove_all_occurrences_of_tracks, self.user_id, playlist_id, tracks)
+
         def spotify_to_songs_dict(self, track):
             """
             Convert dictionary received from Spotify API to ultrasonics songs_dict format.
@@ -652,22 +660,43 @@ def run(settings_dict, **kwargs):
 
             # Add songs which don't already exist in the playlist
             uris = []
+            duplicate_uris = []
 
             log.info("Searching for matching songs in Spotify.")
             for song in tqdm(playlist["songs"], desc=f"Searching Spotify for songs from {playlist['name']}"):
                 # First check for fuzzy duplicate without Spotify api search
-                if not fuzzymatch.duplicate(song, existing_tracks, database["fuzzy_ratio"]):
-                    uri, confidence = s.search(song)
+                duplicate = False
+                for item in existing_tracks:
+                    score = fuzzymatch.similarity(song, item)
 
-                    if uri in existing_uris:
-                        # Song already exists
-                        continue
+                    if score > float(database["fuzzy_ratio"]):
+                        # Duplicate was found
+                        duplicate_uris.append(
+                            f"spotify:track:{item['id']['spotify']}")
+                        duplicate = True
+                        break
 
-                    if confidence > float(database["fuzzy_ratio"]):
-                        uris.append(uri)
-                    else:
-                        log.debug(
-                            f"Could not find song {song['title']} in Spotify; will not add to playlist.")
+                if duplicate:
+                    continue
+
+                uri, confidence = s.search(song)
+
+                if uri in existing_uris:
+                    duplicate_uris.append(uri)
+
+                if confidence > float(database["fuzzy_ratio"]):
+                    uris.append(uri)
+                else:
+                    log.debug(
+                        f"Could not find song {song['title']} in Spotify; will not add to playlist.")
+
+            if settings_dict["existing_playlists"] == "Overwrite":
+                # Remove any songs which aren't in `uris` from the playlist
+                remove_uris = [
+                    uri for uri in existing_uris if uri not in uris + duplicate_uris]
+
+                s.user_playlist_remove_all_occurrences_of_tracks(
+                    playlist_id, remove_uris)
 
             # Add tracks to playlist in batches of 100
             while len(uris) > 100:
@@ -789,4 +818,21 @@ def builder(**kwargs):
         return settings_dict
 
     else:
-        return ""
+        settings_dict = [
+            {
+                "type": "string",
+                "value": "Do you want to overwrite any existing playlists with the same name (replace any songs already in the playlist), or append to them?"
+            },
+            {
+                "type": "radio",
+                "label": "Existing Playlists",
+                "name": "existing_playlists",
+                "id": "existing_playlists",
+                "options": [
+                    "Append",
+                    "Overwrite"
+                ]
+            }
+        ]
+
+        return settings_dict
