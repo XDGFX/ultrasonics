@@ -405,6 +405,10 @@ def builder(**kwargs):
                         "5 Backups",
                         "10 Backups"
                     ]
+                },
+                {
+                    "type": "string",
+                    "value": "💿 This plugin will update any existing playlist to match the one in the applet. This means any existing tracks will be removed if they are not present in the new playlist!"
                 }
             ]
         )
