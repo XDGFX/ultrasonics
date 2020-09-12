@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import io
+import os
+import re
+
 from ultrasonics import logs
 
 log = logs.create_log(__name__)
@@ -32,7 +36,47 @@ def run(settings_dict, **kwargs):
     applet_id = kwargs["applet_id"]
     songs_dict = kwargs["songs_dict"]
 
-    pass
+    for playlist in songs_dict:
+        filename = settings_dict["playlist_name"].replace(
+            "{name}", playlist["name"])
+        filepath = os.path.join(settings_dict["dir"], filename)
+
+        write_lines = []
+
+        for song in playlist["songs"]:
+
+            key_dict = {
+                "title": song.get("title"),
+                "artist": song.get("artists", [None])[0],
+                "album": song.get("album"),
+                "isrc": song.get("isrc"),
+                "location": song.get("location"),
+            }
+
+            output = settings_dict["pattern"]
+
+            try:
+                keys = re.findall(r"{id\.(\w+)}", output)
+
+                for item in keys:
+                    value = song["id"][item]
+                    output = re.sub(r"{id\.(\w+)}", value, output, 1)
+
+                keys = re.findall(r"{(\w+)}", output)
+
+                for item in keys:
+                    value = key_dict[item]
+                    output = re.sub(r"{(\w+)}", value, output, 1)
+
+                write_lines.append(output)
+            except TypeError:
+                log.warning(
+                    f"Song {song['title']} contains an invalid field in pattern {settings_dict['pattern']}")
+                continue
+
+        mode = "a" if settings_dict["existing_files"] == "Append" else "w"
+        with io.open(filepath, mode) as f:
+            f.write("\n".join(write_lines))
 
 
 def builder(**kwargs):
