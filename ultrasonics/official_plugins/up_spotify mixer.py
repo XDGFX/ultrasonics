@@ -81,6 +81,7 @@ def run(settings_dict, **kwargs):
         """
 
         def __init__(self):
+            # Use same cache as up_spotify
             self.cache_file = os.path.join(
                 _ultrasonics["config_dir"], "up_spotify", "up_spotify.bz2")
 

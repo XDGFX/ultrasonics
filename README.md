@@ -25,7 +25,7 @@ Welcome to **ultrasonics**!
 
 **ultrasonics** uses plugins to interact with your favourite services. This means that functionality can be added by simply installing a new plugin. Each plugin may provide compatibility with a service, e.g. the official Spotify plugin links up to... well, Spotify of course. Other plugins provide additional functionality, such as merging playlists from more than one source.
 
-The overview of all included plugins can be found at #plugins.
+The overview of all included plugins can be found at [documentation incomplete].
 
 # Installation
 
@@ -144,7 +144,7 @@ You can build your custom applets using the installed plugins, save it to the da
 
 # Plugins
 
-**ultrasonics** comes bundled with several official plugins. For more info, see the wiki #official_plugins.
+**ultrasonics** comes bundled with several official plugins. For more info, see [documentation incomplete].
 
 New plugins can be installed by simply copying the plugin containing folder into the `plugins` directory.
 
