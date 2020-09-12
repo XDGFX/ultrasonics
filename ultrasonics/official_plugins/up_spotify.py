@@ -589,11 +589,13 @@ def run(settings_dict, **kwargs):
                     raise Exception(
                         "No new saved songs found on this applet run.")
 
-                songs_dict = {
-                    "name": settings_dict["playlist_title"] or "Spotify Saved Songs",
-                    "id": {},
-                    "songs": songs
-                }
+                songs_dict = [
+                    {
+                        "name": settings_dict["playlist_title"] or "Spotify Saved Songs",
+                        "id": {},
+                        "songs": songs
+                    }
+                ]
 
                 return songs_dict
 
@@ -690,7 +692,7 @@ def run(settings_dict, **kwargs):
                     log.debug(
                         f"Could not find song {song['title']} in Spotify; will not add to playlist.")
 
-            if settings_dict["existing_playlists"] == "Overwrite":
+            if settings_dict["existing_playlists"] == "Update":
                 # Remove any songs which aren't in `uris` from the playlist
                 remove_uris = [
                     uri for uri in existing_uris if uri not in uris + duplicate_uris]
@@ -821,7 +823,7 @@ def builder(**kwargs):
         settings_dict = [
             {
                 "type": "string",
-                "value": "Do you want to overwrite any existing playlists with the same name (replace any songs already in the playlist), or append to them?"
+                "value": "Do you want to update any existing playlists with the same name (replace any songs already in the playlist), or append to them?"
             },
             {
                 "type": "radio",
@@ -830,7 +832,7 @@ def builder(**kwargs):
                 "id": "existing_playlists",
                 "options": [
                     "Append",
-                    "Overwrite"
+                    "Update"
                 ]
             }
         ]
