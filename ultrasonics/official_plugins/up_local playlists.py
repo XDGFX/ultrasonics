@@ -350,7 +350,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Directory",
             "name": "dir",
-            "value": "/mnt/music library/playlists"
+            "value": "/mnt/music library/playlists",
+            "required": True
         },
         {
             "type": "string",
@@ -364,7 +365,8 @@ def builder(**kwargs):
             "options": [
                 "Yes",
                 "No"
-            ]
+            ],
+            "required": True
         }
     ]
 
@@ -404,7 +406,8 @@ def builder(**kwargs):
                         "3 Backups",
                         "5 Backups",
                         "10 Backups"
-                    ]
+                    ],
+                    "required": True
                 },
                 {
                     "type": "string",

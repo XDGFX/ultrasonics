@@ -374,6 +374,9 @@ def run(settings_dict, **kwargs):
         for song in tqdm(playlist["songs"], desc=f"Searching Spotify for songs from {playlist['name']}"):
             spotify_id, confidence = s.search(song)
 
+            if not spotify_id:
+                continue
+
             if confidence > float(database.get("fuzzy_ratio") or 90):
                 spotify_ids.append(spotify_id)
             else:
@@ -408,7 +411,7 @@ def run(settings_dict, **kwargs):
 
         # Fill best_results until requested playlist length is reached
         while len(best_results) < int(settings_dict["playlist_length"] or 50) and len(results) > 0:
-            i = random.randint(0, len(results))
+            i = random.randint(0, len(results) - 1)
             best_results.append(results[i])
             del results[i]
 
@@ -449,7 +452,7 @@ def builder(**kwargs):
             "type": "text",
             "label": "Output Playlist Length",
             "name": "playlist_length",
-            "value": "20"
+            "value": "50"
         }
     ]
 

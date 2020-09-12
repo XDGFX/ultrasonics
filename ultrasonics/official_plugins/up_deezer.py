@@ -532,18 +532,18 @@ def builder(**kwargs):
     if component == "inputs":
         settings_dict = [
             {
-                "type": "text",
-                "label": "Filter",
-                "name": "filter",
-                "value": ""
-            },
-            {
                 "type": "string",
                 "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
             },
             {
                 "type": "string",
                 "value": "Leave it blank to sync everything 🤓."
+            },
+            {
+                "type": "text",
+                "label": "Filter",
+                "name": "filter",
+                "value": ""
             }
         ]
 
@@ -563,7 +563,8 @@ def builder(**kwargs):
                 "options": [
                     "Append",
                     "Update"
-                ]
+                ],
+                "required": True
             }
         ]
 

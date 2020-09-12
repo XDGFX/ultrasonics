@@ -422,11 +422,13 @@ def run(settings_dict, **kwargs):
                 "artists": artists,
                 "album": album,
                 "date": date,
-                "isrc": isrc,
-                "id": {
-                    "spotify": str(track["id"])
-                }
+                "isrc": isrc
             }
+
+            if track["id"]:
+                item["id"] = {"spotify": str(track["id"])}
+            else:
+                log.debug(f"Invalid spotify id for song: {track['name']}")
 
             # Remove any empty fields
             item = {k: v for k, v in item.items() if v}
@@ -833,7 +835,8 @@ def builder(**kwargs):
                 "options": [
                     "Append",
                     "Update"
-                ]
+                ],
+                "required": True
             }
         ]
 
