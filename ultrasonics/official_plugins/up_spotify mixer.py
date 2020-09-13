@@ -354,7 +354,7 @@ def run(settings_dict, **kwargs):
     auth = json.loads(database["auth"])
     s.refresh_token = auth["refresh_token"]
 
-    s.sp = spotipy.Spotify(auth=s.token_get())
+    s.sp = spotipy.Spotify(auth=s.token_get(), requests_timeout=60)
 
     playlist_titles = settings_dict["playlist_titles"].split(",")
 
