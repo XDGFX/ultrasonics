@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+"""
+up_time trigger
+
+Official trigger plugin. 
+Runs the created applet on the specified interval times starting at the specified date and time.
+
+AspanishDude, 2020
+"""
 
 import io
 import json
 import math
 import os
+import sqlite3
 import time
 from datetime import datetime
 
@@ -41,53 +50,51 @@ def run(settings_dict, **kwargs):
         Contains anything related to storage of runtimes.
         """
 
-        date_dict = {}
-        date_dict_file = os.path.join(
-            _ultrasonics["config_dir"], "up_time trigger", "date_dict.json")
+        db_file = os.path.join(
+            _ultrasonics["config_dir"], "up_time trigger", "date_dict.db")
 
         def __init__(self):
             """
             Create cache file if needed, load values from the file.
             """
             try:
-                os.mkdir(os.path.dirname(self.date_dict_file))
-                exists = False
+                os.mkdir(os.path.dirname(self.db_file))
             except FileExistsError:
-                if os.path.isfile(self.date_dict_file):
-                    # File already exists, load existing values
-                    with io.open(self.date_dict_file) as f:
-                        self.date_dict = json.load(f)
-                else:
-                    # Create the file
-                    self.update_runtime()
+                pass
 
-        def update_runtime(self):
+            with sqlite3.connect(self.db_file) as conn:
+                cursor = conn.cursor()
+
+                # Create applet table if needed
+                query = "CREATE TABLE IF NOT EXISTS runtimes (applet_id TEXT PRIMARY KEY, lastrun REAL)"
+                cursor.execute(query)
+
+                conn.commit()
+
+        def update_runtime(self, firstrun=False):
             """
             Save the current time to the latest runtime for this applet.
             """
-            # Get the latest version of the date_dict file
-            with io.open(self.date_dict_file) as f:
-                self.date_dict = json.load(f)
+            if firstrun:
+                last_sync_date = start_timestamp_seconds - interval
 
-            # Take the current time in seconds
-            current_time = (datetime.utcnow() -
-                            datetime(1970, 1, 1)).total_seconds()
+            else:
+                # Take the current time in seconds
+                last_sync_date = (datetime.utcnow() -
+                                datetime(1970, 1, 1)).total_seconds()
 
-            # Update the dictionary with the latest runtime
-            self.date_dict[applet_id] = current_time
+            with sqlite3.connect(self.db_file) as conn:
+                cursor = conn.cursor()
 
-            # Update the cache file
-            with io.open(self.date_dict_file, 'w') as f:
-                json.dump(self.date_dict, f)
+                # Create applet table if needed
+                query = "REPLACE INTO runtimes (applet_id, lastrun) VALUES (?,?)"
+                cursor.execute(query, (applet_id, last_sync_date))
+
+                conn.commit()
+
+            return last_sync_date
 
     rt = Runtime()
-
-    if not applet_id in rt.date_dict:
-        # Create the applet entry and store the current date
-        rt.update_runtime()
-
-    # Fetch the last sync date from the date_dict
-    last_sync_date = rt.date_dict[applet_id]
 
     interval_multiplier = float(settings_dict["interval_input"])
     interval_selection = settings_dict["update_frequency"]
@@ -116,15 +123,22 @@ def run(settings_dict, **kwargs):
         # If no value is added then default is start right now
         start_timestamp_seconds = current_time
 
-    # Calculate the time to wait until starting date conditions
-    time_to_firstrun = start_timestamp_seconds - current_time
+    # Fetch the last sync date from the date_dict
+    with sqlite3.connect(rt.db_file) as conn:
+        cursor = conn.cursor()
 
-    # Check if starting date contions already met
-    if time_to_firstrun > 0:
-        # Applet has never run
-        sleep_time = time_to_firstrun
+        # Create applet table if needed
+        query = "SELECT lastrun FROM runtimes WHERE applet_id = ?"
+        cursor.execute(query, (applet_id,))
 
-    elif (last_sync_date + interval - current_time) < 0:
+        rows = cursor.fetchone()
+
+        if rows is None:
+            last_sync_date = rt.update_runtime(firstrun=True)
+        else:
+            last_sync_date = rows[0]   
+
+    if (last_sync_date + interval - current_time) < 0:
         # Applet is overdue
         sleep_time = 0
 
