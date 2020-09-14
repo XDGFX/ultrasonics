@@ -211,6 +211,13 @@ a.tag:hover {
     height: 5em;
 }
 
+.welcome-image {
+    border: var(--grey-dark) solid 1px;
+    border-radius: 4px;
+    margin: 2em 8em 2em 8em;
+    width: calc(100% - 16em);
+}
+
 /* #div_service_select {
     flex-wrap: wrap;
 }
