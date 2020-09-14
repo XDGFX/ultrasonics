@@ -37,12 +37,12 @@ def name():
     nouns = ["actor", "gold", "painting", "advertisement", "grass", "parrot", "afternoon", "greece", "pencil", "airport", "guitar", "piano", "ambulance", "hair", "pillow", "animal", "hamburger", "pizza", "answer", "helicopter", "planet", "apple", "helmet", "plastic", "army", "holiday",  "honey", "potato", "balloon", "horse", "queen", "banana", "hospital", "quill", "battery", "house", "rain", "beach", "hydrogen", "rainbow", "beard", "ice", "raincoat", "bed", "insect", "refrigerator", "insurance", "restaurant", "boy", "iron", "river", "branch", "island", "rocket", "breakfast", "jackal", "room", "brother", "jelly", "rose", "camera", "jewellery", "candle", "sandwich", "car", "juice", "school", "caravan", "kangaroo", "scooter", "carpet", "king", "shampoo", "cartoon", "kitchen", "shoe", "kite", "soccer", "church", "knife", "spoon", "crayon", "lamp",
              "stone", "crowd", "lawyer", "sugar", "daughter", "leather", "death", "library", "teacher", "lighter", "telephone", "diamond", "lion", "television", "dinner", "lizard", "tent", "disease", "lock", "doctor", "tomato", "dog", "lunch", "toothbrush", "dream", "machine", "traffic", "dress", "magazine", "train", "easter", "magician", "truck", "egg", "eggplant", "market", "umbrella", "match", "van", "elephant", "microphone", "vase", "energy", "monkey", "vegetable", "engine", "morning", "vulture", "motorcycle", "wall", "evening", "nail", "whale", "eye", "napkin", "window", "family", "needle", "wire", "nest", "xylophone", "fish", "yacht", "flag", "night", "yak", "flower", "notebook", "zebra", "football", "ocean", "zoo", "forest", "oil", "garden", "fountain", "orange", "gas", "oxygen", "girl", "furniture", "oyster", "glass", "garage", "ghost"]
 
-    n0 = random.randint(0, len(adjectives))
-    n1 = random.randint(0, len(adjectives))
+    n0 = random.randint(0, len(adjectives) - 1)
+    n1 = random.randint(0, len(adjectives) - 1)
 
     while n0 == n1:
-        n1 = random.randint(0, len(adjectives))
+        n1 = random.randint(0, len(adjectives) - 1)
 
-    n2 = random.randint(0, len(nouns))
+    n2 = random.randint(0, len(nouns) - 1)
 
     return f"{adjectives[n0]} {adjectives[n1]} {nouns[n2]}"

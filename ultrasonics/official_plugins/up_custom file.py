@@ -97,7 +97,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Directory",
             "name": "dir",
-            "value": "/mnt/playlists"
+            "value": "/mnt/playlists",
+            "required": True
         },
         {
             "type": "string",
@@ -111,7 +112,8 @@ def builder(**kwargs):
             "options": [
                 "Overwrite",
                 "Append"
-            ]
+            ],
+            "required": True
         },
         {
             "type": "string",
@@ -121,7 +123,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Playlist Name",
             "name": "playlist_name",
-            "value": "{name}.txt"
+            "value": "{name}.txt",
+            "required": True
         },
         {
             "type": "string",
@@ -135,7 +138,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Song Pattern",
             "name": "pattern",
-            "value": "{artist} - {title} (ISRC: {isrc})"
+            "value": "{artist} - {title} (ISRC: {isrc})",
+            "required": True
         }
     ]
 

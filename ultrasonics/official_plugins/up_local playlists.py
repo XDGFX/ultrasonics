@@ -350,7 +350,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Directory",
             "name": "dir",
-            "value": "/mnt/music library/playlists"
+            "value": "/mnt/music library/playlists",
+            "required": True
         },
         {
             "type": "string",
@@ -364,7 +365,8 @@ def builder(**kwargs):
             "options": [
                 "Yes",
                 "No"
-            ]
+            ],
+            "required": True
         }
     ]
 
@@ -404,7 +406,12 @@ def builder(**kwargs):
                         "3 Backups",
                         "5 Backups",
                         "10 Backups"
-                    ]
+                    ],
+                    "required": True
+                },
+                {
+                    "type": "string",
+                    "value": "💿 This plugin will update any existing playlist to match the one in the applet. This means any existing tracks will be removed if they are not present in the new playlist!"
                 }
             ]
         )

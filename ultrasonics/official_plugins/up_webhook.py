@@ -72,13 +72,15 @@ def builder(**kwargs):
             "type": "text",
             "label": "Port",
             "name": "port",
-            "value": "5001"
+            "value": "5001",
+            "required": True
         },
         {
             "type": "text",
             "label": "Root Path",
             "name": "path",
-            "value": "/"
+            "value": "/",
+            "required": True
         },
     ]
 

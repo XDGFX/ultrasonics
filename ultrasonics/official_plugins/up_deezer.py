@@ -33,7 +33,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": "0.1",
+    "version": "0.2",
     "settings": [
         {
             "type": "auth",
@@ -112,6 +112,13 @@ def run(settings_dict, **kwargs):
                     time.sleep(5)
                     r = requests.post(url, data=data)
 
+            elif method == "DELETE":
+                r = requests.delete(url, params=params)
+
+                if r.status_code == 4:
+                    time.sleep(5)
+                    r = requests.post(url, data=data)
+
             else:
                 raise Exception(f"Unknown api method: {method}")
 
@@ -164,13 +171,13 @@ def run(settings_dict, **kwargs):
             try:
                 # If ISRC exists, only use that query
                 url = f"https://api.deezer.com/2.0/track/isrc:{track['isrc']}"
-                track = self.api(url)
+                resp = self.api(url)
 
-                if track.get("error"):
+                if resp.get("error"):
                     # ISRC was not found in Deezer
                     raise KeyError
 
-                results_list.append(self.deezer_to_songs_dict(track=track))
+                results_list.append(self.deezer_to_songs_dict(track=resp))
 
             except KeyError:
                 # If no ISRC, try all additional queries
@@ -313,6 +320,18 @@ def run(settings_dict, **kwargs):
 
             return track_list
 
+        def remove_tracks_from_playlist(self, playlist_id, tracks):
+            """
+            Removes all occurrences of `tracks` from the specified playlist.
+            """
+            url = f"https://api.deezer.com/playlist/{playlist_id}/tracks"
+            params = {
+                "access_token": self.token,
+                "songs": ",".join(tracks)
+            }
+
+            self.api(url, method="DELETE", params=params)
+
         def deezer_to_songs_dict(self, track=None, result=None):
             """
             Convert dictionary received from Deezer API to ultrasonics songs_dict format.
@@ -448,25 +467,49 @@ def run(settings_dict, **kwargs):
 
             # Add songs which don't already exist in the playlist
             new_ids = []
+            duplicate_ids = []
 
             log.info("Searching for matching songs in Deezer.")
             for song in tqdm(playlist["songs"], desc=f"Searching Deezer for songs from {playlist['name']}"):
                 # First check for fuzzy duplicate without Deezer api search
-                if not fuzzymatch.duplicate(song, existing_tracks, database["fuzzy_ratio"]):
+                duplicate = False
+                for item in existing_tracks:
+                    score = fuzzymatch.similarity(song, item)
+
+                    if score > float(database["fuzzy_ratio"]):
+                        # Duplicate was found
+                        duplicate_ids.append(item['id']['deezer'])
+                        duplicate = True
+                        break
+
+                if duplicate:
+                    continue
+
+                try:
                     deezer_id, confidence = dz.search(song)
+                except UserWarning:
+                    # Likely no data was returned
+                    log.warning(
+                        f"No data was returned when searching for song: {song}")
+                    continue
 
-                    if deezer_id in existing_ids:
-                        # Song already exists
-                        continue
+                if deezer_id in existing_ids:
+                    duplicate_ids.append(deezer_id)
 
-                    if confidence > float(database["fuzzy_ratio"]):
-                        new_ids.append(str(deezer_id))
-                    else:
-                        log.debug(
-                            f"Could not find song {song['title']} in Deezer; will not add to playlist.")
+                if confidence > float(database["fuzzy_ratio"]):
+                    new_ids.append(str(deezer_id))
+                else:
+                    log.debug(
+                        f"Could not find song {song['title']} in Deezer; will not add to playlist.")
+
+            if settings_dict["existing_playlists"] == "Update":
+                # Remove any songs which aren't in `uris` from the playlist
+                remove_ids = [
+                    deezer_id for deezer_id in existing_ids if deezer_id not in new_ids + duplicate_ids]
+
+                dz.remove_tracks_from_playlist(playlist_id, remove_ids)
 
             # Add tracks to playlist in batches of 100
-
             url = f"https://api.deezer.com/playlist/{playlist_id}/tracks"
             data = {
                 "access_token": dz.token
@@ -489,22 +532,40 @@ def builder(**kwargs):
     if component == "inputs":
         settings_dict = [
             {
-                "type": "text",
-                "label": "Filter",
-                "name": "filter",
-                "value": ""
-            },
-            {
                 "type": "string",
                 "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
             },
             {
                 "type": "string",
                 "value": "Leave it blank to sync everything 🤓."
+            },
+            {
+                "type": "text",
+                "label": "Filter",
+                "name": "filter",
+                "value": ""
             }
         ]
 
         return settings_dict
 
     else:
-        return ""
+        settings_dict = [
+            {
+                "type": "string",
+                "value": "Do you want to update any existing playlists with the same name (replace any songs already in the playlist), or append to them?"
+            },
+            {
+                "type": "radio",
+                "label": "Existing Playlists",
+                "name": "existing_playlists",
+                "id": "existing_playlists",
+                "options": [
+                    "Append",
+                    "Update"
+                ],
+                "required": True
+            }
+        ]
+
+        return settings_dict

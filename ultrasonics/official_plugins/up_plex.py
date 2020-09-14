@@ -405,4 +405,14 @@ def builder(**kwargs):
             ]
         )
 
+    elif component == "outputs":
+        settings_dict.extend(
+            [
+                {
+                    "type": "string",
+                    "value": "💿 This plugin will update any existing playlist to match the one in the applet. This means any existing tracks will be removed if they are not present in the new playlist!"
+                }
+            ]
+        )
+
     return settings_dict

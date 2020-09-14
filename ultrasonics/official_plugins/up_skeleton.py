@@ -106,7 +106,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Search Term",
             "name": "searchterm",
-            "value": "Flume"
+            "value": "Flume",
+            "required": True
         },
         {
             "type": "radio",
@@ -117,7 +118,8 @@ def builder(**kwargs):
                 "Track",
                 "Artist",
                 "Album"
-            ]
+            ],
+            "required": True
         },
         {
             "type": "select",

@@ -48,7 +48,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Command",
             "name": "command",
-            "value": ""
+            "value": "",
+            "required": True
         }
     ]
 
