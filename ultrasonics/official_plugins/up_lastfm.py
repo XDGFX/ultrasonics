@@ -33,7 +33,8 @@ handshake = {
             "type": "text",
             "label": "Last.fm Username",
             "name": "username",
-            "value": "XDGFX"
+            "value": "XDGFX",
+            "required": True
         }
     ]
 }
@@ -410,7 +411,8 @@ def builder(**kwargs):
             "type": "text",
             "label": "Playlist Title",
             "name": "playlist_title",
-            "value": "Last.fm Songs"
+            "value": "Last.fm Songs",
+            "required": True
         },
     ]
 

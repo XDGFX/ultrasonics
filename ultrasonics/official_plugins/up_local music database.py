@@ -311,7 +311,7 @@ def run(settings_dict, **kwargs):
                             continue
 
                         score = fuzzymatch.similarity(song, item)
-                        if score > float(database["fuzzy_ratio"]):
+                        if score > float(database.get("fuzzy_ratio") or 90):
                             # Match found
                             songs_dict[i]["songs"][j]["location"] = item["location"]
                             found = True

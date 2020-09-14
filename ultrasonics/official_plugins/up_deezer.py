@@ -476,7 +476,7 @@ def run(settings_dict, **kwargs):
                 for item in existing_tracks:
                     score = fuzzymatch.similarity(song, item)
 
-                    if score > float(database["fuzzy_ratio"]):
+                    if score > float(database.get("fuzzy_ratio") or 90):
                         # Duplicate was found
                         duplicate_ids.append(item['id']['deezer'])
                         duplicate = True
@@ -496,7 +496,7 @@ def run(settings_dict, **kwargs):
                 if deezer_id in existing_ids:
                     duplicate_ids.append(deezer_id)
 
-                if confidence > float(database["fuzzy_ratio"]):
+                if confidence > float(database.get("fuzzy_ratio") or 90):
                     new_ids.append(str(deezer_id))
                 else:
                     log.debug(

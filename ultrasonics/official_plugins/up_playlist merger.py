@@ -69,6 +69,7 @@ def run(settings_dict, **kwargs):
     # Selecting the requested fuzzy_ratio
     fuzzy_ratio = (try_float(settings_dict["fuzzy_ratio"]) or try_float(
         database["fuzzy_ratio"]))
+    fuzzy_ratio = 90 if fuzzy_ratio is None else fuzzy_ratio
     log.info(f"Using a fuzzy ratio of {fuzzy_ratio}")
 
     # Find duplicate playlists.
@@ -146,7 +147,7 @@ def builder(**kwargs):
             "type": "text",
             "label": "Fuzzy Ratio",
             "name": "fuzzy_ratio",
-            "value": f"Currently: {database['fuzzy_ratio']} 👾"
+            "value": f"Currently: {database.get('fuzzy_ratio')} 👾"
         }
     ]
 

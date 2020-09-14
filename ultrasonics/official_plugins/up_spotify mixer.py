@@ -367,7 +367,7 @@ def run(settings_dict, **kwargs):
 
         # Remove spotify playlist id if updated title
         if songs_dict[playlist_index]["name"] == new_title.strip():
-            del songs_dict[playlist_index]["id"]["spotify"]
+            songs_dict[playlist_index]["id"] = {}
 
         spotify_ids = []
 

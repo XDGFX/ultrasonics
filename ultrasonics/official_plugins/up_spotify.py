@@ -673,7 +673,7 @@ def run(settings_dict, **kwargs):
                 for item in existing_tracks:
                     score = fuzzymatch.similarity(song, item)
 
-                    if score > float(database["fuzzy_ratio"]):
+                    if score > float(database.get("fuzzy_ratio") or 90):
                         # Duplicate was found
                         duplicate_uris.append(
                             f"spotify:track:{item['id']['spotify']}")
@@ -688,7 +688,7 @@ def run(settings_dict, **kwargs):
                 if uri in existing_uris:
                     duplicate_uris.append(uri)
 
-                if confidence > float(database["fuzzy_ratio"]):
+                if confidence > float(database.get("fuzzy_ratio") or 90):
                     uris.append(uri)
                 else:
                     log.debug(
