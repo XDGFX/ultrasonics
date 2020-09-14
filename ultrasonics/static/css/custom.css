@@ -218,6 +218,10 @@ a.tag:hover {
     width: calc(100% - 16em);
 }
 
+.welcome-page p {
+    margin-bottom: 4em;
+}
+
 /* #div_service_select {
     flex-wrap: wrap;
 }
