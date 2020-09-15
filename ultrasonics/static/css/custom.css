@@ -16,6 +16,15 @@
     color: var(--primary-2);
 }
 
+::selection {
+    background: var(--primary-1);
+    color: var(--grey-darker);
+}
+::-moz-selection {
+    background: var(--primary-1);
+    color: var(--grey-darker);
+}
+
 /* Light and dark mode */
 @media (prefers-color-scheme: dark) {
     html {
@@ -206,9 +215,29 @@ a.tag:hover {
     color: var(--grey-dark);
 }
 
+.has-grey-links a .p2:hover {
+    color: var(--grey-dark);
+}
+
+.has-grey-links.no-hover a:hover {
+    color: var(--grey);
+}
+
+.has-white-links a {
+    color: white;
+}
+
+.has-white-links a:hover {
+    color: var(--grey);
+}
+
 .button.auth {
     width: 100%;
     height: 5em;
+}
+
+.button:focus:not(:active), .button.is-focused:not(:active) {
+	border: var(--primary-1) solid 1px;
 }
 
 .welcome-image {

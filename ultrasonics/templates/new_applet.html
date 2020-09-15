@@ -58,7 +58,9 @@
 
                 <!-- Loop over each type of component to build it's section -->
                 {% for type in ["inputs", "modifiers", "outputs", "triggers"] %}
-                <h2 class="subtitle">{{ type }} <a class="p2" href="/select_plugin?component={{ type }}"><b>+</b></a>
+                <h2 class="subtitle has-grey-links no-hover">
+                    <a href="/select_plugin?component={{ type }}">{{ type }}
+                        <span class="p2"><b>+</b></span></a>
 
                     {% if type == "modifiers" %}
                     <span class="tag">Optional</span>
