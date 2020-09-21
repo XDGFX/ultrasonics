@@ -17,6 +17,7 @@ import os
 
 from mutagen.easyid3 import EasyID3
 from mutagen.mp4 import MP4
+from mutagen.flac import FLAC
 
 from ultrasonics import logs
 
@@ -24,7 +25,8 @@ log = logs.create_log(__name__)
 
 supported_audio_extensions = [
     ".mp3",
-    ".m4a"
+    ".m4a",
+    ".flac"    
 ]
 
 # db_file = os.path.join(os.path.dirname(__file__), "local_tags.db")
@@ -96,7 +98,7 @@ def tags(song_path):
         # acoustid_id = tags["acoustid_id"]
         # acoustid_fingerprint = tags["acoustid_fingerprint"]
 
-    if ext == ".m4a":
+    elif ext == ".m4a":
         tags = MP4(song_path)
 
         # Fetch the m4a tag data from the music file, and save in a dictionary
@@ -113,6 +115,21 @@ def tags(song_path):
 
         # # Correct date format
         # if song_dict["date"]:
+
+    elif ext == ".flac":
+        tags = FLAC(song_path)
+
+        # Fetch the flac tag data from the music file, and save in a dictionary
+        for field in ["title", "album", "date", "isrc", "tracknumber"]:
+            try:
+                song_dict[field] = tags[field][0]
+            except KeyError:
+                pass
+
+        try:
+            song_dict["artists"] = tags["artists"]
+        except KeyError:
+            pass
 
     # Add location of music file to dictionary
     song_dict["location"] = song_path
