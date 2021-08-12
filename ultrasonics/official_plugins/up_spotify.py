@@ -38,7 +38,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": "0.3",
+    "version": "0.4",
     "settings": [
         {
             "type": "auth",
@@ -364,19 +364,21 @@ def run(settings_dict, **kwargs):
             tracks = self.request(self.sp.playlist_tracks, playlist_id,
                                   limit=limit, offset=0, fields=fields)
 
-            tracks_count = len(tracks)
+            tracks = tracks["items"]
             i = 1
 
+            do_extend = len(tracks) == limit
+
             # Get all tracks from the playlist
-            while tracks_count == limit:
+            while do_extend:
                 buffer = self.request(self.sp.playlist_tracks, playlist_id,
-                                      limit=limit, offset=limit * i, **kwargs)
+                                      limit=limit, offset=limit * i, fields=fields)['items']
 
                 tracks.extend(buffer)
-                tracks_count = len(buffer)
+                do_extend = len(buffer) == limit
+
                 i += 1
 
-            tracks = tracks["items"]
 
             track_list = []
 
@@ -390,7 +392,7 @@ def run(settings_dict, **kwargs):
         def user_playlist_remove_all_occurrences_of_tracks(self, playlist_id, tracks):
             """
             Wrapper for the spotipy function of the same name.
-            Removes all `tracks` from the specified playlist. 
+            Removes all `tracks` from the specified playlist.
             """
             self.request(
                 self.sp.user_playlist_remove_all_occurrences_of_tracks, self.user_id, playlist_id, tracks)
