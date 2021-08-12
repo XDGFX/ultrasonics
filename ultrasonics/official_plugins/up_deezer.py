@@ -33,7 +33,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": "0.2",
+    "version": "0.3",
     "settings": [
         {
             "type": "auth",
@@ -261,19 +261,15 @@ def run(settings_dict, **kwargs):
                 "index": 0
             }
 
-            playlists = self.api(url, params=params)["data"]
+            playlists_response = self.api(url, params=params)
+            playlists = playlists_response["data"]
 
-            playlist_count = len(playlists)
-            i = 1
+            playlists_count = playlists_response["total"]
 
-            # Get all playlists from the user
-            while playlist_count == limit:
-                params["index"] = limit * i
-
-                buffer = self.api(url, params=params)["data"]
-                playlists.extend(buffer)
-                playlist_count = len(buffer)
-                i += 1
+            # Get all playlists from the playlist
+            while "next" in playlists_response:
+                playlists_response = self.api(playlists_response["next"])
+                playlists.extend(playlists_response["data"])
 
             log.info(f"Found {len(playlists)} playlist(s) on Deezer.")
 
@@ -292,19 +288,15 @@ def run(settings_dict, **kwargs):
                 "index": 0
             }
 
-            tracks = self.api(url, params=params)["data"]
+            tracks_response = self.api(url, params=params)
+            tracks = tracks_response["data"]
 
-            tracks_count = len(tracks)
-            i = 1
+            tracks_count = tracks_response["total"]
 
             # Get all tracks from the playlist
-            while tracks_count == limit:
-                params["index"] = limit * i
-
-                buffer = self.api(url, params=params)["data"]
-                tracks.extend(buffer)
-                tracks_count = len(buffer)
-                i += 1
+            while "next" in tracks_response:
+                tracks_response = self.api(tracks_response["next"])
+                tracks.extend(tracks_response["data"])
 
             track_list = []
 
@@ -507,7 +499,9 @@ def run(settings_dict, **kwargs):
                 remove_ids = [
                     deezer_id for deezer_id in existing_ids if deezer_id not in new_ids + duplicate_ids]
 
-                dz.remove_tracks_from_playlist(playlist_id, remove_ids)
+                # Skip if no songs are to be removed
+                if remove_ids:
+                    dz.remove_tracks_from_playlist(playlist_id, remove_ids)
 
             # Add tracks to playlist in batches of 100
             url = f"https://api.deezer.com/playlist/{playlist_id}/tracks"
