@@ -14,6 +14,7 @@ XDGFX, 2020
 
 import io
 import os
+import re
 import shutil
 from datetime import datetime
 
@@ -304,6 +305,9 @@ def run(settings_dict, **kwargs):
         existing_playlist_titles = [item["name"] for item in playlists]
 
         for item in songs_dict:
+            # Replace invalid characters in playlist title
+            item["name"] = re.sub("[\\/:*?|<>]+[ ]*", "", item["name"])
+
             # Check if playlist already exists
             if item["name"] in existing_playlist_titles:
                 # Update existing playlist

@@ -242,6 +242,9 @@ def run(settings_dict, **kwargs):
         for item in songs_dict:
             log.info(f"Updating playlist: {item['name']}")
 
+            # Replace invalid characters in playlist title
+            item["name"] = re.sub("[\\/:*?|<>]+[ ]*", "", item["name"])
+
             # Create new playlist
             playlist_path = os.path.join(temp_path, item["name"] + ".m3u")
 

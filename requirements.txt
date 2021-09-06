@@ -1,12 +1,12 @@
 # Main Program
 Flask==1.1.2
 Flask-SocketIO==4.3.1
-eventlet==0.26.1
+eventlet==0.31.0
 
 # Included Plugins
 mutagen==1.45.1
 requests==2.24.0
 fuzzywuzzy==0.18.0
-python-Levenshtein==0.12.0
+python-Levenshtein==0.12.1
 spotipy==2.14.0
 tqdm==4.48.2
