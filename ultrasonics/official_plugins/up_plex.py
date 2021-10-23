@@ -363,6 +363,7 @@ def builder(**kwargs):
         raise Exception(
             f"Unexpected status code received from Plex: {resp.status_code}")
 
+    log.error(resp.text)
     root = ElementTree.fromstring(resp.text)
 
     sections = []

@@ -19,7 +19,7 @@
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap">
     <link rel="stylesheet" href="/static/css/custom.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
 </head>
 
 <body>
@@ -124,8 +124,8 @@
                     <label class="label">{{ setting["label"] }}</label>
                     <div class="control">
                         <input class="input" type="text" name="{{ setting['name'] }}"
-                            placeholder="{{ setting['value'] }}"
-                            {% if setting.get("required") == True %}required{% endif %}>
+                            placeholder="{{ setting['value'] }}" {% if setting.get("required")==True %}required{% endif
+                            %}>
                     </div>
                 </div>
 
@@ -136,7 +136,7 @@
 
                         {% for option in setting["options"] %}
                         <input class="is-checkradio" type="radio" name="{{  setting['name'] }}" id="{{ option }}"
-                            value="{{ option }}" {% if setting.get("required") == True %}required{% endif %}>
+                            value="{{ option }}" {% if setting.get("required")==True %}required{% endif %}>
                         <label for="{{ option }}">{{ option }}</label>
                         {% endfor %}
 

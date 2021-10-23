@@ -233,6 +233,8 @@ def run(settings_dict, **kwargs):
     playlists = [item for item in playlists if os.path.splitext(item["path"])[
         1] in supported_playlist_extensions]
 
+    log.info(f"Found {len(playlists)} playlist(s) in supplied directory.")
+
     if component == "inputs":
         songs_dict = []
 
@@ -240,6 +242,8 @@ def run(settings_dict, **kwargs):
         filter_titles = [item["name"] for item in playlists]
         filter_titles = name_filter.filter_list(
             filter_titles, settings_dict["filter"])
+
+        log.info(f"{len(filter_titles)} playlist(s) match supplied filter.")
 
         playlists = [
             item for item in playlists if item["name"] in filter_titles]
