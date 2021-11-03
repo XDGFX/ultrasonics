@@ -1,25 +1,15 @@
 [Unit]
-
-Description=Ultrasonics Systemd file
-
+Description=ultrasonics: Sync music playlists between all your music services.
 Documentation=https://github.com/XDGFX/ultrasonics
-
 After=network.target
-
 Wants=network-online.target
-
 ConditionPathIsDirectory=/opt/ultrasonics
 
 [Service]
-
 Restart=always
-
 Type=simple
-
 ExecStart=.venv/bin/activate && python3 app.py
-
 WorkingDirectory=/opt/ultrasonics
 
 [Install]
-
-WantedBy=multi-user.target 
+WantedBy=multi-user.target
