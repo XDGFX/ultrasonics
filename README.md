@@ -97,7 +97,11 @@ To run **ultrasonics** you have two options:
 
 ### systemd
 If you want to run this as a systemd process, follow the steps below:
-1. Copy [the example systemd service file](https://github.com/xdgfx/ultrasonics/blob/master/ultrasonics.service) to `/etc/systemd/system/ultrasonics.service`
+1. Copy the example service file to `/etc/systemd/system/ultrasonics.service`
+    ```bash
+    sudo cp ultrasonics.service /etc/systemd/system/ultrasonics.service
+    ```
+
 2. Reload the systemctl daemon to pick up the new service
 
    ```bash
