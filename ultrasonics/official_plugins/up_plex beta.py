@@ -116,7 +116,7 @@ def run(settings_dict, **kwargs):
         for playlist in tqdm(plex_playlists):
             log.info(f"Processing playlist: {playlist.title}")
             playlist_dict = {
-                "title": playlist.title,
+                "name": playlist.title,
                 "id": {
                     "plex": playlist.key,
                 },
