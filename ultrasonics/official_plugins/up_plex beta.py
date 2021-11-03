@@ -34,7 +34,7 @@ handshake = {
     "description": "Sync playlists to and from Plex Media Server.",
     "type": ["inputs", "outputs"],
     "mode": ["playlists"],
-    "version": "0.2",
+    "version": "1.0",
     "settings": [
         {
             "type": "string",
