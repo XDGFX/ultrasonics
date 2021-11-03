@@ -94,7 +94,9 @@ To run **ultrasonics** you have two options:
     (.venv) ↪ python3 app.py
     ```
 
-There are certainly other ways of doing this. Creating a `systemd` file to turn **ultrasonics** into a service is a great idea, but I'll leave that to you ☺.
+
+
+There are certainly other ways of doing this. If you want to run this as a systemd process, copy [this file](https://github.com/psharma04/ultrasonics/blob/master/ultrasonics.service) to `/etc/systemd/system/ultrasonics.service`, then run `sudo systemctl daemon-reload`, followed by `sudo systemctl enable --now ultrasonics`. You can check the status of the process using `systemctl status ultrasonics` ☺.
 
 ## Option 2 (Docker)
 
