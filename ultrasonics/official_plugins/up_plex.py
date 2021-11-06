@@ -8,88 +8,49 @@ Allows syncing playlists to or from Plex Media Server.
 If used as an output plugin, songs must have local directory paths.
 Can be used even if Plex is not running on the same machine as ultrasonics.
 
-XDGFX, 2020
+XDGFX, 2021
 """
 
-import io
-import os
 import re
-import shutil
-from collections import OrderedDict
-from urllib.parse import urlencode
-from xml.etree import ElementTree
 
 import requests
+import plexapi.server
+import plexapi.exceptions
+import plexapi.playlist
 from tqdm import tqdm
-
 from ultrasonics import logs
-from ultrasonics.tools import local_tags
+from ultrasonics.tools import fuzzymatch
 
 log = logs.create_log(__name__)
 
 handshake = {
     "name": "plex",
     "description": "Sync playlists to and from Plex Media Server.",
-    "type": [
-        "inputs",
-        "outputs"
-    ],
-    "mode": [
-        "playlists"
-    ],
-    "version": "0.1",
+    "type": ["inputs", "outputs"],
+    "mode": ["playlists"],
+    "version": "1.0",
     "settings": [
         {
             "type": "string",
-            "value": "Plex needs to have access to the local music files 📡, in order to add it to a playlist. To sync properly, ultrasonics must also have access to this same directory, so enter the respective paths below! 😎 All music to be added must be somewhere inside this folder."
-        },
-        {
-            "type": "text",
-            "label": "Music Directory (from Plex)",
-            "name": "plex_prepend",
-            "value": "/media/uluru/music"
-        },
-        {
-            "type": "text",
-            "label": "Music Directory (from ultrasonics)",
-            "name": "ultrasonics_prepend",
-            "value": "/mnt/music library/music"
-        },
-        {
-            "type": "string",
-            "value": "You have to let ultrasonics know where to find your Plex server... what's it's IP and port?"
+            "value": "You have to let ultrasonics know where to find your Plex server... what's it's IP and port?",
         },
         {
             "type": "text",
             "label": "Server URL",
             "name": "server_url",
-            "value": "http://192.168.1.100:32400"
+            "value": "http://192.168.1.100:32400",
         },
         {
             "type": "string",
-            "value": "Do you want to check SSL when connecting?"
-        },
-        {
-            "type": "radio",
-            "label": "Check SSL",
-            "name": "check_ssl",
-            "id": "check_ssl",
-            "options": [
-                "Yes",
-                "No"
-            ]
-        },
-        {
-            "type": "string",
-            "value": "Last up, what's your Plex Token? Without it, Plex won't answer when ultrasonics knocks 🚧."
+            "value": "Last up, what's your Plex Token? Without it, Plex won't answer when ultrasonics knocks 🚧.",
         },
         {
             "type": "text",
             "label": "Plex Token",
             "name": "plex_token",
-            "value": "A1B3c4bdHA3s8COTaE3l"
-        }
-    ]
+            "value": "A1B3c4bdHA3s8COTaE3l",
+        },
+    ],
 }
 
 
@@ -100,205 +61,204 @@ def run(settings_dict, **kwargs):
     Songs in existing playlists will be overwritten in Plex.
     """
 
+    def plexapi_to_ultrasonics(track) -> dict:
+        """
+        Converts a song object returned by PlexAPI to a song dict format used by ultrasonics.
+        """
+        track_dict = {}
+
+        # Title, artist, id, and location are required
+        track_dict["title"] = track.title
+        track_dict["artists"] = [track.artist().title]
+        track_dict["id"] = {"plex": track.key}
+        track_dict["location"] = track.locations[0]
+        track_dict["duration"] = track.duration
+
+        # Only add album stuff if it exists
+        if album := track.album():
+            track_dict["album"] = album.title
+
+            if date := album.originallyAvailableAt:
+                track_dict["date"] = date.strftime("%Y-%m-%d")
+
+        return track_dict
+
     database = kwargs["database"]
     global_settings = kwargs["global_settings"]
     component = kwargs["component"]
     applet_id = kwargs["applet_id"]
     songs_dict = kwargs["songs_dict"]
 
-    def fetch_playlist(key):
-        url = f"{database['server_url']}{key}?X-Plex-Token={database['plex_token']}"
-
-        resp = requests.get(url, timeout=30, verify=check_ssl)
-
-        if resp.status_code != 200:
-            raise Exception(
-                f"Unexpected status code received from Plex: {resp.status_code}")
-
-        root = ElementTree.fromstring(resp.text)
-
-        title = root.get("title")
-
-        playlist = []
-        for document in tqdm(root.findall("Track"), desc=f"Fetching songs from playlist: {title}"):
-            song = document[0][0].get('file')
-
-            # Convert path to be usable by ultrasonics
-            song_path = remove_prepend(song)
-            song_path = convert_path(song_path)
-            song_path = os.path.join(
-                database["ultrasonics_prepend"], song_path)
-
-            try:
-                song_dict = local_tags.tags(song_path)
-            except Exception as e:
-                log.error(f"Could not load tags from song: {song_path}")
-                log.error(e)
-
-            playlist.append(song_dict)
-
-        return title, playlist
-
-    def remove_prepend(path, invert=False):
-        """
-        Remove any prepend from Plex playlist song paths, so only the path relative to the user's music directory is left.
-        Default is Plex prepend, invert is ultrasonics prepend.
-        """
-
-        if not invert:
-            if database["plex_prepend"]:
-                return path.replace(database["plex_prepend"], '').lstrip("/").lstrip("\\")
-
-        else:
-            if database["ultrasonics_prepend"]:
-                return path.replace(database["ultrasonics_prepend"], '').lstrip("/").lstrip("\\")
-
-        # If no database prepends exist, return the same path
-        return path
-
-    def convert_path(path, invert=False):
-        """
-        Converts a path string into the system format.
-        """
-        if enable_convert_path:
-            unix = os.name != "nt"
-
-            if invert:
-                unix = not unix
-
-            if unix:
-                return path.replace("\\", "/")
-            else:
-                return path.replace("/", "\\")
-        else:
-            return path
-
-    url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
-    check_ssl = database["check_ssl"] == "Yes"
-
-    log.info(
-        f"Requesting playlists from endpoint: {url.replace(database['plex_token'], '***********')}")
-
-    resp = requests.get(url, timeout=30, verify=check_ssl)
-
-    if resp.status_code != 200:
-        raise Exception(
-            f"Unexpected status code received from Plex: {resp.status_code}")
-
-    root = ElementTree.fromstring(resp.text)
-
-    keys = []
-    for document in root.findall("Playlist"):
-        if document.get('smart') == "0" and document.get('playlistType') == "audio":
-            keys.append(document.get('key'))
-
-    log.info(f"Found {len(keys)} playlists.")
-
-    enable_convert_path = False
-    ultrasonics_unix = database["ultrasonics_prepend"].startswith("/")
-    plex_unix = database["plex_prepend"].startswith("/")
-
-    if ultrasonics_unix != plex_unix:
-        log.debug(
-            "ultrasonics paths and Plex playlist paths do not use the same separators. Conversion will occur during sync.")
-        enable_convert_path = True
+    plex = plexapi.server.PlexServer(database["server_url"], database["plex_token"])
 
     if component == "inputs":
         songs_dict = []
 
-        # Copies Plex playlists to .ultrasonics_tmp folder in music directory
-        for key in keys:
-            name, playlist = fetch_playlist(key)
+        # Get a list of playlists which already exist on Plex, filtering by
+        # regex if necessary#
+        log.info("Getting list of playlists from Plex...")
+        plex_playlists = [
+            playlist
+            for playlist in plex.playlists()
+            if re.search(settings_dict["filter"], playlist.title, re.IGNORECASE)
+            and playlist.playlistType == "audio"
+        ]
 
-            # Check if title matches regex setting
-            if re.match(settings_dict["filter"], name, re.IGNORECASE):
-                log.info(f"Fetching playlist: {name}")
+        log.debug(f"Found {len(plex_playlists)} playlists.")
 
-                songs_dict_entry = {
-                    "name": name,
-                    "id": {},
-                    "songs": playlist
-                }
+        # Generate the songs dict
+        for playlist in tqdm(plex_playlists):
+            log.info(f"Processing playlist: {playlist.title}")
+            playlist_dict = {
+                "name": playlist.title,
+                "id": {
+                    "plex": playlist.key,
+                },
+                "songs": [],
+            }
 
-                songs_dict.append(songs_dict_entry)
+            # Get the songs in the playlist
+            for track in tqdm(playlist.items(), desc="Getting songs"):
+                log.debug(f"Processing track: {track.title}")
+                playlist_dict["songs"].append(plexapi_to_ultrasonics(track))
+
+            songs_dict.append(playlist_dict)
 
         return songs_dict
 
     elif component == "outputs":
-        # Create temp sync folder
-        temp_path = os.path.join(
-            database["ultrasonics_prepend"], ".ultrasonics_tmp")
 
-        if os.path.isdir(temp_path):
+        # Get a list of all music libraries on the server, with the preferred
+        # library first if available
+        try:
+            preferred_library_id = re.search(
+                r"\[([\d]+)\]$", settings_dict["section_id"]
+            ).group(1)
+
+            preferred_library = plex.library.sectionByID(int(preferred_library_id))
+        except (IndexError, AttributeError):
+            log.error(
+                f"The preferred library: {settings_dict['section_id']}, doesn't seem to exist anymore... Falling back to all libraries"
+            )
+            preferred_library = None
+
+        libraries = [
+            library
+            for library in plex.library.sections()
+            if library.type == "artist"
+            and (preferred_library is None or library.key != preferred_library.key)
+        ]
+
+        if preferred_library:
+            libraries.insert(0, preferred_library)
+
+        # Loop over supplied songs_dict and check for pre-existing playlists on Plex
+        # If a playlist exists, add songs to it. If not, create it.
+        for playlist in tqdm(songs_dict, desc="Processing playlists"):
+
+            log.info(f"Processing playlist: {playlist['name']}")
+
+            # Check if playlist exists on Plex
             try:
-                shutil.rmtree(temp_path)
-            except Exception as e:
-                raise Exception(
-                    "Could not remove temp folder: {temp_path}. Try deleting manually", e)
+                plex_playlist = plex.playlist(playlist["name"])
+            except plexapi.exceptions.NotFound:
+                plex_playlist = None
 
-        log.info("Creating temporary playlists to send to Plex.")
-        os.makedirs(temp_path)
+            # Loop over songs in playlist and search for them in Plex, appending
+            # to the playlist if found.
+            songs_to_add = []
+            for song in tqdm(playlist["songs"], desc="Adding songs"):
 
-        for item in songs_dict:
-            log.info(f"Updating playlist: {item['name']}")
+                # Check if song exists on Plex
+                plex_songs = preferred_library.search(
+                    title=song["title"], libtype="track", maxresults=10
+                )
 
-            # Replace invalid characters in playlist title
-            item["name"] = re.sub("[\\/:*?|<>]+[ ]*", "", item["name"])
+                # If no match is found, check other libraries
+                if not plex_songs:
+                    for library in libraries:
+                        plex_songs.extend(
+                            library.search(title=song["title"], libtype="track")
+                        )
 
-            # Create new playlist
-            playlist_path = os.path.join(temp_path, item["name"] + ".m3u")
-
-            f = io.open(playlist_path, "w", encoding="utf8")
-
-            # Get songs list for this playlist
-            songs = item["songs"]
-
-            for song in songs:
-                # Skip songs without local file
-                if "location" not in song.keys():
+                # If still no match is found, log it and skip it
+                if not plex_songs:
+                    log.warning(
+                        f"'{song['artists'][0]} - {song['title']}' not found on Plex. Skipping..."
+                    )
                     continue
 
-                # Find location of song, and convert back to local playlists format
-                song_path = song["location"]
-                song_path = remove_prepend(song_path, invert=True)
+                # Convert songs to ultrasonics format
+                plex_songs_ultrasonics = [
+                    plexapi_to_ultrasonics(song) for song in plex_songs
+                ]
 
-                prepend_path_converted = convert_path(
-                    database["plex_prepend"])
+                # Compare similarity of songs to find the best match
+                scores = [
+                    fuzzymatch.similarity(song, plex_song)
+                    for plex_song in plex_songs_ultrasonics
+                ]
 
-                song_path = os.path.join(prepend_path_converted, song_path)
-                song_path = convert_path(song_path, invert=True)
+                # If there's a match, add it to the playlist
+                if max(scores) >= float(settings_dict["fuzzy_ratio"]):
+                    songs_to_add.append(plex_songs[scores.index(max(scores))])
+                else:
+                    log.warning(
+                        f"'{song['artists'][0]} - {song['title']}' not found on Plex with a high enough match ratio (Best: {max(scores)}, required: {settings_dict['fuzzy_ratio']}). Skipping..."
+                    )
+                    log.debug(
+                        f"Closest match: {plex_songs[scores.index(max(scores))]}. If this is correct try decreasing your Fuzzy ratio."
+                    )
 
-                # Write song to playlist terminated with newline character
-                f.write(song_path + '\n')
+            # Check for empty playlists
+            if len(songs_to_add) == 0:
+                log.warning(f"Playlist {playlist['name']} is empty. Skipping...")
+                continue
 
-            f.close()
+            log.info(
+                f"Found {len(songs_to_add)} songs in Plex out of {len(playlist['songs'])} songs supplied"
+            )
 
-            url = f"{database['server_url']}/playlists/upload?"
-            headers = {'cache-control': "no-cache"}
+            # If the playlist doesn't exist, create it and add all songs
+            if not plex_playlist:
+                log.info(f"Creating playlist: {playlist['name']}")
+                plex_playlist = plexapi.playlist.Playlist.create(
+                    server=plex, title=playlist["name"], items=songs_to_add
+                )
+                log.info(f"Successfully created playlist: {playlist['name']}")
 
-            temp_path_plex = os.path.join(
-                database["plex_prepend"], ".ultrasonics_tmp")
+            # If the playlist exists, either add or overwrite songs depending on
+            # supplied option in settings_dict
+            else:
+                if settings_dict["existing_playlists"] == "Append":
+                    log.info(f"Appending songs to playlist: {playlist['name']}")
+                    plex_playlist.addItems(items=songs_to_add)
 
-            playlist_path_plex = os.path.join(
-                temp_path_plex, item["name"] + ".m3u")
+                    log.info(
+                        f"Successfully appended songs to playlist: {playlist['name']}"
+                    )
 
-            playlist_path_plex = convert_path(playlist_path_plex, invert=True)
+                elif settings_dict["existing_playlists"] == "Update":
+                    log.info(f"Updating playlist: {playlist['name']}")
 
-            section_id = re.findall(
-                "\[(\d+)\]$", settings_dict["section_id"])[0]
+                    # Remove items from the existing playlist which do not exist
+                    # in the new one
+                    existing_songs = plex_playlist.items()
+                    plex_playlist.removeItems(
+                        items=[
+                            song for song in existing_songs if song not in songs_to_add
+                        ]
+                    )
 
-            querystring = urlencode(OrderedDict(
-                [("sectionID", section_id), ("path", playlist_path_plex), ("X-Plex-Token", database["plex_token"])]))
+                    # Add the new songs to the playlist, skipping any that
+                    # were already there
+                    plex_playlist.addItems(
+                        items=[
+                            song for song in songs_to_add if song not in existing_songs
+                        ]
+                    )
 
-            response = requests.post(
-                url, data="", headers=headers, params=querystring, verify=check_ssl)
-
-            # Should return nothing but if there's an issue there may be an error shown
-            if not response.text == '':
-                log.debug(response.text)
-
-        # Remove the temporary folder
-        shutil.rmtree(temp_path)
+                    log.info(f"Successfully updated playlist: {playlist['name']}")
 
 
 def test(database, **kwargs):
@@ -307,46 +267,23 @@ def test(database, **kwargs):
     """
     global_settings = kwargs["global_settings"]
 
-    log.debug("Checking that Plex responds to API requests...")
-    url = f"{database['server_url']}/playlists/?X-Plex-Token={database['plex_token']}"
-    check_ssl = database["check_ssl"] == "Yes"
-
-    resp = requests.get(url, timeout=5, verify=check_ssl)
-
-    if resp.status_code == 200:
-        log.debug("Test successful.")
-    else:
-        raise Exception(
-            "Did not successfully connect to Plex API. Check your server URL and token.")
-
-    log.debug("Testing music directories...")
-    if database["plex_prepend"] and database["ultrasonics_prepend"] and os.path.isdir(database["ultrasonics_prepend"]):
-        log.debug("Plex and ultrasonics music paths detected successfully.")
-    else:
-        raise Exception(
-            "Either Plex or ultrasonics music directory paths are missing or don't exist.")
-
-    log.debug("Checking permissions...")
-    temp_path = os.path.join(
-        database["ultrasonics_prepend"], ".ultrasonics_tmp")
-
-    if os.path.isdir(temp_path):
-        try:
-            shutil.rmtree(temp_path)
-        except Exception as e:
-            raise Exception(
-                f"Could not remove temporary ultrasonics folder {temp_path}. Try removing manually.", e)
-
     try:
-        os.makedirs(temp_path)
-        shutil.rmtree(temp_path)
-        log.debug(
-            "Successfully created and removed temporary ultrasonics sync directory.")
+        plex = plexapi.server.PlexServer(database["server_url"], database["plex_token"])
+    except plexapi.exceptions.Unauthorized:
+        raise plexapi.exceptions.Unauthorized(
+            "Invalid Plex Token. Please check your settings."
+        )
+    except requests.exceptions.ConnectionError:
+        raise requests.exceptions.ConnectionError(
+            "Could not find a Plex server on that IP... check you have typed it correctly."
+        )
     except Exception as e:
-        raise Exception(
-            f"Unable to create temporary ultrasonics sync directory {temp_path}. Check ultrasonics has the required permissions.")
+        raise Exception(f"Error connecting to Plex: {e}")
 
-    log.info("Settings test successful.")
+    log.info(f"Successfully connected to Plex: {plex.friendlyName}")
+    log.debug(
+        f"Debug info for Plex:\nPlatform: {plex.platform}\nVersion: {plex.version}"
+    )
 
 
 def builder(**kwargs):
@@ -354,39 +291,26 @@ def builder(**kwargs):
     global_settings = kwargs["global_settings"]
     component = kwargs["component"]
 
-    url = f"{database['server_url']}/library/sections/?X-Plex-Token={database['plex_token']}"
-    check_ssl = "check_ssl" in database.keys()
+    plex = plexapi.server.PlexServer(database["server_url"], database["plex_token"])
 
-    resp = requests.get(url, timeout=30, verify=check_ssl)
-
-    if resp.status_code != 200:
-        raise Exception(
-            f"Unexpected status code received from Plex: {resp.status_code}")
-
-    log.error(resp.text)
-    root = ElementTree.fromstring(resp.text)
-
-    sections = []
-
-    for child in root:
-        title = child.attrib["title"].strip()
-        section_id = child.attrib["key"]
-        section_type = child.attrib["type"]
-
-        if section_type == "artist":
-            sections.append(f"{title} [{section_id}]")
+    # Select all audio libraries, and append their corresponding key
+    sections = [
+        f"{section.title.strip()} [{section.key}]"
+        for section in plex.library.sections()
+        if section.TYPE == "artist"
+    ]
 
     settings_dict = [
         {
             "type": "string",
-            "value": "Please select the music library which contains all your music (due to api limitations 🌱, all music to be synced must be in one library)"
+            "value": "Please select your preferred music library. If a synced song is not found in this library, it will fall back to scanning all music libraries.",
         },
         {
             "type": "select",
             "label": "Music Library",
             "name": "section_id",
-            "options": sections
-        }
+            "options": sections,
+        },
     ]
 
     if component == "inputs":
@@ -394,18 +318,10 @@ def builder(**kwargs):
             [
                 {
                     "type": "string",
-                    "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'."
+                    "value": "You can use regex style filters to only select certain playlists. For example, 'disco' would sync playlists 'Disco 2010' and 'nu_disco', or '2020$' would only sync playlists which ended with the value '2020'.",
                 },
-                {
-                    "type": "string",
-                    "value": "Leave it blank to sync everything 🤓."
-                },
-                {
-                    "type": "text",
-                    "label": "Filter",
-                    "name": "filter",
-                    "value": ""
-                }
+                {"type": "string", "value": "Leave it blank to sync everything 🤓."},
+                {"type": "text", "label": "Filter", "name": "filter", "value": ""},
             ]
         )
 
@@ -414,8 +330,34 @@ def builder(**kwargs):
             [
                 {
                     "type": "string",
-                    "value": "💿 This plugin will update any existing playlist to match the one in the applet. This means any existing tracks will be removed if they are not present in the new playlist!"
-                }
+                    "value": "Songs will always attempt to be matched using fixed values like ISRC or Plex track ID, however if you're trying to sync music without these tags, fuzzy matching will be used instead.",
+                },
+                {
+                    "type": "string",
+                    "value": "This means that the titles 'You & Me - Flume Remix', and 'You & Me (Flume Remix)' will probably qualify as the same song [with a fuzzy score of 96.85 if all other fields are identical]. However, 'You, Me, & the Log Flume Ride' probably won't 🎢 [the score was 88.45 assuming *all* other fields are identical]. The fuzzyness of this matching is determined with the below setting. A value of 100 means all song fields must be identical to pass as duplicates. A value of 0 means any song will quality as a match, even if they are completely different. 👽",
+                },
+                {
+                    "type": "text",
+                    "label": "Fuzzy Ratio",
+                    "name": "fuzzy_ratio",
+                    "value": "Recommended: 90",
+                },
+                {
+                    "type": "string",
+                    "value": "Do you want to update any existing playlists with the same name (replace any songs already in the playlist), or append to them?",
+                },
+                {
+                    "type": "radio",
+                    "label": "Existing Playlists",
+                    "name": "existing_playlists",
+                    "id": "existing_playlists",
+                    "options": ["Append", "Update"],
+                    "required": True,
+                },
+                {
+                    "type": "string",
+                    "value": "One last thing... this plugin matches by playlist title. Plex allows multiple playlists with the same name... Try to avoid this unless you want trouble 😉.",
+                },
             ]
         )
 
