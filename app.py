@@ -12,8 +12,8 @@ import os
 from ultrasonics import database, plugins, scheduler, webapp
 
 _ultrasonics = {
-    "version": "1.0.0-rc.1",
-    "config_dir": os.path.join(os.path.dirname(__file__), "config")
+    "version": "1.2.0",
+    "config_dir": os.path.join(os.path.dirname(__file__), "config"),
 }
 
 database.Core().connect()
