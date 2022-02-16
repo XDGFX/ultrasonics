@@ -278,8 +278,11 @@ def run(settings_dict, **kwargs):
             Removes all `tracks` from the specified playlist.
             """
             playlist = tidalapi.playlist.UserPlaylist(self.session, playlist_id)
-            for track in tracks:
-                playlist.remove_by_id(track['id'])
+            for track in tqdm(
+                tracks,
+                desc=f"Deleting songs from Tidal",
+            ):
+                playlist.remove_by_id(track)
 
         def tidal_to_songs_dict(self, track):
             """
@@ -489,6 +492,8 @@ def run(settings_dict, **kwargs):
         current_playlists = s.current_user_playlists()
 
         for playlist in songs_dict:
+            existing_tracks = None
+
             # Check the playlist already exists in Tidal
             playlist_id = ""
             try:
@@ -525,7 +530,7 @@ def run(settings_dict, **kwargs):
                 existing_tracks = []
 
             # Get all tracks already in the playlist
-            if "existing_tracks" not in vars():
+            if existing_tracks is None:
                 existing_tracks = s.playlist_tracks(playlist_id)
 
             # Add songs which don't already exist in the playlist
@@ -566,7 +571,7 @@ def run(settings_dict, **kwargs):
             if settings_dict["existing_playlists"] == "Update":
                 # Remove any songs which aren't in `uris` from the playlist
                 remove_ids = [
-                    id for id in existing_tracks if id not in ids + duplicate_ids
+                    id['id']['tidal'] for id in existing_tracks if id['id']['tidal'] not in ids + duplicate_ids
                 ]
 
                 s.user_playlist_remove_all_occurrences_of_tracks(
