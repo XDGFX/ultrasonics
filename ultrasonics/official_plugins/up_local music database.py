@@ -180,19 +180,23 @@ class Database:
 
             for song in rows:
                 # Convert to songs_dict format
-                item = {
-                    "title": song[1],
-                    "artists": json.loads(song[2]),
-                    "album": song[3],
-                    "date": song[4],
-                    "isrc": song[5],
-                    "location": song[0]
-                }
+                try:
+                    item = {
+                        "title": song[1],
+                        "artists": json.loads(song[2]),
+                        "album": song[3],
+                        "date": song[4],
+                        "isrc": song[5],
+                        "location": song[0]
+                    }
 
-                # Remove any empty fields
-                item = {k: v for k, v in item.items() if v}
+                    # Remove any empty fields
+                    item = {k: v for k, v in item.items() if v}
 
-                found_songs.append(item)
+                    found_songs.append(item)
+                except TypeError:
+                    log.error("Error parsing JSON, skipping song:")
+                    log.error(song)
 
             return found_songs
 
