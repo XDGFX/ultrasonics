@@ -109,6 +109,7 @@ def run(settings_dict, **kwargs):
             """
             errors = 0
 
+            # Try once again when error
             while errors <= 1:
                 try:
                     return tidal_func(*args, **kwargs)
@@ -119,9 +120,9 @@ def run(settings_dict, **kwargs):
                     self.session.token_refresh(database["refresh_token"])
                     errors += 1
                     continue
-
-            log.error("An error occurred while trying to contact the Tidal api.")
-            raise Exception(e)
+            
+            # raise exception if no return
+            raise Exception("An error occurred while trying to contact the Tidal api.")
 
         def search(self, track):
             """
