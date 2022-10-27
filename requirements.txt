@@ -1,7 +1,7 @@
 # Main Program
 Flask==2.0.1
 Flask-SocketIO==5.1.1
-eventlet==0.32.0
+eventlet==0.33.1
 
 # Included Plugins
 mutagen==1.45.1
