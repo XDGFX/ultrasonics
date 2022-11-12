@@ -415,37 +415,25 @@ def run(settings_dict, **kwargs):
         def spotify_to_songs_dict(self, track):
             """
             Convert dictionary received from Spotify API to ultrasonics songs_dict format.
-            Assumes title, artist(s), and id field are always present.
             """
-            artists = [artist["name"] for artist in track["artists"]]
-
-            try:
-                album = track["album"]["name"]
-            except KeyError:
-                album = None
-
-            try:
-                date = track["album"]["release_date"]
-            except KeyError:
-                date = None
-
-            try:
-                isrc = track["external_ids"]["isrc"]
-            except KeyError:
-                isrc = None
+            artists = [artist.get("name") for artist in track.get("artists", [])]
+            album = track.get("album", {}).get("name")
+            date = track.get("album", {}).get("release_date")
+            isrc = track.get("external_ids", {}).get("isrc")
 
             item = {
-                "title": track["name"],
+                "title": track.get("name"),
                 "artists": artists,
                 "album": album,
                 "date": date,
                 "isrc": isrc,
             }
 
-            if track["id"]:
-                item["id"] = {"spotify": str(track["id"])}
+            if track.get("id"):
+                item["id"] = {"spotify": str(track.get("id"))}
             else:
-                log.debug(f"Invalid spotify id for song: {track['name']}")
+                item["id"] = {}
+                log.debug(f"Invalid spotify id for song: {track.get('name')}")
 
             # Remove any empty fields
             item = {k: v for k, v in item.items() if v}
