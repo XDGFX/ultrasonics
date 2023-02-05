@@ -140,16 +140,12 @@ def run(settings_dict, **kwargs):
             ]
 
             # 1. Tidal ID
-            try:
+            if "id" in track and "tidal" in track["id"]:
                 tidal_id = track["id"]["tidal"]
                 # tidal_uri = f"tidal:track:{tidal_id}"
                 confidence = 100
 
                 return tidal_id, confidence
-
-            except KeyError:
-                # Tidal ID was not supplied
-                pass
 
             # 2. Other fields
             # Multiple searches are made as Tidal is more likely to return false negative (missing songs)
@@ -157,7 +153,7 @@ def run(settings_dict, **kwargs):
 
             queries = []
 
-            try:
+            if "title" in track:
                 title = (
                     re.sub(cutoff_regex[0], "", track["title"], flags=re.IGNORECASE)
                     + "\n"
@@ -166,36 +162,27 @@ def run(settings_dict, **kwargs):
                 title = re.sub(
                     cutoff_regex[1], " ", title, flags=re.IGNORECASE
                 ).strip()
-            except KeyError:
-                pass
 
-            try:
-                album = (
-                    re.sub(cutoff_regex[0], "", track["album"], flags=re.IGNORECASE)
-                    + "\n"
-                )
+            # Tidal doesn't search albums, it seems
+            # if "album" in track:
+            #     album = (
+            #         re.sub(cutoff_regex[0], "", track["album"], flags=re.IGNORECASE)
+            #         + "\n"
+            #     )
+            #
+            #     album = re.sub(
+            #         cutoff_regex[1], " ", album, flags=re.IGNORECASE
+            #     ).strip()
+            #
+            # if "title" in locals() and "album" in locals():
+            #     queries.append(f"{title} {album}")
 
-                album = re.sub(
-                    cutoff_regex[1], " ", album, flags=re.IGNORECASE
-                ).strip()
-            except KeyError:
-                pass
-
-            try:
-                queries.append(f"{title} {album}")
-            except NameError:
-                pass
-
-            try:
-                for artist in track["artists"]:
-                    queries.append(f"{title} {artist}")
-            except NameError:
-                pass
-
-            try:
-                queries.append(title)
-            except NameError:
-                pass
+            if "title" in locals():
+                if "artists" in track:
+                    for artist in track["artists"]:
+                        queries.append(f"{title} {artist}")
+                else:
+                    queries.append(title)
 
             results_list = []
 
@@ -221,7 +208,7 @@ def run(settings_dict, **kwargs):
                 if score > confidence:
                     matched_track = item
                     confidence = score
-                    if confidence > 100:
+                    if confidence >= 100:
                         break
 
             # tidal_uri = f"tidal:track:{matched_track['id']['tidal']}"
@@ -568,7 +555,7 @@ def run(settings_dict, **kwargs):
                     ids.append(id)
                 else:
                     log.debug(
-                        f"Could not find song {song['title']} in Tidal; will not add to playlist."
+                        f"Could not find song '{song['title']}' in Tidal; will not add to playlist."
                     )
 
             if settings_dict["existing_playlists"] == "Update":
