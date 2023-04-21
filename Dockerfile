@@ -5,7 +5,7 @@ WORKDIR /
 
 VOLUME [ "/config", "/plugins" ]
 
-RUN apk --no-cache add gcc g++ musl-dev
+RUN apk --no-cache add gcc g++ musl-dev cmake ninja
 RUN pip install -r requirements.txt
 
 EXPOSE 5000
