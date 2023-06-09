@@ -567,7 +567,7 @@ def run(settings_dict, **kwargs):
                     )
                     if filename := os.environ.get("TIDAL_NOT_FOUND_FILE"):
                         with open(filename, "a") as f:
-                            f.write(f"{song}\n")
+                            f.write(f"{playlist['name']}: {song}\n")
 
             if settings_dict["existing_playlists"] == "Update":
                 # Remove any songs which aren't in `uris` from the playlist
