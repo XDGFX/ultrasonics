@@ -555,7 +555,8 @@ def run(settings_dict, **kwargs):
                     ids.append(id)
                 else:
                     log.debug(
-                        f"Could not find song '{song['title']}' in Tidal; will not add to playlist."
+                        f"Could not find song '{song['title'] if 'title' in song else song}' in Tidal; "
+                        "will not add to playlist."
                     )
 
             if settings_dict["existing_playlists"] == "Update":
