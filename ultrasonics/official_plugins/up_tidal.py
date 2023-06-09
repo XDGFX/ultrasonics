@@ -189,9 +189,10 @@ def run(settings_dict, **kwargs):
             if "album" in track:
                 for result in self.request(self.session.search, track["album"], models=[tidalapi.album.Album])['albums']:
                     for item in result.items():
-                        item = s.tidal_to_songs_dict(item)
-                        if item not in results_list:
-                            results_list.append(item)
+                        if isinstance(item, tidalapi.media.Track):
+                            item = s.tidal_to_songs_dict(item)
+                            if item not in results_list:
+                                results_list.append(item)
 
             # Execute all queries
             for query in queries:
