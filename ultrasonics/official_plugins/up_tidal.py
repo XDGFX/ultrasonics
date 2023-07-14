@@ -483,6 +483,11 @@ def run(settings_dict, **kwargs):
     else:
         "Outputs mode"
 
+        # Remove the not found file if it exists
+        if (not_found_file := os.environ.get("TIDAL_NOT_FOUND_FILE"))\
+                and os.path.exists(not_found_file):
+            os.remove(not_found_file)
+
         # Set the user_id variable
         # s.user_id()
 
@@ -567,8 +572,10 @@ def run(settings_dict, **kwargs):
                         f"Could not find song '{song['title'] if 'title' in song else song}' in Tidal; "
                         "will not add to playlist."
                     )
-                    if filename := os.environ.get("TIDAL_NOT_FOUND_FILE"):
-                        with open(filename, "a") as f:
+
+                    # Write to not found file
+                    if not_found_file:
+                        with open(not_found_file, "a") as f:
                             f.write(f"{playlist['name']}: {song}\n")
 
             if settings_dict["existing_playlists"] == "Update":
