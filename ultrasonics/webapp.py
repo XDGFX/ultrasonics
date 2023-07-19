@@ -13,7 +13,7 @@ import os
 from flask import Flask, redirect, render_template, request
 from flask_socketio import SocketIO, emit, send
 
-from ultrasonics import database, logs, plugins
+from ultrasonics import database, logs, plugins, updater
 from ultrasonics.tools import random_words
 
 log = logs.create_log(__name__)
@@ -32,6 +32,12 @@ def server_start():
 
 def send(event, data):
     sio.emit(str(event), {'data': data})
+
+
+# --- WEBSERVER PROCESSORS ---
+@app.context_processor
+def inject_vars():
+    return dict(version=updater.version, new_version=updater.new_version)
 
 
 # --- WEBSERVER ROUTES ---
