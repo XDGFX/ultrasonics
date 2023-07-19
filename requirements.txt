@@ -11,4 +11,4 @@ python-Levenshtein~=0.21.0
 spotipy~=2.23.0
 tqdm~=4.65.0
 PlexAPI~=4.14.0
-tidalapi~=0.7.1
+tidalapi~=0.7.2
