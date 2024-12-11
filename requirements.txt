@@ -8,6 +8,6 @@ mutagen==1.45.1
 requests==2.26.0
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.12.2
-spotipy==2.19.0
+spotipy==2.22.1
 tqdm==4.62.3
 PlexAPI==4.7.2
