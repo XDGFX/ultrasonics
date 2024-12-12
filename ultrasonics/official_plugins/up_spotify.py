@@ -555,6 +555,9 @@ def run(settings_dict, **kwargs):
             songs_dict = []
 
             for playlist in playlists:
+                if not isinstance(playlist, dict) or playlist.get("name") is None or playlist.get("id") is None:
+                    continue
+
                 item = {"name": playlist["name"], "id": {"spotify": playlist["id"]}}
 
                 songs_dict.append(item)
