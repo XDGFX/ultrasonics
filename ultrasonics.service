@@ -8,7 +8,7 @@ ConditionPathIsDirectory=/opt/ultrasonics
 [Service]
 Restart=always
 Type=simple
-ExecStart=.venv/bin/activate && python3 app.py
+ExecStart=/opt/ultrasonics/.venv/bin/python3 app.py
 WorkingDirectory=/opt/ultrasonics
 
 [Install]

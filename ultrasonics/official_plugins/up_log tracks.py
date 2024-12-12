@@ -20,8 +20,10 @@ def run(settings_dict, **kwargs):
     songs_dict = kwargs["songs_dict"]
 
     log.info(f"Below is the songs_dict passed to this plugin:")
-    log.info("\n\n" + json.dumps(songs_dict, indent=4) + "\n\n")
-
+    try:
+        log.info("\n\n" + json.dumps(songs_dict, indent=4) + "\n\n")
+    except TypeError:
+        log.info("\n\n" + str(songs_dict) + "\n\n")
 
 def builder(**kwargs):
     return []
