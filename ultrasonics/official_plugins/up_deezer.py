@@ -33,7 +33,7 @@ handshake = {
     "mode": [
         "playlists"
     ],
-    "version": "0.3",
+    "version": "0.4",
     "settings": [
         {
             "type": "auth",
@@ -502,6 +502,9 @@ def run(settings_dict, **kwargs):
                 # Skip if no songs are to be removed
                 if remove_ids:
                     dz.remove_tracks_from_playlist(playlist_id, remove_ids)
+
+            # Remove duplicates from the list of new ids
+            new_ids = list(set(new_ids))
 
             # Add tracks to playlist in batches of 100
             url = f"https://api.deezer.com/playlist/{playlist_id}/tracks"

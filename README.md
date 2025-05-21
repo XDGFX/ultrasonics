@@ -1,5 +1,11 @@
 ![](https://raw.githubusercontent.com/XDGFX/ultrasonics/master/ultrasonics/static/images/logo.svg)
 
+> ## Update 2022
+> **ultrasonics** is not depricated, but I don't have as much time as I'd like to work on developing it. I plan to get back to it in the future, I hope you can bear with me! An important upcoming update is regarding [**ultrasonics-api**](https://github.com/XDGFX/ultrasonics-api). I'm currently hosting a public version on Heroku free tier, which is shutting down at the end of November 2022 [as announced back in August](https://techcrunch.com/2022/08/25/heroku-announces-plans-to-eliminate-free-plans-blaming-fraud-and-abuse/). It's needed for any public streaming services (Spotify, Last.fm, etc).
+>
+> I don't have any alternative set up yet, so before that time comes I urge you to set up your own [**ultrasonics-api**](https://github.com/XDGFX/ultrasonics-api) instance alongside **ultrasonics**, and keys for any online services you want to sync with. The instructions are all available over on that repo!
+
+---
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -120,13 +126,13 @@ If you want to run this as a systemd process, follow the steps below:
 
 ## Option 2 (Docker)
 
-The official **ultrasonics** image is located at [xdgfx/ultrasonics](https://hub.docker.com/r/xdgfx/ultrasonics). You can pull and run it manually, or stick it in your `docker-compose.yml` file.
+The official **ultrasonics** image is located on ghcr.io at [ghcr.io/xdgfx/ultrasonics](ghcr.io/xdgfx/ultrasonics). You can pull and run it manually, or stick it in your `docker-compose.yml` file.
 
 ```yaml
 version: "3.7"
 services:
   ultrasonics:
-    image: xdgfx/ultrasonics
+    image: ghcr.io/xdgfx/ultrasonics
     container_name: ultrasonics
     restart: unless-stopped
 
