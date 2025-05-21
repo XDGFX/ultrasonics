@@ -126,13 +126,13 @@ If you want to run this as a systemd process, follow the steps below:
 
 ## Option 2 (Docker)
 
-The official **ultrasonics** image is located at [xdgfx/ultrasonics](https://hub.docker.com/r/xdgfx/ultrasonics). You can pull and run it manually, or stick it in your `docker-compose.yml` file.
+The official **ultrasonics** image is located on ghcr.io at [ghcr.io/xdgfx/ultrasonics](ghcr.io/xdgfx/ultrasonics). You can pull and run it manually, or stick it in your `docker-compose.yml` file.
 
 ```yaml
 version: "3.7"
 services:
   ultrasonics:
-    image: xdgfx/ultrasonics
+    image: ghcr.io/xdgfx/ultrasonics
     container_name: ultrasonics
     restart: unless-stopped
 
