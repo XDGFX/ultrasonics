@@ -132,6 +132,9 @@ dmypy.json
 # VSCode
 .vscode
 
+# Pycharm
+.idea
+
 # Ultrasonics specifics
 .vscode/*
 !.vscode/launch.json
