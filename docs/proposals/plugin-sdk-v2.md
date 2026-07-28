@@ -1,0 +1,117 @@
+# Proposal: Plugin SDK v2
+
+Status: **Draft / not started** — captured for the Phase 0 SDK design pass.
+
+Fleshes out ADR-0004 (typed plugin SDK, explicit registration) into a concrete surface. This is the
+contract every plugin depends on, so it is a checkpoint gate (AGENTS.md) and must be agreed before
+any plugin is written. Nothing here is implemented yet; the shapes below are a starting point to
+grill and refine, not a decided API.
+
+## Goals
+
+1. A plugin is a typed module; malformed plugins fail at compile/registration, not mid-sync
+   (v1 issue #59).
+2. **One schema, three uses** — a plugin's settings are declared once (Zod) and drive runtime
+   validation, the inferred TS type, and the auto-generated settings form. v1's hand-written
+   `builder()` UI-description dicts largely disappear.
+3. Auth is *declared, not implemented* by the plugin (ADR-0005): the plugin says "I need Spotify
+   OAuth"; the `AuthProvider` decides how.
+4. The song dict is the only interchange type, imported from `packages/core` (ADR-0006).
+
+## Proposed surface
+
+### `definePlugin`
+
+```ts
+export default definePlugin({
+  name: "spotify",
+  description: "Sync playlists with Spotify",
+  component: ["inputs", "outputs"],        // was `type` in v1
+  mode: ["playlists"],
+  version: "2.0.0",
+  auth: spotifyOAuth,                        // an AuthSpec, see below
+  persistentSettings: z.object({             // global, per-plugin (v1 `handshake.settings`)
+    fuzzyRatio: z.number().min(0).max(100).default(90),
+    createdPlaylists: z.enum(["public", "private"]).default("private"),
+  }),
+  instanceSettings: (ctx) => z.object({      // per-applet (v1 `builder()`); may branch on component
+    ...(ctx.component === "inputs"
+      ? { mode: z.enum(["playlists", "saved"]), filter: z.string().optional() }
+      : { existing: z.enum(["append", "update"]).default("append") }),
+  }),
+  async run(ctx): Promise<SongDict | void> { /* … */ },
+  async test(ctx): Promise<void> { /* throw on invalid credentials */ },
+});
+```
+
+### The run context (typed; replaces v1's `**kwargs`)
+
+```ts
+interface RunContext<P, I> {
+  component: "inputs" | "modifiers" | "outputs";
+  appletId: string;
+  tenant: TenantContext;              // ADR-0003; a fixed singleton in self-host
+  persistent: P;                      // validated persistentSettings
+  instance: I;                        // validated instanceSettings
+  credentials: Credentials;           // resolved by the AuthProvider (ADR-0005)
+  songs: SongDict;                    // present for modifiers/outputs; empty for inputs
+  configDir: string;                  // was app._ultrasonics["config_dir"]
+  log: Logger;
+}
+```
+
+Inputs and modifiers return a `SongDict`; outputs return `void`. The runner enforces this by the
+`component` type.
+
+### Auth declaration
+
+```ts
+const spotifyOAuth = defineAuth({
+  service: "spotify",
+  flow: "oauth2-pkce",                // pkce | oauth2 | apiKey | serverUrl | none
+  scopes: ["playlist-read-private", "playlist-modify-private"],
+});
+```
+
+The plugin references an `AuthSpec`; the active `AuthProvider` (BYO / PKCE / Proxy) turns it into
+`Credentials` at run time. Self-host BYO and hosted Proxy differ only in which provider is wired
+(ADR-0005) — the plugin is identical.
+
+### Registration (explicit, not scanned)
+
+```ts
+// packages/plugins/registry.ts
+export const officialPlugins = [spotify, plex, deezer, lastfm, /* … */] as const;
+```
+
+Third-party plugins are added to a registry rather than dropped into a scanned folder; the install
+story for those is an open question (see below).
+
+## Conformance test
+
+`packages/plugin-sdk` exports a `runConformance(plugin)` suite every plugin must pass to count as
+ported (Phase 2 gate): valid handshake shape; `persistentSettings`/`instanceSettings` parse and
+reject known-bad input; inputs return a schema-valid song dict; outputs accept one without mutating
+it; declared `auth` resolves against a stub provider. This is the objective "is it done" bar.
+
+## Open questions (grill in the Phase 0 SDK session)
+
+- **Instance settings as a function of context** vs a static schema — the function form supports
+  v1's component-branching builders and dynamic option lists (e.g. "pick from your playlists"), but
+  complicates form generation. Is a static schema + a separate `dynamicOptions()` hook cleaner?
+- **Dynamic option fetching** (v1 builders that query the service for playlist names): needs
+  resolved credentials at *build* time, before an applet is saved. How does the AuthProvider serve
+  a builder, not just a run?
+- **Plugin isolation** — Worker vs subprocess vs in-process. ADR-0001 wants isolation so one bad
+  plugin can't crash a sync; the SDK boundary must suit the chosen mechanism.
+- **Third-party install** under explicit registration — a manifest + dynamic import at startup? A
+  build step? This trades v1's drag-and-drop simplicity for type safety; decide deliberately.
+- **Long-running triggers** (v1 webhook/time-trigger blocked). In v2 triggers should register
+  intent with the scheduler/server, not block. Does the SDK model triggers as `run()` at all, or a
+  distinct `schedule()` / `subscribe()` shape?
+
+## Out of scope
+
+- The `AuthProvider` implementations themselves (own work, ADR-0005).
+- Any specific plugin's logic — see `docs/reference/legacy-architecture.md` per plugin.
+- The frontend form-rendering engine that consumes the Zod schema (a `packages/web` concern).
