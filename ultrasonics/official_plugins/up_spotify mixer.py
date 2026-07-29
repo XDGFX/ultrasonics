@@ -183,6 +183,7 @@ def run(settings_dict, **kwargs):
             """
             errors = 0
 
+            # Try once again when error
             while errors <= 1:
                 try:
                     return sp_func(*args, **kwargs)
@@ -194,9 +195,8 @@ def run(settings_dict, **kwargs):
                     errors += 1
                     continue
 
-            log.error(
-                "An error occurred while trying to contact the Spotify api.")
-            raise Exception(e)
+            # raise exception if no return
+            raise Exception("An error occurred while trying to contact the Spotify api.")
 
         def search(self, track):
             """
