@@ -1,13 +1,25 @@
-# Main Program
+bidict==0.21.4
+certifi==2021.10.8
+charset-normalizer==2.0.7
+click==8.0.3
+dnspython==2.1.0
+eventlet==0.32.0
 Flask==2.0.1
 Flask-SocketIO==5.1.1
-eventlet==0.32.0
-
-# Included Plugins
-mutagen==1.45.1
-requests==2.26.0
 fuzzywuzzy==0.18.0
+greenlet==1.1.2
+idna==3.3
+itsdangerous==2.0.1
+Jinja2==3.0.2
+MarkupSafe==2.0.1
+mutagen==1.45.1
+PlexAPI==4.7.2
+python-engineio==4.3.0
 python-Levenshtein==0.12.2
+python-socketio==5.4.1
+requests==2.26.0
+six==1.16.0
 spotipy==2.19.0
 tqdm==4.62.3
-PlexAPI==4.7.2
+urllib3==1.26.7
+Werkzeug==2.0.2
