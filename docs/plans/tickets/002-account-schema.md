@@ -1,6 +1,6 @@
 # 002 — Account-scoped database schema ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 ✅ · **Blocks:** — · **Claimed by:** —
+**Status:** ✅ Closed 2026-08-03 · **Type:** grilling · **Blocked by:** 001 ✅, 010 ✅ · **Blocks:** — · **Claimed by:** Cal (wayfinder session 2026-08-03)
 
 ## Question
 
@@ -56,3 +56,57 @@ To decide:
 - ORM + engine choice with the alternative it rejected named (house style).
 - The migration story for an existing self-hoster.
 - An ADR — this is squarely checkpoint territory and future agents will need the "why".
+
+## Resolution
+
+**Decided 2026-08-03** with Cal, over seven questions. Full reasoning in
+[ADR-0009](../../adr/0009-database-schema-drizzle-sqlite-and-migrations.md); the gist:
+
+1. **Relational with JSON columns**, not a document database. MongoDB was a live option — Cal's
+   recent projects use it and prefer its object model — and was rejected structurally rather than
+   aesthetically: Mongo has no embedded single-file mode, so it obliges every self-hoster to run a
+   second process. Cal's position as given: *asking self-hosters to run Mongo isn't unreasonable, but
+   without genuine benefit on either tier it's pointless.* Zod plus JSON columns supplies the object
+   ergonomics anyway.
+2. **SQLite only, schema kept dialect-portable.** No Postgres now — *if SQLite will work for a while,
+   let's not jump ahead* — but nothing dialect-exclusive, so the door stays open. Recorded ceiling:
+   one writer, one container, no horizontal scaling.
+3. **Drizzle**, rejecting Prisma. Deciding factor was the migration story plus Bun-native operation
+   with no engine binary in the self-host container, not query ergonomics — where Prisma is better.
+4. **Scoping enforced in the query layer**, since row-level security was Postgres-only and therefore
+   never available. A `storeFor(accountId)` scoped store with named methods for everything owned, and
+   a *separate narrow* auth store for the pre-authentication lookups that structurally cannot be
+   scoped. Raw connection module-private, **enforced by a lint rule from day one** — Cal is for
+   machine-checked invariants over conventions.
+5. **The initial migration** is the eight tables in ADR-0009 §5. The one structural change against
+   v1: its single `plugins` table splits into account-scoped `plugin_settings` and operator-owned
+   `instance_settings`, because v1 could conflate "the Spotify app's client secret" with "this user's
+   Plex URL" only by having one user. Session tokens hashed; device metadata deferred (uniquely
+   cheap to retrofit — `sessions` can be truncated); `runs` frozen in Phase 0 with retention noted
+   and not decided.
+6. **Credentials always encrypted**, both deployments, AES-256-GCM per row, `expires_at` in the clear
+   for the refresh scheduler, `key_version` for later rotation. `ENCRYPTION_KEY` is **required**, with
+   the literal value `auto` as an explicit opt-in to generation.
+7. **Migrations auto-apply on boot** after copying the SQLite file, aborting loudly on failure.
+   Pruning and rollback out of Phase 0.
+
+**A premise was corrected mid-ticket, and it changed the answer to 6.** The draft argument for silent
+key auto-generation rested on self-host having a "no setup promise". Cal challenged it directly and
+was right: every use of *frictionless* in ADR-0003/0007/0008 and `CONTEXT.md` is about **login**
+specifically, and nothing anywhere promises no configuration. An agent's paraphrase had hardened into
+a constraint — the same failure mode ADR-0007 caught with "tenant". With it removed, requiring an
+explicit key choice is clearly better: the flaw in silent generation was never the key file, it was
+that the user never learns the key exists and finds out when a restored backup has dead service
+connections. `CONTEXT.md` is tightened to "no login wall" so the next reader cannot repeat the
+over-reading.
+
+**Consequences for the map:**
+
+- **006 gets its storage shape** — encrypted blob per `(account, service)`, expiry in the clear. The
+  resolution *interface* stays 006's call.
+- **011 inherits a precedent**, to adopt or reject knowingly: explicit configuration over silent
+  defaults, with the login wall still the one thing self-host never gets.
+- **The v1 importer fog can graduate** — v1 is three tables, `repr` blobs in two, no run history, so
+  the importer's scope is now knowable.
+- **Two revisit triggers recorded, neither a defect:** SQLite's single-writer ceiling if hosted ever
+  needs multiple instances, and `runs` retention once hosted carries real traffic.

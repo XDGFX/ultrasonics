@@ -120,8 +120,8 @@ whose data it may touch. A server-side `sessions` row behind an opaque HTTP-only
 (ADR-0007), so it can be revoked instantly. The server resolves it; the **core** never sees it.
 
 **Session source** — Where a `Session` comes from. Authentication is never *bypassed*, only sourced
-differently (ADR-0007): a **cookie login**, the **bootstrapped account** (self-host's frictionless
-default), or a **trusted-proxy header** (Authelia et al.). All three are available in every
+differently (ADR-0007): a **cookie login**, the **bootstrapped account** (self-host's default), or a
+**trusted-proxy header** (Authelia et al.). All three are available in every
 deployment. Self-host's realistic choice is **bootstrapped** or **trusted-proxy**: hosted login is
 social OAuth, and a LAN box with no public DNS cannot complete an OAuth callback, so the cookie
 source is hosted in practice (ADR-0008). `DISABLE_AUTH` selects the bootstrapped source *inside* the
@@ -134,6 +134,10 @@ not a flag bolted on — v1 had no login, so a wall would be a regression (ADR-0
 no login wall on offer at all** (ADR-0008); a self-hoster wanting one runs a reverse proxy in front,
 and supporting their proxy is outside ultrasonics' scope.
 _Avoid_: "a default, not a ceiling" — that framing is withdrawn by ADR-0008.
+_Avoid_: generalising this to "no setup", "no configuration" or "no env vars". The promise is about
+the **login wall and nothing else**. Self-host may reasonably require configuration — ADR-0009
+requires an explicit `ENCRYPTION_KEY` precisely because the wider reading, once assumed, argued for a
+weaker security default.
 
 **Login identity** — What a person presents to prove who they are: a `federated_identities` row
 holding a provider name and an opaque `subject_id` (ADR-0008). Hosted is **social OAuth only** —

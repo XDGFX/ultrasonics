@@ -21,7 +21,8 @@ To settle:
   vocabulary — is `pkce | oauth2 | apiKey | serverUrl | none` complete for the v1 plugin set?
 - The `Credentials` shape handed to `run()`, and who refreshes an expired token — provider,
   runner, or plugin. v1 auto-renewed once inside the plugin on exception; v2 should not.
-- Where BYO client IDs/secrets are entered and stored — per account, per plugin, both? Overlaps 002.
+- Where BYO client IDs/secrets are entered and stored — per account, per plugin, both? **002 has now
+  answered the storage half** (see the note below); what remains here is the resolution interface.
 - **How the provider is handed to core.** ADR-0007 settled that core receives *capabilities, never
   identity*: the server builds an `AuthProvider` already bound to one account and passes it in, so no
   method on this interface should take an `accountId`. Scoping happens at construction. (The draft in
@@ -30,6 +31,23 @@ To settle:
 - The setup-wizard contract: what a provider must expose so the UI can walk a self-hoster through
   registering their own app.
 - What `Proxy` needs reserved now so Phase 5 is additive, without building any of it.
+
+> **Storage settled 2026-08-03 by [ADR-0009](../../adr/0009-database-schema-drizzle-sqlite-and-migrations.md)**
+> (map ticket 002). Credentials live in a `credentials` table, one encrypted row per
+> `(account_id, service)`: `secret` is the credential document under AES-256-GCM, `expires_at` and
+> `key_version` sit in the clear so the refresh scheduler can find due rows without decrypting them.
+> The server builds the provider already bound to one account, so **no method here takes an
+> `account_id`** — it is bound at construction, and the raw connection is unreachable outside the db
+> module anyway.
+>
+> Two things this hands the grilling rather than decides:
+> - **Who refreshes.** `expires_at` being queryable in the clear makes a *scheduler-driven* refresh
+>   cheap to implement — that is an argument available to this ticket, not a decision it has to take.
+> - **Operator-level vs account-level BYO.** ADR-0009 §5 split v1's single settings table into
+>   account-scoped `plugin_settings` and operator-owned `instance_settings`. A BYO client id/secret
+>   registered once by whoever runs the instance belongs in the latter; one supplied by an individual
+>   account belongs in the former. If this ticket concludes both paths are needed, both tables already
+>   exist — no migration.
 
 ## A good resolution
 

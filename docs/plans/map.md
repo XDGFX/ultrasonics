@@ -1,7 +1,7 @@
 # Wayfinder map — Phase 0 contracts
 
-**Status:** Live — working Phase 0. 10 open tickets, 8 on the frontier (002, 003, 004, 006, 008,
-009, 011, 012); 2 closed.
+**Status:** Live — working Phase 0. 10 open tickets, 8 on the frontier (003, 004, 006, 008, 009,
+011, 012, 013); 3 closed.
 
 The decision map. `roadmap.md` says *what* to build; `operating-model.md` says *how* work is
 dispatched; `wave-board.md` says *where execution is right now*. **This says what is still
@@ -54,14 +54,20 @@ corpus — is *not* on this map. It is already unambiguous and lives on the wave
   `DISABLE_AUTH` selects the bootstrapped source *inside* the always-run middleware rather than
   skipping it. Login identity ≠ service connection: seeding allowed, dependency forbidden.
   → [ADR-0008](../adr/0008-hosted-authentication-social-oauth.md)
+- [Account-scoped database schema](tickets/002-account-schema.md) — **relational SQLite with JSON
+  columns** (Mongo rejected: no embedded mode, so it would oblige every self-hoster to run a second
+  process for no benefit either tier collects); schema kept **dialect-portable**, no Postgres yet.
+  **Drizzle**, rejecting Prisma. Scoping enforced in the query layer — a `storeFor(accountId)` store
+  with named methods, a *separate* narrow auth store for the pre-auth lookups, raw connection
+  module-private behind a **lint rule**. Eight tables; v1's single `plugins` table splits into
+  account-scoped `plugin_settings` and operator-owned `instance_settings`. Credentials **always
+  encrypted**, `ENCRYPTION_KEY` **required** with `auto` as an explicit opt-in. Migrations
+  auto-apply on boot after a file copy. → [ADR-0009](../adr/0009-database-schema-drizzle-sqlite-and-migrations.md)
 
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket. Graduates as the frontier advances.
 
-- **The v1 SQLite importer's shape** — how far it maps v1's `ast.literal_eval` rows onto the new
-  schema, and what it does with applets referencing dropped plugins. Needs
-  [Account-scoped database schema](tickets/002-account-schema.md) first.
 - **What the conformance test actually asserts** — the objective "is this plugin ported" bar
   (`CONTEXT.md`). Needs [Plugin SDK surface freeze](tickets/005-sdk-surface.md) first.
 - **Scheduler architecture** — how the server owns recurring and webhook triggers once they no
@@ -101,7 +107,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 002 | ⛔ [Account-scoped database schema](tickets/002-account-schema.md) | grilling | 010 ✅ | **frontier** |
 | 003 | [Plugin isolation mechanism](tickets/003-plugin-isolation.md) | research | — | **frontier** |
 | 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | — | **frontier** |
 | 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003, 004 | blocked |
@@ -111,13 +116,29 @@ Cal accepts the resolution before it counts as decided.
 | 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
+| 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
 
-Closed: **001 Account model**, **010 How a hosted account authenticates** → see Decisions so far.
+Closed: **001 Account model**, **010 How a hosted account authenticates**, **002 Account-scoped
+database schema** → see Decisions so far.
 
-010 closing unblocked **002** — the schema now has its account columns settled (no credential fields
-at all) and is the most valuable ticket on the map: ADR-0003 says it must never need retrofitting.
-**011 survived but narrowed** — its "frictionless is a default, not a ceiling" premise is withdrawn,
-since self-host has no login wall on offer; what remains is first-run bootstrap and proxy config.
-**012 is new** and deliberately not urgent: the collision rule cannot bite while launch is
+**002 is done, and it was the expensive one** — ADR-0003 named it the thing that must never need
+retrofitting. Nothing was blocked on it, so the frontier does not widen; what it does is hand
+concrete shape to three other tickets. **006** now knows how credentials sit at rest (encrypted blob
+per account per service, expiry in the clear) and owes only the resolution *interface*. **011**
+inherits a precedent it may adopt or reject knowingly: explicit configuration over silent defaults,
+with the login wall still the one thing self-host never gets. **013 is new**, graduated from the fog
+by 002 — with both v1's three tables and the target schema now fixed, the importer's mapping is a
+decision rather than a haze.
+
+**One premise was corrected in the course of 002 and is worth carrying forward.** The claim that
+self-host has a "no setup promise" does not exist anywhere in the ADRs — every use of *frictionless*
+is about **login** specifically. It was an agent's paraphrase hardening into a constraint, the same
+failure mode ADR-0007 caught with the word "tenant", and it had been about to justify a weaker
+security default. `CONTEXT.md` is tightened accordingly. Sessions working on 011 especially should
+not re-inflate it.
+
+**011 remains narrowed** — its "frictionless is a default, not a ceiling" premise was already
+withdrawn by 010, since self-host has no login wall on offer; what remains is first-run bootstrap and
+proxy config. **012 remains deliberately not urgent**: the collision rule cannot bite while launch is
 Google-only, but it must be settled *before* provider #2 ships, because the friendly default
 (auto-link on email) is an account-takeover vector.

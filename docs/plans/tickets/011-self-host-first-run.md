@@ -50,6 +50,30 @@ self-hoster is a straight regression (ADR-0003).
   separate logins per family member is not served, and this ticket should say so plainly rather than
   leave it implied.
 
+> **A precedent to adopt or reject knowingly, set 2026-08-03 by
+> [ADR-0009](../../adr/0009-database-schema-drizzle-sqlite-and-migrations.md)** (map ticket 002).
+>
+> Ticket 002's grilling nearly justified a weaker security default by appealing to a self-host "no
+> setup promise". **No such promise exists** — every use of *frictionless* in ADR-0003/0007/0008 and
+> `CONTEXT.md` is about the **login wall specifically**, and Cal's position is that requiring
+> configuration of self-hosters is entirely reasonable where it earns its keep. It was an agent's
+> paraphrase hardening into a constraint, the same failure mode ADR-0007 caught with "tenant".
+>
+> So ADR-0009 chose **explicit configuration over a silent default**: the app refuses to boot without
+> an `ENCRYPTION_KEY`, accepting the literal value `auto` as an opt-in to generating one. The reason
+> was not the risk of the generated key — it was that a silent default means the user never learns the
+> key exists, and finds out when a restored backup has dead service connections.
+>
+> This ticket owns the *general* first-run configuration surface, so it should settle whether that
+> pattern is the house style — and note that its two live questions pull the same way. A
+> **frictionless install accidentally port-forwarded** and **trusted-proxy mode enabled while not
+> actually behind a proxy** are both cases where a silent, convenient default hides a security
+> property the operator never chose. This ticket may still reject the precedent; it should just not
+> re-derive the withdrawn "no setup" premise while doing so.
+>
+> Also inherited: ADR-0009 §7 has the app **auto-migrate on boot after copying the SQLite file**, so
+> a first run and an upgrade run already share a startup path this ticket's sequence must slot into.
+
 ## A good resolution
 
 - The first-run sequence written down, including what the bootstrapped account looks like.
