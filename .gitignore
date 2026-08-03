@@ -143,3 +143,6 @@ dmypy.json
 config/*
 plugins/*
 logs/*
+# Agent scratch — worktrees created by /wayfinder and background sessions.
+# Transient by design; work lands on revival by fast-forward, never as committed worktree state.
+.claude/worktrees/
