@@ -16,8 +16,10 @@ declaration becomes usable credentials. Checkpoint gate (AGENTS.md) — Cal acce
    runs unchanged under BYO, PKCE, and Proxy.
 2. Self-host works **fully offline** with no service ultrasonics operates — the failure that killed
    v1 (`ultrasonics-api`, dead Nov 2022) must be structurally impossible to repeat.
-3. Credentials are stored per tenant (ADR-0003) and never reach the core domain logic.
-4. The hosted tier is an *additive* `Proxy` implementation, not a rewrite (ADR-0002).
+3. Credentials are stored per account (ADR-0003, ADR-0007) and never reach the core domain logic.
+4. A provider instance is **bound to one account at construction** — ADR-0007 puts identity at the
+   server layer, so no method below takes an account id.
+5. The hosted tier is an *additive* `Proxy` implementation, not a rewrite (ADR-0002).
 
 ## Proposed surface
 
@@ -38,16 +40,18 @@ merger, custom file). Whether that list is complete is an open question below.
 ### The provider interface
 
 ```ts
+// Built by the server, already bound to one account (ADR-0007) — the instance *is* the scope,
+// so identity appears nowhere in the method signatures.
 interface AuthProvider {
   /** Credentials for a run. Refreshes transparently; throws if unrecoverable. */
-  resolve(spec: AuthSpec, ctx: TenantContext): Promise<Credentials>;
+  resolve(spec: AuthSpec): Promise<Credentials>;
 
   /** What the UI must collect from the user before `resolve` can succeed. */
   requirements(spec: AuthSpec): AuthRequirement[];
 
   /** Drive an interactive flow (OAuth redirect, PKCE exchange). */
-  begin(spec: AuthSpec, ctx: TenantContext): Promise<AuthChallenge>;
-  complete(spec: AuthSpec, ctx: TenantContext, callback: unknown): Promise<void>;
+  begin(spec: AuthSpec): Promise<AuthChallenge>;
+  complete(spec: AuthSpec, callback: unknown): Promise<void>;
 }
 ```
 
@@ -77,7 +81,7 @@ form and link the service's developer-app page. This is the piece v1 never had.
 
 - Is the **flow vocabulary** complete for the v1 plugin set, and is `serverUrl` (Plex) really an
   *auth* flow or a plugin setting that has drifted into auth?
-- **Where do BYO client credentials live** — per tenant, per plugin, or a per-tenant service-level
+- **Where do BYO client credentials live** — per account, per plugin, or a per-account service-level
   record shared by spotify and spotify-mixer? v1's two Spotify plugins shared one OAuth grant, and
   the port must too (`legacy-architecture.md`, port gotchas).
 - **Encryption at rest** — are stored tokens encrypted, with what key, and how is that key supplied

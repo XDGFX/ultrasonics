@@ -1,21 +1,29 @@
-# 002 — Tenant-scoped database schema ⛔
+# 002 — Account-scoped database schema ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 · **Blocks:** — · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 · **Blocks:** — · **Claimed by:** —
 
 ## Question
 
 What is the v2 database schema, and how are migrations run?
 
-ADR-0003: *"The persistence layer is designed around a tenant context from the first migration;
+ADR-0003: *"The persistence layer is designed around a [n owner] context from the first migration;
 there is no later 'add multi-tenancy' project."* That makes this the single most expensive thing on
 the map to get wrong, and the review found **no cell anywhere owned it** — Phase 0's gate did not
 mention it and Phase 1 mentioned only the v1 importer.
 
+[ADR-0007](../../adr/0007-account-model-sessions-and-the-core-boundary.md) settled the entity model
+this schema expresses, so the starting point is fixed: an `accounts` table, a `sessions` table, and
+an `account_id` column on every owned row. **"Tenant" is retired — everything scopes by `account_id`.**
+What columns `accounts` itself carries depends on ticket 010 (how a hosted account authenticates),
+which is why that now blocks this too.
+
 To decide:
 
-- **Tables and tenant scoping.** Applets, plugin persistent settings, credentials, run history,
-  accounts. Which carry a tenant column, and is scoping enforced by convention, by a query helper,
-  or by row-level security?
+- **Tables and account scoping.** Applets, plugin persistent settings, credentials, run history,
+  accounts, sessions. Which carry `account_id`, and is scoping enforced by convention, by a query
+  helper, or by row-level security? ADR-0007 puts the boundary at the server layer — core is handed
+  pre-scoped objects — so the enforcement mechanism should make that boundary hard to cross by
+  accident.
 - **ORM / query layer.** ADR-0001 says "a real ORM" replacing v1's `repr` + `ast.literal_eval`, but
   names none. Drizzle, Prisma, Kysely, raw `bun:sqlite`? Bun-native matters here.
 - **Engine.** SQLite for self-host is a given; does hosted use the same schema on Postgres, and does
@@ -24,6 +32,8 @@ To decide:
   thinking about it.
 - **Credential storage at rest** — encrypted? With what key, supplied how in self-host? This overlaps
   006; decide the storage shape here, the resolution interface there.
+- **Session rows.** ADR-0007 chose server-side sessions: expiry, cleanup of dead rows, and the
+  non-expiring row self-host's frictionless mode relies on.
 
 ## A good resolution
 

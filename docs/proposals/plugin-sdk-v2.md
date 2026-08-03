@@ -50,7 +50,8 @@ export default definePlugin({
 interface RunContext<P, I> {
   component: "inputs" | "modifiers" | "outputs";
   appletId: string;
-  tenant: TenantContext;              // ADR-0003; a fixed singleton in self-host
+  // No account id: ADR-0007 keeps identity at the server layer and hands core pre-scoped
+  // capabilities. `credentials` below is already resolved for the owning account.
   persistent: P;                      // validated persistentSettings
   instance: I;                        // validated instanceSettings
   credentials: Credentials;           // resolved by the AuthProvider (ADR-0005)

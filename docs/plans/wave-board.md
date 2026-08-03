@@ -28,8 +28,9 @@ parallel fan-out (Phase 2 plugin waves) uses worktree + PR. See `operating-model
 
 ## Current phase: 0 — Foundations & operating model
 
-**Next checkpoint:** the account/tenant model (map ticket 001), which unblocks the schema and
-`AuthProvider` freezes. Then the Phase 0 exit gate.
+**Next checkpoint:** ✅ the account model (map ticket 001) is **decided** — ADR-0007. That freed
+ticket 006 and put 010 (how a hosted account authenticates) on the frontier, which now gates the
+schema. Next checkpoint: 010, then the Phase 0 exit gate.
 
 ### Wave 0.0 — external lead-time (Cal, non-agent) · **queued**
 
@@ -61,14 +62,16 @@ Not build cells — these resolve `map.md` tickets. Mostly HITL with Cal; they d
 
 | Ticket | Type | Status | Notes |
 |---|---|---|---|
-| ⛔ 001 Account and tenant model | grilling | queued | **frontier** · deepest dependency; unblocks 002 + 006 |
+| ⛔ 001 Account model | grilling | ✅ **done** | ADR-0007 · "tenant" retired; freed 006, surfaced 010 + 011 |
 | 003 Plugin isolation mechanism | research | queued | **frontier** · AFK; constrains the SDK boundary |
 | 004 Trigger model + runner OR semantics | grilling | queued | **frontier** · fixes v1's accidental AND |
 | 008 Monorepo conventions | grilling | queued | **frontier** · feeds Wave 0.1 |
 | 009 Triage v1 issue backlog | task | queued | **frontier** · AFK draft, Cal applies public changes |
-| ⛔ 002 Tenant-scoped database schema | grilling | blocked | by 001 · the unretrofittable one |
+| ⛔ 002 Account-scoped database schema | grilling | blocked | by 010 · the unretrofittable one |
 | ⛔ 005 Plugin SDK surface freeze | grilling | blocked | by 003, 004 · blocks all plugin work |
-| ⛔ 006 AuthProvider surface freeze | grilling | blocked | by 001 · grill `proposals/auth-provider-v2.md` |
+| ⛔ 006 AuthProvider surface freeze | grilling | queued | **frontier** · unblocked by 001 · grill `proposals/auth-provider-v2.md` |
+| ⛔ 010 How a hosted account authenticates | grilling | queued | **frontier** · gates 002's `accounts` columns |
+| 011 Self-host first run + auth-mode config | grilling | blocked | by 010 · graduated from map fog |
 | 007 Builder-time credentials | grilling | blocked | by 005, 006 · may legitimately defer past Phase 1 |
 
 ### Wave 0.3 — core ports (parallel, behind 0.1; max N cells) · **queued**
@@ -94,6 +97,6 @@ tickets**. → opens **Phase 1 — vertical slice**.
   (read-only `:check` CI, import-cycle gate, `.claude/settings.json` allowlist).
 - **2026-08-03** — Wayfinder review of the Phase 0 plan. Added `map.md` + 9 decision tickets;
   split the old "freeze SDK + AuthProvider" cell into tickets 001–007; inserted the missing
-  account-model and tenant-schema decisions; moved decisions out of this board into the map
+  account-model and schema decisions; moved decisions out of this board into the map
   (new Wave 0.2), renumbering the core ports to Wave 0.3. `system-command` dropped; Subsonic moved
   to Phase 3; PR policy relaxed to parallel-work-only (`operating-model.md` §2a).

@@ -43,9 +43,10 @@ an ADR or a spec; it never lives in two places.
 
 - **0001** — Stack: TypeScript / Bun / Vue monorepo
 - **0002** — Open-core with a hosted SaaS revenue tier
-- **0003** — Full multi-tenancy, single-tenant self-host default
+- **0003** — Full multi-account isolation, single-account self-host default
 - **0004** — Typed plugin SDK with explicit registration
 - **0005** — AuthProvider abstraction, bring-your-own by default
 - **0006** — Preserve the song dict and fuzzymatch verbatim
+- **0007** — The account model, sessions, and the core boundary *(refines 0003; retires "tenant")*
 
 Start with `../CONTEXT.md` (domain glossary) and `plans/roadmap.md` (where the work is going).

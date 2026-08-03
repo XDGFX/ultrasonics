@@ -17,7 +17,7 @@ land; it does not make them.
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
-**account/tenant model** and the **tenant-scoped database schema** (ADR-0003) — the schema is the
+**account model** (ADR-0007) and the **account-scoped database schema** (ADR-0003) — the schema is the
 one thing that cannot be retrofitted later, so it is decided here, not in Phase 1. Port the song
 dict to Zod. Establish the docs system (this repo, done), `AGENTS.md`, and the **development
 operating model** (`operating-model.md` — the cell/wave/board machinery all later phases run on).
@@ -26,7 +26,7 @@ The contract decisions are tracked as tickets on `map.md`; the phase is not done
 empty.
 
 **Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · account
-model + initial tenant-scoped schema decided (ADR'd) · trigger model settled · song-dict Zod schema
+model + initial account-scoped schema decided (ADR'd) · trigger model settled · song-dict Zod schema
 + its tests merged · docs skeleton and ADRs 0001–0006 in place · operating model + wave board merged
 and the board reflecting live state · **`map.md` has no open tickets**.
 
@@ -36,7 +36,7 @@ and the board reflecting live state · **`map.md` has no open tickets**.
 The make-or-break phase. Port **fuzzymatch** with **golden tests generated from v1** (ADR-0006),
 the applet runner, one input (**Spotify**, BYO + PKCE), one output (**Plex**, via the PlexAPI-style
 approach — the most-requested pairing in the issues), and a minimal Vue UI to build and run *one*
-applet. Implement the schema and account model decided in Phase 0 — multi-tenant seams from day one
+applet. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
 (ADR-0003), self-host still login-free. Build the **runner's trigger semantics** here (OR, not v1's
 accidental AND) even though the trigger *plugins* land in Phase 2: it is core behaviour, not plugin
 behaviour. Write the v1 SQLite **importer**.
@@ -54,7 +54,7 @@ independent unit gated by the SDK **conformance test**. See `docs/reference/lega
 for per-plugin behaviour and the parity matrix.
 
 **Not ported:** `system-command` is **dropped** — arbitrary shell execution has no place in a
-multi-tenant product (ADR-0002/0003), and the self-host case is served by the webhook trigger and
+hosted product many accounts share (ADR-0002/0003), and the self-host case is served by the webhook trigger and
 the CLI runner. `rickroll` and `skeleton` are v1 samples, not features. Subsonic is net-new, so it
 sits in Phase 3 with the other new services rather than under a parity gate.
 
@@ -90,7 +90,7 @@ extended-quota and Apple Developer applications (ADR-0002). Approval lead time i
 to months and is the one dependency no amount of engineering speed can compress, so it runs from
 day one, in parallel with Phase 0. Tracked as Wave 0.0 on the board.
 
-Turn the multi-tenant foundation into the hosted SaaS (ADR-0002): the `Proxy` `AuthProvider` with
+Turn the account-isolation foundation into the hosted SaaS (ADR-0002): the `Proxy` `AuthProvider` with
 ultrasonics-owned app credentials, accounts/billing (Stripe, subscription + freemium), deploy
 infra, per-service **kill-switch** flags, and the marketing site. Launches **cloud-services-only**;
 the **home agent** (A2 — CLI runner with remote dispatch) is a later addon.
@@ -116,5 +116,5 @@ Open decisions **for Phase 0** are tickets on `map.md`, not entries here. This l
 ## Dropped
 
 - **`system-command` plugin** — not ported. Arbitrary shell execution is incompatible with a
-  multi-tenant product (ADR-0002/0003); the self-host use case is served by the webhook trigger and
+  hosted product many accounts share (ADR-0002/0003); the self-host use case is served by the webhook trigger and
   the CLI runner. Reversing this is a fresh decision with its own ADR, not an incidental port.

@@ -105,24 +105,38 @@ users. Replaced entirely by **AuthProvider**. Referenced only for historical con
 
 ### User auth — getting a person into ultrasonics
 
-The exact model is still being decided (`docs/plans/tickets/001-account-model.md`); these terms are
-the vocabulary that decision must fill in. v1 had none of this — it shipped with no login at all.
+The model is settled in ADR-0007. v1 had none of this — it shipped with no login at all.
 
-**Account** — The identity a person signs in as. In the **hosted tier** an account is created at
-signup; in **self-host** one is bootstrapped on first run and the user never sees it (ADR-0003).
-Its relationship to a **Tenant** — one-to-one, or many accounts per tenant — is ticket 001's
-central question.
+**Account** — **The** principal, and the only one: a person *and* the boundary that owns their
+applets, credentials, and run history, one-to-one and permanently (ADR-0007). One hosted
+subscription means exactly one login. In the **hosted tier** an account is created at signup; in
+**self-host** one is bootstrapped on first run and the user never sees it (ADR-0003). Every
+persisted row carries `account_id`; every route resolves an account before touching data.
+_Avoid_: "tenant", "org", "team", "workspace" — there is one word and it is *account*. (Earlier ADRs
+say *tenant*; read **Account**. See ADR-0007 for why the term was retired.)
 
-**Session** — An authenticated request context: which account is making this request, and
-therefore which **Tenant**'s data it may touch. The server resolves it; the **core** never sees it
-(ADR-0003 keeps core tenant-agnostic).
+**Session** — An authenticated request context: which account is making this request, and therefore
+whose data it may touch. A server-side `sessions` row behind an opaque HTTP-only cookie — not a JWT
+(ADR-0007), so it can be revoked instantly. The server resolves it; the **core** never sees it.
 
-**Login-free self-host** — The requirement that a self-hoster is never shown a login wall by
-default: first-run bootstrap, auto-login, and a `DISABLE_AUTH` / trusted-reverse-proxy mode for
-users already running Authelia or similar. A first-class requirement, not a flag bolted on — v1
-had no login, so a wall would be a regression (ADR-0003).
+**Session source** — Where a `Session` comes from. Authentication is never *bypassed*, only sourced
+differently (ADR-0007): a **cookie login**, the **bootstrapped account** (self-host's frictionless
+default), or a **trusted-proxy header** (Authelia et al.). All three are available in every
+deployment — self-host defaults to the frictionless one, but a self-hoster may opt into real login
+by configuration, not by running a different build.
 
-## Deployment & Tenancy
+**Login-free self-host** — The requirement that a self-hoster is never shown a login wall *by
+default*: first-run bootstrap plus a trusted-reverse-proxy mode. A first-class requirement, not a
+flag bolted on — v1 had no login, so a wall would be a regression (ADR-0003). A **default, not a
+ceiling**: opting into real login must stay possible (ADR-0007, ticket 011).
+
+**Capabilities, not identity** — How the account boundary is enforced in code (ADR-0007). The server
+resolves the account and hands **core** objects already scoped to it (an `AuthProvider` bound to that
+account's credentials, a store bound to its rows). No core function takes an `accountId`, so core has
+no way to name another account and cross-account leakage is structurally impossible rather than a
+rule every query must remember.
+
+## Deployment
 
 **Self-host** — The free, open-source deployment: the full product on the user's own machine,
 including services that live on their network (Plex, local files). Always the "real" product;
@@ -132,11 +146,6 @@ admin bootstrap, auto-login, optional `DISABLE_AUTH`/trusted-proxy mode).
 **Hosted tier** — The planned paid SaaS (ADR-0002): ultrasonics runs it, users never touch
 Docker. Launches **cloud-services-only** — it cannot reach a home Plex/local library from the
 cloud. Subscription + freemium via Stripe.
-
-**Tenant** — The isolation boundary in the data model: a workspace/account that owns its
-applets, credentials, and run history. Full multi-tenancy is built in from day one; self-host
-runs the same code as a single tenant with a fixed owner it never sees (ADR-0003).
-_Avoid_: "org", "team" — it is a *tenant*.
 
 **Home agent** — *(future, A2)* A lightweight worker a hosted user runs on their own network so
 the cloud control plane can reach their Plex/local library. Architecturally the headless **CLI

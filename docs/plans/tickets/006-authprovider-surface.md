@@ -1,6 +1,6 @@
 # 006 — AuthProvider surface freeze ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 · **Blocks:** 007 · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅ (cleared) · **Blocks:** 007 · **Claimed by:** —
 
 ## Question
 
@@ -21,7 +21,12 @@ To settle:
   vocabulary — is `pkce | oauth2 | apiKey | serverUrl | none` complete for the v1 plugin set?
 - The `Credentials` shape handed to `run()`, and who refreshes an expired token — provider,
   runner, or plugin. v1 auto-renewed once inside the plugin on exception; v2 should not.
-- Where BYO client IDs/secrets are entered and stored — per tenant, per plugin, both? Overlaps 002.
+- Where BYO client IDs/secrets are entered and stored — per account, per plugin, both? Overlaps 002.
+- **How the provider is handed to core.** ADR-0007 settled that core receives *capabilities, never
+  identity*: the server builds an `AuthProvider` already bound to one account and passes it in, so no
+  method on this interface should take an `accountId`. Scoping happens at construction. (The draft in
+  `auth-provider-v2.md` still threads a `TenantContext` through every call — that is now wrong and
+  the grilling should replace it.)
 - The setup-wizard contract: what a provider must expose so the UI can walk a self-hoster through
   registering their own app.
 - What `Proxy` needs reserved now so Phase 5 is additive, without building any of it.

@@ -1,6 +1,7 @@
-# 001 — Account and tenant model ⛔
+# 001 — Account model ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** — · **Blocks:** 002, 006 · **Claimed by:** —
+**Status:** **Closed** (2026-08-03, accepted by Cal) · **Type:** grilling · **Blocked by:** — ·
+**Blocks:** 002, 006 · **Resolution:** [ADR-0007](../../adr/0007-account-model-sessions-and-the-core-boundary.md)
 
 ## Question
 
@@ -33,3 +34,32 @@ ADR-0003 pulling them into Phase 0–1 explicitly.
 - New `CONTEXT.md` glossary terms so the two auths stop colliding in prose.
 - Enough to let 002 design the schema and 006 decide where credentials hang.
 - An ADR if the model is non-obvious — it almost certainly is.
+
+---
+
+## Resolution — 2026-08-03
+
+Grilled with Cal. Full reasoning and the rejected alternatives are in
+[ADR-0007](../../adr/0007-account-model-sessions-and-the-core-boundary.md); the answers to the four
+questions above:
+
+1. **No separate user entity. One `Account`, 1:1 with the data it owns, permanently.** One hosted
+   subscription = exactly one login, forever — a shared household sync is not a case ultrasonics
+   serves. No membership join, no seam held open on spec.
+2. **Sessions are server-side rows** behind an opaque HTTP-only cookie. Not JWT: ultrasonics is a
+   single server owning its own database, so stateless verification buys nothing while costing
+   instant revocation.
+3. **Auth is never bypassed, only sourced.** One middleware always resolves a `Session`, from one of
+   three sources — cookie login, bootstrapped account, trusted-proxy header — *all available in every
+   deployment*. Self-host defaults to the frictionless source; it is a default, not a ceiling.
+   Route-guard no-ops under `DISABLE_AUTH` were rejected as a second code path.
+4. **Core takes capabilities, never identity.** No core function accepts an `accountId`; the server
+   hands it pre-scoped objects. Cross-account leakage becomes structurally impossible rather than a
+   rule every query must remember.
+
+**The term "tenant" is retired.** Cal did not recognise it — it was jargon an agent introduced when
+writing up ADR-0003, not a concept Cal chose. The isolation decision underneath *was* Cal's and
+stands; only the word changes. Everything scopes by `account_id`.
+
+**Surfaced two follow-ups**, deliberately not settled here: how a hosted account authenticates
+(ticket 010) and self-host first-run + auth-mode configuration (ticket 011).

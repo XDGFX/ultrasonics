@@ -171,14 +171,16 @@ conventions brief comes from map ticket 008.
 **Wave 0.2 — the decision wave (map tickets; mostly HITL, runs alongside 0.1).** Resolve
 `map.md`'s frontier. These are *conversations and research*, not builds, so they don't wait on the
 scaffold and don't consume the concurrency budget the same way:
-- ⛔ *Account and tenant model* (001) — the deepest dependency; unblocks two checkpoint tickets.
+- ⛔ *Account model* (001) — ✅ **resolved 2026-08-03** (ADR-0007); freed 006, surfaced 010 + 011.
+- ⛔ *How a hosted account authenticates* (010) — `/grilling`; gates the schema's `accounts` columns.
+- ⛔ *AuthProvider surface freeze* (006) — `/grilling`; unblocked once 001 closed.
 - *Plugin isolation* (003) — `/research`, AFK, run in parallel with everything.
 - *Trigger model + runner OR semantics* (004) — `/grilling`.
 - *Monorepo conventions* (008) — can ride with Wave 0.1.
 - *v1 issue triage* (009) — AFK, feeds Phase 1–2 acceptance criteria.
 
-Then, as their blockers clear: ⛔ *tenant schema* (002), ⛔ *SDK freeze* (005),
-⛔ *AuthProvider freeze* (006), *builder-time credentials* (007).
+Then, as their blockers clear: ⛔ *account schema* (002), ⛔ *SDK freeze* (005),
+*self-host first run* (011), *builder-time credentials* (007).
 
 **Wave 0.3 — core ports (parallel behind 0.1, rate-limited to N cells).** Pure build work; needs no
 open decision.
