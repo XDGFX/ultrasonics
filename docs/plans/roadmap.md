@@ -14,7 +14,8 @@ SDK), 0005 (auth), 0006 (preserve song dict + fuzzymatch).
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Port the song dict
-to Zod. Establish the docs system (this repo, done) and `AGENTS.md`.
+to Zod. Establish the docs system (this repo, done), `AGENTS.md`, and the **development operating
+model** (`operating-model.md` — the cell/wave/board machinery all later phases run on).
 
 **Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · song-dict
 Zod schema + its tests merged · docs skeleton and ADRs 0001–0006 in place.

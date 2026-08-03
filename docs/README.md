@@ -9,7 +9,7 @@ in-repo docs are the source of truth for anything an agent needs to build correc
 | `adr/` | Architecture Decision Records — the immutable "why" | Cal, at decisions | Append-only; supersede, never edit |
 | `specs/` | One per feature — the contract; acceptance criteria = the test contract | `/grill-with-docs` | Frozen once implementation starts |
 | `proposals/` | Thorough design write-ups for work not yet decided/started | Agents / Cal | Living until accepted |
-| `plans/` | Order of work and current status (`roadmap.md`) | Agents | Living |
+| `plans/` | Order of work + current status: `roadmap.md` (what), `operating-model.md` (how), `wave-board.md` (live state) | Agents | Living |
 | `reference/` | Durable facts (e.g. the v1 architecture the port targets) | Agents | Updated as facts change |
 | `handoffs/` | Where an agent left off, so the next resumes cold | Agent at context end | One per boundary |
 | `sessions/` | Dated log of what happened and what's next | Agent at session end | Append-only |
