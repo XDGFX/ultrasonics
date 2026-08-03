@@ -1,6 +1,7 @@
 # 005 — Plugin SDK surface freeze ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 003, 004 · **Blocks:** 007 · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** ~~003 ✅~~, **004** · **Blocks:** 007 ·
+**Claimed by:** —
 
 ## Question
 
@@ -11,7 +12,12 @@ this point (ADR-0004).
 Grill `../../proposals/plugin-sdk-v2.md` — but note it arrives **narrower than it was written**,
 because the review split three of its five open questions out:
 
-- **Plugin isolation** → ticket 003, resolved first (it constrains what may cross the boundary).
+- **Plugin isolation** → ticket 003, **now resolved** ([ADR-0010](../../adr/0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md)).
+  It does not merely constrain this surface, it hands it a concrete brief: nine day-one constraints, a
+  `RunPayload` / `RunContext` split, four amendments to the sketch, and a **registry-shape constraint**
+  (keep a resolvable module path per entry, or the Phase 2 executor swap breaks the registry this
+  ticket freezes). Read [003's resolution](003-plugin-isolation.md#resolution--2026-08-03) before
+  opening this one — it is the input, not background.
 - **Long-running triggers** → ticket 004, resolved first (it decides whether `run()` is even the
   shape for a trigger).
 - **Third-party install** → ruled out of scope; no third-party plugins exist yet.

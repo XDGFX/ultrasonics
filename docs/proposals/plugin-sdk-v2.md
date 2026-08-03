@@ -111,10 +111,14 @@ freeze.
 
 **Resolved first, because they constrain this surface:**
 
-- **Plugin isolation** — Worker vs subprocess vs in-process. ADR-0001 wants isolation so one bad
-  plugin can't crash a sync; the SDK boundary must suit the chosen mechanism, and a Worker's
-  structured-clone constraint would reshape `RunContext` directly.
-  → ticket [003](../plans/tickets/003-plugin-isolation.md).
+- ~~**Plugin isolation**~~ — **resolved**, ticket [003](../plans/tickets/003-plugin-isolation.md) →
+  [ADR-0010](../adr/0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md). The boundary
+  is designed Worker-shaped now and executed in-process in Phase 1. **This amends the `RunContext`
+  above** — `credentials` becomes plain data with behaviour moving to an async `ctx.auth` facade,
+  `log` is specified as a reconstructed fire-and-forget facade, and `runId` / `deadlineMs` are added.
+  The amended sketch and the nine constraints behind it are in ADR-0010 and
+  [`../reference/plugin-isolation-research.md`](../reference/plugin-isolation-research.md); ticket 005
+  ratifies them into this document at the freeze.
 - **Long-running triggers** (v1 webhook/time-trigger blocked). In v2 triggers should register
   intent with the scheduler/server, not block. Does the SDK model triggers as `run()` at all, or a
   distinct `schedule()` / `subscribe()` shape?

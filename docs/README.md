@@ -52,5 +52,8 @@ operating model was largely a hand-rolled version of what `/wayfinder` and `AGEN
 - **0005** — AuthProvider abstraction, bring-your-own by default
 - **0006** — Preserve the song dict and fuzzymatch verbatim
 - **0007** — The account model, sessions, and the core boundary *(refines 0003; retires "tenant")*
+- **0008** — Hosted authentication is social OAuth only *(refines 0007; Google alone at launch)*
+- **0009** — The v2 database: relational SQLite, Drizzle, account scoping in the query layer
+- **0010** — Worker-shaped plugin boundary, in-process execution in Phase 1 *(refines 0001, 0004)*
 
 Start with `../CONTEXT.md` (domain glossary) and `plans/roadmap.md` (where the work is going).

@@ -50,6 +50,10 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   columns (Mongo rejected), Drizzle, scoping enforced in the query layer by a scoped store behind a
   lint rule; credentials always encrypted; migrations auto-apply on boot.
   → [ADR-0009](../adr/0009-database-schema-drizzle-sqlite-and-migrations.md)
+- [Plugin isolation mechanism](tickets/003-plugin-isolation.md) — boundary designed Worker-shaped
+  now, plugins run in-process in Phase 1 behind a `PluginExecutor` seam; deferred on Bun's maturity,
+  not cost. Price is nine day-one SDK constraints on 005.
+  → [ADR-0010](../adr/0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md)
 
 ## Not yet specified
 
@@ -82,6 +86,8 @@ Ruled beyond this map's destination. Never graduates; returns only if the destin
   `AuthProvider`; roadmap Phase 5.
 - **Product AI implementation** — seam reserved in `CONTEXT.md`, filled post-parity.
 - **Public `README.md` rewrite** — roadmap Phase 4.
+- **Adopting `WorkerExecutor`** — ADR-0010 freezes the boundary; performing the swap is Phase 2
+  execution (`roadmap.md`).
 
 ---
 
@@ -92,9 +98,8 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 003 | [Plugin isolation mechanism](tickets/003-plugin-isolation.md) | research | — | **frontier** |
 | 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | — | **frontier** |
-| 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003, 004 | blocked |
+| 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003 ✅, **004** | blocked |
 | 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
 | 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005, 006 | blocked |
 | 008 | [Monorepo conventions](tickets/008-monorepo-conventions.md) | grilling | — | **frontier** |

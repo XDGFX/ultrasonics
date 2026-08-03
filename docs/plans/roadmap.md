@@ -76,6 +76,14 @@ hosted product many accounts share (ADR-0002/0003), and the self-host case is se
 the CLI runner. `rickroll` and `skeleton` are v1 samples, not features. Subsonic is net-new, so it
 sits in Phase 3 with the other new services rather than under a parity gate.
 
+**Also in this phase: adopt `WorkerExecutor`.** ADR-0010 freezes the plugin boundary as
+Worker-shaped but ships Phase 1 running plugins in-process, on the grounds that first-party reviewed
+plugins do not need isolation and Bun's `Worker` termination is still experimental. Fanning out to
+ten ported plugins is where that stops being true. The swap is a runner change, not an SDK change —
+but it has pre-flight checks (soak terminate-mid-`fetch`, confirm RSS is returned after
+`terminate()`, re-measure on Linux/Docker) listed in
+`../reference/plugin-isolation-research.md`.
+
 **Exit gate:** feature parity with v1 *minus the dropped plugins above* · every plugin passes
 conformance + a smoke test · parity matrix in docs marked complete.
 
