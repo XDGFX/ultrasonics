@@ -18,7 +18,8 @@ to Zod. Establish the docs system (this repo, done), `AGENTS.md`, and the **deve
 model** (`operating-model.md` — the cell/wave/board machinery all later phases run on).
 
 **Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · song-dict
-Zod schema + its tests merged · docs skeleton and ADRs 0001–0006 in place.
+Zod schema + its tests merged · docs skeleton and ADRs 0001–0006 in place · operating model +
+wave board merged and the board reflecting live state.
 
 ## Phase 1 — Vertical slice (prove the whole pipe)
 **Status:** not started · **Owner mix:** agents build; Cal reviews the slice end-to-end
