@@ -1,6 +1,6 @@
 # 002 — Account-scoped database schema ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 · **Blocks:** — · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 ✅ · **Blocks:** — · **Claimed by:** —
 
 ## Question
 
@@ -14,8 +14,23 @@ mention it and Phase 1 mentioned only the v1 importer.
 [ADR-0007](../../adr/0007-account-model-sessions-and-the-core-boundary.md) settled the entity model
 this schema expresses, so the starting point is fixed: an `accounts` table, a `sessions` table, and
 an `account_id` column on every owned row. **"Tenant" is retired — everything scopes by `account_id`.**
-What columns `accounts` itself carries depends on ticket 010 (how a hosted account authenticates),
-which is why that now blocks this too.
+What columns `accounts` itself carries depended on ticket 010, now closed.
+
+> **Unblocked 2026-08-03 by [ADR-0008](../../adr/0008-hosted-authentication-social-oauth.md).**
+> Hosted authenticates by **social OAuth only**, so the answer is that `accounts` carries **no
+> credential columns at all** — no `password_hash`, in any deployment mode, ever. Identities live in
+> their own table:
+>
+> ```
+> accounts              — no credential columns
+> sessions              — server-side rows (ADR-0007)
+> federated_identities  — (account_id, provider, subject_id), unique on (provider, subject_id)
+> ```
+>
+> `federated_identities` is 1:many by construction even though launch ships Google alone and one
+> identity per account — more providers are wanted early, and the alternative is a migration on the
+> account table ADR-0003 says must never need one. Whether provider *email* is stored there is
+> deliberately still open; it is a mutable key and ticket 012 owns that call.
 
 To decide:
 

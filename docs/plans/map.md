@@ -1,7 +1,7 @@
 # Wayfinder map — Phase 0 contracts
 
-**Status:** Live — working Phase 0. 10 open tickets, 5 on the frontier (003, 004, 008, 009, 010);
-1 closed.
+**Status:** Live — working Phase 0. 10 open tickets, 8 on the frontier (002, 003, 004, 006, 008,
+009, 011, 012); 2 closed.
 
 The decision map. `roadmap.md` says *what* to build; `operating-model.md` says *how* work is
 dispatched; `wave-board.md` says *where execution is right now*. **This says what is still
@@ -46,6 +46,14 @@ corpus — is *not* on this map. It is already unambiguous and lives on the wave
   behind an HTTP-only cookie, not JWT. Auth is never bypassed, only *sourced* (cookie / bootstrapped
   / trusted-proxy), all sources available in every deployment. Core receives pre-scoped capabilities,
   never an `accountId`. → [ADR-0007](../adr/0007-account-model-sessions-and-the-core-boundary.md)
+- [How a hosted account authenticates](tickets/010-hosted-auth-method.md) — **social OAuth only**, no
+  passwords, magic links or transactional email; **Google alone at launch**, more expected early.
+  `accounts` carries no credential columns; identities live in a `federated_identities` join table,
+  1:many by construction. **Self-host gets no login wall at all** (a LAN box cannot complete an OAuth
+  callback) — trusted reverse proxy is the documented answer and supporting it is out of scope.
+  `DISABLE_AUTH` selects the bootstrapped source *inside* the always-run middleware rather than
+  skipping it. Login identity ≠ service connection: seeding allowed, dependency forbidden.
+  → [ADR-0008](../adr/0008-hosted-authentication-social-oauth.md)
 
 ## Not yet specified
 
@@ -59,6 +67,14 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
 - **Scheduler architecture** — how the server owns recurring and webhook triggers once they no
   longer block. Needs [Trigger model](tickets/004-trigger-model.md) first.
 - **Zod → settings-form generation** in `packages/web`. Needs the frozen SDK settings shape.
+- **Which providers follow Google, and whether a *service* provider is ever one of them.** ADR-0008
+  ships Google alone and fixes the rule that a login identity is never a service connection (seeding
+  allowed, dependency forbidden) — but whether Spotify in particular is offered as a login at all is
+  a product call Cal was content to defer, and the shortlist beyond Google is unsettled. The linking
+  *rule* is already sharp and ticketed (012); this is the provider slate, which is not.
+- **Whether ultrasonics ever emails users.** ADR-0008 removes email from the login path entirely, but
+  sync-failure and expired-credential notifications are a plausible want. If it returns it is a new
+  dependency on a non-critical path — not a reopening of the auth decision.
 
 ## Out of scope
 
@@ -85,19 +101,23 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 002 | ⛔ [Account-scoped database schema](tickets/002-account-schema.md) | grilling | 010 | blocked |
+| 002 | ⛔ [Account-scoped database schema](tickets/002-account-schema.md) | grilling | 010 ✅ | **frontier** |
 | 003 | [Plugin isolation mechanism](tickets/003-plugin-isolation.md) | research | — | **frontier** |
 | 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | — | **frontier** |
 | 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003, 004 | blocked |
-| 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **unblocked next** |
+| 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
 | 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005, 006 | blocked |
 | 008 | [Monorepo conventions](tickets/008-monorepo-conventions.md) | grilling | — | **frontier** |
 | 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
-| 010 | ⛔ [How a hosted account authenticates](tickets/010-hosted-auth-method.md) | grilling | — | **frontier** |
-| 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 | blocked |
+| 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
+| 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 
-Closed: **001 Account model** → see Decisions so far.
+Closed: **001 Account model**, **010 How a hosted account authenticates** → see Decisions so far.
 
-Resolution order is not fixed — take any frontier ticket. 001 closing freed **006** (it only ever
-waited on the account model) and put **010** on the frontier; 010 now gates the schema, since what
-the `accounts` table stores depends on how people sign in.
+010 closing unblocked **002** — the schema now has its account columns settled (no credential fields
+at all) and is the most valuable ticket on the map: ADR-0003 says it must never need retrofitting.
+**011 survived but narrowed** — its "frictionless is a default, not a ceiling" premise is withdrawn,
+since self-host has no login wall on offer; what remains is first-run bootstrap and proxy config.
+**012 is new** and deliberately not urgent: the collision rule cannot bite while launch is
+Google-only, but it must be settled *before* provider #2 ships, because the friendly default
+(auto-link on email) is an account-takeover vector.

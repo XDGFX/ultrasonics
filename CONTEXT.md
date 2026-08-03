@@ -122,13 +122,30 @@ whose data it may touch. A server-side `sessions` row behind an opaque HTTP-only
 **Session source** — Where a `Session` comes from. Authentication is never *bypassed*, only sourced
 differently (ADR-0007): a **cookie login**, the **bootstrapped account** (self-host's frictionless
 default), or a **trusted-proxy header** (Authelia et al.). All three are available in every
-deployment — self-host defaults to the frictionless one, but a self-hoster may opt into real login
-by configuration, not by running a different build.
+deployment. Self-host's realistic choice is **bootstrapped** or **trusted-proxy**: hosted login is
+social OAuth, and a LAN box with no public DNS cannot complete an OAuth callback, so the cookie
+source is hosted in practice (ADR-0008). `DISABLE_AUTH` selects the bootstrapped source *inside* the
+always-run middleware — it never skips it, so `req.session` is never undefined.
+_Avoid_: describing `DISABLE_AUTH` as "disabling auth" — it selects a source.
 
-**Login-free self-host** — The requirement that a self-hoster is never shown a login wall *by
-default*: first-run bootstrap plus a trusted-reverse-proxy mode. A first-class requirement, not a
-flag bolted on — v1 had no login, so a wall would be a regression (ADR-0003). A **default, not a
-ceiling**: opting into real login must stay possible (ADR-0007, ticket 011).
+**Login-free self-host** — The requirement that a self-hoster is never shown a login wall: first-run
+bootstrap, with trusted-reverse-proxy mode for anyone who wants a wall. A first-class requirement,
+not a flag bolted on — v1 had no login, so a wall would be a regression (ADR-0003). **Self-host has
+no login wall on offer at all** (ADR-0008); a self-hoster wanting one runs a reverse proxy in front,
+and supporting their proxy is outside ultrasonics' scope.
+_Avoid_: "a default, not a ceiling" — that framing is withdrawn by ADR-0008.
+
+**Login identity** — What a person presents to prove who they are: a `federated_identities` row
+holding a provider name and an opaque `subject_id` (ADR-0008). Hosted is **social OAuth only** —
+Google at launch — so ultrasonics stores no login credential at all: no password hash, no magic-link
+token, no email dependency. An account may hold several identities by construction, though launch
+behaviour is one.
+
+**Login identity ≠ service connection** — The two must never be the same record (ADR-0008). Spotify
+can occupy both roles — a service ultrasonics fetches playlists from *and* a possible sign-in
+provider — so the rule is explicit: signing in with a service provider **may offer to seed** a
+service connection, but the account **never depends** on it. Disconnecting Spotify from syncing does
+not affect the ability to log in.
 
 **Capabilities, not identity** — How the account boundary is enforced in code (ADR-0007). The server
 resolves the account and hands **core** objects already scoped to it (an `AuthProvider` bound to that

@@ -52,13 +52,20 @@ session comes from:
 
 | Source | Typical use |
 |---|---|
-| Session cookie | Hosted; any self-hoster who wants a real login |
+| Session cookie | Hosted (see ADR-0008 — a LAN self-hoster cannot complete an OAuth callback, so this source is hosted in practice) |
 | Bootstrapped account | Self-host default — no prompt, no wall |
 | Trusted-proxy header | Users already running Authelia or similar in front |
 
 **All three sources are available in every deployment.** Self-host merely *defaults* to the
 frictionless one; a self-hoster who wants login exactly like hosted changes configuration, not
 builds. Reducing friction is the default, not a ceiling on what self-host can do.
+
+> **Refined by [ADR-0008](0008-hosted-authentication-social-oauth.md).** Hosted authenticates by
+> social OAuth only, and a self-hoster on a LAN cannot complete an OAuth callback — providers reject
+> private-network redirect URLs. Self-host's realistic choice is therefore **bootstrapped** (the
+> default, no wall) or **trusted-proxy**; the cookie source is hosted in practice. The mechanism
+> above is unchanged — one middleware, always resolving a `Session` — only the claim that self-host
+> can have hosted-style login by configuration is withdrawn.
 
 Route handlers never branch on deployment mode — they read `req.session` and nothing else. The
 rejected alternative was a `DISABLE_AUTH` flag making route guards no-ops, which creates a second

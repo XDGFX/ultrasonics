@@ -1,6 +1,6 @@
 # 011 — Self-host first run and auth-mode configuration
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 · **Blocks:** — · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 ✅ · **Blocks:** — · **Claimed by:** —
 
 ## Question
 
@@ -14,21 +14,32 @@ trusted-proxy header — and that **all three sources are available in every dep
 merely defaults to the frictionless one.
 
 That default is the thing to get right: v1 shipped with no login at all, so any wall in front of a
-self-hoster is a straight regression (ADR-0003). But Cal was explicit that frictionless is a
-*default, not a ceiling* — a self-hoster who wants login exactly like hosted must be able to have it
-by changing configuration, not by running a different build.
+self-hoster is a straight regression (ADR-0003).
+
+> **Rescoped 2026-08-03 by [ADR-0008](../../adr/0008-hosted-authentication-social-oauth.md).** This
+> ticket was written on ADR-0007's "frictionless is a *default, not a ceiling*" framing — that a
+> self-hoster could have hosted-style login by changing configuration. **That premise is withdrawn.**
+> Hosted authenticates by social OAuth only, and a self-hoster on a LAN cannot complete an OAuth
+> callback (providers reject private-network redirect URLs), so there is no login wall on offer for
+> self-host at all. Anyone wanting one is directed to a trusted reverse proxy, and supporting their
+> proxy is out of scope.
+>
+> What remains is **first-run bootstrap and the proxy-mode configuration surface** — narrower, and no
+> longer blocked on anything. The "switching modes" question below is largely dissolved: there is no
+> frictionless → real-login upgrade path to design, only frictionless → trusted-proxy.
 
 ## To decide
 
 - **First-run bootstrap.** The account ADR-0007 requires has to exist before the first request is
   served. Is it created eagerly at startup, lazily on first request, or by an explicit setup step?
   What is its identity when nobody has supplied an email address?
-- **Switching modes.** A self-hoster starts frictionless, later wants a real login — what do they do,
-  and what happens to the bootstrapped account? Does it gain credentials, or is a new account made
-  and the data reassigned? (Under ADR-0007's 1:1 model, reassignment is not free.)
+- **Switching to proxy mode.** A self-hoster starts frictionless, later puts Authelia in front —
+  what happens to the bootstrapped account and its data? Under ADR-0007's 1:1 model the proxy's
+  asserted identity must resolve to *that* account rather than minting a second one.
 - **The configuration surface.** One env var with three values, or separate switches per source?
-  Naming matters — `DISABLE_AUTH` is now actively misleading, since ADR-0007 says auth is never
-  disabled, only sourced differently.
+  ADR-0008 keeps the name `DISABLE_AUTH` and its single switch, but fixes its meaning: it selects the
+  bootstrapped source *inside* the always-run middleware rather than skipping it, so `req.session` is
+  never undefined. Whether the name should still be changed — it does not disable anything — is open.
 - **Trusted-proxy mode specifics.** Which header carries the identity, how ultrasonics is told to
   trust it, and the failure mode if it is trusted while *not* actually behind a proxy — that is a
   full authentication bypass, so the safe default and the loud warning both matter.
@@ -43,6 +54,7 @@ by changing configuration, not by running a different build.
 
 - The first-run sequence written down, including what the bootstrapped account looks like.
 - The configuration surface named, with `DISABLE_AUTH` either renamed or justified.
-- The frictionless → real-login upgrade path, concretely.
+- The frictionless → trusted-proxy transition, concretely, including what becomes of the
+  bootstrapped account's data.
 - Feeds the self-host onboarding work in roadmap Phase 1 (`self-host first run reaches a working
   applet without a login prompt` is already in its exit gate).
