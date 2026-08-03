@@ -116,6 +116,19 @@ Two live documents, and the split between them is the point:
 A thing belongs to exactly one of them. If you find yourself writing a decision onto the board, it
 was a ticket; if you find yourself tracking build progress on the map, it was a cell.
 
+**No copies — link instead.** This rule is stated twice because it was broken three times: the board
+and §6 of this document both grew their own copy of the map's ticket list, and the Phase 0 exit gate
+was written out in three files. Every copy was stale within a day of a ticket closing, and a stale
+copy is worse than a link because it looks authoritative. Concretely:
+
+- **Ticket existence, status, blocking and the frontier live only in `map.md`.** No other file lists
+  them. Naming *one* ticket as the source of a constraint ("the conventions brief comes from ticket
+  008") is a pointer and is fine; reproducing the list is not.
+- **Phase gates live only in `roadmap.md`.**
+- **Cell status lives only in `wave-board.md`.**
+
+If you want a reader to see one of those, link to it. Summarising it *is* copying it.
+
 Rule: **a cell's status change updates the board in the same commit**, and a resolved ticket
 updates the map in the same commit that closes it. A board that lags is worse than no board — this
 is the known failure mode of a markdown tracker, and the only defence is the discipline. If you
@@ -169,18 +182,9 @@ and a green empty pipeline. One cell, `/implement`, no checkpoint beyond the pha
 conventions brief comes from map ticket 008.
 
 **Wave 0.2 — the decision wave (map tickets; mostly HITL, runs alongside 0.1).** Resolve
-`map.md`'s frontier. These are *conversations and research*, not builds, so they don't wait on the
-scaffold and don't consume the concurrency budget the same way:
-- ⛔ *Account model* (001) — ✅ **resolved 2026-08-03** (ADR-0007); freed 006, surfaced 010 + 011.
-- ⛔ *How a hosted account authenticates* (010) — `/grilling`; gates the schema's `accounts` columns.
-- ⛔ *AuthProvider surface freeze* (006) — `/grilling`; unblocked once 001 closed.
-- *Plugin isolation* (003) — `/research`, AFK, run in parallel with everything.
-- *Trigger model + runner OR semantics* (004) — `/grilling`.
-- *Monorepo conventions* (008) — can ride with Wave 0.1.
-- *v1 issue triage* (009) — AFK, feeds Phase 1–2 acceptance criteria.
-
-Then, as their blockers clear: ⛔ *account schema* (002), ⛔ *SDK freeze* (005),
-*self-host first run* (011), *builder-time credentials* (007).
+`map.md`'s frontier, in the order the map gives. These are *conversations and research*, not builds,
+so they don't wait on the scaffold and don't consume the concurrency budget the same way. The
+tickets themselves are **not listed here** — `map.md` is the only copy, per §3.
 
 **Wave 0.3 — core ports (parallel behind 0.1, rate-limited to N cells).** Pure build work; needs no
 open decision.
@@ -189,9 +193,7 @@ open decision.
   the port is pinned to v1 output before a line of it is written. Keep a runnable v1 checkout
   around long enough to produce it.
 
-**Phase 0 exit gate** (from roadmap): CI green on an empty pipeline · SDK + `AuthProvider` frozen ·
-account model + schema ADR'd · trigger model settled · song-dict Zod schema + tests merged · docs +
-ADRs in place · `map.md` has no open tickets. → opens **Phase 1**, the vertical slice.
+**Phase 0 exit gate** — `roadmap.md` owns it; not restated here.
 
 ---
 

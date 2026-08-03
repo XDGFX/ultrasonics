@@ -1,6 +1,6 @@
 # Wave board
 
-**Status:** Live — Phase 0, nothing dispatched yet.
+**Status:** Live — Phase 0. No build cell dispatched yet; the decision wave (0.2) is in flight.
 
 Live **execution** state — the single source of truth for *where we are right now*.
 `operating-model.md` explains the mechanism; this is the running instance. `handoffs/`+`sessions/`
@@ -28,9 +28,8 @@ parallel fan-out (Phase 2 plugin waves) uses worktree + PR. See `operating-model
 
 ## Current phase: 0 — Foundations & operating model
 
-**Next checkpoint:** ✅ the account model (map ticket 001) is **decided** — ADR-0007. That freed
-ticket 006 and put 010 (how a hosted account authenticates) on the frontier, which now gates the
-schema. Next checkpoint: 010, then the Phase 0 exit gate.
+**Next checkpoint:** whichever ⛔ ticket the map's frontier surfaces next, then the Phase 0 exit
+gate. Deliberately not named here — see [`map.md`](map.md).
 
 ### Wave 0.0 — external lead-time (Cal, non-agent) · **queued**
 
@@ -56,23 +55,14 @@ schema. Next checkpoint: 010, then the Phase 0 exit gate.
 - **Conventions brief** — the file-suffix taxonomy, linter and test-layout calls come from map
   ticket 008, not from this cell improvising. Resolve 008 first or alongside.
 
-### Wave 0.2 — decisions (map tickets) · **queued**
+### Wave 0.2 — decisions (map tickets) · **in-flight**
 
-Not build cells — these resolve `map.md` tickets. Mostly HITL with Cal; they don't wait on Wave 0.1.
+Not build cells — these resolve `map.md` tickets. Mostly HITL with Cal; they don't wait on Wave 0.1
+and they don't draw on the concurrency budget the way build cells do.
 
-| Ticket | Type | Status | Notes |
-|---|---|---|---|
-| ⛔ 001 Account model | grilling | ✅ **done** | ADR-0007 · "tenant" retired; freed 006, surfaced 010 + 011 |
-| 003 Plugin isolation mechanism | research | queued | **frontier** · AFK; constrains the SDK boundary |
-| 004 Trigger model + runner OR semantics | grilling | queued | **frontier** · fixes v1's accidental AND |
-| 008 Monorepo conventions | grilling | queued | **frontier** · feeds Wave 0.1 |
-| 009 Triage v1 issue backlog | task | queued | **frontier** · AFK draft, Cal applies public changes |
-| ⛔ 002 Account-scoped database schema | grilling | blocked | by 010 · the unretrofittable one |
-| ⛔ 005 Plugin SDK surface freeze | grilling | blocked | by 003, 004 · blocks all plugin work |
-| ⛔ 006 AuthProvider surface freeze | grilling | queued | **frontier** · unblocked by 001 · grill `proposals/auth-provider-v2.md` |
-| ⛔ 010 How a hosted account authenticates | grilling | queued | **frontier** · gates 002's `accounts` columns |
-| 011 Self-host first run + auth-mode config | grilling | blocked | by 010 · graduated from map fog |
-| 007 Builder-time credentials | grilling | blocked | by 005, 006 · may legitimately defer past Phase 1 |
+**→ [`map.md`](map.md) is the only place ticket status lives.** Which tickets exist, what each is
+blocked by, and what's on the frontier are not repeated here — a second copy is a second thing to
+forget, and this board carried a stale one for exactly as long as it existed.
 
 ### Wave 0.3 — core ports (parallel, behind 0.1; max N cells) · **queued**
 
@@ -83,9 +73,7 @@ Not build cells — these resolve `map.md` tickets. Mostly HITL with Cal; they d
 
 ### Phase 0 exit gate
 
-CI green on empty pipeline · SDK + AuthProvider frozen · account model + schema ADR'd · trigger
-model settled · song-dict Zod + tests merged · docs + ADRs in place · **`map.md` has no open
-tickets**. → opens **Phase 1 — vertical slice**.
+→ [`roadmap.md`](roadmap.md) § Phase 0, which owns every phase gate. Not restated here.
 
 ---
 
@@ -95,6 +83,12 @@ tickets**. → opens **Phase 1 — vertical slice**.
   nothing dispatched yet. Awaiting Cal to open Wave 0.0 (external applications) and Wave 0.1.
 - **2026-08-03** — Folded strategic-success tooling conventions into Wave 0.1 acceptance criteria
   (read-only `:check` CI, import-cycle gate, `.claude/settings.json` allowlist).
+- **2026-08-03** — **Deduplication audit.** Cal found ticket state spread across all four planning
+  docs. This board's Wave 0.2 table and `operating-model.md` §6 both held their own copy of the map's
+  ticket list, and both had gone stale within a day (010 and 002 shown open after closing; 012 and
+  013 absent). The Phase 0 exit gate existed in three files; the map's Out-of-scope section restated
+  `roadmap.md`'s Deferred list. All copies removed in favour of links, and `operating-model.md` §3
+  now states the no-copies rule explicitly with the ownership boundaries named.
 - **2026-08-03** — Wayfinder review of the Phase 0 plan. Added `map.md` + 9 decision tickets;
   split the old "freeze SDK + AuthProvider" cell into tickets 001–007; inserted the missing
   account-model and schema decisions; moved decisions out of this board into the map
