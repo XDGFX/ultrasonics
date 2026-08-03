@@ -12,23 +12,41 @@ land; it does not make them.
 
 ---
 
-## Phase 0 — Foundations & operating model
+## Phase 0 — Foundations
 **Status:** in progress (docs) · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
-**account model** (ADR-0007) and the **account-scoped database schema** (ADR-0003) — the schema is the
-one thing that cannot be retrofitted later, so it is decided here, not in Phase 1. Port the song
-dict to Zod. Establish the docs system (this repo, done), `AGENTS.md`, and the **development
-operating model** (`operating-model.md` — the cell/wave/board machinery all later phases run on).
+**account model** (ADR-0007) and the **account-scoped database schema** (ADR-0003, ADR-0009) — the
+schema is the one thing that cannot be retrofitted later, so it is decided here, not in Phase 1.
+Port the song dict to Zod. Establish the docs system (this repo, done) and `AGENTS.md`.
 
 The contract decisions are tracked as tickets on `map.md`; the phase is not done until that map is
-empty.
+empty. How cells and waves are dispatched is in `AGENTS.md`.
+
+**Start immediately, in parallel with everything (Cal, not agents):** file the **Spotify
+extended-quota** and **Apple Developer** applications (ADR-0002's early track). Approval lead time is
+the one dependency engineering speed cannot compress, so it must be ticking in the background from
+the outset.
+
+**The scaffold cell must deliver:**
+- **Read-only CI with `:check` variants** — `lint:check` / `format:check` / `type-check` run
+  read-only so CI *fails* rather than silently repairing (the mutating `bun run check` stays local).
+  Trigger on both PRs and direct pushes to `revival`.
+- **Import-cycle gate** — a `cycle-check` CI step with a `cycle-check:update` rebaseline escape hatch
+  that must be justified in the commit message. A mechanical anti-slop guard on the dep graph.
+- **`.claude/settings.json`** — a scoped permission allowlist (`bun test`/`build`/`check`, `git`,
+  `gh`) to cut permission prompts during agent waves.
+- **Conventions** — the file-suffix taxonomy, linter and test-layout calls come from map ticket
+  [008](tickets/008-monorepo-conventions.md), not from the scaffold cell improvising.
+
+**The core ports** — song dict → Zod with tests, and the fuzzymatch **golden corpus generated from a
+runnable v1 checkout** (ADR-0006) so the port is pinned to v1's output before a line of it is
+written. Keep a v1 checkout around long enough to produce it.
 
 **Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · account
 model + initial account-scoped schema decided (ADR'd) · trigger model settled · song-dict Zod schema
-+ its tests merged · docs skeleton and ADRs 0001–0006 in place · operating model + wave board merged
-and the board reflecting live state · **`map.md` has no open tickets**.
++ its tests merged · docs skeleton and ADRs in place · **`map.md` has no open tickets**.
 
 ## Phase 1 — Vertical slice (prove the whole pipe)
 **Status:** not started · **Owner mix:** agents build; Cal reviews the slice end-to-end

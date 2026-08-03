@@ -3,10 +3,9 @@
 **Status:** Live — working Phase 0. Counts and the frontier are not restated here; read them off the
 [ticket table](#tickets) below, which is the only copy.
 
-The decision map. `roadmap.md` says *what* to build; `operating-model.md` says *how* work is
-dispatched; `wave-board.md` says *where execution is right now*. **This says what is still
-undecided** — and nothing else. A decision lives in exactly one place, its ticket in `tickets/`;
-this file only gists and links.
+The decision map. `roadmap.md` says *what* to build and when; `../../AGENTS.md` says *how* work is
+dispatched and gated. **This says what is still undecided** — and nothing else. A decision lives in
+exactly one place, its ticket in `tickets/`; this file only gists and links.
 
 Tickets are markdown under `tickets/`, one per decision. This is wayfinder's local-markdown
 tracker — chosen over GitHub issues deliberately: `XDGFX/ultrasonics` is public with 275 stars and
@@ -24,14 +23,14 @@ account-scoped database schema are all settled and written down. When no tickets
 Phase 1 is clear.
 
 Execution that follows those decisions — scaffolding, the song-dict port, the fuzzymatch golden
-corpus — is *not* on this map. It is already unambiguous and lives on the wave board.
+corpus — is *not* on this map. It is already unambiguous and lives in `roadmap.md`.
 
 ## Notes
 
 - **Domain:** `../../CONTEXT.md` is the glossary; use its terms exactly. Accepted decisions are in
   `../adr/` — a ticket may not re-litigate one, only supersede it with a new ADR.
 - **Skills every session should consult:** `/grilling` and `/grill-with-docs` for the HITL tickets,
-  `/research` for the AFK ones. See `operating-model.md` §5 for the skill→gate map.
+  `/research` for the AFK ones.
 - **A resolved ticket that decided something non-obvious gets an ADR** (AGENTS.md). The ticket
   records the reasoning; the ADR records the decision.
 - **Standing preference:** prefer the smallest contract that serves Phase 1. Anything the hosted
@@ -88,7 +87,7 @@ Ruled beyond this map's destination. Never graduates; returns only if the destin
 
 ## Tickets
 
-Frontier = open, unblocked, unclaimed. ⛔ marks a checkpoint surface (`operating-model.md` §4):
+Frontier = open, unblocked, unclaimed. ⛔ marks a checkpoint gate (`../../AGENTS.md`):
 Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |

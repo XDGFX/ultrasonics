@@ -7,11 +7,11 @@
 The conventions the scaffold bakes in, which are cheap now and expensive to change once six
 packages exist.
 
-Previously carried as an "open call for the cell" on the wave board — but a convention every future
+Previously carried as an "open call for the cell" on the old wave board — but a convention every future
 package inherits is a decision, not a note. Pulled onto the map so it is settled deliberately.
 
 - **Module file-suffix taxonomy** — adopt `*.interface.ts` / `*.config.ts` / `*.utils.ts` or not?
-  The wave board's instruction was "propose in the PR, don't impose silently"; this is that
+  The old board's instruction was "propose in the PR, don't impose silently"; this is that
   proposal, made once rather than per-package.
 - **Import-cycle gate** — confirmed as a CI step with a `cycle-check:update` rebaseline escape
   hatch that must be justified in the commit message. Which tool?

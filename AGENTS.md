@@ -13,8 +13,13 @@ for where the work is heading.
 - **`docs/plans/roadmap.md`** — the phase you're in and its exit gate.
 - **`docs/plans/map.md`** — the decisions still open. If your work depends on one, resolve its
   ticket first; don't guess an answer a ticket exists to settle.
-- **`docs/plans/wave-board.md`** — live execution state; update it in the same commit as your work.
-- The relevant **`docs/specs/`** entry for the feature you're building — it is the contract.
+
+Read only when they apply — deliberately kept out of this file so it stays cheap to load:
+
+- **`docs/build-process.md`** — the cell pipeline, wave sizing and the skill→gate map. Read before
+  building or dispatching code work; skip for planning, decision and docs sessions.
+- The relevant **`docs/specs/`** entry — the contract for the feature you're building.
+- **`docs/reference/legacy-architecture.md`** — how v1 works. Read when porting from it.
 
 ## The documentation discipline (enforced from day one)
 
@@ -36,7 +41,7 @@ for where the work is heading.
 (engine, core, docs) commits **directly to `revival`**; only parallel fan-out, chiefly Phase 2's
 one-agent-per-plugin waves, uses a worktree and a PR — there the PR earns its keep by isolating
 siblings and giving CI a per-unit verdict. Never merge to `master` (that's roadmap Phase 4) and
-never force-push. Full rationale in `docs/plans/operating-model.md` §2a.
+never force-push. Rationale, and the cell/wave machinery, in `docs/build-process.md`.
 
 ## Checkpoint gates — when to stop and ask Cal
 
