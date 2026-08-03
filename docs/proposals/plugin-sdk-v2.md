@@ -1,6 +1,6 @@
 # Proposal: Plugin SDK v2
 
-Status: **Draft / not started** — captured for the Phase 0 SDK design pass.
+**Status:** Draft — captured for the Phase 0 SDK design pass.
 
 Fleshes out ADR-0004 (typed plugin SDK, explicit registration) into a concrete surface. This is the
 contract every plugin depends on, so it is a checkpoint gate (AGENTS.md) and must be agreed before

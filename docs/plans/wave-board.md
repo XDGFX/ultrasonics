@@ -28,6 +28,17 @@ Checkpoint cells (§4 surfaces) are marked ⛔ — they stop for Cal before merg
 |---|---|---|---|
 | Scaffold Bun monorepo + CI (ADR-0001) | /implement | queued | everything downstream |
 
+**Acceptance criteria for the scaffold cell** (adopted from strategic-success's proven tooling):
+- **Read-only CI with `:check` variants** — `lint:check` / `format:check` / `type-check` run
+  read-only so CI *fails* rather than silently repairing (the mutating `bun run check` is local
+  only). Trigger on **both** PRs and direct pushes to `revival`.
+- **Import-cycle gate** — a `cycle-check` CI step, with a `cycle-check:update` rebaseline escape
+  hatch that must be justified in the commit message. Mechanical anti-slop guard on the dep graph.
+- **`.claude/settings.json`** — a scoped permission allowlist (`bun test`/`build`/`check`, `git`,
+  `gh`) to cut permission prompts during agent waves.
+- **Open call for the cell:** whether to adopt a module file-suffix taxonomy
+  (`*.interface.ts`/`*.config.ts`/`*.utils.ts`) — propose in the PR, don't impose silently.
+
 ### Wave 0.2 — contracts + core (parallel, behind 0.1; rate-limited) · **not dispatched**
 
 | Cell | Skill | Status | Notes |
@@ -47,3 +58,5 @@ in place. → opens **Phase 1 — vertical slice**.
 
 - **2026-08-03** — Board created alongside `operating-model.md`. Phase 0 waves seeded from roadmap;
   nothing dispatched yet. Awaiting Cal to open Wave 0.0 (external applications) and Wave 0.1.
+- **2026-08-03** — Folded strategic-success tooling conventions into Wave 0.1 acceptance criteria
+  (read-only `:check` CI, import-cycle gate, `.claude/settings.json` allowlist).

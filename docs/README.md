@@ -22,6 +22,13 @@ in-repo docs are the source of truth for anything an agent needs to build correc
 - **ADRs**: `NNNN-kebab-title.md`, header `# ADR-NNNN — Title`, then `Status:` / `Date:` and
   `Context` / `Decision` / `Consequences`. Number sequentially; a wrong decision is superseded by a
   new ADR that references it, never edited away.
+- **Status lines are grep-anchored.** Any doc with a status starts it with the exact token
+  `**Status:**` (bold *label*, plain value) as the first line after the title, so one regex spans
+  everything: `grep -rn '^\*\*Status:\*\*' docs/`. The label is the fixed anchor; the value varies.
+  Fixed vocabularies — **ADRs**: `Accepted` · `Complete` · `Superseded`. **Proposals**: `Draft` ·
+  `Research` · `Approved` · `Partially implemented` · `Implemented`.
+- **Every non-obvious rule or decision names the alternative it rejected** — one clause is enough
+  (ADRs, proposals, edit-site comments). Cheap to write; saves the "why not X?" archaeology later.
 - **Cross-reference by id** (`ADR-0004`, `CONTEXT.md`) so the graph stays navigable.
 - The rule from `AGENTS.md`: **no PR merges without its spec**, and non-obvious calls get an ADR.
 
