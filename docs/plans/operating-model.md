@@ -1,5 +1,7 @@
 # Development operating model
 
+**Status:** Living — the Phase 0 factory manual; amend as the factory teaches us where it creaks.
+
 How the revival is actually built: the factory manual. `roadmap.md` says *what* to build and in
 what order; this says *how* the work gets dispatched, kept honest, and kept visible. It is the last
 unbuilt piece of **Phase 0** — "build the factory, not the product".
@@ -31,7 +33,9 @@ wave of ten is just the cell ten times.
 - **docs/specs/ entry** — the contract. Per AGENTS.md, **no PR merges without its spec**. If there
   is no spec, the cell isn't ready; writing it is the first move, not code.
 - **/grill-with-docs** — freezes the spec by stress-testing its open questions. Mandatory for any
-  cell touching a checkpoint surface (§4); optional for a routine port against a frozen contract.
+  cell touching a checkpoint surface (§4). Skip it **only when a frozen spec already covers the
+  cell** (e.g. a routine plugin port against the frozen SDK contract + conformance test) — never
+  because the cell "seems simple". No spec, frozen or fresh, means no merge (AGENTS.md).
 - **/tdd vs /implement** — `/tdd` (red-green-refactor) is the default for anything with correctness
   stakes: fuzzymatch, the runner, plugin I/O, auth. `/implement` is for scaffolding and wiring where
   tests follow rather than lead. When in doubt, `/tdd`.
@@ -40,8 +44,8 @@ wave of ten is just the cell ten times.
 - **/code-review + /improve-codebase-architecture** — the two anti-slop gates. Review catches bugs;
   the architecture pass catches the AI-generated sludge that passes tests but rots the codebase.
   Both must pass. **Red is "don't ask for review"** (AGENTS.md quality gate).
-- **handoff + session log** — written when the cell closes *or* the agent runs low on context, so
-  the next agent resumes cold. Non-negotiable; it's what makes waves survivable.
+- **handoff + session log** — `/handoff`, written when the cell closes *or* the agent runs low on
+  context, so the next agent resumes cold. Non-negotiable; it's what makes waves survivable.
 
 A cell is **done** when its PR is green on the full package suite, both anti-slop gates passed,
 `/verify` observed the behaviour, and its spec's acceptance criteria are ticked.
@@ -58,6 +62,9 @@ A **wave** is a batch of cells Cal dispatches together. Composing one:
    can be embarrassingly parallel and still only run **N concurrent cells** — N set by the token /
    rate ceiling, not by how many cells are theoretically independent. A wide phase drains as
    several batches of N, not one giant fan-out. Undersized beats throttled-and-stalled.
+   **N is recorded on the board** (`wave-board.md`, "Concurrency budget") and is Cal's to tune —
+   never guessed per-wave. Starting value **N = 3**; raise it once a full wave has run without
+   hitting limits, lower it the first time one stalls.
 4. **Place the checkpoints.** Any cell touching a §4 surface stops for Cal *before* it merges.
    Phase boundaries are always a checkpoint.
 
