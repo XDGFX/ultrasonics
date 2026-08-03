@@ -94,21 +94,39 @@ ported (Phase 2 gate): valid handshake shape; `persistentSettings`/`instanceSett
 reject known-bad input; inputs return a schema-valid song dict; outputs accept one without mutating
 it; declared `auth` resolves against a stub provider. This is the objective "is it done" bar.
 
-## Open questions (grill in the Phase 0 SDK session)
+## Open questions
+
+Split across tickets on `../plans/map.md` — these were originally one list, but three of them are
+separate decisions with their own dependencies and two must be answered *before* this surface can
+freeze.
+
+**Owned by ticket [005](../plans/tickets/005-sdk-surface.md) — the freeze itself:**
 
 - **Instance settings as a function of context** vs a static schema — the function form supports
   v1's component-branching builders and dynamic option lists (e.g. "pick from your playlists"), but
   complicates form generation. Is a static schema + a separate `dynamicOptions()` hook cleaner?
-- **Dynamic option fetching** (v1 builders that query the service for playlist names): needs
-  resolved credentials at *build* time, before an applet is saved. How does the AuthProvider serve
-  a builder, not just a run?
+- The `RunContext` shape, the `persistentSettings`/`instanceSettings` split, the registry shape,
+  and what `test()` means for the UI.
+
+**Resolved first, because they constrain this surface:**
+
 - **Plugin isolation** — Worker vs subprocess vs in-process. ADR-0001 wants isolation so one bad
-  plugin can't crash a sync; the SDK boundary must suit the chosen mechanism.
-- **Third-party install** under explicit registration — a manifest + dynamic import at startup? A
-  build step? This trades v1's drag-and-drop simplicity for type safety; decide deliberately.
+  plugin can't crash a sync; the SDK boundary must suit the chosen mechanism, and a Worker's
+  structured-clone constraint would reshape `RunContext` directly.
+  → ticket [003](../plans/tickets/003-plugin-isolation.md).
 - **Long-running triggers** (v1 webhook/time-trigger blocked). In v2 triggers should register
   intent with the scheduler/server, not block. Does the SDK model triggers as `run()` at all, or a
   distinct `schedule()` / `subscribe()` shape?
+  → ticket [004](../plans/tickets/004-trigger-model.md).
+
+**Deferred past the freeze:**
+
+- **Dynamic option fetching** (v1 builders that query the service for playlist names): needs
+  resolved credentials at *build* time, before an applet is saved. How does the AuthProvider serve
+  a builder, not just a run? → ticket [007](../plans/tickets/007-dynamic-options.md), which waits on
+  both this proposal and `auth-provider-v2.md`.
+- **Third-party install** under explicit registration — **out of scope** for now (`map.md`): no
+  third-party plugins exist, so the manifest-vs-build-step trade is unforced. Decide when one does.
 
 ## Out of scope
 

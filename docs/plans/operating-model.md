@@ -15,14 +15,15 @@ stop the slop; the board means nobody gets lost.
 ## 1. The work-cell — the atom of all work
 
 Every unit of work, from "port fuzzymatch" to "port the Deezer plugin", is a **cell**. A cell is
-one deliverable, one worktree, one PR, run through the **same** pipeline. Learn the cell once and a
-wave of ten is just the cell ten times.
+one deliverable run through the **same** pipeline. Learn the cell once and a wave of ten is just
+the cell ten times.
 
 ```
 (ambiguous?) → /research ──▶ docs/specs/<feature>.md ──▶ /grill-with-docs (freeze the spec)
             ──▶ worktree ──▶ /tdd  or  /implement ──▶ /verify
             ──▶ /code-review ──▶ /improve-codebase-architecture (anti-slop gate)
-            ──▶ draft PR ──▶ docs/handoffs/ + docs/sessions/
+            ──▶ land on revival (PR only if parallel — §2a)
+            ──▶ docs/handoffs/ + docs/sessions/
 ```
 
 **Stage rules**
@@ -47,8 +48,14 @@ wave of ten is just the cell ten times.
 - **handoff + session log** — `/handoff`, written when the cell closes *or* the agent runs low on
   context, so the next agent resumes cold. Non-negotiable; it's what makes waves survivable.
 
-A cell is **done** when its PR is green on the full package suite, both anti-slop gates passed,
+A cell is **done** when it is green on the full package suite, both anti-slop gates passed,
 `/verify` observed the behaviour, and its spec's acceptance criteria are ticked.
+
+**Cell sizing.** One deliverable, one decision's worth of scope. Agent sessions are 1M tokens, so
+context is rarely the binding constraint — *reviewability* is. Split a cell when it would resolve
+two independent decisions (as ticket 005 was split from 003 and 004 on `map.md`), not merely when
+it looks long. Conversely, don't split work that shares one contract across three cells just to
+look parallel; the coordination costs more than the concurrency wins.
 
 ## 2. Waves — how a phase becomes parallel work
 
@@ -70,17 +77,49 @@ A **wave** is a batch of cells Cal dispatches together. Composing one:
 
 Dispatch is **human-gated**: Cal opens each wave deliberately. This is a rate-limit decision as
 much as a control one — automated or scheduled fan-out would cheerfully blow the ceiling. Each cell
-runs as a background job in its own worktree and ends at a draft PR.
+runs as a background job.
 
-## 3. The board — so nobody gets lost
+## 2a. Branching — `revival` is the trunk, PRs are optional
 
-`docs/plans/wave-board.md` is the single source of truth for *live* state: the current wave, every
-cell and its status (`queued` / `in-flight` / `blocked` / `awaiting-Cal` / `merged`), what each is
-blocked on, and the next checkpoint. It is the index over the raw material in `handoffs/` and
-`sessions/` — those say *what happened*; the board says *where we are right now*.
+`revival` is a **working branch, not production**. Nothing is deployed from it and no user runs it,
+so the ceremony that protects a release branch is pure friction here. There is no `master` merge
+until v2 is real (roadmap Phase 4).
 
-Rule: **a cell's status change updates the board in the same PR.** A board that lags is worse than
-no board. If you can't tell from the board what needs Cal, the wave has already lost cohesion.
+**The rule: PRs when work is parallel, direct commits when it isn't.**
+
+- **Direct to `revival`** — engine and core development, scaffolding, docs, anything sequential.
+  These start from zero, there is no prior art to conflict with, and Cal does not need to review
+  every commit of a rewrite in progress. Commit and push; the board and session log are the record.
+- **Worktree + PR** — the fan-out case, chiefly Phase 2's one-agent-per-plugin waves. Here a PR
+  earns its keep: it isolates a plugin's work from nine siblings touching the same package tree, it
+  gives CI a per-plugin verdict, and it leaves a legible per-plugin record. Merged by the agent
+  once green and both anti-slop gates pass — no review wait.
+- **⛔ Checkpoint cells** stop for Cal *before* landing, whichever mechanism they used. That is the
+  control gate; the PR is not.
+
+Rejected alternative: PR-for-everything. It reads as rigour but on a pre-release trunk it only
+buys queueing latency and a review backlog Cal has said they don't want.
+
+## 3. The board and the map — so nobody gets lost
+
+Two live documents, and the split between them is the point:
+
+- **`wave-board.md` — the board.** *Live execution state.* The current wave, every cell and its
+  status (`queued` / `in-flight` / `blocked` / `awaiting-Cal` / `merged`), what each is blocked on,
+  and the next checkpoint. Index over the raw material in `handoffs/` and `sessions/` — those say
+  *what happened*; the board says *where we are right now*.
+- **`map.md` — the wayfinder map.** *What is still undecided.* Decision tickets in `tickets/`, one
+  question each, with their blocking edges, plus the fog (**Not yet specified**) and the explicit
+  **Out of scope**. The board tracks work you know how to do; the map tracks work you can't start
+  because a question is open.
+
+A thing belongs to exactly one of them. If you find yourself writing a decision onto the board, it
+was a ticket; if you find yourself tracking build progress on the map, it was a cell.
+
+Rule: **a cell's status change updates the board in the same commit**, and a resolved ticket
+updates the map in the same commit that closes it. A board that lags is worse than no board — this
+is the known failure mode of a markdown tracker, and the only defence is the discipline. If you
+can't tell from the board what needs Cal, the wave has already lost cohesion.
 
 ## 4. Checkpoint surfaces — when a cell stops for Cal
 
@@ -115,23 +154,42 @@ Quality is a step that must pass, not a hope. Each skill is pinned to the gate i
 Concrete application of the model to the roadmap's remaining Phase 0 work. Kept here as the worked
 example; live status lives on the board.
 
+Phase 0 is now explicitly **two kinds of work in parallel**: decisions (map tickets) and build
+(cells). The decisions gate the build, not the other way round — which is why Wave 0.2 comes before
+Wave 0.3 despite 0.3 looking like the "real" work.
+
 **Wave 0.0 — external lead-time (Cal, non-agent, start immediately).** File the Spotify
-extended-quota and Apple Developer applications (ADR-0002 early parallel track). Real lead time;
-kick off before anything else so it's ticking in the background.
+extended-quota and Apple Developer applications (ADR-0002 early parallel track). Approval lead time
+is the one dependency engineering speed cannot compress; kick off before anything else so it's
+ticking in the background.
 
 **Wave 0.1 — the foundation cell (serialising; must land first).** Scaffold the Bun monorepo and CI
 per ADR-0001 — factory only, no product code. Everything downstream needs the `packages/*` skeleton
-and a green empty pipeline. One cell, `/implement`, no checkpoint beyond the phase gate.
+and a green empty pipeline. One cell, `/implement`, no checkpoint beyond the phase gate. Its
+conventions brief comes from map ticket 008.
 
-**Wave 0.2 — contracts + core (parallel behind 0.1, rate-limited to N cells).**
-- *SDK + AuthProvider freeze* — `/grill-with-docs` the `plugin-sdk-v2.md` open questions →
-  freeze both typed contracts. **Checkpoint (SDK contract + auth).** Blocks all plugin work.
+**Wave 0.2 — the decision wave (map tickets; mostly HITL, runs alongside 0.1).** Resolve
+`map.md`'s frontier. These are *conversations and research*, not builds, so they don't wait on the
+scaffold and don't consume the concurrency budget the same way:
+- ⛔ *Account and tenant model* (001) — the deepest dependency; unblocks two checkpoint tickets.
+- *Plugin isolation* (003) — `/research`, AFK, run in parallel with everything.
+- *Trigger model + runner OR semantics* (004) — `/grilling`.
+- *Monorepo conventions* (008) — can ride with Wave 0.1.
+- *v1 issue triage* (009) — AFK, feeds Phase 1–2 acceptance criteria.
+
+Then, as their blockers clear: ⛔ *tenant schema* (002), ⛔ *SDK freeze* (005),
+⛔ *AuthProvider freeze* (006), *builder-time credentials* (007).
+
+**Wave 0.3 — core ports (parallel behind 0.1, rate-limited to N cells).** Pure build work; needs no
+open decision.
 - *Song dict → Zod + tests* — `/tdd`. The sacred interchange type (ADR-0006).
 - *Fuzzymatch golden corpus* — generate the golden test corpus from a v1 checkout (ADR-0006), so
-  the port is pinned to v1 output before a line of it is written.
+  the port is pinned to v1 output before a line of it is written. Keep a runnable v1 checkout
+  around long enough to produce it.
 
 **Phase 0 exit gate** (from roadmap): CI green on an empty pipeline · SDK + `AuthProvider` frozen ·
-song-dict Zod schema + tests merged · docs + ADRs in place. → opens **Phase 1**, the vertical slice.
+account model + schema ADR'd · trigger model settled · song-dict Zod schema + tests merged · docs +
+ADRs in place · `map.md` has no open tickets. → opens **Phase 1**, the vertical slice.
 
 ---
 

@@ -9,12 +9,18 @@ in-repo docs are the source of truth for anything an agent needs to build correc
 | `adr/` | Architecture Decision Records — the immutable "why" | Cal, at decisions | Append-only; supersede, never edit |
 | `specs/` | One per feature — the contract; acceptance criteria = the test contract | `/grill-with-docs` | Frozen once implementation starts |
 | `proposals/` | Thorough design write-ups for work not yet decided/started | Agents / Cal | Living; edited in place through to `Implemented`, never deleted |
-| `plans/` | Order of work + current status: `roadmap.md` (what), `operating-model.md` (how), `wave-board.md` (live state) | Agents | Living |
+| `plans/` | Order of work + current status: `roadmap.md` (what), `operating-model.md` (how), `wave-board.md` (live execution), `map.md` + `tickets/` (what's still undecided) | Agents | Living |
 | `reference/` | Durable facts (e.g. the v1 architecture the port targets) | Agents | Updated as facts change |
 | `handoffs/` | Where an agent left off, so the next resumes cold | Agent at context end | One per boundary |
 | `sessions/` | Dated log of what happened and what's next | Agent at session end | Append-only |
 
 `specs/` is created when the first `/grill-with-docs` session produces one; it doesn't exist yet.
+
+**The four planning docs, and how not to confuse them.** `roadmap.md` = what to build and in what
+order. `operating-model.md` = how a unit of work is dispatched and gated. `wave-board.md` = live
+execution state. `map.md` = the open **decisions**, one per ticket in `plans/tickets/`, with their
+blocking edges, the fog, and what's ruled out of scope. A decided thing leaves the map and becomes
+an ADR or a spec; it never lives in two places.
 
 ## Conventions
 

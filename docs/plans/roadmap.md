@@ -7,19 +7,28 @@ boundary is a checkpoint for Cal (AGENTS.md). Update the **Status** lines as wor
 Decisions this plan rests on: ADR-0001 (stack), 0002 (revenue), 0003 (multi-tenancy), 0004 (plugin
 SDK), 0005 (auth), 0006 (preserve song dict + fuzzymatch).
 
+Decisions **not yet made** live on `map.md` — the wayfinder decision map. This roadmap assumes they
+land; it does not make them.
+
 ---
 
 ## Phase 0 — Foundations & operating model
 **Status:** in progress (docs) · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
-(ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Port the song dict
-to Zod. Establish the docs system (this repo, done), `AGENTS.md`, and the **development operating
-model** (`operating-model.md` — the cell/wave/board machinery all later phases run on).
+(ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
+**account/tenant model** and the **tenant-scoped database schema** (ADR-0003) — the schema is the
+one thing that cannot be retrofitted later, so it is decided here, not in Phase 1. Port the song
+dict to Zod. Establish the docs system (this repo, done), `AGENTS.md`, and the **development
+operating model** (`operating-model.md` — the cell/wave/board machinery all later phases run on).
 
-**Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · song-dict
-Zod schema + its tests merged · docs skeleton and ADRs 0001–0006 in place · operating model +
-wave board merged and the board reflecting live state.
+The contract decisions are tracked as tickets on `map.md`; the phase is not done until that map is
+empty.
+
+**Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · account
+model + initial tenant-scoped schema decided (ADR'd) · trigger model settled · song-dict Zod schema
++ its tests merged · docs skeleton and ADRs 0001–0006 in place · operating model + wave board merged
+and the board reflecting live state · **`map.md` has no open tickets**.
 
 ## Phase 1 — Vertical slice (prove the whole pipe)
 **Status:** not started · **Owner mix:** agents build; Cal reviews the slice end-to-end
@@ -27,33 +36,43 @@ wave board merged and the board reflecting live state.
 The make-or-break phase. Port **fuzzymatch** with **golden tests generated from v1** (ADR-0006),
 the applet runner, one input (**Spotify**, BYO + PKCE), one output (**Plex**, via the PlexAPI-style
 approach — the most-requested pairing in the issues), and a minimal Vue UI to build and run *one*
-applet. Include the multi-tenant seams from day one (ADR-0003) but keep self-host login-free. Write
-the v1 SQLite **importer**.
+applet. Implement the schema and account model decided in Phase 0 — multi-tenant seams from day one
+(ADR-0003), self-host still login-free. Build the **runner's trigger semantics** here (OR, not v1's
+accidental AND) even though the trigger *plugins* land in Phase 2: it is core behaviour, not plugin
+behaviour. Write the v1 SQLite **importer**.
 
 **Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · fuzzymatch golden
-tests reproduce v1 output · importer reads a v1 `ultrasonics.db`.
+tests reproduce v1 output · importer reads a v1 `ultrasonics.db` · self-host first run reaches a
+working applet without a login prompt.
 
 ## Phase 2 — Plugin parity (fan out)
 **Status:** not started · **Owner mix:** heavily parallel — one worktree + agent per plugin
 
-Port the rest against the proven SDK: deezer, lastfm, subsonic *(new)*, local-music-database,
-local-playlists, playlist-merger, spotify-mixer, custom-file, log-tracks, webhook, time-trigger.
-Decide **system-command**'s fate in a multi-tenant world before porting it. Each plugin is an
+Port the rest against the proven SDK: deezer, lastfm, local-music-database, local-playlists,
+playlist-merger, spotify-mixer, custom-file, log-tracks, webhook, time-trigger. Each plugin is an
 independent unit gated by the SDK **conformance test**. See `docs/reference/legacy-architecture.md`
 for per-plugin behaviour and the parity matrix.
 
-**Exit gate:** feature parity with v1 · every plugin passes conformance + a smoke test · parity
-matrix in docs marked complete.
+**Not ported:** `system-command` is **dropped** — arbitrary shell execution has no place in a
+multi-tenant product (ADR-0002/0003), and the self-host case is served by the webhook trigger and
+the CLI runner. `rickroll` and `skeleton` are v1 samples, not features. Subsonic is net-new, so it
+sits in Phase 3 with the other new services rather than under a parity gate.
+
+**Exit gate:** feature parity with v1 *minus the dropped plugins above* · every plugin passes
+conformance + a smoke test · parity matrix in docs marked complete.
 
 ## Phase 3 — Beyond v1 (requested services + AI seams)
 **Status:** not started · **Owner mix:** agents build; Cal prioritises from the issue backlog
 
 Ship what people keep asking for and v1 never delivered: **YouTube Music** (#43), **Tidal** (#44),
-**Apple Music** (#55). Reserve — don't fill — the AI seams: `matcher.strategy = "fuzzy" | "llm"`
-and a natural-language playlist plugin. Opt-in only (ADR-0002).
+**Apple Music** (#55), **Subsonic**. Reserve — don't fill — the AI seams:
+`matcher.strategy = "fuzzy" | "llm"` and a natural-language playlist plugin. Opt-in only (ADR-0002).
+
+Backlog triage happens *before* this phase, not in it (`map.md` ticket 009) — the point of triaging
+early is that Phases 1–2 get the evidence of what users actually hit.
 
 **Exit gate:** ≥1 net-new service shipped · AI-seam interface merged (implementation deferred) ·
-backlog issues triaged and linked.
+Phase 3 backlog issues linked to the work that closes them.
 
 ## Phase 4 — Release & announce
 **Status:** not started · **Owner mix:** agents draft; Cal presses publish
@@ -66,8 +85,10 @@ install · release notes out.
 
 ## Phase 5 — Hosted tier (revenue)
 **Status:** not started · **Owner mix:** agents build; Cal owns the business surface
-**Early parallel track (start during Phase 1–2):** file Spotify extended-quota and Apple Developer
-applications — real lead time (ADR-0002).
+**Early parallel track — start immediately, not when this phase opens:** file the Spotify
+extended-quota and Apple Developer applications (ADR-0002). Approval lead time is measured in weeks
+to months and is the one dependency no amount of engineering speed can compress, so it runs from
+day one, in parallel with Phase 0. Tracked as Wave 0.0 on the board.
 
 Turn the multi-tenant foundation into the hosted SaaS (ADR-0002): the `Proxy` `AuthProvider` with
 ultrasonics-owned app credentials, accounts/billing (Stripe, subscription + freemium), deploy
@@ -81,9 +102,19 @@ freemium gate live · kill-switch verified · commercial-API approvals in hand f
 
 ## Deferred / not yet decided
 
+Open decisions **for Phase 0** are tickets on `map.md`, not entries here. This list is what sits
+*beyond* that map's destination — deliberately out of scope until a later phase makes it live.
+
 - Exact freemium tier limits (Phase 5 launch detail).
 - Hosting/infra choice for the hosted tier.
 - A2 home-agent dispatch protocol (NAT traversal, auth).
-- Third-party plugin distribution/install story under explicit registration (ADR-0004).
+- Third-party plugin distribution/install story under explicit registration (ADR-0004) — revisit
+  when a third-party plugin actually exists.
 - Product AI implementation (matcher `"llm"`, NL playlists) — seams only for now.
 - Public-facing `README.md` rewrite — kept as-is until v2 is real to avoid misleading users.
+
+## Dropped
+
+- **`system-command` plugin** — not ported. Arbitrary shell execution is incompatible with a
+  multi-tenant product (ADR-0002/0003); the self-host use case is served by the webhook trigger and
+  the CLI runner. Reversing this is a fresh decision with its own ADR, not an incidental port.

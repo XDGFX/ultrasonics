@@ -32,7 +32,8 @@ proposal graduates; small ones can just reach `Implemented` without an ADR.
 
 | Proposal | Status | Notes |
 |---|---|---|
-| `plugin-sdk-v2.md` | Draft | Fleshes ADR-0004 into a concrete surface. Checkpoint gate; freeze via `/grill-with-docs` before any plugin (Wave 0.2). |
+| `plugin-sdk-v2.md` | Draft | Fleshes ADR-0004 into a concrete surface. Checkpoint gate; freeze via ticket [005](../plans/tickets/005-sdk-surface.md) before any plugin. |
+| `auth-provider-v2.md` | Draft | Fleshes ADR-0005 into a concrete surface. Checkpoint gate; freeze via ticket [006](../plans/tickets/006-authprovider-surface.md). |
 
 ## Note on ambiguous cases
 

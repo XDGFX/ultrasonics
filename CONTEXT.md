@@ -52,7 +52,9 @@ nothing back into the pipeline.
 
 **Trigger** — A component that decides *when* an applet runs (e.g. every 6 hours). Not part of
 the song-dict flow. Historically the runner required *all* triggers to fire (AND); the intended
-semantics are OR — resolve when triggers are rebuilt.
+semantics are OR. This is a **runner** semantic, not a plugin one, and is settled by
+`docs/plans/tickets/004-trigger-model.md` before the runner is built (roadmap Phase 1) — not
+incidentally inside a Phase 2 trigger-plugin port.
 
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists
@@ -80,6 +82,13 @@ the LLM implementation is deferred and opt-in (ADR-0002 keeps product AI out of 
 
 ## Auth
 
+Two different things share the word "auth" and must never be conflated:
+**service auth** (how a *plugin* gets credentials for Spotify) and **user auth** (how a *person*
+gets into ultrasonics). `AuthProvider` is the first. Accounts and sessions are the second.
+_Avoid_: unqualified "auth" in prose — say **service auth** or **user auth**.
+
+### Service auth — credentials for a plugin
+
 **AuthProvider** — The swappable interface through which a plugin obtains credentials for a
 service. A plugin declares *what* auth it needs (e.g. Spotify OAuth); it never encodes *how* the
 credentials are obtained. Implementations: **BYO** (self-hoster supplies their own app
@@ -93,6 +102,25 @@ path. Contrast with the hosted tier, where ultrasonics holds the app credentials
 **ultrasonics-api** — *(legacy, dead)* The v1 proxy server that held secret API keys for public
 services. Ran on Heroku free tier and stopped working in Nov 2022, breaking Spotify sync for new
 users. Replaced entirely by **AuthProvider**. Referenced only for historical context.
+
+### User auth — getting a person into ultrasonics
+
+The exact model is still being decided (`docs/plans/tickets/001-account-model.md`); these terms are
+the vocabulary that decision must fill in. v1 had none of this — it shipped with no login at all.
+
+**Account** — The identity a person signs in as. In the **hosted tier** an account is created at
+signup; in **self-host** one is bootstrapped on first run and the user never sees it (ADR-0003).
+Its relationship to a **Tenant** — one-to-one, or many accounts per tenant — is ticket 001's
+central question.
+
+**Session** — An authenticated request context: which account is making this request, and
+therefore which **Tenant**'s data it may touch. The server resolves it; the **core** never sees it
+(ADR-0003 keeps core tenant-agnostic).
+
+**Login-free self-host** — The requirement that a self-hoster is never shown a login wall by
+default: first-run bootstrap, auto-login, and a `DISABLE_AUTH` / trusted-reverse-proxy mode for
+users already running Authelia or similar. A first-class requirement, not a flag bolted on — v1
+had no login, so a wall would be a regression (ADR-0003).
 
 ## Deployment & Tenancy
 

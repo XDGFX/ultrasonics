@@ -193,8 +193,10 @@ Writes a file with a per-song `pattern` supporting `{title}`, `{artist}`, `{albu
 ### Utility / trigger plugins
 - **log tracks** — outputs; dumps `songs_dict` as JSON to the log. Debug. *(trivial)*
 - **rickroll** — modifiers; replaces every song with a hard-coded Rick Astley track. Joke. *(trivial)*
-- **system command** — outputs; `os.system(command)`. **Arbitrary command execution — security
-  review required in the port.** *(trivial, sensitive)*
+- **system command** — outputs; `os.system(command)`. **DROPPED — not ported.** Arbitrary shell
+  execution is incompatible with a multi-tenant product (ADR-0002/0003); the self-host use case is
+  served by the webhook trigger plus the CLI runner. Documented here for historical completeness
+  only. *(trivial, sensitive)*
 - **webhook** — triggers; spins a **blocking Flask server** until one GET hits `path`, then shuts
   down (deprecated Werkzeug shutdown — re-architect around the Bun server). *(moderate)*
 - **time trigger** — triggers; recurring interval from a `start_timestamp`, blocking `time.sleep`
@@ -218,7 +220,7 @@ Writes a file with a per-song `pattern` supporting `{title}`, `{artist}`, `{albu
 | custom file | outputs | songs, playlists | filesystem | no | trivial |
 | log tracks | outputs | playlists | none | no | trivial |
 | rickroll | modifiers | playlists | none | no | trivial |
-| system command | outputs | songs, playlists | OS shell | no | trivial (security) |
+| ~~system command~~ | outputs | songs, playlists | OS shell | no | **dropped — not ported** |
 | webhook | triggers | playlists, songs | Flask/Werkzeug | no | moderate |
 | time trigger | triggers | playlists, songs | SQLite; blocking sleep | no | moderate |
 
@@ -241,7 +243,7 @@ Writes a file with a per-song `pattern` supporting `{title}`, `{artist}`, `{albu
   setting's placeholder being the string `"Recommended: 90"`.
 - Blocking designs (**webhook**, **time trigger**) must be re-architected around the v2 server /
   scheduler, not ported literally.
-- **system command** is arbitrary code execution — decide its place (if any) in a multi-tenant
-  hosted world (ADR-0002/0003) before porting.
+- **system command** is arbitrary code execution — **decided: dropped**, not ported (roadmap,
+  "Dropped"). Reversing that is a fresh decision with its own ADR.
 - v1 plugins reach into `app._ultrasonics["config_dir"]`; the config-dir location was part of the
   runtime contract. v2 passes it through typed context instead.

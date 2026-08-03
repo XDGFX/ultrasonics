@@ -11,13 +11,17 @@ for where the work is heading.
 - **`docs/adr/`** — accepted decisions. Do not re-litigate an accepted ADR; if you think one
   is wrong, write a superseding ADR, don't silently diverge.
 - **`docs/plans/roadmap.md`** — the phase you're in and its exit gate.
+- **`docs/plans/map.md`** — the decisions still open. If your work depends on one, resolve its
+  ticket first; don't guess an answer a ticket exists to settle.
+- **`docs/plans/wave-board.md`** — live execution state; update it in the same commit as your work.
 - The relevant **`docs/specs/`** entry for the feature you're building — it is the contract.
 
 ## The documentation discipline (enforced from day one)
 
-- **No PR merges without its spec.** A feature PR references the `docs/specs/` entry whose
+- **Nothing lands without its spec.** Feature work references the `docs/specs/` entry whose
   acceptance criteria it satisfies. If there's no spec, the work isn't ready — write it first
-  (this is what a `/grill-with-docs` session produces).
+  (this is what a `/grill-with-docs` session produces). This binds whether the work arrives as a
+  PR or as a direct commit to `revival`.
 - **Non-obvious decisions get an ADR.** If you chose X over a reasonable Y, record why in
   `docs/adr/` (next number, `Status: Proposed` until Cal accepts). Cheap to write, saves the
   archaeology later.
@@ -26,11 +30,20 @@ for where the work is heading.
   Blockers · Files touched. The next agent must be able to resume cold.
 - **Log the session.** Dated entry in `docs/sessions/`: what changed, what's next.
 
+## Branching
+
+`revival` is the trunk and is **not production** — nothing deploys from it. Sequential work
+(engine, core, docs) commits **directly to `revival`**; only parallel fan-out, chiefly Phase 2's
+one-agent-per-plugin waves, uses a worktree and a PR — there the PR earns its keep by isolating
+siblings and giving CI a per-unit verdict. Never merge to `master` (that's roadmap Phase 4) and
+never force-push. Full rationale in `docs/plans/operating-model.md` §2a.
+
 ## Checkpoint gates — when to stop and ask Cal
 
-Work autonomously, but **escalate rather than guess** on any PR that touches:
+Work autonomously, but **escalate rather than guess** on anything that touches:
 
-- the **auth layer** (`AuthProvider`, credential storage, OAuth flows),
+- the **auth layer** — both senses: `AuthProvider` / credential storage / OAuth flows (service
+  auth), *and* accounts, sessions, login (user auth). See `CONTEXT.md`, "Auth".
 - the **plugin SDK contract** (the shape plugins depend on),
 - the **database schema** or a migration,
 - **multi-tenancy / security** boundaries,
