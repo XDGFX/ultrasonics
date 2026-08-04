@@ -1,6 +1,6 @@
 # 004 — Trigger model and runner semantics
 
-**Status:** Open · **Type:** grilling · **Blocked by:** **014** · **Blocks:** 005 · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** 014 ✅ · **Blocks:** 005 · **Claimed by:** —
 
 ## Question
 
@@ -31,7 +31,8 @@ if so it is a per-applet setting, not a hardcoded change.
 
 ## Context
 
-**Blocked on [014](014-trigger-candidates.md) as of 2026-08-04.** A grilling session opened on the
+**[014](014-trigger-candidates.md) resolved 2026-08-04 — the evidence is in hand; read its Answer
+before resuming.** A grilling session opened on the
 SDK shape — is a trigger a `run()` plugin, a distinct `schedule()`/`subscribe()` shape, or not a
 plugin at all? — and Cal stopped it at the first question: *evaluate what is worthwhile having as a
 trigger before committing to anything*. The shape follows the set. If the valuable triggers are a

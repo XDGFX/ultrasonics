@@ -54,6 +54,12 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   now, plugins run in-process in Phase 1 behind a `PluginExecutor` seam; deferred on Bun's maturity,
   not cost. Price is nine day-one SDK constraints on 005.
   → [ADR-0010](../adr/0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md)
+- [Which triggers are worth having](tickets/014-trigger-candidates.md) — every candidate worth
+  building (schedule, inbound webhook, outbound webhook, run-now) is a **server capability needing no
+  plugin apparatus**; Home Assistant/Node-RED/IFTTT/Zapier all collapse into one inbound webhook;
+  service events ("new album") are polling-only and cost-prohibitive; nobody ever used v1's webhook,
+  which has been broken since Mar 2022. Findings, not a decision — 004 owns the call.
+  → [research](../reference/trigger-candidates-research.md)
 
 ## Not yet specified
 
@@ -83,7 +89,12 @@ Ruled beyond this map's destination. Never graduates; returns only if the destin
 - **Third-party plugin install story** — no third-party plugin exists yet.
 - **Subsonic** — net-new rather than a port; roadmap Phase 3.
 - **Hosted-tier decisions** — freemium limits, hosting/infra, A2 dispatch, the `Proxy`
-  `AuthProvider`; roadmap Phase 5.
+  `AuthProvider`; roadmap Phase 5. ⚠️ **Carry this forward when the phase opens:** research for
+  [014](tickets/014-trigger-candidates.md) turned up a **Spotify platform-access wall** — development
+  mode capped at a handful of users, extended quota requiring a registered business above a high MAU
+  threshold. A *permission* wall, not a rate limit, so it bears on ADR-0002 and on whether `Proxy` is
+  viable for Spotify at all. BYO self-host is unaffected. Figures are second-hand and must be
+  reconfirmed against Spotify's own developer terms before anything rests on them.
 - **Product AI implementation** — seam reserved in `CONTEXT.md`, filled post-parity.
 - **Public `README.md` rewrite** — roadmap Phase 4.
 - **Adopting `WorkerExecutor`** — ADR-0010 freezes the boundary; performing the swap is Phase 2
@@ -98,7 +109,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | **014** | blocked |
+| 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | 014 ✅ | **frontier** (evidence in hand) |
 | 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003 ✅, **004** | blocked |
 | 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
 | 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005, 006 | blocked |
@@ -107,7 +118,6 @@ Cal accepts the resolution before it counts as decided.
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
-| 014 | [Which triggers are worth having](tickets/014-trigger-candidates.md) | research | — | **frontier** (AFK, running) |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 
