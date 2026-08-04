@@ -21,6 +21,26 @@ Read only when they apply — deliberately kept out of this file so it stays che
 - The relevant **`docs/specs/`** entry — the contract for the feature you're building.
 - **`docs/reference/legacy-architecture.md`** — how v1 works. Read when porting from it.
 
+## Agent skills
+
+Per-repo configuration the engineering skills read. Consult these when a skill asks where
+something lives; you don't need them for ordinary sessions.
+
+### Issue tracker
+
+Local markdown, in-repo — specs and their implementation issues under `docs/specs/<feature>/`,
+open decisions under `docs/plans/`. GitHub Issues is read-only evidence, never a work queue.
+See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, unchanged, written as the `**Status:**` value on an implementation
+issue. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
 ## The documentation discipline (enforced from day one)
 
 - **Nothing lands without its spec.** Feature work references the `docs/specs/` entry whose

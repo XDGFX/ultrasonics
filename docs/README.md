@@ -7,7 +7,8 @@ in-repo docs are the source of truth for anything an agent needs to build correc
 | Folder | What it holds | Written by | Mutable? |
 |---|---|---|---|
 | `adr/` | Architecture Decision Records — the immutable "why" | Cal, at decisions | Append-only; supersede, never edit |
-| `specs/` | One per feature — the contract; acceptance criteria = the test contract | `/grill-with-docs` | Frozen once implementation starts |
+| `specs/` | One folder per feature: `spec.md` (the contract; acceptance criteria = the test contract) plus `issues/` (its build slices) | `/grill-with-docs`, `/to-tickets` | `spec.md` frozen once implementation starts; `issues/` living |
+| `agents/` | Per-repo config the engineering skills read: issue tracker, triage labels, domain docs | `/setup-matt-pocock-skills` | Living; edit directly |
 | `proposals/` | Thorough design write-ups for work not yet decided/started | Agents / Cal | Living; edited in place through to `Implemented`, never deleted |
 | `plans/` | `roadmap.md` (what to build, when) and `map.md` + `tickets/` (what's still undecided) | Agents | Living |
 | `reference/` | Durable facts (e.g. the v1 architecture the port targets) | Agents | Updated as facts change |
@@ -37,6 +38,8 @@ operating model was largely a hand-rolled version of what `/wayfinder` and `AGEN
   everything: `grep -rn '^\*\*Status:\*\*' docs/`. The label is the fixed anchor; the value varies.
   Fixed vocabularies — **ADRs**: `Proposed` (new, awaiting Cal) · `Accepted` · `Superseded`.
   **Proposals**: `Draft` · `Research` · `Approved` · `Partially implemented` · `Implemented`.
+  **Issues** (`specs/*/issues/`): the five triage roles — `needs-triage` · `needs-info` ·
+  `ready-for-agent` · `ready-for-human` · `wontfix` (see `agents/triage-labels.md`).
   **Plans**: free-form, but the line must be present so the survey sees living docs too.
 - **Every non-obvious rule or decision names the alternative it rejected** — one clause is enough
   (ADRs, proposals, edit-site comments). Cheap to write; saves the "why not X?" archaeology later.
