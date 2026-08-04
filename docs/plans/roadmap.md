@@ -55,9 +55,16 @@ The make-or-break phase. Port **fuzzymatch** with **golden tests generated from 
 the applet runner, one input (**Spotify**, BYO + PKCE), one output (**Plex**, via the PlexAPI-style
 approach — the most-requested pairing in the issues), and a minimal Vue UI to build and run *one*
 applet. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
-(ADR-0003), self-host still login-free. Build the **runner's trigger semantics** here (OR, not v1's
-accidental AND) even though the trigger *plugins* land in Phase 2: it is core behaviour, not plugin
-behaviour. Write the v1 SQLite **importer**.
+(ADR-0003), self-host still login-free. Build the **scheduler and the inbound webhook route** here:
+ADR-0011 makes triggers server capabilities rather than plugins, so this phase owns them outright
+(OR semantics, queue-depth-of-one on a same-applet collision) and Phase 2 has no trigger cells to
+port. Architecture is map ticket [015](tickets/015-scheduler-architecture.md). Write the v1 SQLite
+**importer**.
+
+**Note on this phase's exit gate.** That it targets Spotify → **Plex**, which Cal has no setup to
+test personally, was raised and deliberately reaffirmed on 2026-08-04: it is the most-requested
+pairing and the work has to happen regardless, so the plan is not rearranged around testability.
+Not a live question — do not re-raise it.
 
 **Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · fuzzymatch golden
 tests reproduce v1 output · importer reads a v1 `ultrasonics.db` · self-host first run reaches a
@@ -67,9 +74,13 @@ working applet without a login prompt.
 **Status:** not started · **Owner mix:** heavily parallel — one worktree + agent per plugin
 
 Port the rest against the proven SDK: deezer, lastfm, local-music-database, local-playlists,
-playlist-merger, spotify-mixer, custom-file, log-tracks, webhook, time-trigger. Each plugin is an
+playlist-merger, spotify-mixer, custom-file, log-tracks. Each plugin is an
 independent unit gated by the SDK **conformance test**. See `docs/reference/legacy-architecture.md`
 for per-plugin behaviour and the parity matrix.
+
+**Not ported as plugins:** `webhook` and `time-trigger`. ADR-0011 makes triggers **server
+capabilities, not plugins** — the schedule and the inbound webhook route are Phase 1 server work
+(below), so there is nothing left to port here. Two fewer cells in this phase.
 
 **Not ported:** `system-command` is **dropped** — arbitrary shell execution has no place in a
 hosted product many accounts share (ADR-0002/0003), and the self-host case is served by the webhook trigger and

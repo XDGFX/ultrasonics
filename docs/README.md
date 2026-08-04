@@ -58,5 +58,6 @@ operating model was largely a hand-rolled version of what `/wayfinder` and `AGEN
 - **0008** — Hosted authentication is social OAuth only *(refines 0007; Google alone at launch)*
 - **0009** — The v2 database: relational SQLite, Drizzle, account scoping in the query layer
 - **0010** — Worker-shaped plugin boundary, in-process execution in Phase 1 *(refines 0001, 0004)*
+- **0011** — Triggers are server capabilities, not plugins *(refines 0001, 0004)*
 
 Start with `../CONTEXT.md` (domain glossary) and `plans/roadmap.md` (where the work is going).

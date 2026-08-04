@@ -119,10 +119,14 @@ freeze.
   The amended sketch and the nine constraints behind it are in ADR-0010 and
   [`../reference/plugin-isolation-research.md`](../reference/plugin-isolation-research.md); ticket 005
   ratifies them into this document at the freeze.
-- **Long-running triggers** (v1 webhook/time-trigger blocked). In v2 triggers should register
-  intent with the scheduler/server, not block. Does the SDK model triggers as `run()` at all, or a
-  distinct `schedule()` / `subscribe()` shape?
-  → ticket [004](../plans/tickets/004-trigger-model.md).
+- ~~**Long-running triggers**~~ — **resolved**, ticket
+  [004](../plans/tickets/004-trigger-model.md) →
+  [ADR-0011](../adr/0011-triggers-are-server-capabilities-not-plugins.md). The answer is *neither*
+  `run()` nor a `schedule()`/`subscribe()` shape: **the SDK does not model triggers at all.**
+  `Trigger` is removed as a Component and the surface freezes at three — `inputs`, `modifiers`,
+  `outputs`. Triggers become server-owned applet configuration (a schedule and/or an authenticated
+  inbound webhook), so no trigger shape needs to satisfy ADR-0010's nine boundary constraints. The
+  `component` union already sketched above is therefore correct as written, not an omission.
 
 **Deferred past the freeze:**
 

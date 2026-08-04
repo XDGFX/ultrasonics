@@ -60,6 +60,12 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   service events ("new album") are polling-only and cost-prohibitive; nobody ever used v1's webhook,
   which has been broken since Mar 2022. Findings, not a decision — 004 owns the call.
   → [research](../reference/trigger-candidates-research.md)
+- [Trigger model and runner semantics](tickets/004-trigger-model.md) — **a Trigger is not a plugin**;
+  the `Trigger` Component is removed and the SDK freezes at three (`inputs`/`modifiers`/`outputs`).
+  Triggers become server-owned applet config: a schedule and/or an authenticated inbound webhook.
+  Combination is **OR**, hardcoded (the AND bug dissolves rather than being fixed); a firing during a
+  run **queues at depth one**, concurrency allowed across different applets.
+  → [ADR-0011](../adr/0011-triggers-are-server-capabilities-not-plugins.md)
 
 ## Not yet specified
 
@@ -67,8 +73,9 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
 
 - **What the conformance test actually asserts** — the objective "is this plugin ported" bar
   (`CONTEXT.md`). Needs [Plugin SDK surface freeze](tickets/005-sdk-surface.md) first.
-- **Scheduler architecture** — how the server owns recurring and webhook triggers once they no
-  longer block. Needs [Trigger model](tickets/004-trigger-model.md) first.
+- **Notifications** — whether ultrasonics ever tells a user something happened, by any channel. The
+  **outbound webhook on sync completion** belongs here (deferred by ADR-0011, and 014 found it has
+  the *better* demand signal of the two webhook directions), as does email, below.
 - **Zod → settings-form generation** in `packages/web`. Needs the frozen SDK settings shape.
 - **Which providers follow Google, and whether a *service* provider is ever one of them.** ADR-0008
   ships Google alone and fixes the rule that a login identity is never a service connection (seeding
@@ -109,8 +116,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | 014 ✅ | **frontier** (evidence in hand) |
-| 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003 ✅, **004** | blocked |
+| 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003 ✅, 004 ✅ | **frontier** (unblocked) |
 | 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
 | 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005, 006 | blocked |
 | 008 | [Monorepo conventions](tickets/008-monorepo-conventions.md) | grilling | — | **frontier** |
@@ -118,6 +124,7 @@ Cal accepts the resolution before it counts as decided.
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
+| 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 

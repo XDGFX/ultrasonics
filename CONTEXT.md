@@ -24,9 +24,11 @@ When present on both sides it is the most reliable cross-service match short of 
 **Playlist** — A named, ordered collection of songs, optionally carrying per-service IDs so the
 same playlist can be recognised across services.
 
-**Applet** — A saved sync pipeline: one or more **Inputs**, zero or more **Modifiers**, one or
-more **Outputs**, and zero or more **Triggers**. Modelled on IFTTT. The mental model users
-already understand; keep it. Runs on a trigger or on manual run.
+**Applet** — A saved sync pipeline: one or more **Inputs**, zero or more **Modifiers**, and one or
+more **Outputs**, plus its **Trigger** configuration. Modelled on IFTTT. The mental model users
+already understand; keep it — the UI still reads "when this, do that" even though a trigger is
+server-side configuration rather than a component in the pipeline (ADR-0011). Runs on a trigger or on
+manual run.
 
 ## Plugins
 
@@ -39,8 +41,9 @@ module registered explicitly (ADR-0004), not discovered by dynamic import.
 version, declared **auth** need, and a settings schema. In v2 the settings schema is a Zod object
 that drives validation, the TypeScript type, and the auto-generated settings form at once.
 
-**Component** — Which slot a plugin occupies in an applet: **Input**, **Modifier**, **Output**, or
-**Trigger**. A single plugin may support several (e.g. Spotify is both input and output).
+**Component** — Which slot a plugin occupies in an applet: **Input**, **Modifier**, or **Output** —
+three, not four. A single plugin may support several (e.g. Spotify is both input and output).
+**Trigger is not a component** (ADR-0011); earlier docs list four.
 
 **Input** — A component that fetches playlists/songs from a service and emits a song dict.
 
@@ -50,11 +53,14 @@ dedupe, filter, substitute). Optional in an applet.
 **Output** — A component that receives a song dict and writes it to a service. Terminal; emits
 nothing back into the pipeline.
 
-**Trigger** — A component that decides *when* an applet runs (e.g. every 6 hours). Not part of
-the song-dict flow. Historically the runner required *all* triggers to fire (AND); the intended
-semantics are OR. This is a **runner** semantic, not a plugin one, and is settled by
-`docs/plans/tickets/004-trigger-model.md` before the runner is built (roadmap Phase 1) — not
-incidentally inside a Phase 2 trigger-plugin port.
+**Trigger** — What decides *when* an applet runs: a **schedule**, and/or an authenticated **inbound
+webhook**. Not part of the song-dict flow. **A trigger is not a plugin and not a Component** — it is
+applet configuration owned by the server (ADR-0011). Any trigger firing runs the applet (**OR**,
+hardcoded — v1's AND was an acknowledged bug, and the question dissolves once triggers stop being
+components). A trigger firing while the applet is already running **queues** it, at a **queue depth of
+one**; further firings are absorbed into the pending run and the applet shows a `queued` state.
+Concurrency across *different* applets is allowed.
+_Avoid_: "trigger plugin" — v1's webhook and time-trigger plugins are not ported as plugins.
 
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists
