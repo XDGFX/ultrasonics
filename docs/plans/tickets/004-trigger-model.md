@@ -1,6 +1,6 @@
 # 004 — Trigger model and runner semantics
 
-**Status:** Open · **Type:** grilling · **Blocked by:** — · **Blocks:** 005 · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** **014** · **Blocks:** 005 · **Claimed by:** —
 
 ## Question
 
@@ -28,3 +28,22 @@ if so it is a per-applet setting, not a hardcoded change.
 - The trigger shape in the SDK, ready for 005 to freeze.
 - OR semantics settled, with the runner — not a plugin — owning them.
 - A note on where the scheduler picks up registered intent (the detail can stay fog for now).
+
+## Context
+
+**Blocked on [014](014-trigger-candidates.md) as of 2026-08-04.** A grilling session opened on the
+SDK shape — is a trigger a `run()` plugin, a distinct `schedule()`/`subscribe()` shape, or not a
+plugin at all? — and Cal stopped it at the first question: *evaluate what is worthwhile having as a
+trigger before committing to anything*. The shape follows the set. If the valuable triggers are a
+schedule and an inbound webhook, both are server capabilities and the Trigger component may not
+belong in the SDK at all; if they are service-specific (new-album-drop and friends), a plugin shape
+earns its keep.
+
+One observation for whoever resumes this: `docs/proposals/plugin-sdk-v2.md` already types
+`RunContext.component` as `"inputs" | "modifiers" | "outputs"` — **triggers are absent**. The sketch
+had already stopped treating a trigger as something that runs. That is a drafting artefact, not a
+decision, but it points the same way.
+
+Note that ruling on this touches `CONTEXT.md` (**Trigger**, **Applet** — "zero or more Triggers" as
+components) and `roadmap.md` (Phase 2 lists `webhook` and `time-trigger` as plugin cells). Whichever
+way it goes, those need updating in the same resolution.

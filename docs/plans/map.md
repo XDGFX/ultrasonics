@@ -98,7 +98,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | — | **frontier** |
+| 004 | [Trigger model and runner semantics](tickets/004-trigger-model.md) | grilling | **014** | blocked |
 | 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003 ✅, **004** | blocked |
 | 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
 | 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005, 006 | blocked |
@@ -107,6 +107,7 @@ Cal accepts the resolution before it counts as decided.
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
+| 014 | [Which triggers are worth having](tickets/014-trigger-candidates.md) | research | — | **frontier** (AFK, running) |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 
