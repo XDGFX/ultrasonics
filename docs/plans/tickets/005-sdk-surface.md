@@ -1,7 +1,7 @@
 # 005 — Plugin SDK surface freeze ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** ~~003 ✅~~, **004** · **Blocks:** 007 ·
-**Claimed by:** —
+**Status:** resolved · **Type:** grilling · **Blocked by:** ~~003 ✅~~, ~~004 ✅~~ · **Blocks:** 007 ·
+**Claimed by:** Cal (wayfinder session, 2026-08-06)
 
 ## Question
 
@@ -46,3 +46,80 @@ not because of context limits. Do not re-merge them.
 - The frozen surface written into `plugin-sdk-v2.md`, status moved off `Draft`.
 - An ADR if the shape diverges from what ADR-0004 implied.
 - Enough certainty that a Phase 2 plugin port needs no further SDK decisions.
+
+## Resolution — 2026-08-06
+
+**The surface is frozen, and `component` is the keying axis throughout it.**
+→ [ADR-0012](../../adr/0012-plugin-sdk-surface-keyed-by-component.md), which carries the full
+reasoning, the rejected alternatives and the consequences. Accepted by Cal in the grilling session.
+
+```ts
+export default definePlugin({
+  name: "spotify",
+  description: "Sync playlists with Spotify",
+  mode: ["playlists"],                   // separate axis; stays declared
+  version: "2.0.0",
+  auth: spotifyOAuth,                    // reachability + secrets
+
+  persistentSettings: z.object({         // per-account, per-plugin
+    fuzzyRatio: z.number().min(0).max(100).default(90),
+  }),
+
+  instanceSettings: {                    // static record, keyed by component
+    inputs:  z.discriminatedUnion("mode", [ /* … */ ]),
+    outputs: z.object({ existing: z.enum(["append", "update"]).default("append") }),
+  },
+
+  run: {                                 // one handler per component
+    async inputs(ctx)  { return songs },      // Promise<SongDict>
+    async outputs(ctx) { ctx.songs },         // Promise<void>
+  },
+
+  async test(ctx) { return { ok: true } },    // optional; plain-data result
+});
+```
+
+### The five open questions, answered
+
+1. **`instanceSettings`: static record keyed by component**, not `(ctx) => ZodObject`. A survey of
+   all 16 v1 plugins found the "dynamic builder" story is three separable things: 11 of 16 branch on
+   `component` and on *nothing else*; conditional fields within one component (Spotify's `shy`
+   classes) are a `z.discriminatedUnion`; and only `up_plex.py`'s build-time HTTP fetch needs a
+   function — which is ticket 007's, not this freeze's.
+2. **`RunContext`**: ratifies ADR-0010 unchanged — plain-data `credentials`, async `ctx.auth` facade,
+   fire-and-forget `log`, `runId`, `deadlineMs`, `configDir` as a string. `songs` exists **only** on
+   the modifier and output contexts; the "empty dict for inputs" fiction is gone.
+3. **`persistentSettings` / `instanceSettings` split**: kept, with a stated boundary against auth —
+   *if you cannot open an authenticated connection without it, it is auth, not a setting*. Plex's
+   `server_url` and TLS toggle are therefore ticket 006's; its path mapping is `persistentSettings`.
+4. **Registry**: a record of `name → { path, load() }`. `load()` for in-process, `path` for the
+   Phase 2 worker (ADR-0010's constraint), and the name key is the applet's plugin lookup.
+5. **`test()`**: optional (only 5 of 16 v1 plugins define one), and returns a plain-data
+   `TestResult` rather than throwing — under ADR-0010's constraint 4 a thrown `Error` reaches the UI
+   with its subclass erased, so it cannot distinguish an expired token from an unreachable server.
+   `TestContext` has no `instance` settings; `test()` runs before any applet exists.
+
+Plus one the freeze surfaced: the **`component` declaration is removed** and derived from
+`Object.keys(run)`, rather than being a third copy of the same list that can disagree with the other
+two.
+
+### What this hands forward
+
+- **Ticket 007** — narrowed: it must add dynamic option fetching *without* returning
+  `instanceSettings` to a function, since form generation now depends on it being static.
+- **Ticket 006** — given a boundary rule rather than an assumption about what the `AuthSpec` owns,
+  and told that `ctx.auth` exists and is async, with its shape left entirely to 006.
+- **Ticket [016](016-settings-form-generation.md)** — new, graduated from the map's fog. Rendering a
+  `z.discriminatedUnion` is now the mechanism by which v1's hand-written `builder()` blocks
+  disappear, so it is load-bearing rather than merely convenient.
+- **`runConformance`** gains key parity (`keys(run) === keys(instanceSettings)`) alongside
+  ADR-0010's two boundary checks — clearing part of the map's "what the conformance test asserts"
+  fog, though not all of it.
+- **`plugin-sdk-v2.md`** moves off `Draft` and now describes the frozen surface.
+
+### Deliberately not decided here
+
+- `ctx.auth`'s own shape — 006.
+- `persistentSettings` being account-scoped was treated as **settled by ADR-0009**, not reopened.
+- Plugin settings migration across a version bump — `legacy-architecture.md` assigns v1's
+  `version_check` to the core settings/migration layer, not the SDK.

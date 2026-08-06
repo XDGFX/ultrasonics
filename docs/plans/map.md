@@ -54,6 +54,11 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   now, plugins run in-process in Phase 1 behind a `PluginExecutor` seam; deferred on Bun's maturity,
   not cost. Price is nine day-one SDK constraints on 005.
   → [ADR-0010](../adr/0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md)
+- [Plugin SDK surface freeze](tickets/005-sdk-surface.md) — `component` becomes the keying axis:
+  `instanceSettings` a static record and `run` one handler per component, the `component`
+  declaration derived from `run`'s keys, the registry a `name → {path, load()}` record, `test()`
+  returning plain data rather than throwing. Auth boundary: if you cannot connect without it, it is
+  auth, not a setting. → [ADR-0012](../adr/0012-plugin-sdk-surface-keyed-by-component.md)
 - [Which triggers are worth having](tickets/014-trigger-candidates.md) — every candidate worth
   building (schedule, inbound webhook, outbound webhook, run-now) is a **server capability needing no
   plugin apparatus**; Home Assistant/Node-RED/IFTTT/Zapier all collapse into one inbound webhook;
@@ -72,11 +77,14 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
 In scope, but not yet sharp enough to ticket. Graduates as the frontier advances.
 
 - **What the conformance test actually asserts** — the objective "is this plugin ported" bar
-  (`CONTEXT.md`). Needs [Plugin SDK surface freeze](tickets/005-sdk-surface.md) first.
+  (`CONTEXT.md`). **Partly cleared, not gone:** ADR-0012 §8 fixed three machine-checked invariants
+  (run/`instanceSettings` key parity, plus ADR-0010's `structuredClone` and lost-methods checks), and
+  `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
+  sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
+  practice, and whether the renderable-schema subset (016) is asserted here too.
 - **Notifications** — whether ultrasonics ever tells a user something happened, by any channel. The
   **outbound webhook on sync completion** belongs here (deferred by ADR-0011, and 014 found it has
   the *better* demand signal of the two webhook directions), as does email, below.
-- **Zod → settings-form generation** in `packages/web`. Needs the frozen SDK settings shape.
 - **Which providers follow Google, and whether a *service* provider is ever one of them.** ADR-0008
   ships Google alone and fixes the rule that a login identity is never a service connection (seeding
   allowed, dependency forbidden) — but whether Spotify in particular is offered as a login at all is
@@ -116,15 +124,15 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 005 | ⛔ [Plugin SDK surface freeze](tickets/005-sdk-surface.md) | grilling | 003 ✅, 004 ✅ | **frontier** (unblocked) |
 | 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
-| 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005, 006 | blocked |
+| 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005 ✅, **006** | blocked |
 | 008 | [Monorepo conventions](tickets/008-monorepo-conventions.md) | grilling | — | **frontier** |
 | 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
 | 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |
+| 016 | [Zod → settings-form generation](tickets/016-settings-form-generation.md) | grilling | 005 ✅ | **frontier** (graduated) |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 

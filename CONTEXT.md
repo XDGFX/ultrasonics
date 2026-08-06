@@ -37,12 +37,16 @@ it is via a **Handshake**, does its work in `run()`, optionally validates creden
 `test()`, and describes its per-applet settings via `builder()`. In v2 a plugin is a typed
 module registered explicitly (ADR-0004), not discovered by dynamic import.
 
-**Handshake** — A plugin's self-description: name, description, **Component** type(s), **Mode**(s),
-version, declared **auth** need, and a settings schema. In v2 the settings schema is a Zod object
-that drives validation, the TypeScript type, and the auto-generated settings form at once.
+**Handshake** — A plugin's self-description: name, description, **Mode**(s), version, declared
+**auth** need, and its settings schemas. In v2 a settings schema is a Zod object that drives
+validation, the TypeScript type, and the auto-generated settings form at once. The **Component**
+types are *not* declared — they are derived from the keys of `run` (ADR-0012), so the list exists
+in one place rather than three.
 
 **Component** — Which slot a plugin occupies in an applet: **Input**, **Modifier**, or **Output** —
-three, not four. A single plugin may support several (e.g. Spotify is both input and output).
+three, not four. A single plugin may support several (e.g. Spotify is both input and output), and in
+v2 it does so by supplying one `run` handler and one `instanceSettings` schema per component
+(ADR-0012), not by branching on a component argument as v1 did.
 **Trigger is not a component** (ADR-0011); earlier docs list four.
 
 **Input** — A component that fetches playlists/songs from a service and emits a song dict.
@@ -68,7 +72,8 @@ into a songs-mode output is unsupported and should warn.
 
 **Plugin SDK** — The typed contract and helper library every plugin builds against
 (`packages/plugin-sdk`). Owns `definePlugin()`, the handshake/settings types, and auth helpers.
-Changes here are a checkpoint gate (AGENTS.md).
+Changes here are a checkpoint gate (AGENTS.md). **The surface is frozen** as of ADR-0012 and
+specified in `docs/proposals/plugin-sdk-v2.md`; changing it is an ADR-level act.
 
 **Conformance test** — A shared test suite every plugin must pass to be considered ported: it
 exercises the handshake shape, settings validation, and the input/output contract against the
