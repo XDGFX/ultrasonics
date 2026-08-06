@@ -1,6 +1,15 @@
 # 007 — Builder-time credentials for dynamic options
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 005, 006 · **Blocks:** — · **Claimed by:** —
+**Status:** Open · **Type:** grilling · **Blocked by:** ~~005 ✅~~, ~~006 ✅~~ · **Blocks:** — ·
+**Claimed by:** —
+
+> **Unblocked 2026-08-06.** Both prerequisites narrowed this ticket rather than merely clearing it.
+> [ADR-0012](../../adr/0012-plugin-sdk-surface-keyed-by-component.md) made `instanceSettings` a
+> **static** record, so dynamic option fetching may not return it to a function — form generation now
+> depends on it being static. [ADR-0013](../../adr/0013-authprovider-surface-service-grants-and-declared-fields.md)
+> fixed `ctx.auth.get()` as a **zero-argument** typed getter, so builder-time credential access must
+> not widen it. `up_plex.py`'s build-time HTTP fetch for library sections is the one v1 behaviour
+> that actually needs this.
 
 ## Question
 

@@ -106,6 +106,21 @@ credentials are obtained. Implementations: **BYO** (self-hoster supplies their o
 credentials, default, always works offline), **PKCE** (no client secret needed), and **Proxy**
 (credentials brokered by a hosted service). See ADR-0005.
 
+**Service** — The thing a grant is *for* (`"spotify"`, `"plex"`), declared by a plugin as
+`defineAuth({ service })`. A **contract string, not a label**: it is the key of the stored
+credential row, so two plugins declaring the same service **share one grant by design** — this is
+how `spotify` and `spotify-mixer` share one connection, as they did in v1 (ADR-0013).
+_Avoid_: treating `service` as a display name, or assuming one plugin means one grant.
+
+**Grant** — One account's stored credential for one service: the encrypted row keyed
+`(account_id, service)` (ADR-0009). What `resolve()` returns credentials from, and what a user
+"reconnects" when it expires.
+
+**Flow** — *How* a secret is obtained: `oauth2-pkce`, `oauth2`, `token` (the user pastes one), or
+`none`. Distinct from **fields**, which is *what* must be collected — a Zod object the plugin
+declares, from which `Credentials` is inferred (ADR-0013).
+_Avoid_: `apiKey` or `serverUrl` as flow names — both are `token` flows differing only in fields.
+
 **BYO credentials** — "Bring your own": the self-hoster registers their own developer app with a
 service and pastes the client ID (and secret only where unavoidable). The default and offline
 path. Contrast with the hosted tier, where ultrasonics holds the app credentials.

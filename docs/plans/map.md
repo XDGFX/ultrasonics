@@ -71,6 +71,14 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   Combination is **OR**, hardcoded (the AND bug dissolves rather than being fixed); a firing during a
   run **queues at depth one**, concurrency allowed across different applets.
   → [ADR-0011](../adr/0011-triggers-are-server-capabilities-not-plugins.md)
+- [AuthProvider surface freeze](tickets/006-authprovider-surface.md) — a grant belongs to a
+  `service` (two plugins declaring the same one share it, by design) and its shape is a declared Zod
+  `fields` object, so `serverUrl`/`apiKey` leave the flow vocabulary as `token` flows; `Credentials`
+  is inferred and `ctx.auth.get()` takes no arguments; five methods, adding the `configure()` the
+  draft lacked for the offline paste path; refresh is lazy inside `resolve()`; the reconnect surface
+  is built host-side. Found that v1's Last.fm key came from the **dead proxy**, so it never had a
+  working BYO path.
+  → [ADR-0013](../adr/0013-authprovider-surface-service-grants-and-declared-fields.md)
 
 ## Not yet specified
 
@@ -82,6 +90,16 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
   sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
   practice, and whether the renderable-schema subset (016) is asserted here too.
+- **Account-level BYO client credentials.** ADR-0013 §7 ships operator-level only for Phase 1 (one
+  registered app per service per instance, in `instance_settings`). Account-level is **deferred, not
+  ruled out** — `plugin_settings` already exists so no migration is needed, and it is the natural
+  fallback if the Spotify platform-access wall found by [014](tickets/014-trigger-candidates.md)
+  bites the hosted tier. Sharpens into a ticket when that wall is reconfirmed, or when the hosted
+  tier opens.
+- **Whether the auth setup wizard shares 016's renderer.** ADR-0013 gives the wizard a typed
+  contract (`requirements()` plus the declared `fields` schema), but not a renderer. It may collapse
+  into [016](tickets/016-settings-form-generation.md) rather than becoming its own ticket — 016
+  should decide that when it is worked, not before.
 - **Notifications** — whether ultrasonics ever tells a user something happened, by any channel. The
   **outbound webhook on sync completion** belongs here (deferred by ADR-0011, and 014 found it has
   the *better* demand signal of the two webhook directions), as does email, below.
@@ -124,8 +142,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 006 | ⛔ [AuthProvider surface freeze](tickets/006-authprovider-surface.md) | grilling | — | **frontier** |
-| 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005 ✅, **006** | blocked |
+| 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005 ✅, 006 ✅ | **frontier** (unblocked) |
 | 008 | [Monorepo conventions](tickets/008-monorepo-conventions.md) | grilling | — | **frontier** |
 | 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |

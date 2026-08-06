@@ -1,6 +1,8 @@
 # 006 — AuthProvider surface freeze ⛔
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅ (cleared) · **Blocks:** 007 · **Claimed by:** —
+**Status:** ✅ resolved 2026-08-06 (agreed by Cal in session) · **Type:** grilling ·
+**Blocked by:** 001 ✅ (cleared) · **Blocks:** 007 ·
+**Claimed by:** Cal (wayfinder session, 2026-08-06)
 
 ## Question
 
@@ -54,3 +56,69 @@ To settle:
 - The frozen interface in `auth-provider-v2.md`, status moved off `Draft`.
 - The BYO and PKCE paths fully specified; `Proxy` a named seam only.
 - Consistency with 002 on where credentials physically live.
+
+## Resolution — 2026-08-06
+
+**A grant belongs to a `service`, and its shape is declared as `fields`.**
+→ [ADR-0013](../../adr/0013-authprovider-surface-service-grants-and-declared-fields.md), which
+carries the full reasoning, the rejected alternatives and the consequences.
+[`auth-provider-v2.md`](../../proposals/auth-provider-v2.md) is now the frozen specification.
+
+### Two findings that reframed the ticket
+
+**`serverUrl` was never a flow.** Reading v1: `up_plex.py` collects `server_url` + `plex_token`,
+both pasted, no OAuth anywhere; `up_lastfm.py` collects only a *username* and imports its API key
+from `ultrasonics.tools.api_key` — **the dead proxy**. So Last.fm is not a working BYO path in v1 at
+all; it is a second broken proxy path, less visible than Spotify's. Plex's flow ("paste a secret")
+is identical to Last.fm's; only the field count differs. The draft's enum conflated *how the secret
+is obtained* with *which fields are needed*.
+
+**The draft had no way to save a pasted token.** `requirements()` told the UI what to ask for and
+there was nowhere to put the answer — so the offline BYO paste path, which ADR-0005 makes the
+*default*, had no method at all.
+
+### The six questions, answered
+
+1. **Flow vs fields**: split. `flow: "oauth2-pkce" | "oauth2" | "token" | "none"`; `fields` is a Zod
+   object. `apiKey` and `serverUrl` leave the vocabulary — both are `token` flows. Last.fm gains a
+   real offline path as a side effect. Plex's `serverUrl`/`verifyTls` are auth fields under
+   ADR-0012's boundary rule; its path mapping stays `persistentSettings`.
+2. **Grant identity**: `service`, and sharing is **the feature** — two plugins declaring the same
+   `service` share one grant, preserving v1's spotify/spotify-mixer behaviour that ADR-0009's
+   `(account_id, service)` key had already committed to. Price: `service` is a contract string, so
+   `runConformance` checks it against a service registry.
+3. **What the plugin receives**: `Credentials` is `z.infer` of the declared `fields`;
+   `ctx.auth.get()` takes **no arguments** (a re-passed spec would be a second copy that can
+   disagree — ADR-0012's reasoning for deleting the `component` declaration). Closes the shape
+   ADR-0012 left open.
+4. **Methods**: five, split by flow — `requirements()`/`resolve()` universal, `configure()` for
+   `token`, `begin()`/`complete()` for `oauth2*`. A single `connect()` state machine was rejected:
+   it makes the offline paste path pay for OAuth's complexity, backwards from ADR-0005.
+5. **Refresh**: the provider's, **lazily inside `resolve()`** — one code path, correct when the
+   scheduler is down. Explicitly against the argument ADR-0009 handed us (clear-text `expires_at`
+   makes scheduled refresh cheap); cheap is not a reason to make it the contract. Scheduled pre-warm
+   is a permitted optimisation, not Phase 1. The plugin never refreshes.
+6. **Reconnect surface**: built **host-side**. `resolve()` is not plugin code, so the host already
+   holds the typed failure; `ctx.auth.get()` just rejects and the plugin does nothing. Deliberately
+   *not* `test()`'s plain-data shape — ADR-0010's subclass erasure only binds when the information
+   must cross the boundary, and here it never does.
+
+Plus: **BYO client credentials are operator-level** (`instance_settings`) in Phase 1;
+account-level is deferred to the map's fog, not ruled out. **`Proxy` reserves three things** — no
+provider named in `defineAuth`, `requirements()` may return empty, provider-supplied redirect URI.
+
+### What this hands forward
+
+- **Ticket 007** — unblocked, and narrowed: `ctx.auth.get()` is now a fixed zero-argument typed
+  getter, so builder-time option fetching must not widen it.
+- **Ticket 016** — the auth setup wizard needs a form from `requirements()` + `fields`; whether it
+  shares 016's Zod renderer is left open there rather than decided here.
+- **`runConformance`** gains a service-registry check on `service`.
+- **The Plex port** must not look for `server_url` or the TLS toggle in settings.
+- **New surface the draft lacked**: a service registry, since `service` is now load-bearing.
+
+### Deliberately not decided here
+
+- Whether the wizard shares 016's renderer.
+- Account-level BYO — map fog, revisited if the Spotify platform-access wall (014) bites.
+- Scheduled refresh — deferred, and additive when it returns.

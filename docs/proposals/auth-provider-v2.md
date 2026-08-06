@@ -1,14 +1,14 @@
-# Proposal: AuthProvider v2
+# AuthProvider v2 — the frozen surface
 
-**Status:** Draft — a starting point to grill, not a decided interface.
+**Status:** Frozen 2026-08-06 by map ticket
+[006](../plans/tickets/006-authprovider-surface.md) →
+[ADR-0013](../adr/0013-authprovider-surface-service-grants-and-declared-fields.md).
+Changes only deliberately from here (checkpoint gate, ADR-0005).
 
-Fleshes out ADR-0005 (`AuthProvider` abstraction, BYO by default) into a concrete surface. Written
-because the Phase 0 exit gate requires freezing `AuthProvider`, and unlike the plugin SDK there was
-nothing to freeze — ADR-0005 records a decision, not a type. Freeze via ticket
-[006](../plans/tickets/006-authprovider-surface.md).
-
-Sibling to `plugin-sdk-v2.md`: that one owns what a plugin *declares*; this owns how the
-declaration becomes usable credentials. Checkpoint gate (AGENTS.md) — Cal accepts before it freezes.
+Realises ADR-0005 (`AuthProvider` abstraction, BYO by default) as a concrete surface. Sibling to
+`plugin-sdk-v2.md`: that one owns what a plugin *declares*; this owns how the declaration becomes
+usable credentials. **ADR-0013 carries the reasoning and the rejected alternatives — this file is
+the specification.**
 
 ## Goals
 
@@ -16,84 +16,135 @@ declaration becomes usable credentials. Checkpoint gate (AGENTS.md) — Cal acce
    runs unchanged under BYO, PKCE, and Proxy.
 2. Self-host works **fully offline** with no service ultrasonics operates — the failure that killed
    v1 (`ultrasonics-api`, dead Nov 2022) must be structurally impossible to repeat.
-3. Credentials are stored per account (ADR-0003, ADR-0007) and never reach the core domain logic.
-4. A provider instance is **bound to one account at construction** — ADR-0007 puts identity at the
-   server layer, so no method below takes an account id.
+3. Credentials are stored per account (ADR-0009) and never reach the core domain logic.
+4. A provider instance is **bound to one account at construction** (ADR-0007), so no method below
+   takes an account id.
 5. The hosted tier is an *additive* `Proxy` implementation, not a rewrite (ADR-0002).
 
-## Proposed surface
-
-### What a plugin declares
+## What a plugin declares
 
 ```ts
 const spotifyOAuth = defineAuth({
   service: "spotify",
-  flow: "oauth2-pkce",                  // pkce | oauth2 | apiKey | serverUrl | none
+  flow: "oauth2-pkce",
   scopes: ["playlist-read-private", "playlist-modify-private"],
+});
+
+const plexAuth = defineAuth({
+  service: "plex",
+  flow: "token",
+  fields: z.object({
+    serverUrl: z.string().url(),
+    token: z.string().min(1),
+    verifyTls: z.boolean().default(true),
+  }),
 });
 ```
 
-The flow vocabulary must cover the whole v1 plugin set — `oauth2-pkce` (Spotify), `oauth2` (Deezer),
-`apiKey` (Last.fm), `serverUrl` (Plex: a token plus a base URL), `none` (local files, playlist
-merger, custom file). Whether that list is complete is an open question below.
+**`flow` and `fields` are separate axes** (ADR-0013 §1). `flow` is how the secret is obtained;
+`fields` is what must be collected.
 
-### The provider interface
+| `flow` | Meaning | `fields` | v1 examples |
+|---|---|---|---|
+| `oauth2-pkce` | Interactive redirect, no client secret stored | supplied by the SDK: `{ accessToken }` | Spotify |
+| `oauth2` | Interactive redirect, client secret required | supplied by the SDK: `{ accessToken }` | Deezer |
+| `token` | User pastes a secret | declared by the plugin | Plex, Last.fm |
+| `none` | No credentials at all | — | local files, playlist merger, custom file |
+
+There is no `apiKey` or `serverUrl` flow: both are `token` flows differing only in their fields.
+
+**`service` is the grant identity.** Two plugins declaring the same `service` share one grant, by
+design — `spotify-mixer` declares `service: "spotify"` and inherits Spotify's connection, preserving
+v1 behaviour. `service` is a contract string, not a label: `runConformance` asserts it matches a
+known service-registry entry.
+
+Under ADR-0012's boundary rule — *if you cannot open an authenticated connection without it, it is
+auth, not a setting* — Plex's `serverUrl` and `verifyTls` are auth fields, **not**
+`persistentSettings`. Its path mapping remains `persistentSettings`.
+
+## What a plugin receives
+
+```ts
+async inputs(ctx) {
+  const { serverUrl, token, verifyTls } = await ctx.auth.get();
+}
+```
+
+`ctx.auth.get()` takes no arguments — the plugin already declared its spec. `Credentials` is
+`z.infer` of the declared `fields`, so it is fully typed and plain data by construction (ADR-0010).
+
+**A plugin never refreshes and never retries auth.** `resolve()` returns credentials already valid;
+a plugin that sees a 401 fails the run. If the grant is unrecoverable, `ctx.auth.get()` rejects, the
+plugin catches nothing, and the runner attaches the reconnect action host-side (ADR-0013 §6).
+
+## The provider interface
 
 ```ts
 // Built by the server, already bound to one account (ADR-0007) — the instance *is* the scope,
-// so identity appears nowhere in the method signatures.
+// so identity appears nowhere in these signatures.
 interface AuthProvider {
-  /** Credentials for a run. Refreshes transparently; throws if unrecoverable. */
-  resolve(spec: AuthSpec): Promise<Credentials>;
-
-  /** What the UI must collect from the user before `resolve` can succeed. */
+  /** Universal. What the UI must collect before `resolve` can succeed. May be empty. */
   requirements(spec: AuthSpec): AuthRequirement[];
 
-  /** Drive an interactive flow (OAuth redirect, PKCE exchange). */
+  /** Universal. Credentials for a run; refreshes transparently; rejects if unrecoverable. */
+  resolve(spec: AuthSpec): Promise<Credentials>;
+
+  /** `token` flows. Validate against the declared `fields` and write the encrypted row. */
+  configure(spec: AuthSpec, input: unknown): Promise<void>;
+
+  /** `oauth2*` flows only. */
   begin(spec: AuthSpec): Promise<AuthChallenge>;
   complete(spec: AuthSpec, callback: unknown): Promise<void>;
 }
 ```
 
-`Credentials` is deliberately opaque to the runner and narrow to the plugin — an access token, or
-a token plus base URL for `serverUrl` flows.
+`resolve()` runs **host-side**, behind the `ctx.auth` facade — it is not plugin code and does not
+execute inside the plugin boundary.
 
-**Refresh belongs to the provider, not the plugin.** v1 caught `SpotifyException` inside the plugin
-and renewed once; every plugin re-implemented it. In v2 `resolve()` returns credentials already
-valid, and a plugin that gets a 401 fails the run rather than repairing it.
+**Refresh is the provider's, lazily inside `resolve()`.** A scheduled pre-warm calling the same
+method is a permitted optimisation and is not Phase 1, even though ADR-0009 kept `expires_at` in the
+clear to make one cheap.
 
-### Implementations
+## Storage
+
+Per ADR-0009, unchanged by this freeze:
+
+- One encrypted row per `(account_id, service)` in `credentials` — `secret` under AES-256-GCM,
+  `expires_at` and `key_version` in the clear.
+- **BYO client credentials are operator-level in Phase 1**: one registered developer app per service
+  per instance, in operator-owned `instance_settings`. Account-level BYO
+  (`plugin_settings`) is deferred, not ruled out — no migration needed if it returns.
+
+## Implementations
 
 - **BYO** (default) — the self-hoster registers their own developer app and supplies the client ID
   (and secret only where a service leaves no alternative). No network dependency on ultrasonics.
 - **PKCE** — no client secret stored at all; preferred wherever the service supports it.
-- **Proxy** — credentials brokered by a hosted service. Phase 5. Reserved as a seam here, not built.
+- **Proxy** — credentials brokered by a hosted service. Phase 5, **seam only**.
 
 Which provider is active is deployment configuration. The plugin cannot tell the difference.
 
-### Setup wizard contract
+### What `Proxy` reserves
 
-`requirements()` is what makes BYO painless rather than a support burden: it returns a typed
-description of what to collect (a client ID, a server URL, a token), enough for the UI to render a
-form and link the service's developer-app page. This is the piece v1 never had.
+1. Nothing in `defineAuth` may name a provider — selection is deployment configuration.
+2. `requirements()` may return an **empty list**; the UI must handle "nothing to fill in, just press
+   Connect" rather than treating empty as an error.
+3. The redirect URI in `begin()` is provider-supplied, not derived from the local instance URL.
 
-## Open questions (grill in ticket 006)
+## Setup wizard contract
 
-- Is the **flow vocabulary** complete for the v1 plugin set, and is `serverUrl` (Plex) really an
-  *auth* flow or a plugin setting that has drifted into auth?
-- **Where do BYO client credentials live** — per account, per plugin, or a per-account service-level
-  record shared by spotify and spotify-mixer? v1's two Spotify plugins shared one OAuth grant, and
-  the port must too (`legacy-architecture.md`, port gotchas).
-- **Encryption at rest** — are stored tokens encrypted, with what key, and how is that key supplied
-  in self-host without adding first-run friction? Overlaps ticket 002.
-- **Builder-time resolution** — `resolve()` is written for a run; dynamic option lists need
-  credentials while an applet is being *built*. See ticket 007.
-- **Failure surface** — how does an expired/revoked grant reach the user? A run that fails with
-  "reconnect Spotify" is a UX contract, not just an exception.
+`requirements()` plus the declared `fields` schema is what makes BYO painless rather than a support
+burden: enough for the UI to render a form and link the service's developer-app page. This is the
+piece v1 never had.
+
+Whether that form renders through ticket [016](../plans/tickets/016-settings-form-generation.md)'s
+Zod form generator or its own renderer is **not decided here**.
 
 ## Out of scope
 
 - The `Proxy` implementation and hosted app registrations (ADR-0002, roadmap Phase 5).
-- User accounts, sessions, and login — a different thing that shares the word "auth". See ticket
-  [001](../plans/tickets/001-account-model.md).
+- User accounts, sessions, and login — a different thing that shares the word "auth"
+  (`CONTEXT.md`, "Auth"); settled by ADR-0007 and ADR-0008.
 - Per-plugin auth logic; plugins declare, they do not implement.
+- Builder-time credential resolution for dynamic option lists — ticket
+  [007](../plans/tickets/007-dynamic-options.md).
