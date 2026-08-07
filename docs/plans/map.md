@@ -79,6 +79,12 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   is built host-side. Found that v1's Last.fm key came from the **dead proxy**, so it never had a
   working BYO path.
   → [ADR-0013](../adr/0013-authprovider-surface-service-grants-and-declared-fields.md)
+- [Monorepo conventions](tickets/008-monorepo-conventions.md) — **a filename suffix earns its keep
+  only when something mechanical reads it**, so the taxonomy is rejected and `*.test.ts` is the only
+  suffix; the package `exports` field is the real module boundary. Biome replaces ESLint+Prettier;
+  the cycle gate becomes two gates and loses its rebaseline hatch (a roadmap amendment). Also
+  decided, though not on the ticket: one package per plugin, and no tsconfig project references in
+  Phase 0. → [ADR-0014](../adr/0014-monorepo-conventions-naming-boundaries-and-gates.md)
 
 ## Not yet specified
 
@@ -143,7 +149,6 @@ Cal accepts the resolution before it counts as decided.
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
 | 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005 ✅, 006 ✅ | **frontier** (unblocked) |
-| 008 | [Monorepo conventions](tickets/008-monorepo-conventions.md) | grilling | — | **frontier** |
 | 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |

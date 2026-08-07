@@ -16,8 +16,9 @@ for where the work is heading.
 
 Read only when they apply — deliberately kept out of this file so it stays cheap to load:
 
-- **`docs/build-process.md`** — the cell pipeline, wave sizing and the skill→gate map. Read before
-  building or dispatching code work; skip for planning, decision and docs sessions.
+- **`docs/build-process.md`** — the cell pipeline, wave sizing, the skill→gate map, and the
+  scaffold conventions in operational detail (cycle gates, script composition, the agent permission
+  allowlist). Read before building or dispatching code work; skip for planning and docs sessions.
 - The relevant **`docs/specs/`** entry — the contract for the feature you're building.
 - **`docs/reference/legacy-architecture.md`** — how v1 works. Read when porting from it.
 
@@ -83,7 +84,15 @@ checkpoint. Phase boundaries are always a checkpoint.
   (`colour`, `initialise`, `behaviour`, `synchronise`).
 - **Runtime is Bun**, not Node. Tests use `bun:test`. Frontend is **Vue 3 + Vite**.
 - **TypeScript, strict.** No `any` in shipped code without a comment justifying it.
-- **Monorepo** via Bun workspaces under `packages/` — see ADR-0001 for the package layout.
+- **Monorepo** via Bun workspaces under `packages/` — see ADR-0001 for the package layout, and
+  ADR-0014 for the conventions below. **One package per plugin**: `packages/plugins/<name>/`.
+- **Name files for the concept they hold** (`song-dict.ts`), never for their layer. There is **no**
+  `*.interface.ts` / `*.utils.ts` / `*.config.ts` taxonomy — a suffix is adopted only when a machine
+  reads it, which here means `*.test.ts` alone (ADR-0014).
+- **A package's `exports` field is its public surface**, and the only boundary that is actually
+  enforced. Biome's `noPrivateImports` is on as a helpful default, not a guarantee.
+- **Tests are colocated** as `*.test.ts` beside the code; test *data* lives in `test/fixtures/`.
+- **Biome** is the linter and formatter (not ESLint/Prettier); `.vue` is out of its scope for now.
 - **Validation is Zod.** The song dict, plugin settings, and API boundaries are Zod schemas;
   the TypeScript type is inferred from the schema, never hand-declared alongside it.
 - **The song dict is sacred.** Its shape (`CONTEXT.md`) is the interchange format between every
@@ -94,5 +103,6 @@ checkpoint. Phase boundaries are always a checkpoint.
 The gate below is the target the moment the first package lands; until then it's aspirational.
 
 - `bun run test` — the **full** suite for the package you touched, not just changed files.
-- `bun run check` — lint, format, and type-check (read-only in CI; may mutate locally).
+- `bun run check` — lint, format and type-check, locally and mutating. CI runs `check:ci`, which is
+  the read-only variants plus the import-cycle gates, and fails rather than repairing (ADR-0014).
 - Green is not "done", but red is "don't ask for review".

@@ -58,6 +58,61 @@ Quality is a step that must pass, not a hope.
 | No bugs | `/code-review` | review surfaces an unaddressed correctness issue |
 | No slop | `/improve-codebase-architecture` | it passes tests but degrades the architecture |
 
+## Scaffold conventions — operational detail
+
+The decisions are ADR-0014; this is how they run. The one-liners every session needs are in
+`AGENTS.md` § Conventions — what follows is only read when you are building or wiring CI.
+
+### Scripts
+
+| Script | What it runs | Where |
+|---|---|---|
+| `bun run check` | `biome check --write` + `tsc --noEmit` (+ `vue-tsc` once `packages/web` exists) | Local only; mutating |
+| `bun run check:ci` | `lint:check` · `format:check` · `type-check` · `cycle-check` | CI; read-only, fails rather than repairs |
+| `bun run test` | `bun test` for the package you touched | Both |
+
+CI triggers on PRs **and** direct pushes to `revival`, since sequential work commits straight to the
+branch (`AGENTS.md` § Branching).
+
+### The two import-cycle gates
+
+They have different scopes and neither replaces the other:
+
+- **Inside a package** — Biome's `noImportCycles`, configured `ignoreTypes: true` because type-only
+  imports vanish at runtime and cannot cycle.
+- **Across packages** — a script walking the workspace dependency graph in each `package.json`.
+  Biome's rule is documented as project-scoped and computationally expensive, so it is not trusted to
+  catch `@ultrasonics/core` ↔ `@ultrasonics/server`. Package-level cycles are the ones that hurt
+  most, and this check is instant.
+
+**There is no rebaseline file.** Biome has no baseline mechanism, so a cycle that must stand is
+suppressed at the site:
+
+```ts
+// biome-ignore lint/correctness/noImportCycles: <why this cycle is unavoidable>
+```
+
+The justification sits at the cycle and shows up in the diff, which is the point — an earlier draft
+of the roadmap specified a `cycle-check:update` rebaseline hatch, and ADR-0014 retired it in favour
+of this.
+
+### Agent permission allowlist
+
+`.claude/settings.json` exists to stop agent waves becoming prompt-storms. The **deny** list is the
+half that earns its keep.
+
+- **Allow** — `bun test`, `bun run build`, `bun run check`, the `:check` variants, `bun install`;
+  `git status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; `gh issue view`,
+  `gh issue list`, `gh pr view`, `gh pr list`.
+- **Deny** — `gh issue comment|close|edit|label`, `gh pr comment|merge`, `git push --force`, and any
+  push to `master`.
+
+The denials enforce `docs/agents/issue-tracker.md`'s rule that the 40+ real user issues on the public
+repo are **read-only evidence, never a work queue** — previously prose, now a check. The scope is
+deliberately tight while `revival` might never land: an agent touching a stranger's issue thread is
+unrecoverable, a permission prompt is a keystroke. Expect to loosen it if `revival` becomes the trunk
+and issues move to GitHub properly.
+
 ## Notes
 
 **Why PRs are optional.** `revival` is a working branch, not production, so the ceremony that

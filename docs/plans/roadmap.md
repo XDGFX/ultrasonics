@@ -33,12 +33,18 @@ the outset.
 - **Read-only CI with `:check` variants** — `lint:check` / `format:check` / `type-check` run
   read-only so CI *fails* rather than silently repairing (the mutating `bun run check` stays local).
   Trigger on both PRs and direct pushes to `revival`.
-- **Import-cycle gate** — a `cycle-check` CI step with a `cycle-check:update` rebaseline escape hatch
-  that must be justified in the commit message. A mechanical anti-slop guard on the dep graph.
+- **Import-cycle gate** — a `cycle-check` CI step, a mechanical anti-slop guard on the dep graph.
+  **Amended by [ADR-0014](../adr/0014-monorepo-conventions-naming-boundaries-and-gates.md):** it is
+  *two* gates (Biome `noImportCycles` inside a package, a workspace dep-graph script across them),
+  and the `cycle-check:update` rebaseline hatch this brief originally specified is **retired** —
+  Biome has no baseline, so a standing cycle is justified in a per-site suppression comment instead.
 - **`.claude/settings.json`** — a scoped permission allowlist (`bun test`/`build`/`check`, `git`,
-  `gh`) to cut permission prompts during agent waves.
-- **Conventions** — the file-suffix taxonomy, linter and test-layout calls come from map ticket
-  [008](tickets/008-monorepo-conventions.md), not from the scaffold cell improvising.
+  read-only `gh`) to cut permission prompts during agent waves, plus the deny entries that make
+  GitHub issues read-only to agents. Both listed in `../build-process.md`.
+- **Conventions** — settled by ticket [008](tickets/008-monorepo-conventions.md) →
+  [ADR-0014](../adr/0014-monorepo-conventions-naming-boundaries-and-gates.md): no file-suffix
+  taxonomy, Biome over ESLint+Prettier, colocated tests, one package per plugin, shared base tsconfig
+  with no project references. The scaffold cell implements these; it does not revisit them.
 
 **The core ports** — song dict → Zod with tests, and the fuzzymatch **golden corpus generated from a
 runnable v1 checkout** (ADR-0006) so the port is pinned to v1's output before a line of it is
