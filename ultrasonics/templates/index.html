@@ -90,7 +90,9 @@
 
         <div class="section has-text-centered">
             <p>
-                <strong>ultrasonics</strong> by <a class="p1" href="https://github.com/XDGFX/ultrasonics">XDGFX</a>.
+                <strong>ultrasonics</strong>
+                <a class="{{ "p1" if version == new_version else "has-text-danger" }}" title="Newest Version: {{ new_version }}" href="https://github.com/XDGFX/ultrasonics/releases">{{ version }}</a>
+                by <a class="p1" href="https://github.com/XDGFX/ultrasonics">XDGFX</a>.
                 do more with your music.
             </p>
         </div>

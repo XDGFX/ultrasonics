@@ -9,14 +9,19 @@ XDGFX, 2020
 
 import os
 
-from ultrasonics import database, plugins, scheduler, webapp
+from ultrasonics import updater, database, plugins, scheduler, webapp
 
 _ultrasonics = {
     "version": "1.0.0-rc.1",
     "config_dir": os.path.join(os.path.dirname(__file__), "config")
 }
 
-database.Core().connect()
-plugins.plugin_gather()
-scheduler.scheduler_start()
-webapp.server_start()
+def start():
+    updater.start(_ultrasonics["version"])
+    database.Core().connect()
+    plugins.plugin_gather()
+    scheduler.scheduler_start()
+    webapp.server_start()
+
+if __name__ == "__main__":
+    start()
