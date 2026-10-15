@@ -1,0 +1,8 @@
+{
+	"name": "alpha",
+	"version": "0.0.0",
+	"dependencies": {
+		"beta-js": "1.0.0",
+		"@scope/beta": "1.0.0"
+	}
+}

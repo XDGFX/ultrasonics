@@ -1,0 +1,7 @@
+{
+	"name": "gamma",
+	"version": "0.0.0",
+	"dependencies": {
+		"delta": "workspace:*"
+	}
+}

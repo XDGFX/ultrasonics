@@ -1,0 +1,7 @@
+{
+	"name": "alpha",
+	"version": "0.0.0",
+	"dependencies": {
+		"beta": "workspace:*"
+	}
+}

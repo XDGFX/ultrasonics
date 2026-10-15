@@ -9,15 +9,17 @@
 	],
 	"scripts": {
 		"check": "biome check --write && bun run type-check",
-		"check:ci": "bun run lint:check && bun run format:check && bun run type-check",
+		"check:ci": "bun run lint:check && bun run format:check && bun run type-check && bun run cycle-check",
+		"cycle-check": "bun scripts/cycle-check.ts",
 		"lint:check": "biome lint",
 		"format:check": "biome format",
 		"type-check": "tsc --noEmit -p tsconfig.json",
-		"test": "bun test --pass-with-no-tests"
+		"test": "bun test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",
 		"@types/bun": "1.4.2",
-		"typescript": "7.0.2"
+		"typescript": "7.0.2",
+		"zod": "4.6.7"
 	}
 }
