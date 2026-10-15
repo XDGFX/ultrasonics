@@ -85,6 +85,10 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   the cycle gate becomes two gates and loses its rebaseline hatch (a roadmap amendment). Also
   decided, though not on the ticket: one package per plugin, and no tsconfig project references in
   Phase 0. → [ADR-0014](../adr/0014-monorepo-conventions-naming-boundaries-and-gates.md)
+- [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) — **deferred past
+  Phase 1**, static settings only; v1's sole dynamic list was Plex's library sections and it never
+  had a playlist picker. Plex takes an optional free-text `library` (empty = the only music library;
+  title or id), and an unresolvable one fails the run listing the server's libraries. No ADR.
 
 ## Not yet specified
 
@@ -106,6 +110,11 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   contract (`requirements()` plus the declared `fields` schema), but not a renderer. It may collapse
   into [016](tickets/016-settings-form-generation.md) rather than becoming its own ticket — 016
   should decide that when it is worked, not before.
+- **Dynamic option lists (pickers)** — "pick from your playlists" instead of a regex or title field.
+  Deferred by [007](tickets/007-dynamic-options.md): wanted as a v2 improvement, not before parity.
+  Known shape: an optional, additive hook keyed by component and field (`instanceSettings` stays
+  static, ADR-0012), which needs a second `PluginExecutor` entry point, a builder context for
+  `resolve()`, a rule for when credentials are missing, and caching. Graduates once parity is reached.
 - **Notifications** — whether ultrasonics ever tells a user something happened, by any channel. The
   **outbound webhook on sync completion** belongs here (deferred by ADR-0011, and 014 found it has
   the *better* demand signal of the two webhook directions), as does email, below.
@@ -148,7 +157,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 007 | [Builder-time credentials for dynamic options](tickets/007-dynamic-options.md) | grilling | 005 ✅, 006 ✅ | **frontier** (unblocked) |
 | 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |

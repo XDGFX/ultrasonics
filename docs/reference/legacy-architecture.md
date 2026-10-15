@@ -165,7 +165,9 @@ hard.**
 Built on **PlexAPI**; no path translation (PlexAPI resolves locations). Token + server URL. Matches
 playlists by **title**; searches preferred music library first then falls back, scoring with
 `fuzzymatch.similarity` against instance `fuzzy_ratio`. Update mode diffs items; else appends /
-creates. Builds song dict with `id={"plex": track.key}`, `location`, `duration`. **Prefer this over
+creates. Builds song dict with `id={"plex": track.key}`, `location`, `duration`. Like legacy
+`plex`, its `builder()` fetches the server's library sections live on every configure-page load —
+v1's only dynamic option list (v2 replaces it with a free-text `library`; map ticket 007). **Prefer this over
 legacy `plex` for the port. Complexity: moderate.**
 
 ### local playlists — inputs, outputs · playlists

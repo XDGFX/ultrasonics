@@ -2,6 +2,9 @@
 
 **Status:** Open · **Type:** grilling · **Blocked by:** 002 ✅ · **Blocks:** — · **Claimed by:** —
 
+> **From 007 (2026-10-15).** Plex's v2 `library` setting accepts a bare section id, so v1's
+> `section_id` (stored as `"Title [id]"`) can be carried across by extracting the id.
+
 ## Question
 
 When an existing v1 user upgrades, what exactly comes across from their old SQLite database, and
