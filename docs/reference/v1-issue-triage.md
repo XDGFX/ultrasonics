@@ -4,8 +4,8 @@ Every open issue on [`XDGFX/ultrasonics`](https://github.com/XDGFX/ultrasonics/i
 **2026-10-15**), read in full with comments and sorted by what it means for the 2.0 rewrite. Map
 ticket [009](../plans/tickets/009-issue-triage.md) resolves here. The backlog is the only record of
 what real users hit, so the deliverable is the **must still work** list below. Labels and closes come
-second. **Nothing here has been applied to GitHub yet:** the labels, comments and closes are drafted
-for Cal to run by hand.
+second. **Applied 2026-10-15** at Cal's instruction: all 37 issues labelled, and the 14 issues listed below
+closed with the comments drafted here. 23 remain open.
 
 [I] = an issue Cal opened himself as a v1 to-do. Every other issue came from a user. The open PRs
 were skimmed too, and two of them matter: [#35](https://github.com/XDGFX/ultrasonics/pull/35) has
@@ -216,10 +216,10 @@ for n in 39 54; do gh issue edit $n -R $R --add-label duplicate; done
 
 ```zsh
 #!/usr/bin/env zsh
-# Closes the Dies-with-v1 issues and the #54 duplicate. Edit the bodies before running.
+# Closes the Dies-with-v1 issues and the #54 duplicate. Run 2026-10-15.
 set -euo pipefail
 R=XDGFX/ultrasonics
-D=/tmp/ultrasonics-close   # put default.md, proxy.md, done.md, empty.md, toolchain.md, flask.md, own.md, dup.md here
+D=./close   # default.md, proxy.md, done.md, empty.md, toolchain.md, flask.md, own.md, dup.md
 
 for n in 30 31 48 58; do gh issue close $n -R $R --reason 'not planned' --comment "$(<$D/default.md)"; done
 for n in 39 65;       do gh issue close $n -R $R --reason 'not planned' --comment "$(<$D/toolchain.md)"; done
@@ -228,7 +228,7 @@ gh issue close 66 -R $R --reason 'not planned' --comment "$(<$D/flask.md)"
 gh issue close 8  -R $R --reason completed     --comment "$(<$D/done.md)"
 gh issue close 50 -R $R --reason 'not planned' --comment "$(<$D/empty.md)"
 for n in 4 7 13;      do gh issue close $n -R $R --reason 'not planned' --comment "$(<$D/own.md)"; done
-gh issue close 54 -R $R --reason 'not planned' --comment "$(<$D/dup.md)"
+gh issue close 54 -R $R --reason duplicate --comment "$(<$D/dup.md)"
 ```
 
 Don't close Preserve, Phase 3 or Uncertain issues now. They are the Phase 4 re-engagement list:

@@ -1,6 +1,6 @@
 # 009 — Triage the v1 issue backlog
 
-**Status:** ✅ resolved 2026-10-15 (drafts await Cal) · **Type:** task (AFK) · **Blocked by:** — · **Blocks:** 017 · **Claimed by:** Claude (wayfinder session 2026-10-15)
+**Status:** ✅ resolved 2026-10-15 (labels and closes applied at Cal's instruction) · **Type:** task (AFK) · **Blocked by:** — · **Blocks:** 017 · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 ## Question
 
@@ -41,8 +41,8 @@ user-visible** — closing an issue is outward-facing.
 All 37 open issues are triaged in
 [`v1-issue-triage.md`](../../reference/v1-issue-triage.md): 13 die with v1, 16 to preserve, 4 are
 Phase 3 features and 4 are uncertain (#12, #14, #32, #41, which are Cal's call). Duplicates: #54 of
-#47, #39 of #65. **Nothing has been applied to GitHub.** The labels script and the close comments
-are drafted there for Cal to edit and run.
+#47, #39 of #65. At Cal's instruction, the labels are applied to all 37 issues and the 14
+dies-with-v1 and duplicate issues are closed with comments. 23 remain open.
 
 **The deliverable is the "Must still work in v2" list**, eleven behaviours written to be lifted into
 specs' acceptance criteria. The headline ones: an empty result is not a failure (#36), one bad song

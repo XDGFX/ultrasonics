@@ -8,9 +8,8 @@
 `docs/reference/v1-issue-triage.md`: 13 die with v1, 16 to preserve, 4 are Phase 3 features and 4
 are uncertain. It also lists eleven must-still-work behaviours to lift into specs.
 
-- **Nothing was applied to GitHub.** The labels script and the close comments are drafts for Cal to
-  run. The close script reads its comment bodies from `/tmp/ultrasonics-close/`, which has to be
-  created first.
+- **Applied to GitHub at Cal's instruction:** all 37 issues labelled, and 14 closed with comments
+  (13 dies-with-v1, plus #54 as a duplicate of #47). 23 remain open.
 - New ticket **017 ⛔**: does an output return a run report? Outputs return `void`, so "matched 0
   of 50" has nowhere to go.
 - Notes added to 011 (reverse proxies and subpaths), 013 (unknown plugins, a self-hosted

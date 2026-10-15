@@ -91,8 +91,8 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   title or id), and an unresolvable one fails the run listing the server's libraries. No ADR.
 - [Triage the v1 issue backlog](tickets/009-issue-triage.md): all 37 open issues are bucketed (13
   die with v1, 16 to preserve, 4 Phase 3, 4 uncertain), along with eleven **must-still-work
-  behaviours** to lift into specs. Labels and close comments are drafted but not applied, because
-  Cal applies anything user-visible. Surfaced 017.
+  behaviours** to lift into specs. Labels are applied, and the 14 dead issues
+  are closed with comments. Surfaced 017.
   → [triage](../reference/v1-issue-triage.md)
 
 ## Not yet specified
