@@ -1,6 +1,6 @@
 # Wayfinder map — Phase 0 contracts
 
-**Status:** One open ticket (018). ADRs 0007–0019 were accepted by Cal on 2026-10-15. Counts and the frontier are not restated here; read them off the
+**Status:** No open tickets. ADRs 0007–0020 are accepted; ADR-0021 (from 018) awaits Cal at the checkpoint. Counts and the frontier are not restated here; read them off the
 [ticket table](#tickets) below, which is the only copy.
 
 The decision map. `roadmap.md` says *what* to build and when; `../../AGENTS.md` says *how* work is
@@ -129,20 +129,17 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   by position and counts derived by the runner. A playlist's failure is data; a throw fails the
   whole output. Runs end `succeeded | partial | failed | interrupted`, stored in a JSON `results`
   column. Outputs only. → [ADR-0020](../adr/0020-outputs-return-a-result.md)
+- [Does the runner validate the song dict at run time?](tickets/018-runtime-song-dict-validation.md):
+  yes, what every input and modifier returns, per plugin. Unknown keys are stripped with a warning;
+  a bad song or playlist is dropped, the plugin blamed, and the rejection recorded in `results`. Any
+  rejection caps the run at `partial`. Conformance runs the same check strictly, as its sixth
+  invariant, which clears the conformance fog. About 25 ms for 50,000 songs.
+  → [ADR-0021](../adr/0021-the-runner-validates-the-song-dict.md) (Proposed)
 
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket. Graduates as the frontier advances.
 
-- **What the conformance test actually asserts** — the objective "is this plugin ported" bar
-  (`CONTEXT.md`). **Partly cleared, not gone:** ADR-0012 §8 fixed three machine-checked invariants
-  (run/`instanceSettings` key parity, plus ADR-0010's `structuredClone` and lost-methods checks), and
-  `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
-  sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
-  practice. (The renderable subset is now a fourth invariant, by ADR-0019 §3, and output
-  completeness a fifth, by ADR-0020 §2.) Whether the runner also parses the song dict at run time
-  has graduated to [018](tickets/018-runtime-song-dict-validation.md), and its answer may clear
-  the rest of this.
 - **Account-level BYO client credentials.** ADR-0013 §7 ships operator-level only for Phase 1 (one
   registered app per service per instance, in `instance_settings`). Account-level is **deferred, not
   ruled out** — `plugin_settings` already exists so no migration is needed, and it is the natural
@@ -218,7 +215,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 018 | [Does the runner validate the song dict at run time?](tickets/018-runtime-song-dict-validation.md) | grilling ⛔ | — | Open |
+| — | *No open tickets.* | | | |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 

@@ -100,8 +100,9 @@ type OutputRunContext<P, I>   = BaseRunContext<P, I> & { songs: SongDict };
 
 `songs` exists **only** where it is meaningful. Inputs return a `SongDict`, modifiers return a
 `SongDict`, outputs return an `OutputResult` (one entry per playlist: `written`, `skipped` or
-`failed`, with unmatched songs by position; ADR-0020) — enforced by the handler's type, not by a
-runtime check in the runner.
+`failed`, with unmatched songs by position; ADR-0020) — enforced by the handler's type. The runner
+also parses every returned `SongDict` at run time, because no type sees what a service sends: bad
+songs and playlists are rejected and recorded, and unknown keys stripped (ADR-0021).
 
 ### `test()`
 
@@ -175,8 +176,9 @@ ported (Phase 2 gate): valid handshake shape; `persistentSettings`/`instanceSett
 reject known-bad input; inputs return a schema-valid song dict; outputs accept one without mutating
 it; declared `auth` resolves against a stub provider. This is the objective "is it done" bar.
 
-Five checks are **machine-checked invariants**, not conventions — the first from this freeze, the
-next two from ADR-0010 §5, the fourth from ADR-0019 §3, the last from ADR-0020 §2:
+Six checks are **machine-checked invariants**, not conventions — the first from this freeze, the
+next two from ADR-0010 §5, the fourth from ADR-0019 §3, the fifth from ADR-0020 §2, the last from
+ADR-0021 §7:
 
 - **Key parity** — `Object.keys(run)` must equal `Object.keys(instanceSettings)`. Catches a handler
   that would never be dispatched, and a settings schema for a component the plugin does not
@@ -190,8 +192,9 @@ next two from ADR-0010 §5, the fourth from ADR-0019 §3, the last from ADR-0020
   uses only the subset ADR-0019 §3 allows; a failure names the offending path.
 - **Output completeness** — an output's result names every playlist of a fixture song dict exactly
   once, by position, with every unmatched position in range.
-
-What the suite asserts beyond this is still partly open — see `map.md`, **Not yet specified**.
+- **A valid song dict** — the runtime song-dict validator, exported beside the `SongDict` schema,
+  run in strict mode over every input's and modifier's fixture output, finds no issue: no unknown
+  key, no rejected song, no rejected playlist.
 
 ## How this surface was settled
 

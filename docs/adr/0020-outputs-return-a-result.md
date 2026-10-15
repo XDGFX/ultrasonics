@@ -5,6 +5,8 @@
 **Builds on:** ADR-0010 (plain-data return values, `RunResult`), ADR-0018 (`runs` and its trigger)
 **Amends:** ADR-0012 §2, where `outputs(ctx)` returns `Promise<void>`; ADR-0009's `runs` row, which
 gains a `results` column and a defined set of outcomes; `docs/proposals/plugin-sdk-v2.md`.
+**Amended by:** [ADR-0021](0021-the-runner-validates-the-song-dict.md) §6 — a rejected song or
+playlist caps the run at `partial`, or `failed` if nothing was written
 **Ticket:** [`docs/plans/tickets/017-output-run-report.md`](../plans/tickets/017-output-run-report.md)
 
 ## Context

@@ -63,6 +63,11 @@ found on the service). A failure of one playlist belongs here; only a failure of
 an error (ADR-0020).
 _Avoid_: "not found" for unmatched songs.
 
+**Rejection** — A song or playlist the runner drops because what a plugin returned breaks the song
+dict's shape. It is always the plugin's fault, and it is recorded on the run (ADR-0021). Distinct
+from a **skip**, which a plugin chooses.
+_Avoid_: calling a rejection a skip.
+
 **Trigger** — What decides *when* an applet runs: a **schedule**, and/or an authenticated **inbound
 webhook**. Not part of the song-dict flow. **A trigger is not a plugin and not a Component** — it is
 applet configuration owned by the server (ADR-0011). Any trigger firing runs the applet (**OR**,
@@ -80,8 +85,8 @@ _Avoid_: "cron", "timer" — a schedule is not a cron expression.
 
 **Run** — One execution of an applet, recorded with what triggered it (`schedule`, `webhook` or
 `manual`) and how it ended: **succeeded**, **partial** (something was written, but not everything
-the outputs attempted), or **failed** (nothing was written). Unmatched songs never change how a run
-ends. A run cut short by the server stopping is **interrupted**, not failed, and is not rerun.
+the outputs attempted, or something was rejected), or **failed** (nothing was written). Unmatched
+songs never change how a run ends. A run cut short by the server stopping is **interrupted**, not failed, and is not rerun.
 
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists

@@ -1,7 +1,7 @@
 # 018 — Does the runner validate the song dict at run time?
 
-**Status:** Open · **Type:** grilling ⛔ (plugin SDK contract) · **Blocked by:** — · **Blocks:** — ·
-**Claimed by:** —
+**Status:** resolved · **Type:** grilling ⛔ (plugin SDK contract) · **Blocked by:** — · **Blocks:** — ·
+**Claimed by:** Claude (session 2026-10-15, with Cal)
 
 ## Question
 
@@ -36,3 +36,24 @@ decide it before the slice is built. Related decisions to read, not re-litigate:
 - An ADR. This is a checkpoint gate, so Cal accepts it.
 
 ## Answer
+
+Agreed with Cal on 2026-10-15 across two grilling rounds. The decision is
+[ADR-0021](../../adr/0021-the-runner-validates-the-song-dict.md), Proposed until Cal accepts it at
+the checkpoint. In short:
+
+1. **Yes.** The runner parses what every input and modifier returns, per plugin and before
+   merging. Outputs are not parsed again.
+2. **Lenient at run time, strict in conformance.** Unknown keys are stripped with one warning per
+   plugin per run; `runConformance` rejects them.
+3. **Drop only what failed:** a bad song, a bad playlist, or, if the whole return is malformed, the
+   plugin is treated as having thrown.
+4. **The plugin is blamed,** named with its component; sanitising service data is its job.
+5. **Recorded by the runner** as `rejected` entries in `runs.results`, capped at 50 in detail.
+6. **Outcome:** any rejection caps the run at `partial`, or `failed` if nothing was written
+   (amends ADR-0020 §5).
+7. **Conformance** runs the same validator strictly over fixture outputs: the sixth invariant. This
+   clears the conformance fog on the map.
+
+Cost was measured, not guessed: about 25 ms for 50,000 songs with Zod 4, against about 100 ms for
+`structuredClone` of the same dict. Whether `title` is `.min(1)` is shape, left to the song-dict
+port.
