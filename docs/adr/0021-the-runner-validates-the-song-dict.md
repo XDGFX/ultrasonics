@@ -1,6 +1,6 @@
 # ADR-0021 — The runner validates the song dict at each plugin boundary
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-15
 **Builds on:** ADR-0006 (the song dict's shape, as a Zod schema), ADR-0010 (the plain-data
 boundary), ADR-0020 (run outcomes and the `results` column)

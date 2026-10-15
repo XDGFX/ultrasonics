@@ -1,6 +1,6 @@
 # Wayfinder map — Phase 0 contracts
 
-**Status:** No open tickets. ADRs 0007–0020 are accepted; ADR-0021 (from 018) awaits Cal at the checkpoint. Counts and the frontier are not restated here; read them off the
+**Status:** Destination reached — confirmed by Cal on 2026-10-15. No open tickets; ADRs 0007–0021 are accepted. Counts and the frontier are not restated here; read them off the
 [ticket table](#tickets) below, which is the only copy.
 
 The decision map. `roadmap.md` says *what* to build and when; `../../AGENTS.md` says *how* work is
@@ -134,7 +134,7 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   a bad song or playlist is dropped, the plugin blamed, and the rejection recorded in `results`. Any
   rejection caps the run at `partial`. Conformance runs the same check strictly, as its sixth
   invariant, which clears the conformance fog. About 25 ms for 50,000 songs.
-  → [ADR-0021](../adr/0021-the-runner-validates-the-song-dict.md) (Proposed)
+  → [ADR-0021](../adr/0021-the-runner-validates-the-song-dict.md)
 
 ## Not yet specified
 

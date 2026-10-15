@@ -5,7 +5,7 @@
 ## Done
 
 **Ticket 018 resolved.** Cal agreed across two grilling rounds. The decision is
-[ADR-0021](../adr/0021-the-runner-validates-the-song-dict.md), Proposed.
+[ADR-0021](../adr/0021-the-runner-validates-the-song-dict.md), accepted by Cal at the checkpoint.
 
 - The runner parses what every input and modifier returns, per plugin. Unknown keys are stripped
   with a warning; bad songs and playlists are rejected, blamed on the plugin, and recorded in
@@ -17,5 +17,6 @@
 
 ## Next
 
-The map has no open tickets. Cal to accept ADR-0021 at the checkpoint, then confirm Phase 0's
-destination is reached.
+Cal confirmed the map's destination is reached: every contract Phase 1 needs is frozen. Phase 0
+itself stays open until its execution lands (scaffold and CI, the song-dict Zod port, the fuzzymatch
+golden corpus), per `roadmap.md`.

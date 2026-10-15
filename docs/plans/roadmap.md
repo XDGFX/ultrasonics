@@ -13,7 +13,7 @@ land; it does not make them.
 ---
 
 ## Phase 0 — Foundations
-**Status:** in progress (docs) · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
+**Status:** in progress — contracts frozen (`map.md` empty, 2026-10-15); scaffold and core ports remain · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the

@@ -38,7 +38,7 @@ decide it before the slice is built. Related decisions to read, not re-litigate:
 ## Answer
 
 Agreed with Cal on 2026-10-15 across two grilling rounds. The decision is
-[ADR-0021](../../adr/0021-the-runner-validates-the-song-dict.md), Proposed until Cal accepts it at
+[ADR-0021](../../adr/0021-the-runner-validates-the-song-dict.md), accepted by Cal at
 the checkpoint. In short:
 
 1. **Yes.** The runner parses what every input and modifier returns, per plugin and before
