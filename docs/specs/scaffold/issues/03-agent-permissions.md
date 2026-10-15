@@ -15,3 +15,7 @@
 - [ ] Deny entries cover flag-reordered and option-prefixed variants wherever the settings syntax
       allows it.
 - [ ] `.claude/worktrees/` stays out of git.
+
+## Comments
+
+- 2026-10-15 — Resolved on `revival`; review fixes in 40f52b9. Open items for Cal are in `docs/handoffs/2026-10-15-scaffold.md`.

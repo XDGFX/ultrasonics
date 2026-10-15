@@ -22,3 +22,7 @@ The spec's `/verify` pass (Testing Decisions, "The config gates are proved by `/
       `AGENTS.md`, detail in `docs/build-process.md`).
 - [ ] A `docs/handoffs/` entry records the pinned Bun version and the verify observations, and a
       `docs/sessions/` entry is written.
+
+## Comments
+
+- 2026-10-15 — Resolved on `revival`; review fixes in 40f52b9. Open items for Cal are in `docs/handoffs/2026-10-15-scaffold.md`.

@@ -20,3 +20,7 @@ Testing Decisions. Fixtures live under the root tooling's `test/fixtures/`.
 - [ ] `bun run cycle-check` passes on the real repo, and `check:ci` runs it.
 - [ ] Fixture workspaces are not picked up by the real workspace, Biome's cycle rule or tsc in a
       way that turns the gate red.
+
+## Comments
+
+- 2026-10-15 — Resolved on `revival`; review fixes in 40f52b9. Open items for Cal are in `docs/handoffs/2026-10-15-scaffold.md`.

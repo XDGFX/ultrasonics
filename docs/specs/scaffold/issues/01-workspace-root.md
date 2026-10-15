@@ -24,3 +24,7 @@ TypeScript, Biome, Scripts) and ADR-0014. The v1 tree is untouched and excluded 
       or renamed in the current Biome release, stop and escalate (spec, Further Notes).
 - [ ] `.vue` and every v1 path are outside Biome's and tsc's scope.
 - [ ] Nothing under the v1 tree is modified.
+
+## Comments
+
+- 2026-10-15 — Resolved on `revival`; review fixes in 40f52b9. Open items for Cal are in `docs/handoffs/2026-10-15-scaffold.md`.
