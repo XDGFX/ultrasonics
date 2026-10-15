@@ -99,6 +99,12 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   required and replaces `DISABLE_AUTH`. The account is created at boot in every mode. A trusted
   proxy is listed by CIDR and authorises without identifying. Exposure gets a warning, not a block.
   One account per install. → [ADR-0015](../adr/0015-self-host-first-run-and-the-auth-source-switch.md)
+- [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md): no
+  auto-linking, ever. Settings is the only way to add an identity. A sign-in whose verified email
+  collides is blocked, with a hint naming the original provider. No merges, and never zero
+  identities. Link and unlink need a sign-in within the last 10 minutes. Adds
+  `federated_identities.email` and `sessions.authenticated_at`.
+  → [ADR-0016](../adr/0016-identity-linking-and-the-collision-rule.md)
 
 ## Not yet specified
 
@@ -134,12 +140,14 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   `resolve()`, a rule for when credentials are missing, and caching. Graduates once parity is reached.
 - **Notifications** — whether ultrasonics ever tells a user something happened, by any channel. The
   **outbound webhook on sync completion** belongs here (deferred by ADR-0011, and 014 found it has
-  the *better* demand signal of the two webhook directions), as does email, below.
+  the *better* demand signal of the two webhook directions), as does email, below. So does the
+  **"a new sign-in method was added" alert**, the standard takeover alarm that ADR-0016 left
+  without a channel.
 - **Which providers follow Google, and whether a *service* provider is ever one of them.** ADR-0008
   ships Google alone and fixes the rule that a login identity is never a service connection (seeding
   allowed, dependency forbidden) — but whether Spotify in particular is offered as a login at all is
   a product call Cal was content to defer, and the shortlist beyond Google is unsettled. The linking
-  *rule* is already sharp and ticketed (012); this is the provider slate, which is not.
+  *rule* is decided (ADR-0016); this is the provider slate, which is not.
 - **Whether ultrasonics ever emails users.** ADR-0008 removes email from the login path entirely, but
   sync-failure and expired-credential notifications are a plausible want. If it returns it is a new
   dependency on a non-critical path — not a reopening of the auth decision.
@@ -174,7 +182,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
 | 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |
 | 016 | [Zod → settings-form generation](tickets/016-settings-form-generation.md) | grilling | 005 ✅ | **frontier** (graduated) |

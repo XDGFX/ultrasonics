@@ -109,9 +109,9 @@ more in a repo meant for autonomous agents than in a human-only one.
 
 | Table | Scoped | Notes |
 |---|---|---|
-| `accounts` | — (is the scope) | `id`, `created_at`. No credential columns, ever (ADR-0008). Email deliberately absent — ticket 012 owns it. |
-| `sessions` | `account_id` | `token_hash` (unique), `created_at`, `last_seen_at`, `expires_at` **nullable** |
-| `federated_identities` | `account_id` | `provider`, `subject_id`, unique on `(provider, subject_id)` |
+| `accounts` | — (is the scope) | `id`, `created_at`. No credential columns, ever (ADR-0008). Email deliberately absent: provider email lives on the identity (ADR-0016). |
+| `sessions` | `account_id` | `token_hash` (unique), `created_at`, `authenticated_at` (ADR-0016), `last_seen_at`, `expires_at` **nullable** |
+| `federated_identities` | `account_id` | `provider`, `subject_id`, unique on `(provider, subject_id)`; `email` nullable, verified only, non-unique index (ADR-0016) |
 | `applets` | ✅ | `name`, `enabled`, `definition` (JSON — the plugin chain, Zod-validated), timestamps |
 | `credentials` | ✅ | `service`, `expires_at`, `key_version`, `secret` (encrypted blob) — §6 |
 | `plugin_settings` | ✅ | Per-account persistent plugin settings (JSON) |

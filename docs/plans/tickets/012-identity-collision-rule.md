@@ -1,6 +1,6 @@
 # 012 — The identity-collision rule for provider #2
 
-**Status:** Open · **Type:** grilling · **Blocked by:** — · **Blocks:** — · **Claimed by:** —
+**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0016 awaits acceptance) · **Type:** grilling · **Blocked by:** — · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 ## Question
 
@@ -47,3 +47,32 @@ behaviours are possible and none is obviously right:
 Not urgent: launch is Google-only and the collision is impossible until a second provider exists.
 But it **must** be settled *before* provider #2 ships, not during — the wrong default here is a
 security bug that looks like a convenience feature.
+
+## Answer
+
+Agreed with Cal on 2026-10-15. The decision is
+[ADR-0016](../../adr/0016-identity-linking-and-the-collision-rule.md), and the reasoning is there
+too. In short:
+
+1. **Settings is the only way to add an identity.** Sign-in either resolves an identity to the
+   account that owns it or creates a new account. It never attaches an identity to an existing one.
+2. **A collision at sign-in is blocked, with a hint.** An unknown identity whose verified email
+   matches an existing identity is refused, and no account is created. The message names the
+   original provider and points to linking from settings. There is no auto-linking even when the
+   email is verified, because "verified by the provider" says nothing about who holds the address
+   today.
+3. **Unlinking is refused if it would leave zero identities**, enforced by the server. It never
+   revokes sessions, because a session belongs to the account. You may remove the identity you
+   signed in with, as long as another one remains.
+4. **No merges, no moves.** Linking an identity owned by another account is refused.
+5. **`federated_identities.email`**: nullable, verified addresses only (unverified ones would let an
+   attacker squat an address), lowercased with no further normalisation, refreshed on every sign-in,
+   non-unique index. It is read only by the collision check.
+6. **Link and unlink both need a sign-in within the last 10 minutes.** This adds
+   `sessions.authenticated_at`.
+
+**Handed to 002 (already closed):** both columns are written into ADR-0009 §5's migration table as an
+amendment.
+
+**Left as fog:** an alert when an identity is linked is the standard takeover alarm, but it needs a
+channel to reach the user. It joins the map's Notifications item.

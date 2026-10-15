@@ -175,6 +175,10 @@ Google at launch — so ultrasonics stores no login credential at all: no passwo
 token, no email dependency. An account may hold several identities by construction, though launch
 behaviour is one.
 
+**Linking** — Attaching a further login identity to an existing account. It happens **only** from
+settings, by a user who has signed in recently. Signing in never links, even when the new provider
+reports the same email; a collision is refused with a pointer to the original provider (ADR-0016).
+
 **Login identity ≠ service connection** — The two must never be the same record (ADR-0008). Spotify
 can occupy both roles — a service ultrasonics fetches playlists from *and* a possible sign-in
 provider — so the rule is explicit: signing in with a service provider **may offer to seed** a
