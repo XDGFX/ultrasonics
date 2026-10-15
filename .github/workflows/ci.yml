@@ -1,0 +1,40 @@
+name: CI
+
+# The v1 workflows beside this one trigger only on master; this one gates the revival.
+on:
+  pull_request:
+  push:
+    branches: [revival]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Gate
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      # Reads `packageManager` from package.json, the single Bun pin local runs also use.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+
+      - name: Install (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint:check
+
+      - name: Format
+        run: bun run format:check
+
+      - name: Type-check
+        run: bun run type-check
+
+      - name: Import cycles
+        run: bun run cycle-check
+
+      - name: Test
+        run: bun run test
