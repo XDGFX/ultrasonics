@@ -1,0 +1,28 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": ["packages/**", "scripts/**", "*.json", "!**/*.vue", "!**/test/fixtures"]
+	},
+	"formatter": {
+		"lineWidth": 100
+	},
+	"linter": {
+		"rules": {
+			"preset": "recommended",
+			"correctness": {
+				"noPrivateImports": "error"
+			},
+			"suspicious": {
+				"noImportCycles": {
+					"level": "error",
+					"options": { "ignoreTypes": true }
+				}
+			}
+		}
+	}
+}

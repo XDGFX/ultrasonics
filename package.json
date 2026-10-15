@@ -1,0 +1,23 @@
+{
+	"name": "ultrasonics",
+	"private": true,
+	"type": "module",
+	"packageManager": "bun@1.4.2",
+	"workspaces": [
+		"packages/*",
+		"packages/plugins/*"
+	],
+	"scripts": {
+		"check": "biome check --write && bun run type-check",
+		"check:ci": "bun run lint:check && bun run format:check && bun run type-check",
+		"lint:check": "biome lint",
+		"format:check": "biome format",
+		"type-check": "tsc --noEmit -p tsconfig.json",
+		"test": "bun test --pass-with-no-tests"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
+		"@types/bun": "1.4.2",
+		"typescript": "7.0.2"
+	}
+}
