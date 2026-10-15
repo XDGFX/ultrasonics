@@ -98,9 +98,7 @@ checkpoint. Phase boundaries are always a checkpoint.
 - **The song dict is sacred.** Its shape (`CONTEXT.md`) is the interchange format between every
   plugin. Changing it is an ADR-level decision, never an incidental one.
 
-## Quality gate (once code exists)
-
-The gate below is the target the moment the first package lands; until then it's aspirational.
+## Quality gate
 
 - `bun run test` — the **full** suite for the package you touched, not just changed files.
 - `bun run check` — lint, format and type-check, locally and mutating. CI runs `check:ci`, which is

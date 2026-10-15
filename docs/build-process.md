@@ -89,8 +89,10 @@ They have different scopes and neither replaces the other:
 suppressed at the site:
 
 ```ts
-// biome-ignore lint/correctness/noImportCycles: <why this cycle is unavoidable>
+// biome-ignore lint/suspicious/noImportCycles: <why this cycle is unavoidable>
 ```
+
+Biome flags every import that forms the cycle, so each of them needs its own suppression.
 
 The justification sits at the cycle and shows up in the diff, which is the point — an earlier draft
 of the roadmap specified a `cycle-check:update` rebaseline hatch, and ADR-0014 retired it in favour
