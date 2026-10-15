@@ -5,6 +5,7 @@
 **Refines:** ADR-0004 (which committed to a typed SDK and named `plugin-sdk-v2.md` as the place the
 exact surface would be specified — this is that specification, and it diverges from ADR-0004's
 sketch in five places)
+**Amended by:** [ADR-0020](0020-outputs-return-a-result.md) — outputs return an `OutputResult`, not `void`
 **Constrained by:** [ADR-0010](0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md)
 (the nine boundary constraints and the `RunPayload`/`RunContext` split),
 [ADR-0011](0011-triggers-are-server-capabilities-not-plugins.md) (three components, no trigger)

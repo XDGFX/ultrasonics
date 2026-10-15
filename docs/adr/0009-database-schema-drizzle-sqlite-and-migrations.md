@@ -4,6 +4,7 @@
 **Date:** 2026-08-03
 **Refines:** ADR-0001 (names the "real ORM" it left unnamed), ADR-0003 and ADR-0007 (expresses the
 account scope concretely), ADR-0008 (spends the schema it handed over)
+**Amended by:** [ADR-0020](0020-outputs-return-a-result.md) — `runs` gains `results` and a defined set of outcomes
 
 ## Context
 
@@ -116,7 +117,7 @@ more in a repo meant for autonomous agents than in a human-only one.
 | `credentials` | ✅ | `service`, `expires_at`, `key_version`, `secret` (encrypted blob) — §6 |
 | `plugin_settings` | ✅ | Per-account persistent plugin settings (JSON) |
 | `instance_settings` | — (operator-owned) | Deployment-wide config; reached only through the narrow module |
-| `runs` | ✅ | `applet_id`, started/finished, status (incl. `interrupted`), `trigger` (ADR-0018), log |
+| `runs` | ✅ | `applet_id`, started/finished, status (`running`/`succeeded`/`partial`/`failed`/`interrupted`, ADR-0020), `trigger` (ADR-0018), `results` JSON (ADR-0020), log |
 
 **`plugin_settings` splits from `instance_settings`** because v1's single `plugins` table conflated
 two different things that only a single-user deployment can conflate: the Spotify *application's*

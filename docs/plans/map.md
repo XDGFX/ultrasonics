@@ -1,6 +1,6 @@
 # Wayfinder map — Phase 0 contracts
 
-**Status:** Live — working Phase 0. Counts and the frontier are not restated here; read them off the
+**Status:** Complete pending Cal's Phase 0 checkpoint — no open tickets. Counts and the frontier are not restated here; read them off the
 [ticket table](#tickets) below, which is the only copy.
 
 The decision map. `roadmap.md` says *what* to build and when; `../../AGENTS.md` says *how* work is
@@ -124,6 +124,11 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   absent. One renderer covers persistent, instance and auth `fields`, and `persistentSettings`
   becomes optional. Radio versus select goes to the Phase 1 prototype.
   → [ADR-0019](../adr/0019-settings-forms-rendered-from-json-schema.md)
+- [Does an output report what it did?](tickets/017-output-run-report.md): yes, as a required return
+  value. One entry per playlist, by position: `written`, `skipped` or `failed`, with unmatched songs
+  by position and counts derived by the runner. A playlist's failure is data; a throw fails the
+  whole output. Runs end `succeeded | partial | failed | interrupted`, stored in a JSON `results`
+  column. Outputs only. → [ADR-0020](../adr/0020-outputs-return-a-result.md)
 
 ## Not yet specified
 
@@ -134,7 +139,8 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   (run/`instanceSettings` key parity, plus ADR-0010's `structuredClone` and lost-methods checks), and
   `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
   sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
-  practice. (The renderable subset is now a fourth invariant, by ADR-0019 §3.) **Evidence from
+  practice. (The renderable subset is now a fourth invariant, by ADR-0019 §3, and output
+  completeness a fifth, by ADR-0020 §2.) **Evidence from
   [009](tickets/009-issue-triage.md):** v1 shipped an input that emitted the wrong key (#59). A type
   can't catch bad data from a service, which argues for Zod-parsing the song dict at each plugin
   boundary at run time.
@@ -152,6 +158,14 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   longer parses: the form shows the issues and the run fails. Whether a plugin can ship a settings
   migration is undecided. It sharpens when the first Phase 2 port changes a schema that has stored
   values.
+- **A result for inputs (and modifiers).** ADR-0020 gave outputs a result and left inputs to
+  `ctx.log` warnings when they skip a playlist. Sharpens if a skipped input playlist turns out to
+  need the same visibility in run history. Additive.
+- **Match confidence for review.** ADR-0020 records matched or unmatched only. #32's beets-style
+  manual review would need a score per match, added as an optional field. Pairs with the `"llm"`
+  matcher strategy.
+- **How long runs are kept.** ADR-0009 left `runs` retention open; ADR-0020's `results` column
+  stores unmatched songs, a few hundred KB per run in the #32 case, so it is now more pressing.
 - **Dynamic option lists (pickers)** — "pick from your playlists" instead of a regex or title field.
   Deferred by [007](tickets/007-dynamic-options.md): wanted as a v2 improvement, not before parity.
   Known shape: an optional, additive hook keyed by component and field (`instanceSettings` stays
@@ -205,7 +219,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 017 | ⛔ [Does an output report what it did?](tickets/017-output-run-report.md) | grilling | 009 ✅ | **frontier** (new) |
+| — | *No open tickets. The way to Phase 1 is clear; Phase 0's exit is a checkpoint for Cal.* | | | |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 

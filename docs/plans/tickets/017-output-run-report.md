@@ -1,7 +1,7 @@
 # 017 — Does an output report what it did?
 
-**Status:** Open · **Type:** grilling ⛔ (plugin SDK contract) · **Blocked by:** 009 ✅ · **Blocks:** — ·
-**Claimed by:** —
+**Status:** resolved · **Type:** grilling ⛔ (plugin SDK contract) · **Blocked by:** 009 ✅ · **Blocks:** — ·
+**Claimed by:** Claude (session 2026-10-15, with Cal)
 
 ## Question
 
@@ -26,3 +26,24 @@ need revisiting.
 - Yes or no. If yes, the result shape (a Zod schema), whether it is optional for an output, and
   where the runner surfaces it: run history, the UI, and the notifications fog.
 - An amendment to ADR-0012 or a superseding ADR. This is a checkpoint gate, so Cal accepts it.
+
+## Answer
+
+Agreed with Cal on 2026-10-15, across three grilling rounds, and accepted at the checkpoint. The
+decision is [ADR-0020](../../adr/0020-outputs-return-a-result.md). In short:
+
+1. **Yes, as a return value.** `outputs(ctx)` returns a required `Promise<OutputResult>`. A
+   fire-and-forget `ctx.report()` was rejected: no type forces the call. Inputs and modifiers are
+   unchanged.
+2. **One entry per playlist, by position in `ctx.songs`,** each exactly once. The runner treats a
+   gap or duplicate as the output breaking the contract; `runConformance` gains a fifth invariant.
+3. **Status** `written | skipped | failed`, with `{ code, message }` on the last two. A playlist's
+   failure is data; a throw means the whole output failed.
+4. **Unmatched songs as positions;** the runner derives supplied and matched. No match confidence
+   yet.
+5. **Run outcomes** `running | succeeded | partial | failed | interrupted`. Unmatched songs and
+   skips never change the outcome.
+6. **Storage:** a JSON `results` column on `runs`, holding copies of the unmatched songs.
+7. **Seen in** Phase 1 run history (per-playlist line, unmatched list one click away); a host-side
+   export replaces PR #45's not-found file and may slip to Phase 2; notifications get content but
+   no channel.

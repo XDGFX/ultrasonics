@@ -57,6 +57,12 @@ dedupe, filter, substitute). Optional in an applet.
 **Output** — A component that receives a song dict and writes it to a service. Terminal; emits
 nothing back into the pipeline.
 
+**Output result** — What an output returns: for each playlist it received, whether it was
+**written**, **skipped** or **failed**, and which of its songs were **unmatched** (no counterpart
+found on the service). A failure of one playlist belongs here; only a failure of the whole output is
+an error (ADR-0020).
+_Avoid_: "not found" for unmatched songs.
+
 **Trigger** — What decides *when* an applet runs: a **schedule**, and/or an authenticated **inbound
 webhook**. Not part of the song-dict flow. **A trigger is not a plugin and not a Component** — it is
 applet configuration owned by the server (ADR-0011). Any trigger firing runs the applet (**OR**,
@@ -73,8 +79,9 @@ it returns; one passed while the applet was disabled does not (ADR-0018).
 _Avoid_: "cron", "timer" — a schedule is not a cron expression.
 
 **Run** — One execution of an applet, recorded with what triggered it (`schedule`, `webhook` or
-`manual`) and how it ended. A run cut short by the server stopping is **interrupted**, not failed,
-and is not rerun.
+`manual`) and how it ended: **succeeded**, **partial** (something was written, but not everything
+the outputs attempted), or **failed** (nothing was written). Unmatched songs never change how a run
+ends. A run cut short by the server stopping is **interrupted**, not failed, and is not rerun.
 
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists

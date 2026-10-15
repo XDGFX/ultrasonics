@@ -56,7 +56,7 @@ export default definePlugin({
   // One handler per component. Keys must match `instanceSettings` exactly.
   run: {
     async inputs(ctx) { /* … */ return songs },   // Promise<SongDict>
-    async outputs(ctx) { /* … */ },               // Promise<void>
+    async outputs(ctx) { /* … */ },               // Promise<OutputResult> (ADR-0020)
   },
 
   async test(ctx) { return { ok: true } },        // optional; see below
@@ -99,8 +99,9 @@ type OutputRunContext<P, I>   = BaseRunContext<P, I> & { songs: SongDict };
 ```
 
 `songs` exists **only** where it is meaningful. Inputs return a `SongDict`, modifiers return a
-`SongDict`, outputs return `void` — enforced by the handler's type, not by a runtime check in the
-runner.
+`SongDict`, outputs return an `OutputResult` (one entry per playlist: `written`, `skipped` or
+`failed`, with unmatched songs by position; ADR-0020) — enforced by the handler's type, not by a
+runtime check in the runner.
 
 ### `test()`
 
@@ -174,8 +175,8 @@ ported (Phase 2 gate): valid handshake shape; `persistentSettings`/`instanceSett
 reject known-bad input; inputs return a schema-valid song dict; outputs accept one without mutating
 it; declared `auth` resolves against a stub provider. This is the objective "is it done" bar.
 
-Four checks are **machine-checked invariants**, not conventions — the first from this freeze, the
-next two from ADR-0010 §5, the last from ADR-0019 §3:
+Five checks are **machine-checked invariants**, not conventions — the first from this freeze, the
+next two from ADR-0010 §5, the fourth from ADR-0019 §3, the last from ADR-0020 §2:
 
 - **Key parity** — `Object.keys(run)` must equal `Object.keys(instanceSettings)`. Catches a handler
   that would never be dispatched, and a settings schema for a component the plugin does not
@@ -187,6 +188,8 @@ next two from ADR-0010 §5, the last from ADR-0019 §3:
   instance and strips its methods, so this is the half that actually catches the hazard.
 - **The renderable subset** — every settings and auth `fields` schema converts to JSON Schema and
   uses only the subset ADR-0019 §3 allows; a failure names the offending path.
+- **Output completeness** — an output's result names every playlist of a fixture song dict exactly
+  once, by position, with every unmatched position in range.
 
 What the suite asserts beyond this is still partly open — see `map.md`, **Not yet specified**.
 
