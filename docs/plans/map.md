@@ -111,6 +111,12 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   because Spotify's and Deezer's tokens belong to the dead proxy's app. Each plugin's v1 mapping is
   part of its Phase 2 port, which amends that phase's exit gate.
   → [ADR-0017](../adr/0017-the-v1-importer.md)
+- [Scheduler architecture](tickets/015-scheduler-architecture.md): a schedule is an interval (hour,
+  day or week) from an anchor in its own timezone, tagged so cron can follow. It lives as columns on
+  `applets`; one 60-second loop dispatches due applets. An overdue run fires once after downtime but
+  not after re-enabling. No automatic retries. The webhook is a hashed, rotatable per-applet token,
+  in the path or a Bearer header. `runs` records its trigger.
+  → [ADR-0018](../adr/0018-the-scheduler-and-the-inbound-webhook.md)
 
 ## Not yet specified
 
@@ -144,6 +150,10 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   Known shape: an optional, additive hook keyed by component and field (`instanceSettings` stays
   static, ADR-0012), which needs a second `PluginExecutor` entry point, a builder context for
   `resolve()`, a rule for when credentials are missing, and caching. Graduates once parity is reached.
+- **Automatic retry of a failed run** (v1 #12). Ruled out of Phase 1 by
+  [015](tickets/015-scheduler-architecture.md): retrying only *transient* failures needs plugins to
+  classify their errors, which is a plugin SDK change (ADR-0012). Sharpens into a ticket if users
+  hit transient failures often enough that waiting for the next scheduled run is not enough.
 - **Notifications** — whether ultrasonics ever tells a user something happened, by any channel. The
   **outbound webhook on sync completion** belongs here (deferred by ADR-0011, and 014 found it has
   the *better* demand signal of the two webhook directions), as does email, below. So does the
@@ -188,7 +198,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |
 | 016 | [Zod → settings-form generation](tickets/016-settings-form-generation.md) | grilling | 005 ✅ | **frontier** (graduated) |
 | 017 | ⛔ [Does an output report what it did?](tickets/017-output-run-report.md) | grilling | 009 ✅ | **frontier** (new) |
 

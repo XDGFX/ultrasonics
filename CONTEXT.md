@@ -66,6 +66,16 @@ one**; further firings are absorbed into the pending run and the applet shows a 
 Concurrency across *different* applets is allowed.
 _Avoid_: "trigger plugin" — v1's webhook and time-trigger plugins are not ported as plugins.
 
+**Schedule** — A trigger that fires an applet every N hours, days or weeks, counted from an
+**anchor** time in a named timezone. Days and weeks follow the local clock, so a daily schedule
+keeps its hour across a clock change. A due time missed while the server was down fires once when
+it returns; one passed while the applet was disabled does not (ADR-0018).
+_Avoid_: "cron", "timer" — a schedule is not a cron expression.
+
+**Run** — One execution of an applet, recorded with what triggered it (`schedule`, `webhook` or
+`manual`) and how it ended. A run cut short by the server stopping is **interrupted**, not failed,
+and is not rerun.
+
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists
 into a songs-mode output is unsupported and should warn.

@@ -112,11 +112,11 @@ more in a repo meant for autonomous agents than in a human-only one.
 | `accounts` | — (is the scope) | `id`, `created_at`. No credential columns, ever (ADR-0008). Email deliberately absent: provider email lives on the identity (ADR-0016). |
 | `sessions` | `account_id` | `token_hash` (unique), `created_at`, `authenticated_at` (ADR-0016), `last_seen_at`, `expires_at` **nullable** |
 | `federated_identities` | `account_id` | `provider`, `subject_id`, unique on `(provider, subject_id)`; `email` nullable, verified only, non-unique index (ADR-0016) |
-| `applets` | ✅ | `name`, `enabled`, `definition` (JSON — the plugin chain, Zod-validated), timestamps |
+| `applets` | ✅ | `name`, `enabled`, `definition` (JSON — the plugin chain, Zod-validated), timestamps; `schedule` (JSON), `next_run_at` (indexed), `webhook_token_hash`, all nullable (ADR-0018) |
 | `credentials` | ✅ | `service`, `expires_at`, `key_version`, `secret` (encrypted blob) — §6 |
 | `plugin_settings` | ✅ | Per-account persistent plugin settings (JSON) |
 | `instance_settings` | — (operator-owned) | Deployment-wide config; reached only through the narrow module |
-| `runs` | ✅ | `applet_id`, started/finished, status, log |
+| `runs` | ✅ | `applet_id`, started/finished, status (incl. `interrupted`), `trigger` (ADR-0018), log |
 
 **`plugin_settings` splits from `instance_settings`** because v1's single `plugins` table conflated
 two different things that only a single-user deployment can conflate: the Spotify *application's*
