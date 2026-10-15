@@ -1,6 +1,6 @@
 # ADR-0019 — Settings forms are rendered from JSON Schema
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-15
 **Builds on:** ADR-0004 (one schema, three uses), ADR-0012 (static `instanceSettings` keyed by
 component, discriminated unions for conditional fields), ADR-0013 (auth `fields` are a Zod object)

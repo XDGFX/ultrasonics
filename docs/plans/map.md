@@ -1,6 +1,6 @@
 # Wayfinder map — Phase 0 contracts
 
-**Status:** Complete pending Cal's Phase 0 checkpoint — no open tickets. Counts and the frontier are not restated here; read them off the
+**Status:** One open ticket (018). ADRs 0007–0019 were accepted by Cal on 2026-10-15. Counts and the frontier are not restated here; read them off the
 [ticket table](#tickets) below, which is the only copy.
 
 The decision map. `roadmap.md` says *what* to build and when; `../../AGENTS.md` says *how* work is
@@ -140,10 +140,9 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
   sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
   practice. (The renderable subset is now a fourth invariant, by ADR-0019 §3, and output
-  completeness a fifth, by ADR-0020 §2.) **Evidence from
-  [009](tickets/009-issue-triage.md):** v1 shipped an input that emitted the wrong key (#59). A type
-  can't catch bad data from a service, which argues for Zod-parsing the song dict at each plugin
-  boundary at run time.
+  completeness a fifth, by ADR-0020 §2.) Whether the runner also parses the song dict at run time
+  has graduated to [018](tickets/018-runtime-song-dict-validation.md), and its answer may clear
+  the rest of this.
 - **Account-level BYO client credentials.** ADR-0013 §7 ships operator-level only for Phase 1 (one
   registered app per service per instance, in `instance_settings`). Account-level is **deferred, not
   ruled out** — `plugin_settings` already exists so no migration is needed, and it is the natural
@@ -219,7 +218,7 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| — | *No open tickets. The way to Phase 1 is clear; Phase 0's exit is a checkpoint for Cal.* | | | |
+| 018 | [Does the runner validate the song dict at run time?](tickets/018-runtime-song-dict-validation.md) | grilling ⛔ | — | Open |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 

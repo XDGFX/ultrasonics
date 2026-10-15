@@ -1,6 +1,6 @@
 # ADR-0017 — The v1 importer
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-15
 **Builds on:** ADR-0009 §5–§7 (target schema, encryption, boot migrations), ADR-0011 (triggers are
 server config), ADR-0013 §7 (operator-level client credentials), ADR-0015 §3 (boot order)

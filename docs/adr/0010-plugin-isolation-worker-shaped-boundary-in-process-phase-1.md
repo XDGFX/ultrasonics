@@ -1,6 +1,6 @@
 # ADR-0010 — Worker-shaped plugin boundary, in-process execution in Phase 1
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-03
 **Refines:** ADR-0001 (which wanted isolation but did not choose a mechanism), ADR-0004 (the SDK
 contract this constrains)

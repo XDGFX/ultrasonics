@@ -1,6 +1,6 @@
 # 015 — Scheduler architecture
 
-**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0018 awaits acceptance) · **Type:** grilling · **Blocked by:** 004 ✅ · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
+**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0018 accepted 2026-10-15) · **Type:** grilling · **Blocked by:** 004 ✅ · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 ## Question
 

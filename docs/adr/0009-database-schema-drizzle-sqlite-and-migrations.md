@@ -1,6 +1,6 @@
 # ADR-0009 — The v2 database: relational SQLite, Drizzle, and account scoping in the query layer
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-03
 **Refines:** ADR-0001 (names the "real ORM" it left unnamed), ADR-0003 and ADR-0007 (expresses the
 account scope concretely), ADR-0008 (spends the schema it handed over)

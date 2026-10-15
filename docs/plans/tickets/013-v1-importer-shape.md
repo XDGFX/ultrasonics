@@ -1,6 +1,6 @@
 # 013 — The v1 importer's shape
 
-**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0017 awaits acceptance) · **Type:** grilling · **Blocked by:** 002 ✅ · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
+**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0017 accepted 2026-10-15) · **Type:** grilling · **Blocked by:** 002 ✅ · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 > **From 007 (2026-10-15).** Plex's v2 `library` setting accepts a bare section id, so v1's
 > `section_id` (stored as `"Title [id]"`) can be carried across by extracting the id.

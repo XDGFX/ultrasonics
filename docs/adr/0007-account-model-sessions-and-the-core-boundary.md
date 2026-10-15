@@ -1,6 +1,6 @@
 # ADR-0007 — The account model, sessions, and the core boundary
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-03
 **Refines:** ADR-0003 (does not supersede its decision — only fixes the vocabulary and fills in the model it left open)
 

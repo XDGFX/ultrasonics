@@ -1,6 +1,6 @@
 # ADR-0018 — The scheduler and the inbound webhook
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-15
 **Builds on:** ADR-0011 (triggers are server config: OR, queue depth one), ADR-0009 §5 (schema),
 ADR-0017 §4 (the importer maps `time trigger` to a schedule)

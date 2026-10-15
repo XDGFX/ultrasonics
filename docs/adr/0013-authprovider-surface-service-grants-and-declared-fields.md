@@ -1,6 +1,6 @@
 # ADR-0013 — The AuthProvider surface: service grants and declared fields
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-06
 **Refines:** ADR-0005 (which decided the `AuthProvider` *abstraction* and BYO-by-default, but
 recorded a decision rather than a type — this is the type)

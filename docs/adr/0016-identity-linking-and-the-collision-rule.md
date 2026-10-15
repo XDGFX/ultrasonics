@@ -1,6 +1,6 @@
 # ADR-0016 — Identity linking and the collision rule
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-15
 **Refines:** ADR-0008 §1, which deferred the linking rule until a second provider exists
 **Amends:** ADR-0009 §5's initial migration: `federated_identities` gains `email`, `sessions` gains

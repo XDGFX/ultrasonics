@@ -1,6 +1,6 @@
 # ADR-0008 — Hosted authentication is social OAuth only
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-03
 **Refines:** ADR-0007 (fills in how a session is first obtained; corrects one claim in its source table)
 

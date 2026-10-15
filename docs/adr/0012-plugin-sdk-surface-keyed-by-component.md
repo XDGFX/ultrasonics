@@ -1,6 +1,6 @@
 # ADR-0012 — The plugin SDK surface is keyed by component
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-06
 **Refines:** ADR-0004 (which committed to a typed SDK and named `plugin-sdk-v2.md` as the place the
 exact surface would be specified — this is that specification, and it diverges from ADR-0004's

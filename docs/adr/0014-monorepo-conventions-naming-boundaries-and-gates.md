@@ -1,6 +1,6 @@
 # ADR-0014 — Monorepo conventions: naming, boundaries and gates
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-07
 **Refines:** ADR-0001 (which fixed the stack and package layout but left naming, plugin packaging
 and the TypeScript config strategy open)

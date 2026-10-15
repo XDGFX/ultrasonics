@@ -1,6 +1,6 @@
 # ADR-0011 — Triggers are server capabilities, not plugins
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-08-04
 **Refines:** ADR-0004 (the typed plugin SDK, which this removes a component type from), ADR-0001
 (which inherited v1's four-component model)

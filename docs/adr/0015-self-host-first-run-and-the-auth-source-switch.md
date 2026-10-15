@@ -1,6 +1,6 @@
 # ADR-0015 — Self-host first run and the auth-source switch
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-15
 **Refines:** ADR-0007 (session sources), ADR-0008 (self-host has no login wall)
 **Amends:** ADR-0008 §4, which kept the name `DISABLE_AUTH`, and ADR-0009 §5, which had self-host's

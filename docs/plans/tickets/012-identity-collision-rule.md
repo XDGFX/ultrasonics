@@ -1,6 +1,6 @@
 # 012 — The identity-collision rule for provider #2
 
-**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0016 awaits acceptance) · **Type:** grilling · **Blocked by:** — · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
+**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0016 accepted 2026-10-15) · **Type:** grilling · **Blocked by:** — · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 ## Question
 
