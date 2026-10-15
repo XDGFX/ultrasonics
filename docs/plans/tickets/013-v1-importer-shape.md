@@ -1,6 +1,6 @@
 # 013 — The v1 importer's shape
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 002 ✅ · **Blocks:** — · **Claimed by:** —
+**Status:** ✅ resolved 2026-10-15 (agreed by Cal in session; ADR-0017 awaits acceptance) · **Type:** grilling · **Blocked by:** 002 ✅ · **Blocks:** — · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 > **From 007 (2026-10-15).** Plex's v2 `library` setting accepts a bare section id, so v1's
 > `section_id` (stored as `"Title [id]"`) can be carried across by extracting the id.
@@ -65,3 +65,27 @@ plugins users wrote themselves (#30), and both legacy `plex` and `plex beta`. An
 references an unknown plugin needs a defined outcome, and the triage suggests skipping it and
 reporting it. Some users self-hosted `ultrasonics-api`, so `api_url` may hold a private address.
 Drop it without complaint.
+
+## Answer
+
+Agreed with Cal on 2026-10-15, across three grilling rounds. The decision is
+[ADR-0017](../../adr/0017-the-v1-importer.md), whose §3 holds the row table. In short:
+
+1. **Automatic, once, at first boot, self-host only.** It runs after migration and account creation
+   and before the scheduler. It finds `config/ultrasonics.db` (or `V1_DATABASE`) and opens it
+   read-only. A `v1_import` marker stops it running twice; to redo an import, delete the v2 database.
+   This settles the coordination with 011: the bootstrapped account owns everything.
+2. **A small TypeScript parser** for the Python literal subset v1 writes (strings, booleans, `None`,
+   numbers, lists, dicts), tested against fixture blobs. No Python, no v1-side export, and the
+   Spotify pickle cache is never opened.
+3. **Credentials:** only Plex carries across, into an encrypted grant. Spotify's and Deezer's tokens
+   belong to the dead proxy's app, so those services are reported for reconnection. v1 never had a
+   Last.fm key.
+4. **Unknown plugins** mean the whole applet is skipped and reported with its v1 config. This puts
+   **no constraint on 005**. Plex is resolved by name and version, because 1.2.0 renamed `plex beta`
+   to `plex`. `time trigger` becomes a schedule and `webhook` is dropped.
+5. **Applets import disabled.** A bad applet is skipped; the import aborts only if the file is not a
+   readable v1 database. The report goes to the boot log, a dismissable UI notice and a file.
+6. **Each plugin's v1 mapping is part of its Phase 2 port**, as a module inside the importer, tested
+   against a fixture. The mapping must carry behaviour-bearing state such as `created_playlists`.
+   This amends Phase 2's exit gate.

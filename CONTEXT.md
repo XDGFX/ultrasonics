@@ -219,3 +219,8 @@ redeploy. Insurance for reactive gating if a platform objects to a service's API
 **Applet store / Plugin store** — The persisted applets and per-plugin persistent settings. In
 v2, typed rows with JSON columns via a real ORM — replacing v1's practice of persisting Python
 `repr` strings parsed back with `ast.literal_eval`.
+
+**v1 importer** — What brings a self-hosted v1 user's applets and settings into v2, once, on their
+first v2 boot. It never runs v1 code and never changes v1's database. Whatever it cannot bring
+across, it reports rather than guesses. Not to be confused with a **migration**, which changes v2's
+own schema.

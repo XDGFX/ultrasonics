@@ -105,6 +105,12 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   identities. Link and unlink need a sign-in within the last 10 minutes. Adds
   `federated_identities.email` and `sessions.authenticated_at`.
   → [ADR-0016](../adr/0016-identity-linking-and-the-collision-rule.md)
+- [The v1 importer's shape](tickets/013-v1-importer-shape.md): automatic and once, at the first
+  self-host boot. It reads v1's database read-only with a small TypeScript `repr` parser. Applets
+  import disabled; an unknown plugin skips its applet, with a report. Only Plex credentials survive,
+  because Spotify's and Deezer's tokens belong to the dead proxy's app. Each plugin's v1 mapping is
+  part of its Phase 2 port, which amends that phase's exit gate.
+  → [ADR-0017](../adr/0017-the-v1-importer.md)
 
 ## Not yet specified
 
@@ -182,7 +188,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
 | 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |
 | 016 | [Zod → settings-form generation](tickets/016-settings-form-generation.md) | grilling | 005 ✅ | **frontier** (graduated) |
 | 017 | ⛔ [Does an output report what it did?](tickets/017-output-run-report.md) | grilling | 009 ✅ | **frontier** (new) |

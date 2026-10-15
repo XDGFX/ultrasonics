@@ -102,7 +102,8 @@ but it has pre-flight checks (soak terminate-mid-`fetch`, confirm RSS is returne
 `../reference/plugin-isolation-research.md`.
 
 **Exit gate:** feature parity with v1 *minus the dropped plugins above* · every plugin passes
-conformance + a smoke test · parity matrix in docs marked complete.
+conformance + a smoke test · every plugin's v1 import mapping tested against a v1 fixture (ADR-0017
+§5) · parity matrix in docs marked complete.
 
 ## Phase 3 — Beyond v1 (requested services + AI seams)
 **Status:** not started · **Owner mix:** agents build; Cal prioritises from the issue backlog
@@ -121,7 +122,8 @@ Phase 3 backlog issues linked to the work that closes them.
 **Status:** not started · **Owner mix:** agents draft; Cal presses publish
 
 Multi-arch Docker image, a real docs site (v1's README admits documentation was "incomplete"), a
-v1→v2 migration guide, and a 2.0 announcement to re-engage the 275 stargazers and open issues.
+v1→v2 migration guide (centred on the automatic v1 importer, ADR-0017, and the services it asks the
+user to reconnect), and a 2.0 announcement to re-engage the 275 stargazers and open issues.
 
 **Exit gate:** Docker image published · docs site live · migration guide tested against a real v1
 install · release notes out.
