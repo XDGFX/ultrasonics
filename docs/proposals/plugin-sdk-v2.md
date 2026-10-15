@@ -38,7 +38,7 @@ export default definePlugin({
   version: "2.0.0",
   auth: spotifyOAuth,                        // an AuthSpec, see below
 
-  // Per-account, per-plugin (v1 `handshake.settings`, minus what auth now owns).
+  // Per-account, per-plugin (v1 `handshake.settings`, minus what auth now owns). Optional (ADR-0019).
   persistentSettings: z.object({
     fuzzyRatio: z.number().min(0).max(100).default(90),
     createdPlaylists: z.enum(["public", "private"]).default("private"),
@@ -174,8 +174,8 @@ ported (Phase 2 gate): valid handshake shape; `persistentSettings`/`instanceSett
 reject known-bad input; inputs return a schema-valid song dict; outputs accept one without mutating
 it; declared `auth` resolves against a stub provider. This is the objective "is it done" bar.
 
-Three checks are **machine-checked invariants**, not conventions — the first from this freeze, the
-other two from ADR-0010 §5:
+Four checks are **machine-checked invariants**, not conventions — the first from this freeze, the
+next two from ADR-0010 §5, the last from ADR-0019 §3:
 
 - **Key parity** — `Object.keys(run)` must equal `Object.keys(instanceSettings)`. Catches a handler
   that would never be dispatched, and a settings schema for a component the plugin does not
@@ -185,6 +185,8 @@ other two from ADR-0010 §5:
 - **The lost-methods assertion** — reject any field whose prototype is not `Object.prototype`,
   `Array.prototype`, or a known cloneable builtin. Structured clone *silently accepts* a class
   instance and strips its methods, so this is the half that actually catches the hazard.
+- **The renderable subset** — every settings and auth `fields` schema converts to JSON Schema and
+  uses only the subset ADR-0019 §3 allows; a failure names the offending path.
 
 What the suite asserts beyond this is still partly open — see `map.md`, **Not yet specified**.
 

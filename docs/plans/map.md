@@ -117,6 +117,13 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   not after re-enabling. No automatic retries. The webhook is a hashed, rotatable per-applet token,
   in the path or a Bearer header. `runs` records its trigger.
   → [ADR-0018](../adr/0018-the-scheduler-and-the-inbound-webhook.md)
+- [Zod → settings-form generation](tickets/016-settings-form-generation.md): Zod 4, with the server
+  serving JSON Schema and the web package rendering it. Copy lives in the schema via a typed
+  `.meta()` helper (`warning` keeps v1's data-loss caveats). A small renderable subset is enforced
+  in `runConformance`. The server is the only validator, and an empty input means the key is
+  absent. One renderer covers persistent, instance and auth `fields`, and `persistentSettings`
+  becomes optional. Radio versus select goes to the Phase 1 prototype.
+  → [ADR-0019](../adr/0019-settings-forms-rendered-from-json-schema.md)
 
 ## Not yet specified
 
@@ -127,7 +134,7 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   (run/`instanceSettings` key parity, plus ADR-0010's `structuredClone` and lost-methods checks), and
   `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
   sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
-  practice, and whether the renderable-schema subset (016) is asserted here too. **Evidence from
+  practice. (The renderable subset is now a fourth invariant, by ADR-0019 §3.) **Evidence from
   [009](tickets/009-issue-triage.md):** v1 shipped an input that emitted the wrong key (#59). A type
   can't catch bad data from a service, which argues for Zod-parsing the song dict at each plugin
   boundary at run time.
@@ -141,10 +148,10 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   one self-host account can't sync a second, separate Spotify account. Only one user has asked (on
   PR #45, found by [009](tickets/009-issue-triage.md)), but it's a gap with no workaround, not a
   rough edge. At minimum, ADR-0013 should name it as a known limitation.
-- **Whether the auth setup wizard shares 016's renderer.** ADR-0013 gives the wizard a typed
-  contract (`requirements()` plus the declared `fields` schema), but not a renderer. It may collapse
-  into [016](tickets/016-settings-form-generation.md) rather than becoming its own ticket — 016
-  should decide that when it is worked, not before.
+- **Migrating stored settings between plugin versions.** ADR-0019 §7 only surfaces a value that no
+  longer parses: the form shows the issues and the run fails. Whether a plugin can ship a settings
+  migration is undecided. It sharpens when the first Phase 2 port changes a schema that has stored
+  values.
 - **Dynamic option lists (pickers)** — "pick from your playlists" instead of a regex or title field.
   Deferred by [007](tickets/007-dynamic-options.md): wanted as a v2 improvement, not before parity.
   Known shape: an optional, additive hook keyed by component and field (`instanceSettings` stays
@@ -198,7 +205,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 016 | [Zod → settings-form generation](tickets/016-settings-form-generation.md) | grilling | 005 ✅ | **frontier** (graduated) |
 | 017 | ⛔ [Does an output report what it did?](tickets/017-output-run-report.md) | grilling | 009 ✅ | **frontier** (new) |
 
 Closed tickets are not listed here — they are **Decisions so far** above.

@@ -1,6 +1,6 @@
 # 016 — Zod → settings-form generation
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 005 ✅ · **Blocks:** — · **Claimed by:** —
+**Status:** resolved · **Type:** grilling · **Blocked by:** 005 ✅ · **Blocks:** — · **Claimed by:** Cal (agent session 2026-10-15)
 
 ## Question
 
@@ -57,3 +57,28 @@ The issue triage found the **blank-number trap**. #47 crashed on `float('')`. Th
 `z.coerce.number()`, turns `''` into `0`, and a fuzzy ratio of 0 matches every song. So the renderer
 must map an empty numeric input to `undefined`, so that `.default(90)` applies. This belongs in the
 acceptance criteria. One renderer for persistent and instance settings also closes #5.
+
+## Answer
+
+Agreed with Cal on 2026-10-15, across three grilling rounds. The decision is
+[ADR-0019](../../adr/0019-settings-forms-rendered-from-json-schema.md). In short:
+
+1. **Transport:** Zod is pinned at v4. The server serves `z.toJSONSchema(…, { io: "input" })`, and
+   `packages/web` renders JSON Schema without ever importing plugin code.
+2. **Copy:** a typed SDK helper over `.meta()`, with `title`, `description`, `placeholder` and
+   `warning` on a field, an object or a union variant. Plain text only. `secret` is legal in auth
+   `fields` only.
+3. **Subset:** string, number or int, boolean and enum leaves; optional, default and server-only
+   refine wrappers; a flat object or a discriminated union of flat objects at the top. No nesting,
+   arrays, transforms or `coerce`. `runConformance` enforces it.
+4. **Discriminated union:** hidden branches are kept while the form is open; only the active branch
+   is saved. **Radio versus select is not decided here.** It goes to the Phase 1 spec, to be judged
+   by feel on a prototype of the Spotify input form.
+5. **Validation:** the server is the only validator, and its issues map onto fields by `path`. HTML
+   attributes give instant hints. **Empty means absent**, so `.default(90)` applies (the 009
+   criterion).
+6. **One renderer** for persistent settings, instance settings (per slot) and the auth wizard's
+   `fields`, which closes #5. `persistentSettings` becomes optional.
+7. **Invalid stored values** (after a plugin update or import) are loaded as far as they fit and
+   shown with their issues. Saving is blocked, and a run fails before plugin code with the fields
+   named. Automatic settings migration between plugin versions is left in the fog.
