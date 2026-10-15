@@ -57,3 +57,11 @@ To decide:
 - The `repr` parsing approach chosen, with its cost acknowledged.
 - The dropped-plugin behaviour, and any constraint it imposes on ticket 005.
 - Whether import is a first-run step or an anytime action — coordinated with ticket 011.
+
+## From 009
+
+Real v1 databases reference plugins that v2 will never register: Steve-Tech's TIDAL fork (PR #45),
+plugins users wrote themselves (#30), and both legacy `plex` and `plex beta`. An applet that
+references an unknown plugin needs a defined outcome, and the triage suggests skipping it and
+reporting it. Some users self-hosted `ultrasonics-api`, so `api_url` may hold a private address.
+Drop it without complaint.

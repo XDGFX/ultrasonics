@@ -50,3 +50,10 @@ Enough for a Phase 1 build of the settings form without further decisions: the r
 subset and whether it is enforced, how a discriminated union behaves, where prose lives, and how
 validation errors surface. A rough prototype of the Spotify input form — the hardest real case —
 would settle most of it faster than argument; `/prototype` is the right tool.
+
+## From 009
+
+The issue triage found the **blank-number trap**. #47 crashed on `float('')`. The obvious fix,
+`z.coerce.number()`, turns `''` into `0`, and a fuzzy ratio of 0 matches every song. So the renderer
+must map an empty numeric input to `undefined`, so that `.default(90)` applies. This belongs in the
+acceptance criteria. One renderer for persistent and instance settings also closes #5.

@@ -89,6 +89,11 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   Phase 1**, static settings only; v1's sole dynamic list was Plex's library sections and it never
   had a playlist picker. Plex takes an optional free-text `library` (empty = the only music library;
   title or id), and an unresolvable one fails the run listing the server's libraries. No ADR.
+- [Triage the v1 issue backlog](tickets/009-issue-triage.md): all 37 open issues are bucketed (13
+  die with v1, 16 to preserve, 4 Phase 3, 4 uncertain), along with eleven **must-still-work
+  behaviours** to lift into specs. Labels and close comments are drafted but not applied, because
+  Cal applies anything user-visible. Surfaced 017.
+  → [triage](../reference/v1-issue-triage.md)
 
 ## Not yet specified
 
@@ -99,13 +104,20 @@ In scope, but not yet sharp enough to ticket. Graduates as the frontier advances
   (run/`instanceSettings` key parity, plus ADR-0010's `structuredClone` and lost-methods checks), and
   `plugin-sdk-v2.md` lists the rest as prose. What remains fog is whether that prose list is
   sufficient to call a port done — chiefly what "inputs return a schema-valid song dict" demands in
-  practice, and whether the renderable-schema subset (016) is asserted here too.
+  practice, and whether the renderable-schema subset (016) is asserted here too. **Evidence from
+  [009](tickets/009-issue-triage.md):** v1 shipped an input that emitted the wrong key (#59). A type
+  can't catch bad data from a service, which argues for Zod-parsing the song dict at each plugin
+  boundary at run time.
 - **Account-level BYO client credentials.** ADR-0013 §7 ships operator-level only for Phase 1 (one
   registered app per service per instance, in `instance_settings`). Account-level is **deferred, not
   ruled out** — `plugin_settings` already exists so no migration is needed, and it is the natural
   fallback if the Spotify platform-access wall found by [014](tickets/014-trigger-candidates.md)
   bites the hosted tier. Sharpens into a ticket when that wall is reconfirmed, or when the hosted
   tier opens.
+- **More than one grant for the same service.** ADR-0013 keys a grant `(account_id, service)`, so
+  one self-host account can't sync a second, separate Spotify account. Only one user has asked (on
+  PR #45, found by [009](tickets/009-issue-triage.md)), but it's a gap with no workaround, not a
+  rough edge. At minimum, ADR-0013 should name it as a known limitation.
 - **Whether the auth setup wizard shares 016's renderer.** ADR-0013 gives the wizard a typed
   contract (`requirements()` plus the declared `fields` schema), but not a renderer. It may collapse
   into [016](tickets/016-settings-form-generation.md) rather than becoming its own ticket — 016
@@ -157,12 +169,12 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 009 | [Triage the v1 issue backlog](tickets/009-issue-triage.md) | task | — | **frontier** |
 | 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
 | 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |
 | 016 | [Zod → settings-form generation](tickets/016-settings-form-generation.md) | grilling | 005 ✅ | **frontier** (graduated) |
+| 017 | ⛔ [Does an output report what it did?](tickets/017-output-run-report.md) | grilling | 009 ✅ | **frontier** (new) |
 
 Closed tickets are not listed here — they are **Decisions so far** above.
 

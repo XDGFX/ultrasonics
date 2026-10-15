@@ -44,3 +44,10 @@ is addressed and authenticated.
 Not a contract the *plugin SDK* depends on — 005 can freeze without it. It is a **core/server**
 decision that Phase 1 needs before the runner is built, which is why it sits on this map rather than
 being left to an implementation wave.
+
+## From 009
+
+- #12 asks for one automatic retry after a transient failure. Decide whether retries exist, and how
+  they interact with queueing at depth one.
+- v1 logged an applet with **no trigger** as an error with a traceback (#31). An applet that only
+  runs on demand is valid and must not log as a failure.

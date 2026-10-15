@@ -82,3 +82,10 @@ self-hoster is a straight regression (ADR-0003).
   bootstrapped account's data.
 - Feeds the self-host onboarding work in roadmap Phase 1 (`self-host first run reaches a working
   applet without a login prompt` is already in its exit gate).
+
+## From 009
+
+Self-hosters run Traefik or SWAG in front (#37), some under a **URL subpath**. Forwarded proto and
+host handling, plus a base path, are first-run concerns alongside the trusted-proxy session source.
+Install targets in the backlog go beyond Docker: Unraid (#30), Yunohost (#41), systemd (#8), and
+bare-metal Windows (#29, #65).

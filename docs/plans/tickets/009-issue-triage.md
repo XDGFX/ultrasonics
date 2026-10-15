@@ -1,6 +1,6 @@
 # 009 — Triage the v1 issue backlog
 
-**Status:** Open · **Type:** task (AFK) · **Blocked by:** — · **Blocks:** — · **Claimed by:** —
+**Status:** ✅ resolved 2026-10-15 (drafts await Cal) · **Type:** task (AFK) · **Blocked by:** — · **Blocks:** 017 · **Claimed by:** Claude (wayfinder session 2026-10-15)
 
 ## Question
 
@@ -35,3 +35,27 @@ Expect four buckets:
 
 Touches the public repo. Agent drafts the triage and the comment wording; **Cal applies anything
 user-visible** — closing an issue is outward-facing.
+
+## Answer
+
+All 37 open issues are triaged in
+[`v1-issue-triage.md`](../../reference/v1-issue-triage.md): 13 die with v1, 16 to preserve, 4 are
+Phase 3 features and 4 are uncertain (#12, #14, #32, #41, which are Cal's call). Duplicates: #54 of
+#47, #39 of #65. **Nothing has been applied to GitHub.** The labels script and the close comments
+are drafted there for Cal to edit and run.
+
+**The deliverable is the "Must still work in v2" list**, eleven behaviours written to be lifted into
+specs' acceptance criteria. The headline ones: an empty result is not a failure (#36), one bad song
+never aborts a run (#38, #29, #49, #56), a blank fuzzy ratio defaults rather than crashes (#47), and
+a run reports what it actually did (#30, #32). Of the examples suggested above, #36, #47 and #56
+held up. #3 is already answered by ADR-0011. #5 was a to-do Cal filed and no user ever hit it.
+
+### Handed forward
+
+- **017 (new, ⛔ SDK)** — outputs return `void`, so "matched 0 of 50" has nowhere to go.
+- **011, 013, 015, 016** — notes added to each ticket.
+- **Map fog** — the conformance item gains runtime song-dict validation (#59). A new item covers
+  more than one grant for the same service, which ADR-0013's `(account_id, service)` key rules out.
+- **Not on this map:** playlist artwork (#52) and Spotify playlist folders would need new song-dict
+  fields, and #32 is evidence for a review-unmatched screen. Both are Phase 3 or later, and both are
+  recorded in the triage doc.
