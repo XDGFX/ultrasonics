@@ -142,6 +142,10 @@ expressed (ADR-0007: "an ordinary session row that does not expire"). This is no
 rejecting a nullable `account_id` above: a nullable scope column changes *which rows match* a query
 silently, whereas a nullable expiry is one explicit branch at one call site.
 
+> **Amended by [ADR-0015](0015-self-host-first-run-and-the-auth-source-switch.md) §3:** the
+> bootstrapped `Session` is built per request with no row, so self-host no longer needs `NULL`.
+> `expires_at` stays nullable only if the hosted tier finds a use for it.
+
 **Sessions expire 30 days after last use**, rolled forward via `last_seen_at`, so an active user is
 never logged out and an abandoned session dies in a month. Hosted only; self-host's row never
 expires. Expired rows are swept on boot and periodically by the scheduler the app already runs,

@@ -94,6 +94,11 @@ corpus — is *not* on this map. It is already unambiguous and lives in `roadmap
   behaviours** to lift into specs. Labels are applied, and the 14 dead issues
   are closed with comments. Surfaced 017.
   → [triage](../reference/v1-issue-triage.md)
+- [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md): security
+  properties are never silently defaulted (house style). `AUTH_SOURCE=bootstrapped|proxy|oauth` is
+  required and replaces `DISABLE_AUTH`. The account is created at boot in every mode. A trusted
+  proxy is listed by CIDR and authorises without identifying. Exposure gets a warning, not a block.
+  One account per install. → [ADR-0015](../adr/0015-self-host-first-run-and-the-auth-source-switch.md)
 
 ## Not yet specified
 
@@ -169,7 +174,6 @@ Cal accepts the resolution before it counts as decided.
 
 | # | Ticket | Type | Blocked by | Status |
 |---|---|---|---|---|
-| 011 | [Self-host first run and auth-mode config](tickets/011-self-host-first-run.md) | grilling | 010 ✅ | **frontier** (rescoped) |
 | 012 | ⛔ [The identity-collision rule for provider #2](tickets/012-identity-collision-rule.md) | grilling | — | **frontier** |
 | 013 | [The v1 importer's shape](tickets/013-v1-importer-shape.md) | grilling | 002 ✅ | **frontier** (graduated) |
 | 015 | [Scheduler architecture](tickets/015-scheduler-architecture.md) | grilling | 004 ✅ | **frontier** (graduated) |

@@ -1,6 +1,6 @@
 # 011 — Self-host first run and auth-mode configuration
 
-**Status:** Open · **Type:** grilling · **Blocked by:** 001 ✅, 010 ✅ · **Blocks:** — · **Claimed by:** —
+**Status:** resolved · **Type:** grilling · **Blocked by:** 001 ✅, 010 ✅ · **Blocks:** — · **Claimed by:** Claude (2026-10-15)
 
 ## Question
 
@@ -89,3 +89,39 @@ Self-hosters run Traefik or SWAG in front (#37), some under a **URL subpath**. F
 host handling, plus a base path, are first-run concerns alongside the trusted-proxy session source.
 Install targets in the backlog go beyond Docker: Unraid (#30), Yunohost (#41), systemd (#8), and
 bare-metal Windows (#29, #65).
+
+## Answer
+
+Resolved 2026-10-15. Cal agreed every recommendation in one grilling round. The decision is in
+[ADR-0015](../../adr/0015-self-host-first-run-and-the-auth-source-switch.md), and this records the
+reasoning.
+
+- **House style:** ADR-0009's precedent is adopted. A setting that decides a security property has no
+  silent default, and an unset one exits with an explanation. The two live risks the ticket named,
+  an exposed install and a proxy trusted by mistake, are both what a silent default would hide.
+- **Configuration surface:** `AUTH_SOURCE=bootstrapped|proxy|oauth` is required and replaces
+  `DISABLE_AUTH`. The name describes what the middleware does, a boolean couldn't express three
+  values, and "none" would contradict ADR-0007. This amends ADR-0008 §4, which is still Proposed.
+- **First run:** the account is created at boot, after the migrations, if `accounts` is empty. It
+  happens in every mode, so switching source never creates a second one. The account is `id` and
+  `created_at` only; the email question had already gone, with ADR-0009. The bootstrapped `Session`
+  is built per request, with no cookie and no row.
+- **Trusted proxy:** requires a `TRUSTED_PROXIES` CIDR list. `PROXY_USER_HEADER` defaults to
+  `Remote-User`. A request from outside the list, or one with no header, gets 401 and never falls
+  back. Forwarded proto and host are honoured from the same list only.
+- **From bootstrapped to proxy:** only the source changes. Any non-empty header value maps to the one
+  account, and the username is logged but not stored. Data never moves.
+- **Several users on one self-host install:** not supported. One account per install; anyone who
+  needs separate data runs another container.
+- **Exposure:** a warning and a UI banner, not a block. Address checks wrongly block IPv6 LANs and
+  Tailscale, and they miss the most common exposure, a reverse proxy, which connects from a private
+  address. This is the cheaper option, which the map's standing caution says to scrutinise. It
+  holds, because §1 makes running without a wall a written choice.
+- **From 009:** subpath serving is deferred, but redirects are relative so it stays possible.
+  Install targets beyond Docker are packaging work, so they're off this map. Operator BYO client
+  credentials are entered in the UI and stored in `instance_settings`; rendering them belongs to
+  016.
+
+Corrected while resolving: ADR-0003's "admin account, auto-login" wording, `CONTEXT.md`'s
+**Session source** and **Self-host** entries, ADR-0008 §4 and ADR-0009 §5. Each now has a note
+pointing to ADR-0015.

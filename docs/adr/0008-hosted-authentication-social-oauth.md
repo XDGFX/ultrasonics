@@ -75,6 +75,10 @@ So self-host does not get a login wall:
 
 ### 4. `DISABLE_AUTH` selects a source; it does not skip the middleware
 
+> **Amended by [ADR-0015](0015-self-host-first-run-and-the-auth-source-switch.md):** the switch is
+> now the required `AUTH_SOURCE=bootstrapped|proxy|oauth`. The design below is unchanged; only the
+> name is not.
+
 Cal proposed a single middleware-level flag that accepts or skips the auth middleware — deliberately
 *not* per-route guards, which ADR-0007 had rejected. The distinction matters anyway, and this is the
 one place the grilling changed the design rather than recording it:

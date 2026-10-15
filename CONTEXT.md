@@ -150,9 +150,13 @@ differently (ADR-0007): a **cookie login**, the **bootstrapped account** (self-h
 **trusted-proxy header** (Authelia et al.). All three are available in every
 deployment. Self-host's realistic choice is **bootstrapped** or **trusted-proxy**: hosted login is
 social OAuth, and a LAN box with no public DNS cannot complete an OAuth callback, so the cookie
-source is hosted in practice (ADR-0008). `DISABLE_AUTH` selects the bootstrapped source *inside* the
-always-run middleware — it never skips it, so `req.session` is never undefined.
-_Avoid_: describing `DISABLE_AUTH` as "disabling auth" — it selects a source.
+source is hosted in practice (ADR-0008). The required `AUTH_SOURCE` setting picks one *inside* the
+always-run middleware, which it never skips, so `req.session` is never undefined (ADR-0015).
+_Avoid_: `DISABLE_AUTH`, "no auth" or "auth off": nothing is disabled, a source is selected.
+
+**Trusted proxy** — A reverse proxy whose address is listed in `TRUSTED_PROXIES` and whose identity
+header ultrasonics believes. It **authorises without identifying**: any user it lets through is the
+install's one account (ADR-0015). A header from any other address is never believed.
 
 **Login-free self-host** — The requirement that a self-hoster is never shown a login wall: first-run
 bootstrap, with trusted-reverse-proxy mode for anyone who wants a wall. A first-class requirement,
@@ -187,8 +191,9 @@ rule every query must remember.
 
 **Self-host** — The free, open-source deployment: the full product on the user's own machine,
 including services that live on their network (Plex, local files). Always the "real" product;
-the paid tier withholds convenience, never capability. Ships login-free by default (first-run
-admin bootstrap, auto-login, optional `DISABLE_AUTH`/trusted-proxy mode).
+the paid tier withholds convenience, never capability. Login-free: one account, created on first
+boot, reached via the bootstrapped source or a trusted proxy. Several users per install are not
+supported (ADR-0015).
 
 **Hosted tier** — The planned paid SaaS (ADR-0002): ultrasonics runs it, users never touch
 Docker. Launches **cloud-services-only** — it cannot reach a home Plex/local library from the

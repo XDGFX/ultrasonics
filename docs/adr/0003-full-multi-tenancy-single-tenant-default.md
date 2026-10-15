@@ -25,6 +25,9 @@ differ by configuration, not architecture:
 - **Self-host** runs as a single tenant with a frictionless default: first-run bootstraps an
   admin account, auto-login / remember-me keeps it out of the way, and `DISABLE_AUTH` /
   trusted-reverse-proxy mode exists for users who already run Authelia et al. in front.
+  _(Since refined: self-host has no login at all, so there is no admin login and no auto-login.
+  The account is created at boot and the source is chosen by `AUTH_SOURCE`. See ADR-0008 and
+  ADR-0015.)_
 - **Hosted** turns the same scope into real isolation behind an account/auth front door.
 
 ## Consequences
