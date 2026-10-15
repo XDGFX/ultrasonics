@@ -25,4 +25,11 @@ describe("cycle-check", () => {
 		expect(run.exitCode).toBe(1);
 		expect(run.stderr).toContain(join("packages", "beta", "package.json"));
 	});
+
+	test("exits non-zero when two members share a name, naming both manifests", () => {
+		const run = runCycleCheck(fixture("duplicate-member-name"));
+		expect(run.exitCode).toBe(1);
+		expect(run.stderr).toContain(join("packages", "alpha", "package.json"));
+		expect(run.stderr).toContain(join("packages", "duplicate", "package.json"));
+	});
 });

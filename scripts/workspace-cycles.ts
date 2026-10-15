@@ -7,15 +7,20 @@ import { z } from "zod";
  */
 export type CycleVerdict = { kind: "acyclic" } | { kind: "cycles"; cycles: string[][] };
 
+const dependencyFields = [
+	"dependencies",
+	"devDependencies",
+	"peerDependencies",
+	"optionalDependencies",
+] as const;
+
 const dependencyMap = z.record(z.string(), z.string()).optional();
 
-const memberManifest = z.object({
-	name: z.string().min(1),
-	dependencies: dependencyMap,
-	devDependencies: dependencyMap,
-	peerDependencies: dependencyMap,
-	optionalDependencies: dependencyMap,
-});
+const dependencyShape = Object.fromEntries(
+	dependencyFields.map((field) => [field, dependencyMap]),
+) as Record<(typeof dependencyFields)[number], typeof dependencyMap>;
+
+const memberManifest = z.object({ name: z.string().min(1), ...dependencyShape });
 
 const rootManifest = z.object({
 	workspaces: z
@@ -52,22 +57,29 @@ async function readWorkspaceGraph(root: string): Promise<Map<string, string[]>> 
 	const { workspaces = [] } = await readManifest(join(root, "package.json"), rootManifest);
 	const patterns = Array.isArray(workspaces) ? workspaces : workspaces.packages;
 
-	const members = new Map<string, z.infer<typeof memberManifest>>();
+	const paths = new Set<string>();
 	for (const pattern of patterns) {
 		for await (const path of new Bun.Glob(`${pattern}/package.json`).scan({ cwd: root })) {
-			const manifest = await readManifest(join(root, path), memberManifest);
-			members.set(manifest.name, manifest);
+			paths.add(join(root, path));
 		}
 	}
 
+	// Sorted so that which of two same-named manifests is reported does not depend on scan order.
+	const members = new Map<string, { path: string; manifest: z.infer<typeof memberManifest> }>();
+	for (const path of [...paths].sort()) {
+		const manifest = await readManifest(path, memberManifest);
+		const clash = members.get(manifest.name);
+		if (clash) {
+			throw new ManifestError(path, {
+				cause: `package name "${manifest.name}" is already used by ${clash.path}`,
+			});
+		}
+		members.set(manifest.name, { path, manifest });
+	}
+
 	const graph = new Map<string, string[]>();
-	for (const [name, manifest] of members) {
-		const named = [
-			manifest.dependencies,
-			manifest.devDependencies,
-			manifest.peerDependencies,
-			manifest.optionalDependencies,
-		].flatMap((deps) => Object.keys(deps ?? {}));
+	for (const [name, { manifest }] of members) {
+		const named = dependencyFields.flatMap((field) => Object.keys(manifest[field] ?? {}));
 		graph.set(name, [...new Set(named.filter((dep) => members.has(dep)))].sort());
 	}
 	return graph;

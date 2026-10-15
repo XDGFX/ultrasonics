@@ -11,7 +11,7 @@
 		"check": "biome check --write && bun run type-check",
 		"check:ci": "bun run lint:check && bun run format:check && bun run type-check && bun run cycle-check",
 		"cycle-check": "bun scripts/cycle-check.ts",
-		"lint:check": "biome lint",
+		"lint:check": "biome check --formatter-enabled=false",
 		"format:check": "biome format",
 		"type-check": "tsc --noEmit -p tsconfig.json",
 		"test": "bun test"
