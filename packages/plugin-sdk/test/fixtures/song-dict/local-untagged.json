@@ -1,0 +1,17 @@
+{
+	"playlists": [
+		{
+			"name": "Downloads",
+			"songs": [
+				{
+					"title": "  track01  ",
+					"artists": [],
+					"album": "   ",
+					"date": "",
+					"location": "file:///home/cal/Downloads/track01.mp3",
+					"id": {}
+				}
+			]
+		}
+	]
+}

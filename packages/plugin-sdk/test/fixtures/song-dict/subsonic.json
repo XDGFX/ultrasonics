@@ -1,0 +1,21 @@
+{
+	"playlists": [
+		{
+			"name": "Morning",
+			"description": "",
+			"id": { "subsonic:music.example.net": "12" },
+			"songs": [
+				{
+					"title": "Hoppípolla",
+					"artists": ["Sigur Rós"],
+					"album": "Takk...",
+					"date": "2005",
+					"isrc": "",
+					"durationMs": 268000,
+					"explicit": null,
+					"id": { "subsonic:music.example.net": "301", "musicbrainz": "" }
+				}
+			]
+		}
+	]
+}

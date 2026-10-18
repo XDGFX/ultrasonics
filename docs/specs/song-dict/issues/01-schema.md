@@ -14,14 +14,18 @@ types. Every rule is in the spec's Implementation Decisions (The schema). Fixtur
 
 ## Acceptance criteria
 
-- [ ] The spec's schema criteria pass:
+- [x] The spec's schema criteria pass:
   - blanks are absent;
   - title and artists follow their rules;
   - bad formats fail at their own paths;
   - unknown keys are stripped (lenient) or rejected (strict);
   - `version` and `id` defaults apply.
-- [ ] The type-level test shows `SongDictInput` admits `null` and `""` in optional fields and
+- [x] The type-level test shows `SongDictInput` admits `null` and `""` in optional fields and
       `SongDict` excludes them. No shipped type is `any` or `unknown`.
-- [ ] `bun run test` and `bun run check:ci` pass.
+- [x] `bun run test` and `bun run check:ci` pass.
 
 ## Comments
+
+- 2026-10-18 — Resolved on `revival`. The service fixtures showed that blank IDs (Last.fm's empty
+  MBIDs) would drop whole songs, so a blank ID entry is now dropped like any other blank. The spec's
+  ID rule is amended to match.

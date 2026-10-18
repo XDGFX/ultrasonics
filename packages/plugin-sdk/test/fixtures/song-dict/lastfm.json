@@ -1,0 +1,17 @@
+{
+	"playlists": [
+		{
+			"name": "Loved tracks",
+			"id": {},
+			"songs": [
+				{
+					"title": "Windowlicker",
+					"artists": ["Aphex Twin"],
+					"album": null,
+					"durationMs": null,
+					"id": { "lastfm": "https://www.last.fm/music/Aphex+Twin/_/Windowlicker", "musicbrainz": "" }
+				}
+			]
+		}
+	]
+}

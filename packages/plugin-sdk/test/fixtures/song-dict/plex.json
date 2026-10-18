@@ -1,0 +1,19 @@
+{
+	"playlists": [
+		{
+			"name": "Sunday",
+			"id": { "plex:3f9a1c7be2d04e5a": "48213" },
+			"songs": [
+				{
+					"title": "Re: Stacks",
+					"artists": ["Bon Iver"],
+					"album": "For Emma, Forever Ago",
+					"date": "2008-02-19",
+					"durationMs": 401000,
+					"location": "file:///data/music/Bon%20Iver/For%20Emma/09%20Re%20Stacks.flac",
+					"id": { "plex:3f9a1c7be2d04e5a": "48977" }
+				}
+			]
+		}
+	]
+}

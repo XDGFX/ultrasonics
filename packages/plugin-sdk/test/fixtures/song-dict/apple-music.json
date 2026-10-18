@@ -1,0 +1,27 @@
+{
+	"playlists": [
+		{
+			"name": "Late Night",
+			"description": "After midnight",
+			"id": { "apple-music": "p.qQXLxPLtA75zg8e" },
+			"songs": [
+				{
+					"title": "Nightcall",
+					"artists": ["Kavinsky"],
+					"album": "Nightcall - EP",
+					"date": "2010-01-01",
+					"isrc": "FR6V81000110",
+					"durationMs": 258000,
+					"explicit": false,
+					"id": { "apple-music": "1440820745" }
+				},
+				{
+					"title": "Uploaded bootleg",
+					"artists": ["Kavinsky"],
+					"durationMs": 201000,
+					"id": { "apple-music": "i.KoJeg8VCZ5MPz" }
+				}
+			]
+		}
+	]
+}

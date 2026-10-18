@@ -1,0 +1,37 @@
+{
+	"playlists": [
+		{
+			"name": "Focus",
+			"description": "",
+			"id": { "spotify": "37i9dQZF1DWZeKCadgRdKQ" },
+			"songs": [
+				{
+					"title": "Strobe",
+					"artists": ["deadmau5"],
+					"album": "For Lack of a Better Name",
+					"date": "2009",
+					"isrc": "USUS10900456",
+					"durationMs": 633000,
+					"explicit": false,
+					"id": { "spotify": "0VjIjW4GlUZAMYd2vXMi3b" }
+				},
+				{
+					"title": "Taken-down track",
+					"artists": ["Unknown Artist"],
+					"album": "",
+					"explicit": false,
+					"id": { "spotify": "4uLU6hMCjMI75M1A2tKUQC" }
+				},
+				{
+					"title": "my-demo.mp3",
+					"artists": [],
+					"album": "",
+					"isrc": null,
+					"explicit": false,
+					"location": null,
+					"id": null
+				}
+			]
+		}
+	]
+}

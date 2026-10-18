@@ -58,7 +58,7 @@ The TypeScript types are inferred from the schema, never declared beside it (`AG
 | `SongDict.playlists` | An array of `Playlist`. It may be empty. |
 | `Playlist.name` | Required, trimmed, non-empty. |
 | `Playlist.description` | Optional, trimmed. |
-| `Playlist.id`, `Song.id` | A map from ID-space key to bare ID. The key matches `^[a-z0-9-]+(:\S+)?$`. The value is trimmed and non-empty. Optional on input, where it defaults to `{}`. |
+| `Playlist.id`, `Song.id` | A map from ID-space key to bare ID. The key matches `^[a-z0-9-]+(:\S+)?$`. The value is trimmed; a blank or `null` value drops that entry, as with any other blank (Last.fm sends empty MBIDs). Optional on input, where it defaults to `{}`. |
 | `Playlist.songs` | An array of `Song`. It may be empty. |
 | `Song.title` | Required, trimmed, non-empty. |
 | `Song.artists` | Required array; it may be empty. Each name is trimmed and non-empty. |
