@@ -55,7 +55,7 @@ export default definePlugin({
 
   // One handler per component. Keys must match `instanceSettings` exactly.
   run: {
-    async inputs(ctx) { /* … */ return songs },   // Promise<SongDict>
+    async inputs(ctx) { /* … */ return songs },   // Promise<SongDictInput> (ADR-0023)
     async outputs(ctx) { /* … */ },               // Promise<OutputResult> (ADR-0020)
   },
 
@@ -98,8 +98,8 @@ type ModifierRunContext<P, I> = BaseRunContext<P, I> & { songs: SongDict };
 type OutputRunContext<P, I>   = BaseRunContext<P, I> & { songs: SongDict };
 ```
 
-`songs` exists **only** where it is meaningful. Inputs return a `SongDict`, modifiers return a
-`SongDict`, outputs return an `OutputResult` (one entry per playlist: `written`, `skipped` or
+`songs` exists **only** where it is meaningful. Inputs return a `SongDictInput`, modifiers return a
+`SongDictInput` (the schema's input type, ADR-0023), outputs return an `OutputResult` (one entry per playlist: `written`, `skipped` or
 `failed`, with unmatched songs by position; ADR-0020) — enforced by the handler's type. The runner
 also parses every returned `SongDict` at run time, because no type sees what a service sends: bad
 songs and playlists are rejected and recorded, and unknown keys stripped (ADR-0021).

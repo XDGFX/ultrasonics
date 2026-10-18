@@ -6,6 +6,9 @@
 boundary), ADR-0020 (run outcomes and the `results` column)
 **Amends:** ADR-0020 §5, where a rejection now caps the outcome; `docs/proposals/plugin-sdk-v2.md`,
 where return types were "enforced by the handler's type, not by a runtime check in the runner".
+**Amended by:** [ADR-0023](0023-the-v2-song-dict-shape.md) — the dict is an object, so §3's "not
+a list" reads "not a song dict object"; `duration` is carried as `durationMs`; `title` is
+non-empty; §7's strict mode is the strict schema variant.
 **Ticket:** [`docs/plans/tickets/018-runtime-song-dict-validation.md`](../plans/tickets/018-runtime-song-dict-validation.md)
 
 ## Context

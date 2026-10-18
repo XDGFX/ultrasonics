@@ -9,15 +9,18 @@ decision, it links the ADR that owns it.
 into an **Applet** that pulls playlists from one place, optionally transforms them, and pushes
 them somewhere else. Self-hostable and free; a hosted paid tier is planned (ADR-0002).
 
-**Song dict** — The universal interchange format passed between every plugin. A list of
-**Playlist** objects, each `{ name, id: { service: id }, songs: [Song] }`. This shape is the
-project's core asset and is deliberately service-agnostic. This is v1's shape; v2 redesigns it
-from here (ADR-0022). Once frozen, changing it is an ADR-level decision.
+**Song dict** — The universal interchange format passed between every plugin:
+`{ version, playlists: [Playlist] }`, each **Playlist** `{ name, description?, id, songs: [Song] }`.
+This shape is the project's core asset and is deliberately service-agnostic. Its Zod schema lives
+in `packages/plugin-sdk` (ADR-0023). Changing it is an ADR-level decision.
 _Avoid_: "track list", "payload" — it is always the *song dict*.
 
-**Song** — One entry in a playlist: `{ title, artists: [string], album, date, isrc, location,
-id: { service: id } }`. Every field except `title`/`artists` is optional. `isrc`, `id`, and
-`location` are **hard-match keys** (see **Fuzzymatch**); the rest are fuzzy-matched.
+**Song** — One entry in a playlist: `{ title, artists: [string], album?, date?, isrc?, durationMs?,
+explicit?, location?, id }`. `title` is non-empty; `artists` may be empty. `date` is a partial ISO
+date, `location` a `file://` URI. Blank optional fields count as absent (ADR-0023).
+
+**ID space** — A key in a song's or playlist's `id` map: what the ID is unique within, such as
+`spotify`, `musicbrainz` or `plex:<server id>`. Not a plugin name (ADR-0023).
 
 **ISRC** — International Standard Recording Code. A globally unique per-recording identifier.
 When present on both sides it is the most reliable cross-service match short of an exact ID.
