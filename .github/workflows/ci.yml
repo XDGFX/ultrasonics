@@ -3,6 +3,7 @@ name: CI
 # The v1 workflows beside this one trigger only on master; this one gates the revival.
 on:
   pull_request:
+    branches: [revival]
   push:
     branches: [revival]
 

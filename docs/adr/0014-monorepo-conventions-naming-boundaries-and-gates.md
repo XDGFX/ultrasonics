@@ -151,7 +151,8 @@ retrofitting is annoying but bounded.
 
 ### 9. `.claude/settings.json` — the deny list is the point
 
-Allow: `bun test`, `bun run build`, `bun run check`, the `:check` variants, `bun install`; `git`
+Allow: `bun test`, `bun run test`, `bun run build`, `bun run check`, `bun run check:ci`, the `:check`
+variants, `bun run cycle-check`, `bun install`; `git`
 `status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; and read-only `gh` —
 `issue view`, `issue list`, `pr view`, `pr list`.
 

@@ -103,11 +103,13 @@ of this.
 `.claude/settings.json` exists to stop agent waves becoming prompt-storms. The **deny** list is the
 half that earns its keep.
 
-- **Allow** — `bun test`, `bun run build`, `bun run check`, the `:check` variants, `bun install`;
+- **Allow** — `bun test`, `bun run test`, `bun run build`, `bun run check`, `bun run check:ci`, the
+  `:check` variants, `bun run cycle-check`, `bun install`;
   `git status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; `gh issue view`,
   `gh issue list`, `gh pr view`, `gh pr list`.
 - **Deny** — `gh issue comment|close|edit|label`, `gh pr comment|merge`, `git push --force`, and any
-  push to `master`.
+  push to `master`. Option-prefixed pushes are caught only as `git -C * push`, because a bare
+  `git * push` also matched commit messages containing "push".
 
 The denials enforce `docs/agents/issue-tracker.md`'s rule that the 40+ real user issues on the public
 repo are **read-only evidence, never a work queue** — previously prose, now a check. The scope is
