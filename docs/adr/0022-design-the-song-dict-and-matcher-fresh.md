@@ -1,6 +1,6 @@
 # ADR-0022 — Design the song dict and the matcher fresh
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-10-18
 **Supersedes:** ADR-0006
 
