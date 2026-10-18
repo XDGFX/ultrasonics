@@ -117,7 +117,7 @@ rebaseline hatch as confirmed, so this amends it deliberately rather than quietl
 and colocation means one directory listing shows a unit and its tests together, which matters more
 than usual because agents navigate by reading directories and a split layout doubles the lookups.
 
-**Test *data* goes in `test/fixtures/` per package.** The fuzzymatch golden corpus (ADR-0006) and the
+**Test *data* goes in `test/fixtures/` per package.** The matcher's match dataset (ADR-0022) and the
 v1 importer's sample databases are data, not code, and colocating them would bury the source files.
 
 ### 6. One package per plugin

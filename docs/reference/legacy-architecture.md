@@ -36,7 +36,7 @@ Records `lastrun = { time, result }`. Fails the whole applet if any input or out
 **Known bug to fix in the port:** `applet_trigger_run()` requires *all* triggers to fire (AND) —
 the comment admits it should be OR. Fix in v2 (`CONTEXT.md`, "Trigger").
 
-### The song dict (preserve exactly — ADR-0006)
+### The song dict (v2's starting point, not its spec — ADR-0022)
 
 The interchange format between every plugin. A list of playlists:
 
@@ -71,11 +71,11 @@ with `AuthProvider` (BYO/PKCE/Proxy).
 
 ---
 
-## fuzzymatch — source of truth (ADR-0006)
+## fuzzymatch (reference only — ADR-0022)
 
 `tools/fuzzymatch.py`. Two entry points: `duplicate(song, song_list, threshold) → bool` and
-`similarity(a, b) → float 0–100`. **Port the code, not the docstring** — the docstring's
-"35/35/20/10" percentages are wrong; the executed integer weights below are authoritative.
+`similarity(a, b) → float 0–100`. The docstring's "35/35/20/10" percentages are wrong; the integer
+weights below are what runs. They were set by hand and never tested.
 
 ### Hard-match keys (short-circuit before any fuzzy scoring)
 

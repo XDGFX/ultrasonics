@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-10-15
-**Builds on:** ADR-0006 (the song dict's shape, as a Zod schema), ADR-0010 (the plain-data
+**Builds on:** ADR-0006, superseded by ADR-0022 (the song dict as a Zod schema), ADR-0010 (the plain-data
 boundary), ADR-0020 (run outcomes and the `results` column)
 **Amends:** ADR-0020 §5, where a rejection now caps the outcome; `docs/proposals/plugin-sdk-v2.md`,
 where return types were "enforced by the handler's type, not by a runtime check in the runner".

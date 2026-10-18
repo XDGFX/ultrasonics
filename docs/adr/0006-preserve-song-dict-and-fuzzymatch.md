@@ -1,6 +1,6 @@
 # ADR-0006 — Preserve the song dict and fuzzymatch verbatim
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-0022](0022-design-the-song-dict-and-matcher-fresh.md)
 **Date:** 2026-07-28
 
 ## Context

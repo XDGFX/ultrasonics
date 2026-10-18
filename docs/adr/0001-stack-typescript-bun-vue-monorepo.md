@@ -19,7 +19,7 @@ types and testability.
 Rewrite ultrasonics as a **Bun-workspaces monorepo in TypeScript (strict)**, Vue 3 + Vite
 frontend, Zod for validation. Package layout:
 
-- `packages/core` — song dict (Zod), applet runner, fuzzymatch + golden tests.
+- `packages/core` — song dict (Zod), applet runner, the matcher and its match dataset.
 - `packages/plugin-sdk` — `definePlugin()`, handshake/settings types, auth helpers (ADR-0004).
 - `packages/plugins` — the official plugins, one folder each, isolated.
 - `packages/server` — Bun HTTP API + WebSocket run-logs, scheduler, persistence (ADR-0003).
@@ -34,7 +34,7 @@ browser.
 
 - v1's Python plugins do not carry over; each is re-implemented against the new SDK (Phase 2,
   `docs/plans/roadmap.md`). This is the bulk of the work and is why the AI-agent workflow matters.
-- Deprecated native deps disappear with the language; `fuzzywuzzy`'s behaviour is reproduced in
-  TS and pinned with golden tests (ADR-0006).
+- Deprecated native deps disappear with the language; the matcher is
+  redesigned in TS rather than reproducing `fuzzywuzzy` (ADR-0022).
 - Existing users have a v1 SQLite database; a one-time importer is required (see roadmap Phase 1).
 - Tooling standardises on `bun test` / `bun run check`; `AGENTS.md` owns the gate.

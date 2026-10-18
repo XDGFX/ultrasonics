@@ -22,8 +22,8 @@ Concretely: the plugin SDK surface, the `AuthProvider` surface, the account mode
 account-scoped database schema are all settled and written down. When no tickets remain, the way to
 Phase 1 is clear.
 
-Execution that follows those decisions — scaffolding, the song-dict port, the fuzzymatch golden
-corpus — is *not* on this map. It is already unambiguous and lives in `roadmap.md`.
+Execution that follows those decisions — scaffolding, the song-dict schema, the matcher's match
+dataset — is *not* on this map. It is already unambiguous and lives in `roadmap.md`.
 
 ## Notes
 

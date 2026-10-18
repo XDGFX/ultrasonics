@@ -21,7 +21,7 @@ contract; the ADR is the reasoning.
    `builder()` UI-description dicts largely disappear.
 3. Auth is *declared, not implemented* by the plugin (ADR-0005): the plugin says "I need Spotify
    OAuth"; the `AuthProvider` decides how.
-4. The song dict is the only interchange type, imported from `packages/core` (ADR-0006).
+4. The song dict is the only interchange type, imported from `packages/core` (ADR-0022).
 
 ## The frozen surface
 

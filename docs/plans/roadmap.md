@@ -13,7 +13,7 @@ land; it does not make them.
 ---
 
 ## Phase 0 — Foundations
-**Status:** in progress — contracts frozen (`map.md` empty, 2026-10-15); scaffold landed (2026-10-15); core ports remain · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
+**Status:** in progress — contracts frozen (`map.md` empty, 2026-10-15); scaffold landed (2026-10-15); the song dict remains · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
@@ -46,9 +46,8 @@ the outset.
   taxonomy, Biome over ESLint+Prettier, colocated tests, one package per plugin, shared base tsconfig
   with no project references. The scaffold cell implements these; it does not revisit them.
 
-**The core ports** — song dict → Zod with tests, and the fuzzymatch **golden corpus generated from a
-runnable v1 checkout** (ADR-0006) so the port is pinned to v1's output before a line of it is
-written. Keep a v1 checkout around long enough to produce it.
+**The song dict** — designed fresh for v2 as a Zod schema with tests, starting from v1's shape
+([ADR-0022](../adr/0022-design-the-song-dict-and-matcher-fresh.md)). It needs a design spec first.
 
 **Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · account
 model + initial account-scoped schema decided (ADR'd) · trigger model settled · song-dict Zod schema
@@ -57,7 +56,8 @@ model + initial account-scoped schema decided (ADR'd) · trigger model settled �
 ## Phase 1 — Vertical slice (prove the whole pipe)
 **Status:** not started · **Owner mix:** agents build; Cal reviews the slice end-to-end
 
-The make-or-break phase. Port **fuzzymatch** with **golden tests generated from v1** (ADR-0006),
+The make-or-break phase. Build the **matcher**, designed fresh and measured against a labelled
+**match dataset** (ADR-0022),
 the applet runner, one input (**Spotify**, BYO + PKCE), one output (**Plex**, via the PlexAPI-style
 approach — the most-requested pairing in the issues), and a minimal Vue UI to build and run *one*
 applet. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
@@ -72,8 +72,8 @@ test personally, was raised and deliberately reaffirmed on 2026-08-04: it is the
 pairing and the work has to happen regardless, so the plan is not rearranged around testability.
 Not a live question — do not re-raise it.
 
-**Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · fuzzymatch golden
-tests reproduce v1 output · importer reads a v1 `ultrasonics.db` · self-host first run reaches a
+**Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · the matcher meets
+its accuracy target on the match dataset · importer reads a v1 `ultrasonics.db` · self-host first run reaches a
 working applet without a login prompt.
 
 ## Phase 2 — Plugin parity (fan out)

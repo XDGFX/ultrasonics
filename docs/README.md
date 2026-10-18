@@ -53,7 +53,7 @@ operating model was largely a hand-rolled version of what `/wayfinder` and `AGEN
 - **0003** — Full multi-account isolation, single-account self-host default
 - **0004** — Typed plugin SDK with explicit registration
 - **0005** — AuthProvider abstraction, bring-your-own by default
-- **0006** — Preserve the song dict and fuzzymatch verbatim
+- **0006** — Preserve the song dict and fuzzymatch verbatim *(superseded by 0022)*
 - **0007** — The account model, sessions, and the core boundary *(refines 0003; retires "tenant")*
 - **0008** — Hosted authentication is social OAuth only *(refines 0007; Google alone at launch)*
 - **0009** — The v2 database: relational SQLite, Drizzle, account scoping in the query layer

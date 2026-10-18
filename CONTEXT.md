@@ -11,7 +11,8 @@ them somewhere else. Self-hostable and free; a hosted paid tier is planned (ADR-
 
 **Song dict** — The universal interchange format passed between every plugin. A list of
 **Playlist** objects, each `{ name, id: { service: id }, songs: [Song] }`. This shape is the
-project's core asset and is deliberately service-agnostic. Changing it is an ADR-level decision.
+project's core asset and is deliberately service-agnostic. This is v1's shape; v2 redesigns it
+from here (ADR-0022). Once frozen, changing it is an ADR-level decision.
 _Avoid_: "track list", "payload" — it is always the *song dict*.
 
 **Song** — One entry in a playlist: `{ title, artists: [string], album, date, isrc, location,
@@ -106,12 +107,16 @@ song dict. The gate for Phase 2 parity work.
 **Fuzzymatch** — The weighted song-matching engine that decides whether two songs are "the same"
 across services. Hard keys (`location`, then `isrc`/`id`) short-circuit to a match; otherwise a
 weighted average of fuzzy field scores (title, artist, album, date) is compared to a threshold.
-The v1 weights and regex cleaning are the source of truth and are ported verbatim (ADR-0005);
-see `docs/reference/legacy-architecture.md`.
+That is v1's design. v2 designs the matcher fresh and measures it on the **match dataset**; v1's
+weights and regexes are reference only (ADR-0022, `docs/reference/legacy-architecture.md`).
 
-**Matcher strategy** — The pluggable approach fuzzymatch uses: `"fuzzy"` (the deterministic v1
-algorithm, default) or a future `"llm"` strategy for hard cases. The seam exists from the start;
-the LLM implementation is deferred and opt-in (ADR-0002 keeps product AI out of Phase 1).
+**Match dataset** — Labelled song pairs whose answer is known: the same recording on two services
+(they share an ISRC, which the test hides from the matcher), or different recordings that look
+alike. The matcher's accuracy is measured on it (ADR-0022).
+
+**Matcher strategy** — A proposed seam for more than one matching approach: a deterministic
+`"fuzzy"` default and a future opt-in `"llm"` strategy (ADR-0002 keeps product AI out of Phase 1).
+Whether the seam exists is for the matcher's spec to decide (ADR-0022).
 
 ## Auth
 
