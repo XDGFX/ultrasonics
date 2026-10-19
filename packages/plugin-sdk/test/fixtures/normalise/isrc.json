@@ -1,0 +1,16 @@
+{
+	"normalised": [
+		["already normalised", "GBAYE0601498", "GBAYE0601498"],
+		["lower-case", "gbaye0601498", "GBAYE0601498"],
+		["hyphenated", "GB-AYE-06-01498", "GBAYE0601498"],
+		["spaced", " GB AYE 06 01498 ", "GBAYE0601498"]
+	],
+	"rejected": [
+		["blank", "   "],
+		["too short", "GBAYE060149"],
+		["too long", "GBAYE06014988"],
+		["letters in the designation code", "GBAYE06O1498"],
+		["a digit in the country code", "G1AYE0601498"],
+		["punctuation", "GB.AYE.06.01498"]
+	]
+}

@@ -1,0 +1,26 @@
+{
+	"normalised": [
+		["a year", "2008", "2008"],
+		["a year and month", "2008-09", "2008-09"],
+		["a full date", "2008-09-23", "2008-09-23"],
+		["a padded string", " 2008-09-23 ", "2008-09-23"],
+		["an ISO date-time in UTC", "2008-09-23T14:05:00Z", "2008-09-23"],
+		["an ISO date-time with a fraction", "2008-09-23T14:05:00.123Z", "2008-09-23"],
+		["an ISO date-time with an offset", "2008-09-23T23:30:00-05:00", "2008-09-23"],
+		["an ISO date-time with no zone", "2008-09-23T14:05:00", "2008-09-23"],
+		["a year number", 2008, "2008"]
+	],
+	"rejected": [
+		["an impossible day", "2021-02-30"],
+		["an impossible month", "2020-13"],
+		["a date-time on an impossible day", "2021-02-30T12:00:00Z"],
+		["a blank string", "   "],
+		["a date with a bare T", "2008-09-23T"],
+		["a date with junk after the T", "2008-09-23Tfoo"],
+		["a day-first date", "23/09/2008"],
+		["an unpadded month", "2008-9"],
+		["a three-digit year number", 999],
+		["a five-digit year number", 10000],
+		["a fractional year number", 2008.5]
+	]
+}

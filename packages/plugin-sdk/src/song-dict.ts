@@ -38,10 +38,14 @@ function isRealDate(value: string): boolean {
 	);
 }
 
-/** The release date of this release, as precise as the service knows it (ADR-0023 §5). */
-const releaseDate = z.string().refine(isRealDate, "Expected YYYY, YYYY-MM or YYYY-MM-DD");
+/**
+ * The release date of this release, as precise as the service knows it (ADR-0023 §5).
+ * @package
+ */
+export const releaseDate = z.string().refine(isRealDate, "Expected YYYY, YYYY-MM or YYYY-MM-DD");
 
-const isrc = z
+/** @package */
+export const isrc = z
 	.string()
 	.regex(/^[A-Z]{2}[A-Z0-9]{3}\d{7}$/, "Expected a normalised 12-character ISRC");
 

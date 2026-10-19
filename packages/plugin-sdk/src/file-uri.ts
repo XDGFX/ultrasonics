@@ -3,6 +3,9 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 /** A drive path (`C:\…` or `C:/…`) or a UNC path (`\\server\share\…`). */
 const windowsPath = /^(?:[A-Za-z]:[\\/]|\\\\[^\\])/;
 
+/** A bare root (`/`, `/C:/`, or `/C://` from `C:\`) names no file. */
+const rootPathname = /^\/(?:[A-Za-z]:)?\/*$/;
+
 /**
  * The `file://` URI a song's `location` holds for an absolute local path. Windows paths are
  * recognised by shape, not by the platform this runs on (v1 #22).
@@ -12,8 +15,7 @@ export function toFileUri(path: string): string | undefined {
 	if (!windows && !path.startsWith("/")) return undefined;
 	try {
 		const url = pathToFileURL(path, { windows });
-		// A bare root names no file, and fails the `location` rule.
-		return url.pathname === "/" ? undefined : url.href;
+		return rootPathname.test(url.pathname) ? undefined : url.href;
 	} catch {
 		return undefined;
 	}

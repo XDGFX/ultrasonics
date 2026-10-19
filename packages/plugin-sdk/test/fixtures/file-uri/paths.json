@@ -1,0 +1,35 @@
+{
+	"pathsAndUris": [
+		["/home/cal/Music/Strobe.flac", "file:///home/cal/Music/Strobe.flac"],
+		["/home/cal/Music/a b#1 100%.flac", "file:///home/cal/Music/a%20b%231%20100%25.flac"],
+		["/home/cal/Música/Björk.flac", "file:///home/cal/M%C3%BAsica/Bj%C3%B6rk.flac"],
+		["C:\\Users\\Cal\\Music\\Strobe.flac", "file:///C:/Users/Cal/Music/Strobe.flac"],
+		["C:\\Music\\a b#1 100%.flac", "file:///C:/Music/a%20b%231%20100%25.flac"],
+		["C:\\Música\\Björk.flac", "file:///C:/M%C3%BAsica/Bj%C3%B6rk.flac"],
+		["\\\\nas\\share\\Music\\a b#1 100%.flac", "file://nas/share/Music/a%20b%231%20100%25.flac"],
+		["\\\\nas\\share\\Música\\Björk.flac", "file://nas/share/M%C3%BAsica/Bj%C3%B6rk.flac"]
+	],
+	"forwardSlashDrivePaths": [["D:/Music/a b.flac", "file:///D:/Music/a%20b.flac"]],
+	"notAbsolutePaths": [
+		"",
+		"Music/a.flac",
+		"./a.flac",
+		"../a.flac",
+		"C:a.flac",
+		"\\Music\\a.flac",
+		"/",
+		"C:\\",
+		"C:/",
+		"\\\\nas",
+		"\\\\nas\\"
+	],
+	"notLocalUris": [
+		"",
+		"not a uri",
+		"/home/cal/Music/a.flac",
+		"C:\\Music\\a.flac",
+		"https://example.com/a.flac",
+		"file:///home/cal/a%2Fb.flac",
+		"file:///C:/Music/a%5Cb.flac"
+	]
+}

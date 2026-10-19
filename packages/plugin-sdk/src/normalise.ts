@@ -1,17 +1,12 @@
-import { Song } from "./song-dict.ts";
-
-/** Checking against `Song` itself keeps each helper's output inside the schema's rule. */
-function passesSongRule(field: "isrc" | "date", value: string): string | undefined {
-	const result = Song.safeParse({ title: "-", artists: [], [field]: value });
-	return result.success ? result.data[field] : undefined;
-}
+import { isrc, releaseDate } from "./song-dict.ts";
 
 /** Cleans a raw ISRC from a service, or gives `undefined` to leave the field out. */
 export function normaliseIsrc(raw: string): string | undefined {
-	return passesSongRule("isrc", raw.trim().toUpperCase().replace(/[- ]/g, ""));
+	return isrc.safeParse(raw.trim().toUpperCase().replace(/[- ]/g, "")).data;
 }
 
-const isoDateTime = /^(\d{4}-\d{2}-\d{2})T/;
+/** A full ISO 8601 date-time: a time, an optional fraction, and an optional `Z` or offset. */
+const isoDateTime = /^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/;
 
 /** Cleans a raw release date from a service, or gives `undefined` to leave the field out. */
 export function normaliseDate(raw: string | number | Date): string | undefined {
@@ -19,5 +14,5 @@ export function normaliseDate(raw: string | number | Date): string | undefined {
 		return Number.isNaN(raw.getTime()) ? undefined : normaliseDate(raw.toISOString());
 	}
 	const value = String(raw).trim();
-	return passesSongRule("date", isoDateTime.exec(value)?.[1] ?? value);
+	return releaseDate.safeParse(isoDateTime.exec(value)?.[1] ?? value).data;
 }
