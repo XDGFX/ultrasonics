@@ -1,25 +1,25 @@
 # Instructions for AI agents
 
 Repo-wide rules for the **ultrasonics 2.0** revival. File-specific constraints live as
-comments at their edit sites. This is currently a **documentation-only** repo: the code
-rewrite has not started. Read `CONTEXT.md` for the domain glossary and `docs/plans/roadmap.md`
-for where the work is heading.
+comments at their edit sites. The rewrite is in Phase 0. Read `GLOSSARY.md` for the domain
+glossary and `docs/plans/roadmap.md` for where the work is heading.
 
 ## Read before you write
 
-- **`CONTEXT.md`** — the domain glossary. Use these terms exactly; do not invent synonyms.
+- **`GLOSSARY.md`** — the domain glossary. Use these terms exactly; do not invent synonyms.
 - **`docs/adr/`** — accepted decisions. Do not re-litigate an accepted ADR; if you think one
   is wrong, write a superseding ADR, don't silently diverge.
 - **`docs/plans/roadmap.md`** — the phase you're in and its exit gate.
-- **`docs/plans/map.md`** — the decisions still open. If your work depends on one, resolve its
-  ticket first; don't guess an answer a ticket exists to settle.
+- **Open GitHub issues labelled `wayfinder:map`** — any planning still under way. If your work
+  depends on one of its open tickets, resolve that first; don't guess an answer a ticket exists to
+  settle.
 
 Read only when they apply — deliberately kept out of this file so it stays cheap to load:
 
 - **`docs/build-process.md`** — the cell pipeline, wave sizing, the skill→gate map, and the
   scaffold conventions in operational detail (cycle gates, script composition, the agent permission
   allowlist). Read before building or dispatching code work; skip for planning and docs sessions.
-- The relevant **`docs/specs/`** entry — the contract for the feature you're building.
+- The **spec issue** for the feature you're building (the parent of your ticket) — its contract.
 - **`docs/reference/legacy-architecture.md`** — how v1 works. Read when porting from it.
 
 ## Agent skills
@@ -29,32 +29,29 @@ something lives; you don't need them for ordinary sessions.
 
 ### Issue tracker
 
-Local markdown, in-repo — specs and their implementation issues under `docs/specs/<feature>/`,
-open decisions under `docs/plans/`. GitHub Issues is read-only evidence, never a work queue.
-See `docs/agents/issue-tracker.md`.
+GitHub Issues on `XDGFX/ultrasonics`: wayfinder maps, specs and their tickets. v1 user issues are
+touched only through `/triage`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-The five canonical roles, unchanged, written as the `**Status:**` value on an implementation
-issue. See `docs/agents/triage-labels.md`.
+The five canonical roles, unchanged, as GitHub labels. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context — `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context — `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ## The documentation discipline (enforced from day one)
 
-- **Nothing lands without its spec.** Feature work references the `docs/specs/` entry whose
-  acceptance criteria it satisfies. If there's no spec, the work isn't ready — write it first
-  (this is what a `/grill-with-docs` session produces). This binds whether the work arrives as a
+- **Nothing lands without its spec.** Feature work belongs to a ticket whose parent is a spec issue,
+  and satisfies its acceptance criteria. If there's no spec, the work isn't ready: write it first
+  (`/grill-with-docs`, then `/to-spec` and `/to-tickets`). This binds whether the work arrives as a
   PR or as a direct commit to `revival`.
-- **Non-obvious decisions get an ADR.** If you chose X over a reasonable Y, record why in
-  `docs/adr/` (next number, `Status: Proposed` until Cal accepts). Cheap to write, saves the
-  archaeology later.
-- **Write a handoff when you stop.** On finishing or running low on context, append a
-  `docs/handoffs/` entry: Goal · Done · In-flight (branch/worktree) · Next concrete step ·
-  Blockers · Files touched. The next agent must be able to resume cold.
-- **Log the session.** Dated entry in `docs/sessions/`: what changed, what's next.
+- **Hard-to-reverse design decisions get an ADR** in `docs/adr/`, in the `/domain-modeling`
+  format: a title and a few sentences on what was chosen over what, and why. `Status: Proposed`
+  until Cal accepts. An ADR records a design; how work is done belongs in this file or
+  `docs/agents/`.
+- **Close the ticket when its work lands** (`docs/agents/issue-tracker.md`). The issue, its
+  comments and git history are the record; there are no handoff files or session logs.
 
 ## Branching
 
@@ -69,7 +66,7 @@ never force-push. Rationale, and the cell/wave machinery, in `docs/build-process
 Work autonomously, but **escalate rather than guess** on anything that touches:
 
 - the **auth layer** — both senses: `AuthProvider` / credential storage / OAuth flows (service
-  auth), *and* accounts, sessions, login (user auth). See `CONTEXT.md`, "Auth".
+  auth), *and* accounts, sessions, login (user auth). See `GLOSSARY.md`, "Auth".
 - the **plugin SDK contract** (the shape plugins depend on),
 - the **database schema** or a migration,
 - **multi-tenancy / security** boundaries,
@@ -95,7 +92,7 @@ checkpoint. Phase boundaries are always a checkpoint.
 - **Biome** is the linter and formatter (not ESLint/Prettier); `.vue` is out of its scope for now.
 - **Validation is Zod.** The song dict, plugin settings, and API boundaries are Zod schemas;
   the TypeScript type is inferred from the schema, never hand-declared alongside it.
-- **The song dict is sacred.** Its shape (`CONTEXT.md`) is the interchange format between every
+- **The song dict is sacred.** Its shape (`GLOSSARY.md`) is the interchange format between every
   plugin. Changing it is an ADR-level decision, never an incidental one.
 
 ## Quality gate

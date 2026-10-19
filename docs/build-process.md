@@ -3,26 +3,25 @@
 **Read this when** you are about to build a unit of code, or dispatch a wave of them. Not needed for
 planning, decision or documentation sessions — `AGENTS.md` covers those on its own.
 
-`plans/map.md` covers what is still **undecided**; this covers how decided work gets **built**.
+A wayfinder map covers what is still **undecided**; this covers how decided work gets **built**.
 
 ## The cell — the atom of work
 
 One deliverable, run through one pipeline. Learn it once and a wave of ten is the cell ten times.
 
 ```
-(ambiguous?) → /research ──▶ docs/specs/<feature>.md ──▶ /grill-with-docs (freeze the spec)
-            ──▶ worktree ──▶ /tdd  or  /implement ──▶ /verify
+(ambiguous?) → /research ──▶ /grill-with-docs ──▶ /to-spec (spec issue) ──▶ /to-tickets
+            ──▶ per ticket: /implement (drives /tdd) ──▶ /verify
             ──▶ /code-review ──▶ /improve-codebase-architecture (anti-slop gate)
-            ──▶ land on revival (PR only if parallel — AGENTS.md § Branching)
-            ──▶ docs/handoffs/ + docs/sessions/
+            ──▶ land on revival (PR only if parallel — AGENTS.md § Branching) ──▶ close the ticket
 ```
 
 - **/research** only when the spec would otherwise rest on a guess; skip when the contract is
   already unambiguous.
 - **/grill-with-docs** is mandatory for any cell touching a checkpoint gate (`AGENTS.md`). Skip it
-  only when a frozen spec already covers the cell — never because the cell "seems simple".
-- **/tdd** is the default wherever correctness matters (fuzzymatch, the runner, plugin I/O, auth);
-  **/implement** is for scaffolding and wiring. When in doubt, `/tdd`.
+  only when a spec issue already covers the cell — never because the cell "seems simple".
+- **/implement** builds one ticket, `/clear`ing context between tickets; **/implement-spec** runs a
+  whole spec's tickets in parallel on one integration branch. Both drive **/tdd**.
 - **/verify** means the cell was seen *running*, not merely green in tests.
 
 A cell is **done** when the full package suite is green, both anti-slop gates passed, `/verify`
@@ -107,15 +106,14 @@ half that earns its keep.
   `:check` variants, `bun run cycle-check`, `bun install`;
   `git status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; `gh issue view`,
   `gh issue list`, `gh pr view`, `gh pr list`.
-- **Deny** — `gh issue comment|close|edit|label`, `gh pr comment|merge`, `git push --force`, and any
-  push to `master`. Option-prefixed pushes are caught only as `git -C * push`, because a bare
-  `git * push` also matched commit messages containing "push".
+- **Deny** — `gh pr comment|merge`, `git push --force`, and any push to `master`. Option-prefixed
+  pushes are caught only as `git -C * push`, because a bare `git * push` also matched commit
+  messages containing "push".
 
-The denials enforce `docs/agents/issue-tracker.md`'s rule that the 40+ real user issues on the public
-repo are **read-only evidence, never a work queue** — previously prose, now a check. The scope is
-deliberately tight while `revival` might never land: an agent touching a stranger's issue thread is
-unrecoverable, a permission prompt is a keystroke. Expect to loosen it if `revival` becomes the trunk
-and issues move to GitHub properly.
+`gh issue` writes are neither allowed nor denied, a change to ADR-0014 §9. Agents claim and
+close their own tickets, so the old denials had to go. Outside bypass mode each write still asks
+first, because a permission rule cannot tell a ticket from a v1 user's thread. The rule for the
+latter is in `docs/agents/issue-tracker.md`.
 
 ## Notes
 

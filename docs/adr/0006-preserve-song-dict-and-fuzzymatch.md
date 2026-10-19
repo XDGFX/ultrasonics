@@ -16,7 +16,7 @@ behaviour change.
 
 **Port the song dict and the fuzzymatch algorithm unchanged.**
 
-- The song dict keeps its exact shape (`CONTEXT.md`); it becomes a Zod schema, otherwise
+- The song dict keeps its exact shape (`GLOSSARY.md`); it becomes a Zod schema, otherwise
   identical. It remains the interchange format between all plugins.
 - fuzzymatch's hard-match keys (`location`, then `isrc`/`id`), field weights (title / artist /
   album / date), the fuzzy ratio choices per field, and the regex cutoffs for cleaning
@@ -26,7 +26,7 @@ behaviour change.
   expected outputs the TS port must reproduce. These are generated once from v1 and committed.
 
 Improvements to matching are not forbidden — but they arrive as a *new* matcher strategy behind
-the seam (`"fuzzy"` | `"llm"`, `CONTEXT.md`), leaving the deterministic default untouched and
+the seam (`"fuzzy"` | `"llm"`, `GLOSSARY.md`), leaving the deterministic default untouched and
 regression-tested.
 
 ## Consequences

@@ -25,7 +25,7 @@ A person and the boundary that owns their data are the **same thing, one-to-one,
 hosted subscription means exactly one login, forever; a household sharing a single sync setup is not
 a use case ultrasonics serves. There is no separate person entity and no membership join.
 
-**"Tenant" is retired as a term.** It leaves `CONTEXT.md`, the planning docs, and the proposals. The
+**"Tenant" is retired as a term.** It leaves `GLOSSARY.md`, the planning docs, and the proposals. The
 isolation discipline ADR-0003 bought is unchanged — it is simply spelled `account_id` now:
 
 - Every persisted row carries `account_id`.

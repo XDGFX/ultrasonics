@@ -1,7 +1,7 @@
 # AuthProvider v2 — the frozen surface
 
 **Status:** Frozen 2026-08-06 by map ticket
-[006](../plans/tickets/006-authprovider-surface.md) →
+[AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76) →
 [ADR-0013](../adr/0013-authprovider-surface-service-grants-and-declared-fields.md).
 Changes only deliberately from here (checkpoint gate, ADR-0005).
 
@@ -137,14 +137,14 @@ Which provider is active is deployment configuration. The plugin cannot tell the
 burden: enough for the UI to render a form and link the service's developer-app page. This is the
 piece v1 never had.
 
-Whether that form renders through ticket [016](../plans/tickets/016-settings-form-generation.md)'s
+Whether that form renders through ticket [Zod → settings-form generation](https://github.com/XDGFX/ultrasonics/issues/86)'s
 Zod form generator or its own renderer is **not decided here**.
 
 ## Out of scope
 
 - The `Proxy` implementation and hosted app registrations (ADR-0002, roadmap Phase 5).
 - User accounts, sessions, and login — a different thing that shares the word "auth"
-  (`CONTEXT.md`, "Auth"); settled by ADR-0007 and ADR-0008.
+  (`GLOSSARY.md`, "Auth"); settled by ADR-0007 and ADR-0008.
 - Per-plugin auth logic; plugins declare, they do not implement.
 - Builder-time credential resolution for dynamic option lists — ticket
-  [007](../plans/tickets/007-dynamic-options.md).
+  [Builder-time credentials for dynamic options](https://github.com/XDGFX/ultrasonics/issues/77).

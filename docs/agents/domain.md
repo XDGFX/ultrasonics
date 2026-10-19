@@ -1,15 +1,15 @@
 # Domain Docs
 
 How the engineering skills should consume this repo's domain documentation when exploring the
-codebase. **Layout: single-context** — one `CONTEXT.md` and one `docs/adr/` at the repo root.
+codebase. **Layout: single-context** — one `GLOSSARY.md` and one `docs/adr/` at the repo root.
 
 ADR-0001 plans a Bun-workspace monorepo under `packages/`, but package boundaries are not
 bounded contexts: stay single-context unless a genuine second domain language appears, at which
-point add a root `CONTEXT-MAP.md` and per-context `CONTEXT.md` files.
+point add a root `GLOSSARY-MAP.md` and per-context `GLOSSARY.md` files.
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root — the domain glossary.
+- **`GLOSSARY.md`** at the repo root — the domain glossary.
 - **`docs/adr/`** — read the ADRs that touch the area you're about to work in.
 
 If a file doesn't exist, **proceed silently**. Don't flag its absence; don't suggest creating it
@@ -20,7 +20,7 @@ creates these lazily, when terms or decisions actually get resolved.
 
 ```
 /
-├── CONTEXT.md
+├── GLOSSARY.md
 └── docs/
     └── adr/
         ├── 0001-stack-typescript-bun-vue-monorepo.md
@@ -30,7 +30,7 @@ creates these lazily, when terms or decisions actually get resolved.
 ## Use the glossary's vocabulary
 
 When your output names a domain concept — an issue title, a refactor proposal, a hypothesis, a
-test name — use the term exactly as `CONTEXT.md` defines it. Don't drift to synonyms the glossary
+test name — use the term exactly as `GLOSSARY.md` defines it. Don't drift to synonyms the glossary
 explicitly avoids (`account_id`, never "tenant"; the song dict, not "track object").
 
 If the concept you need isn't in the glossary yet, that's a signal: either you're inventing
@@ -48,6 +48,6 @@ overriding — `AGENTS.md` forbids re-litigating an accepted ADR without a super
 ## ADRs and specs are different documents
 
 An **ADR** records a decision and its reasoning: immutable, append-only, superseded by a new ADR
-rather than edited. A **spec** (`docs/specs/<feature>/spec.md`) commissions work: what must be
-true for a feature to be done. A decision that shapes many features is an ADR; the contract for
+rather than edited. A **spec** (a GitHub issue, written by `/to-spec`) commissions work: what
+must be true for a feature to be done. A decision that shapes many features is an ADR; the contract for
 one feature is a spec. See `issue-tracker.md`.

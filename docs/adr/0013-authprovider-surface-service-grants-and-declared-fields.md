@@ -13,7 +13,7 @@ is Worker-shaped; credentials are plain data),
 [ADR-0012](0012-plugin-sdk-surface-keyed-by-component.md) (which deferred `ctx.auth`'s shape here,
 and fixed the boundary rule: *if you cannot open an authenticated connection without it, it is
 auth, not a setting*)
-**Ticket:** [`docs/plans/tickets/006-authprovider-surface.md`](../plans/tickets/006-authprovider-surface.md)
+**Ticket:** [AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76)
 
 ## Context
 

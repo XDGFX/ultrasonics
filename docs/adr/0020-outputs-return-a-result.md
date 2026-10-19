@@ -8,7 +8,7 @@ gains a `results` column and a defined set of outcomes; `docs/proposals/plugin-s
 **Amended by:** [ADR-0021](0021-the-runner-validates-the-song-dict.md) §6 — a rejected song or
 playlist caps the run at `partial`, or `failed` if nothing was written;
 [ADR-0023](0023-the-v2-song-dict-shape.md) §1 — a playlist's position is within `ctx.songs.playlists`
-**Ticket:** [`docs/plans/tickets/017-output-run-report.md`](../plans/tickets/017-output-run-report.md)
+**Ticket:** [Does an output report what it did?](https://github.com/XDGFX/ultrasonics/issues/87)
 
 ## Context
 

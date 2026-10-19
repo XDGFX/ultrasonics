@@ -2,8 +2,9 @@
 
 Source of truth for porting v1 → v2. Everything here describes the **existing Python app** as it
 stands on `master`, read directly from source. When the port needs to know "what did v1 actually
-do", this is the answer. Behaviour to preserve exactly (the song dict, fuzzymatch) is called out;
-everything else is being replaced (ADR-0001).
+do", this is the answer. Nothing here has to be preserved exactly: the song dict and fuzzymatch are
+reference material for designs made fresh (ADR-0022), and everything else is being replaced
+(ADR-0001).
 
 ## Engine overview
 
@@ -34,7 +35,7 @@ From `applet_run()`. An applet is `{ inputs[], modifiers[], outputs[], triggers[
 Records `lastrun = { time, result }`. Fails the whole applet if any input or output is missing.
 
 **Known bug to fix in the port:** `applet_trigger_run()` requires *all* triggers to fire (AND) —
-the comment admits it should be OR. Fix in v2 (`CONTEXT.md`, "Trigger").
+the comment admits it should be OR. Fix in v2 (`GLOSSARY.md`, "Trigger").
 
 ### The song dict (v2's starting point, not its spec — ADR-0022)
 

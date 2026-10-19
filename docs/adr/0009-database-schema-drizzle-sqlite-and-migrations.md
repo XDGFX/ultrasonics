@@ -18,7 +18,7 @@ wayfinder review found no cell anywhere owned it.
 
 One premise correction happened during the grilling and is recorded here because it changed an
 answer. The draft argument for a weak self-host default leaned on a "no setup promise". No such
-promise exists: every use of *frictionless* in ADR-0003, ADR-0007, ADR-0008 and `CONTEXT.md` is about
+promise exists: every use of *frictionless* in ADR-0003, ADR-0007, ADR-0008 and `GLOSSARY.md` is about
 **login** specifically — "no login friction", "a login wall would be a regression against v1, which
 had none". Cal flagged the over-reading directly: plenty of self-hosted software requires
 configuration, and minimising friction *where reasonable* is not a prohibition on env vars. The
@@ -211,7 +211,7 @@ disk annoyance; rollback needs a real answer not worth guessing before a single 
 - **The v1 importer's job is small.** v1's entire schema is three tables — `ultrasonics(key,value)`,
   `plugins`, `applets` — with Python `repr` blobs in the last two and no run history. The fog entry
   for the importer can be graduated with that in hand.
-- **`CONTEXT.md`'s "frictionless" wording is tightened to "no login wall"**, so the over-reading
+- **`GLOSSARY.md`'s "frictionless" wording is tightened to "no login wall"**, so the over-reading
   corrected in the Context above is harder for the next reader to repeat.
 - **Two triggers to revisit this ADR**, neither of which is a defect: SQLite's single-writer ceiling
   if hosted needs multiple app instances, and `runs` retention once hosted carries real traffic.

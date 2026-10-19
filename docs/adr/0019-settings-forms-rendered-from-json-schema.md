@@ -6,7 +6,7 @@
 component, discriminated unions for conditional fields), ADR-0013 (auth `fields` are a Zod object)
 **Amends:** `docs/proposals/plugin-sdk-v2.md`. `persistentSettings` becomes optional, and the
 conformance suite gains the renderable-subset check.
-**Ticket:** [`docs/plans/tickets/016-settings-form-generation.md`](../plans/tickets/016-settings-form-generation.md)
+**Ticket:** [Zod → settings-form generation](https://github.com/XDGFX/ultrasonics/issues/86)
 
 ## Context
 

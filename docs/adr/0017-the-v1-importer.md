@@ -5,7 +5,7 @@
 **Builds on:** ADR-0009 §5–§7 (target schema, encryption, boot migrations), ADR-0011 (triggers are
 server config), ADR-0013 §7 (operator-level client credentials), ADR-0015 §3 (boot order)
 **Amends:** `roadmap.md` Phase 2's exit gate: a ported plugin also ships its tested v1 mapping.
-**Ticket:** [`docs/plans/tickets/013-v1-importer-shape.md`](../plans/tickets/013-v1-importer-shape.md)
+**Ticket:** [The v1 importer's shape](https://github.com/XDGFX/ultrasonics/issues/83)
 
 ## Context
 

@@ -7,7 +7,7 @@
 where a return that is not a song dict object fails as a whole, and its notes on `duration` and
 `title`; `docs/proposals/plugin-sdk-v2.md`, whose `SongDict` return type becomes `SongDictInput`.
 **Evidence:** [`docs/research/song-dict.md`](../research/song-dict.md)
-**Spec:** [`docs/specs/song-dict/spec.md`](../specs/song-dict/spec.md)
+**Spec:** [Spec: the v2 song dict](https://github.com/XDGFX/ultrasonics/issues/95)
 
 ## Context
 

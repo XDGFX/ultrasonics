@@ -6,7 +6,7 @@
 ADR-0017 §4 (the importer maps `time trigger` to a schedule)
 **Amends:** ADR-0009 §5. `applets` gains `schedule`, `next_run_at` and `webhook_token_hash`, and
 `runs` gains `trigger` and an `interrupted` status.
-**Ticket:** [`docs/plans/tickets/015-scheduler-architecture.md`](../plans/tickets/015-scheduler-architecture.md)
+**Ticket:** [Scheduler architecture](https://github.com/XDGFX/ultrasonics/issues/85)
 
 ## Context
 

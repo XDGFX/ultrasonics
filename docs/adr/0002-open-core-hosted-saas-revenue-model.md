@@ -36,7 +36,7 @@ Adopt **open-core** with a **hosted SaaS** revenue tier:
    (Spotify extended quota, Apple Developer) start early in parallel, for lead time.
 
 Product AI (LLM matching, natural-language playlists) stays out of the initial product; the seams
-are reserved (see `CONTEXT.md`, "Matcher strategy") but the implementation is deferred and opt-in.
+are reserved (see `GLOSSARY.md`, "Matcher strategy") but the implementation is deferred and opt-in.
 
 ## Consequences
 

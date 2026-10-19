@@ -5,7 +5,7 @@
 **Refines:** ADR-0007 (session sources), ADR-0008 (self-host has no login wall)
 **Amends:** ADR-0008 §4, which kept the name `DISABLE_AUTH`, and ADR-0009 §5, which had self-host's
 bootstrapped session stored as a `sessions` row that never expires.
-**Ticket:** [`docs/plans/tickets/011-self-host-first-run.md`](../plans/tickets/011-self-host-first-run.md)
+**Ticket:** [Self-host first run and auth-mode configuration](https://github.com/XDGFX/ultrasonics/issues/81)
 
 ## Context
 

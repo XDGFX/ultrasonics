@@ -1,4 +1,4 @@
-# Context
+# Glossary
 
 Domain glossary for ultrasonics. No implementation details — terms only. When a term maps to a
 decision, it links the ADR that owns it.

@@ -9,7 +9,7 @@ where return types were "enforced by the handler's type, not by a runtime check 
 **Amended by:** [ADR-0023](0023-the-v2-song-dict-shape.md) — the dict is an object, so §3's "not
 a list" reads "not a song dict object"; `duration` is carried as `durationMs`; `title` is
 non-empty; §7's strict mode is the strict schema variant.
-**Ticket:** [`docs/plans/tickets/018-runtime-song-dict-validation.md`](../plans/tickets/018-runtime-song-dict-validation.md)
+**Ticket:** [Does the runner validate the song dict at run time?](https://github.com/XDGFX/ultrasonics/issues/88)
 
 ## Context
 

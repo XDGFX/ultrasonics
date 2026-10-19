@@ -1,6 +1,6 @@
 # Proposal: Plugin SDK v2
 
-**Status:** Frozen — ticket [005](../plans/tickets/005-sdk-surface.md) resolved 2026-08-06,
+**Status:** Frozen — ticket [Plugin SDK surface freeze](https://github.com/XDGFX/ultrasonics/issues/75) resolved 2026-08-06,
 ratified by [ADR-0012](../adr/0012-plugin-sdk-surface-keyed-by-component.md).
 
 Fleshes out ADR-0004 (typed plugin SDK, explicit registration) into a concrete surface. This is the
@@ -145,7 +145,7 @@ the service without it, it is auth — not a setting.* So Plex's `server_url` an
 toggle belong to the `AuthSpec` (the `serverUrl` flow), while its `plex_prepend` /
 `ultrasonics_prepend` path mapping is `persistentSettings`. v1's `handshake.settings` conflated an
 auth button, connection configuration and genuine preferences in one list; this rule separates them.
-The `AuthSpec`'s own surface is ticket [006](../plans/tickets/006-authprovider-surface.md).
+The `AuthSpec`'s own surface is ticket [AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76).
 
 ### Registration (explicit, not scanned)
 
@@ -167,7 +167,7 @@ loader**. All three consumers are served by exactly one of those parts:
 - The runner resolves a persisted applet's plugin by `officialPlugins[applet.plugin]`.
 
 Third-party plugins would be added to this registry rather than dropped into a scanned folder; that
-install story is out of scope until a third-party plugin exists (`map.md`).
+install story is out of scope until a third-party plugin exists ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70), Out of scope).
 
 ## Conformance test
 
@@ -201,7 +201,7 @@ ADR-0021 §7:
 Every question this document once left open is now closed. Kept as the paper trail — a plugin port
 should not have to rediscover why a shape is what it is.
 
-**Closed by the freeze, ticket [005](../plans/tickets/005-sdk-surface.md) →
+**Closed by the freeze, ticket [Plugin SDK surface freeze](https://github.com/XDGFX/ultrasonics/issues/75) →
 [ADR-0012](../adr/0012-plugin-sdk-surface-keyed-by-component.md):**
 
 - ~~**Instance settings as a function of context** vs a static schema~~ — **static record keyed by
@@ -220,7 +220,7 @@ The freeze also **removed the `component` declaration**, deriving it from `Objec
 
 **Resolved first, because they constrained this surface:**
 
-- ~~**Plugin isolation**~~ — **resolved**, ticket [003](../plans/tickets/003-plugin-isolation.md) →
+- ~~**Plugin isolation**~~ — **resolved**, ticket [Plugin isolation mechanism](https://github.com/XDGFX/ultrasonics/issues/73) →
   [ADR-0010](../adr/0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md). The boundary
   is designed Worker-shaped now and executed in-process in Phase 1. **This amends the `RunContext`
   above** — `credentials` becomes plain data with behaviour moving to an async `ctx.auth` facade,
@@ -229,7 +229,7 @@ The freeze also **removed the `component` declaration**, deriving it from `Objec
   [`../reference/plugin-isolation-research.md`](../reference/plugin-isolation-research.md); ticket 005
   ratifies them into this document at the freeze.
 - ~~**Long-running triggers**~~ — **resolved**, ticket
-  [004](../plans/tickets/004-trigger-model.md) →
+  [Trigger model and runner semantics](https://github.com/XDGFX/ultrasonics/issues/74) →
   [ADR-0011](../adr/0011-triggers-are-server-capabilities-not-plugins.md). The answer is *neither*
   `run()` nor a `schedule()`/`subscribe()` shape: **the SDK does not model triggers at all.**
   `Trigger` is removed as a Component and the surface freezes at three — `inputs`, `modifiers`,
@@ -241,20 +241,20 @@ The freeze also **removed the `component` declaration**, deriving it from `Objec
 
 - **Dynamic option fetching** (v1 builders that query the service for playlist names): needs
   resolved credentials at *build* time, before an applet is saved. How does the AuthProvider serve
-  a builder, not just a run? → ticket [007](../plans/tickets/007-dynamic-options.md), which waits on
+  a builder, not just a run? → ticket [Builder-time credentials for dynamic options](https://github.com/XDGFX/ultrasonics/issues/77), which waits on
   `auth-provider-v2.md`. **Constrained by the freeze:** it must not return `instanceSettings` to a
   function, because form generation now depends on that field being static.
-- **Third-party install** under explicit registration — **out of scope** for now (`map.md`): no
+- **Third-party install** under explicit registration — **out of scope** for now ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70)): no
   third-party plugins exist, so the manifest-vs-build-step trade is unforced. Decide when one does.
 
 ## Out of scope
 
 - The `AuthProvider` implementations themselves (own work, ADR-0005) and the `AuthSpec` surface
-  (ticket [006](../plans/tickets/006-authprovider-surface.md)). This document fixes only that
+  (ticket [AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76)). This document fixes only that
   `ctx.auth` exists and is async.
 - Any specific plugin's logic — see `docs/reference/legacy-architecture.md` per plugin.
 - The frontend form-rendering engine that consumes the Zod schema (a `packages/web` concern) —
-  ticket [016](../plans/tickets/016-settings-form-generation.md). Note that the freeze made this
+  ticket [Zod → settings-form generation](https://github.com/XDGFX/ultrasonics/issues/86). Note that the freeze made this
   **load-bearing**: rendering a `z.discriminatedUnion` is now the mechanism by which v1's
   hand-written `builder()` blocks actually disappear.
 - Plugin settings migration across a version bump — `legacy-architecture.md` assigns v1's

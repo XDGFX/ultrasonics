@@ -5,7 +5,7 @@
 **Refines:** ADR-0004 (the typed plugin SDK, which this removes a component type from), ADR-0001
 (which inherited v1's four-component model)
 **Evidence:** [`docs/reference/trigger-candidates-research.md`](../reference/trigger-candidates-research.md)
-**Ticket:** [`docs/plans/tickets/004-trigger-model.md`](../plans/tickets/004-trigger-model.md)
+**Ticket:** [Trigger model and runner semantics](https://github.com/XDGFX/ultrasonics/issues/74)
 
 ## Context
 
@@ -82,13 +82,13 @@ server capabilities under this decision, so neither needs a contract frozen now.
   test and constrain — no trigger shape needs to satisfy ADR-0010's nine boundary constraints.
 - **The AND→OR bug dissolves rather than being fixed.** With no set of trigger plugins whose firings
   must be combined, there is no combination logic to get wrong.
-- **`CONTEXT.md` changes.** **Trigger** is no longer a **Component**; **Applet** no longer carries
+- **`GLOSSARY.md` changes.** **Trigger** is no longer a **Component**; **Applet** no longer carries
   "zero or more Triggers" as components. Both are amended in this commit.
 - **`roadmap.md` changes.** Phase 2 loses `webhook` and `time-trigger` as plugin cells — two fewer
   ports. The scheduler and webhook route become Phase 1 server work instead.
 - **The server now owns scheduling**, which was previously nobody's job because the trigger plugin
   blocked. How the scheduler persists intent, survives restarts and handles missed runs is a real
-  decision and is ticketed as [015](../plans/tickets/015-scheduler-architecture.md).
+  decision and is ticketed as [Scheduler architecture](https://github.com/XDGFX/ultrasonics/issues/85).
 - **Run frequency has a real per-account cost.** A no-op sync is cheap in *writes* but not in
   *reads* — "nothing changed" is only knowable after fetching from both services. Accepted: Cal's
   position is that a run costs fractions of a penny, with free-tier rate limits and a cap on active

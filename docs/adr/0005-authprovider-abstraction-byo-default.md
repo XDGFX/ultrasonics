@@ -32,7 +32,7 @@ Credentials are stored per tenant (ADR-0003). A first-run setup wizard makes BYO
 - Phase 1 ships self-host-first with **zero hosting burden** — BYO + PKCE need nothing running.
 - The hosted tier becomes an *additive* `Proxy` implementation plus app registrations, not a
   rewrite of plugin auth.
-- `ultrasonics-api` is not resurrected; it survives only as a historical reference in `CONTEXT.md`.
+- `ultrasonics-api` is not resurrected; it survives only as a historical reference in `GLOSSARY.md`.
 - The `AuthProvider` interface and credential storage are a **checkpoint gate** (AGENTS.md).
 - Some services will only ever be BYO/offline-appropriate; the hosted tier's coverage is governed
   by ADR-0002 (ship-all, gate reactively), not by this interface.

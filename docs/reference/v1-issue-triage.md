@@ -2,7 +2,7 @@
 
 Every open issue on [`XDGFX/ultrasonics`](https://github.com/XDGFX/ultrasonics/issues) (37 as of
 **2026-10-15**), read in full with comments and sorted by what it means for the 2.0 rewrite. Map
-ticket [009](../plans/tickets/009-issue-triage.md) resolves here. The backlog is the only record of
+ticket [Triage the v1 issue backlog](https://github.com/XDGFX/ultrasonics/issues/79) resolves here. The backlog is the only record of
 what real users hit, so the deliverable is the **must still work** list below. Labels and closes come
 second. **Applied 2026-10-15** at Cal's instruction: all 37 issues labelled, and the 14 issues listed below
 closed with the comments drafted here. 23 remain open.

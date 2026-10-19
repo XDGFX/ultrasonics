@@ -1,7 +1,7 @@
 # Reference — Trigger candidates
 
-Research findings for ticket [014](../plans/tickets/014-trigger-candidates.md): *which* triggers are
-worth having, so [004](../plans/tickets/004-trigger-model.md) can decide how a **Trigger** is
+Research findings for ticket [Which triggers are worth having](https://github.com/XDGFX/ultrasonics/issues/84): *which* triggers are
+worth having, so [Trigger model and runner semantics](https://github.com/XDGFX/ultrasonics/issues/74) can decide how a **Trigger** is
 modelled — or whether the **Trigger** component survives at all.
 
 Durable facts, cited. Claims are marked **[repo]** where this document verified them by reading the
@@ -268,7 +268,7 @@ is the one open question that could change "no competitor offers a user-invokabl
 
 ## 3. Feasibility per deployment
 
-The hosted tier launches **cloud-services-only** and cannot reach a home network (`CONTEXT.md`); this
+The hosted tier launches **cloud-services-only** and cannot reach a home network (`GLOSSARY.md`); this
 section asks which candidates split along that line.
 
 | Candidate | Hosted | Self-host | Why |
@@ -697,7 +697,7 @@ Three supporting observations:
 - **The AND→OR bug (issue [#3](https://github.com/XDGFX/ultrasonics/issues/3)) dissolves** if triggers
   are applet configuration rather than plugins that must each "complete". Any of several independent
   sources may fire the applet; there is no sequence to get wrong. That is a runner semantic, exactly
-  as `CONTEXT.md` says.
+  as `GLOSSARY.md` says.
 
 If 004 keeps a Trigger component anyway, the case must rest on optionality for candidate 7 — and this
 document's finding is that candidate 7 is the weakest item on the list, not the strongest.

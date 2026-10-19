@@ -1,8 +1,8 @@
 # Reference — Plugin isolation on Bun
 
-Research findings for ticket [003](../plans/tickets/003-plugin-isolation.md): how plugins are
+Research findings for ticket [Plugin isolation mechanism](https://github.com/XDGFX/ultrasonics/issues/73): how plugins are
 isolated at run time, and what the chosen mechanism demands of the SDK boundary that ticket
-[005](../plans/tickets/005-sdk-surface.md) freezes.
+[Plugin SDK surface freeze](https://github.com/XDGFX/ultrasonics/issues/75) freezes.
 
 Durable facts, cited. Claims are marked **[measured]** where this document verified them by running
 code, **[docs]** where a primary source states them, and **[uncertain]** where neither settles it.

@@ -4,7 +4,7 @@
 **Date:** 2026-08-07
 **Refines:** ADR-0001 (which fixed the stack and package layout but left naming, plugin packaging
 and the TypeScript config strategy open)
-**Ticket:** [`docs/plans/tickets/008-monorepo-conventions.md`](../plans/tickets/008-monorepo-conventions.md)
+**Ticket:** [Monorepo conventions](https://github.com/XDGFX/ultrasonics/issues/78)
 **Amends:** [`docs/plans/roadmap.md`](../plans/roadmap.md) § Phase 0, whose scaffold brief recorded a
 `cycle-check:update` rebaseline hatch that §4 below retires.
 
@@ -150,6 +150,9 @@ retrofitting is annoying but bounded.
   plus `cycle-check`. Fails rather than repairs, per the roadmap's Phase 0 brief.
 
 ### 9. `.claude/settings.json` — the deny list is the point
+
+*Amended 2026-10-19: the `gh issue` write denials are removed, now that revival work is tracked as
+GitHub issues (`docs/agents/issue-tracker.md`).*
 
 Allow: `bun test`, `bun run test`, `bun run build`, `bun run check`, `bun run check:ci`, the `:check`
 variants, `bun run cycle-check`, `bun install`; `git`

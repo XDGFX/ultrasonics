@@ -5,7 +5,7 @@
 **Refines:** ADR-0008 §1, which deferred the linking rule until a second provider exists
 **Amends:** ADR-0009 §5's initial migration: `federated_identities` gains `email`, `sessions` gains
 `authenticated_at`.
-**Ticket:** [`docs/plans/tickets/012-identity-collision-rule.md`](../plans/tickets/012-identity-collision-rule.md)
+**Ticket:** [The identity-collision rule for provider #2](https://github.com/XDGFX/ultrasonics/issues/82)
 
 ## Context
 

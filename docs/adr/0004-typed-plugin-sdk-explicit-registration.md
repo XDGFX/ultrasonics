@@ -24,7 +24,7 @@ frontend — so v1's hand-written `builder()` UI-description blocks largely disa
 global settings, and — for modifiers/outputs — the incoming song dict) and returns a typed song
 dict (inputs/modifiers) or nothing (outputs). An optional `test()` validates credentials.
 
-A plugin passes the shared **conformance test** (`CONTEXT.md`) to be considered ported.
+A plugin passes the shared **conformance test** (`GLOSSARY.md`) to be considered ported.
 
 ## Consequences
 

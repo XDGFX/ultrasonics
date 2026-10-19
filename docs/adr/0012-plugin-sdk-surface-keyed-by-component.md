@@ -9,7 +9,7 @@ sketch in five places)
 **Constrained by:** [ADR-0010](0010-plugin-isolation-worker-shaped-boundary-in-process-phase-1.md)
 (the nine boundary constraints and the `RunPayload`/`RunContext` split),
 [ADR-0011](0011-triggers-are-server-capabilities-not-plugins.md) (three components, no trigger)
-**Ticket:** [`docs/plans/tickets/005-sdk-surface.md`](../plans/tickets/005-sdk-surface.md)
+**Ticket:** [Plugin SDK surface freeze](https://github.com/XDGFX/ultrasonics/issues/75)
 
 ## Context
 
@@ -163,7 +163,7 @@ Per the repo's preference for machine-checked invariants over conventions:
   depends on that field being static.
 - **`packages/web` must render a `z.discriminatedUnion`.** This is a real requirement the proposal
   did not have, and it is the mechanism by which v1's hand-written `shy`-class JavaScript
-  disappears. Ticketed as [016](../plans/tickets/016-settings-form-generation.md), graduated from
+  disappears. Ticketed as [Zod → settings-form generation](https://github.com/XDGFX/ultrasonics/issues/86), graduated from
   the map's fog by this decision.
 - **Every plugin port writes one handler per component** rather than one `run()` with a branch. For
   the 11 of 16 that branched anyway this is a straight simplification; for the 5 that did not it is

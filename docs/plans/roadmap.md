@@ -5,24 +5,25 @@ green. Sequential where correctness demands it, parallel where work is independe
 boundary is a checkpoint for Cal (AGENTS.md). Update the **Status** lines as work lands.
 
 Decisions this plan rests on: ADR-0001 (stack), 0002 (revenue), 0003 (multi-tenancy), 0004 (plugin
-SDK), 0005 (auth), 0006 (preserve song dict + fuzzymatch).
+SDK), 0005 (auth), 0022 (design the song dict and matcher fresh).
 
-Decisions **not yet made** live on `map.md` — the wayfinder decision map. This roadmap assumes they
-land; it does not make them.
+Decisions **not yet made** are tickets on an open wayfinder map (a GitHub issue labelled
+`wayfinder:map`). This roadmap assumes they land; it does not make them.
 
 ---
 
 ## Phase 0 — Foundations
-**Status:** in progress — contracts frozen (`map.md` empty, 2026-10-15); scaffold landed (2026-10-15); the song dict remains · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
+**Status:** in progress — contracts frozen ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70) closed, 2026-10-15); scaffold landed (2026-10-15); the song dict remains · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
 **account model** (ADR-0007) and the **account-scoped database schema** (ADR-0003, ADR-0009) — the
 schema is the one thing that cannot be retrofitted later, so it is decided here, not in Phase 1.
-Port the song dict to Zod. Establish the docs system (this repo, done) and `AGENTS.md`.
+Design the song dict as a Zod schema. Establish the docs system (this repo, done) and `AGENTS.md`.
 
-The contract decisions are tracked as tickets on `map.md`; the phase is not done until that map is
-empty. How cells and waves are dispatched is in `AGENTS.md`.
+The contract decisions were tickets on the
+[Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70) map. How cells and waves are
+dispatched is in `build-process.md`.
 
 **Start immediately, in parallel with everything (Cal, not agents):** file the **Spotify
 extended-quota** and **Apple Developer** applications (ADR-0002's early track). Approval lead time is
@@ -41,17 +42,18 @@ the outset.
 - **`.claude/settings.json`** — a scoped permission allowlist (`bun test`/`build`/`check`, `git`,
   read-only `gh`) to cut permission prompts during agent waves, plus the deny entries that make
   GitHub issues read-only to agents. Both listed in `../build-process.md`.
-- **Conventions** — settled by ticket [008](tickets/008-monorepo-conventions.md) →
+- **Conventions** — settled by ticket [Monorepo conventions](https://github.com/XDGFX/ultrasonics/issues/78) →
   [ADR-0014](../adr/0014-monorepo-conventions-naming-boundaries-and-gates.md): no file-suffix
   taxonomy, Biome over ESLint+Prettier, colocated tests, one package per plugin, shared base tsconfig
   with no project references. The scaffold cell implements these; it does not revisit them.
 
 **The song dict** — designed fresh for v2 as a Zod schema with tests, starting from v1's shape
-([ADR-0022](../adr/0022-design-the-song-dict-and-matcher-fresh.md)). It needs a design spec first.
+([ADR-0022](../adr/0022-design-the-song-dict-and-matcher-fresh.md)), specified in
+[Spec: the v2 song dict](https://github.com/XDGFX/ultrasonics/issues/95).
 
 **Exit gate:** CI green on an empty pipeline · SDK + `AuthProvider` interfaces frozen · account
 model + initial account-scoped schema decided (ADR'd) · trigger model settled · song-dict Zod schema
-+ its tests merged · docs skeleton and ADRs in place · **`map.md` has no open tickets**.
++ its tests merged · docs skeleton and ADRs in place · **the Phase 0 contracts map is closed**.
 
 ## Phase 1 — Vertical slice (prove the whole pipe)
 **Status:** not started · **Owner mix:** agents build; Cal reviews the slice end-to-end
@@ -64,7 +66,7 @@ applet. Implement the schema and account model decided in Phase 0 — account-is
 (ADR-0003), self-host still login-free. Build the **scheduler and the inbound webhook route** here:
 ADR-0011 makes triggers server capabilities rather than plugins, so this phase owns them outright
 (OR semantics, queue-depth-of-one on a same-applet collision) and Phase 2 has no trigger cells to
-port. Architecture is map ticket [015](tickets/015-scheduler-architecture.md). Write the v1 SQLite
+port. Architecture is map ticket [Scheduler architecture](https://github.com/XDGFX/ultrasonics/issues/85). Write the v1 SQLite
 **importer**.
 
 **Note on this phase's exit gate.** That it targets Spotify → **Plex**, which Cal has no setup to
@@ -112,7 +114,7 @@ Ship what people keep asking for and v1 never delivered: **YouTube Music** (#43)
 **Apple Music** (#55), **Subsonic**. Reserve — don't fill — the AI seams:
 `matcher.strategy = "fuzzy" | "llm"` and a natural-language playlist plugin. Opt-in only (ADR-0002).
 
-Backlog triage happens *before* this phase, not in it (`map.md` ticket 009) — the point of triaging
+Backlog triage happens *before* this phase, not in it ([Triage the v1 issue backlog](https://github.com/XDGFX/ultrasonics/issues/79)) — the point of triaging
 early is that Phases 1–2 get the evidence of what users actually hit.
 
 **Exit gate:** ≥1 net-new service shipped · AI-seam interface merged (implementation deferred) ·
@@ -147,8 +149,8 @@ freemium gate live · kill-switch verified · commercial-API approvals in hand f
 
 ## Deferred / not yet decided
 
-Open decisions **for Phase 0** are tickets on `map.md`, not entries here. This list is what sits
-*beyond* that map's destination — deliberately out of scope until a later phase makes it live.
+Open decisions are wayfinder tickets, not entries here. This list is what sits beyond the Phase 0
+map's destination, deliberately out of scope until a later phase makes it live.
 
 - Exact freemium tier limits (Phase 5 launch detail).
 - Hosting/infra choice for the hosted tier.
