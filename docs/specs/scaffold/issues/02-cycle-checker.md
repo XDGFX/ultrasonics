@@ -1,6 +1,6 @@
 # 02 — Cross-package cycle checker
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Spec:** `../spec.md` · **Blocked by:** 01 · **Blocks:** 05 · **Build:** `/tdd`
 

@@ -1,6 +1,6 @@
 # 04 — CI workflow
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Spec:** `../spec.md` · **Blocked by:** 01 · **Blocks:** 05 · **Build:** `/implement`
 

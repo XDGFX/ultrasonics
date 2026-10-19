@@ -1,6 +1,6 @@
 # 01 — The plugin-sdk package and the song dict schema
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Spec:** `../spec.md` · **Blocked by:** none · **Blocks:** 02, 03, 04 · **Build:** `/implement`
 

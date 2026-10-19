@@ -1,6 +1,6 @@
 # 05 — Verify the gates and update the docs
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Spec:** `../spec.md` · **Blocked by:** 01, 02, 03, 04 · **Blocks:** none · **Build:** `/implement`
 

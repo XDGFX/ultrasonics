@@ -1,6 +1,6 @@
 # 01 — Workspace root, Bun pin, TypeScript and Biome
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Spec:** `../spec.md` · **Blocked by:** none · **Blocks:** 02, 04, 05 · **Build:** `/implement`
 

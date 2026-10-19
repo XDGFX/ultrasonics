@@ -1,6 +1,6 @@
 # Spec — Phase 0 scaffold cell
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Sources:** `docs/plans/roadmap.md` § Phase 0 ("The scaffold cell must deliver"), ADR-0001 (stack
 and layout), ADR-0014 (naming, boundaries, gates, scripts, permissions), `docs/build-process.md`

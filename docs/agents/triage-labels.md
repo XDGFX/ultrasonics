@@ -18,6 +18,10 @@ here touches `XDGFX/ultrasonics`.
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), write the corresponding
 string from the right-hand column into the issue's `**Status:**` line.
 
+When an issue's work is merged to `revival`, set its status to `resolved` and add a dated
+`## Comments` line naming the commit. A spec whose issues are all resolved is `resolved` too.
+`resolved` is not a triage role, so it has no GitHub label; on GitHub it is a closed issue.
+
 ## Not the same vocabulary as wayfinder tickets
 
 `docs/plans/tickets/` uses its own `**Status:**` vocabulary (`Open` / `claimed` / `resolved`) —

@@ -1,6 +1,6 @@
 # 03 — Agent permission allowlist
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Spec:** `../spec.md` · **Blocked by:** none · **Blocks:** 05 · **Build:** `/implement`
 
