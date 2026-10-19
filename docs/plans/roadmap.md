@@ -13,7 +13,7 @@ Decisions **not yet made** are tickets on an open wayfinder map (a GitHub issue 
 ---
 
 ## Phase 0 — Foundations
-**Status:** in progress — contracts frozen ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70) closed, 2026-10-15); scaffold landed (2026-10-15); the song dict remains · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
+**Status:** in progress — contracts frozen ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70) closed, 2026-10-15); scaffold landed (2026-10-15); song dict landed (2026-10-19) · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
