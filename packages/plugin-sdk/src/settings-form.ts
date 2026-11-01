@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { IssuePath, ValidationIssue } from "./song-dict-validator.ts";
+import type { IssuePath, ValidationIssue } from "./validation-issue.ts";
 
 export type JSONSchema = z.core.JSONSchema.BaseSchema;
 
@@ -60,16 +60,20 @@ export function toFormSchema(
 	const issues: ValidationIssue[] = [];
 	const report = (path: IssuePath, message: string) => issues.push({ path, message });
 
+	// Transforms, pipes and coercion vanish from input-mode JSON Schema, so only Zod sees them.
+	const unseen: { jsonPath: (string | number)[]; message: string }[] = [];
 	const jsonSchema = z.toJSONSchema(schema, {
 		io: "input",
 		unrepresentable: "any",
-		// Transforms, pipes and coercion vanish from input-mode JSON Schema, so only Zod sees them.
-		override({ zodSchema, path }) {
+		override({ zodSchema, path: jsonPath }) {
 			const def = zodSchema._zod.def as { type: string; coerce?: boolean };
 			if (def.type === "pipe" || def.type === "transform") {
-				report(valuePath(path), "A transform or pipe changes what the form saves");
+				unseen.push({ jsonPath, message: "A transform or pipe changes what the form saves" });
 			} else if (def.coerce) {
-				report(valuePath(path), "Coercion turns a blank field into a value the user never typed");
+				unseen.push({
+					jsonPath,
+					message: "Coercion turns a blank field into a value the user never typed",
+				});
 			}
 		},
 	}) as JSONSchema;
@@ -91,6 +95,8 @@ export function toFormSchema(
 		if (!isLeaf) report(path, describeNonLeaf(node));
 		else if (node.const !== undefined && !isDiscriminator) {
 			report(path, "A literal is renderable only as a union's discriminator; use an enum");
+		} else if (node.format !== undefined) {
+			report(path, `A "${node.format}" string format cannot be rendered; use a regex`);
 		}
 	};
 
@@ -106,15 +112,33 @@ export function toFormSchema(
 	};
 
 	const variants = (jsonSchema.oneOf ?? []).filter((v): v is JSONSchema => typeof v === "object");
-	if (jsonSchema.oneOf) {
-		const discriminator = Object.keys(variants[0]?.properties ?? {}).find((key) =>
-			variants.every((variant) => {
-				const property = variant.properties?.[key];
-				return typeof property === "object" && property.const !== undefined;
-			}),
+	const discriminator = Object.keys(variants[0]?.properties ?? {}).find((key) =>
+		variants.every((variant) => {
+			const property = variant.properties?.[key];
+			return typeof property === "object" && property.const !== undefined;
+		}),
+	);
+	/** Names a variant by its discriminator value, as `mode=saved`, so a path finds one variant. */
+	const variantPath = (index: number): IssuePath => {
+		const property = discriminator && variants[index]?.properties?.[discriminator];
+		return typeof property === "object" ? [`${discriminator}=${String(property.const)}`] : [];
+	};
+
+	for (const { jsonPath, message } of unseen) {
+		const [head, index] = jsonPath;
+		report(
+			head === "oneOf" && typeof index === "number"
+				? [...variantPath(index), ...valuePath(jsonPath.slice(2))]
+				: valuePath(jsonPath),
+			message,
 		);
+	}
+
+	if (jsonSchema.oneOf) {
 		if (discriminator === undefined) report([], "Expected a union to be discriminated");
-		for (const variant of variants) checkFlatObject(variant, [], discriminator);
+		for (const [index, variant] of variants.entries()) {
+			checkFlatObject(variant, variantPath(index), discriminator);
+		}
 	} else if (jsonSchema.type === "object" && !jsonSchema.anyOf) {
 		checkFlatObject(jsonSchema, []);
 	} else {

@@ -5,25 +5,26 @@ import { SongDict } from "./song-dict.ts";
 
 const Settings = z.record(z.string(), z.unknown());
 
-const runFields = {
+const RunFields = z.object({
 	appletId: z.string(),
 	runId: z.string(),
-	/** The run's wall-clock deadline, in epoch milliseconds; reported, not enforced, in Phase 1. */
+	/** The run's wall-clock deadline, in epoch milliseconds; nothing enforces it yet. */
 	deadlineMs: z.number(),
 	/** A path, never a handle (ADR-0010 #8). */
 	configDir: z.string(),
 	persistent: Settings,
 	instance: Settings,
-};
+});
+type RunFields = z.infer<typeof RunFields>;
 
 /**
  * The plain data that crosses the plugin boundary for one handler call (ADR-0010 §4). The harness
  * on the plugin's side rebuilds a live context around it.
  */
 export const RunPayload = z.discriminatedUnion("component", [
-	z.object({ component: z.literal("inputs"), ...runFields }),
-	z.object({ component: z.literal("modifiers"), ...runFields, songs: SongDict }),
-	z.object({ component: z.literal("outputs"), ...runFields, songs: SongDict }),
+	RunFields.extend({ component: z.literal("inputs") }),
+	RunFields.extend({ component: z.literal("modifiers"), songs: SongDict }),
+	RunFields.extend({ component: z.literal("outputs"), songs: SongDict }),
 ]);
 export type RunPayload = z.infer<typeof RunPayload>;
 
@@ -57,12 +58,10 @@ type AuthFacade<A> = [A] extends [AuthSpec]
 	: unknown;
 type PersistentOf<P> = [P] extends [SettingsSchema] ? z.output<P> : Record<string, never>;
 
+type LiveAuth = { auth?: { get(): Promise<unknown> } };
+
 /** What an input handler receives: `instance` typed from its own component's schema. */
-export type RunContext<Instance, Persistent, Auth> = {
-	appletId: string;
-	runId: string;
-	deadlineMs: number;
-	configDir: string;
+export type RunContext<Instance, Persistent, Auth> = Omit<RunFields, "persistent" | "instance"> & {
 	persistent: PersistentOf<Persistent>;
 	instance: Instance;
 	log: Log;
@@ -74,30 +73,23 @@ export type SongsContext<Instance, Persistent, Auth> = RunContext<Instance, Pers
 };
 
 /** What `test()` receives: no instance settings, since no applet exists yet (ADR-0012 §5). */
-export type TestContext<Persistent, Auth> = {
-	configDir: string;
+export type TestContext<Persistent, Auth> = Omit<TestPayload, "persistent"> & {
 	persistent: PersistentOf<Persistent>;
 	log: Log;
 } & AuthFacade<Auth>;
 
 /** A context as the runner holds it, before any plugin's types narrow it. */
-export interface LiveRunContext {
-	appletId: string;
-	runId: string;
-	deadlineMs: number;
-	configDir: string;
-	persistent: Record<string, unknown>;
-	instance: Record<string, unknown>;
-	log: Log;
-	auth?: { get(): Promise<unknown> };
-	songs?: SongDict;
+export type LiveRunContext = RunFields & { log: Log; songs?: SongDict } & LiveAuth;
+
+export type LiveTestContext = TestPayload & { log: Log } & LiveAuth;
+
+/** Whether the plugin declares auth; only then does its context carry `auth`. */
+export interface HarnessOptions {
+	declaresAuth: boolean;
 }
 
-export interface LiveTestContext {
-	configDir: string;
-	persistent: Record<string, unknown>;
-	log: Log;
-	auth?: { get(): Promise<unknown> };
+function authFacade(port: HostPort, options: HarnessOptions): LiveAuth {
+	return options.declaresAuth ? { auth: { get: () => port.credentials() } } : {};
 }
 
 function createLog(port: HostPort, runId: string | undefined): Log {
@@ -107,14 +99,22 @@ function createLog(port: HostPort, runId: string | undefined): Log {
 }
 
 /**
- * The plugin-side harness: rebuilds a live context from a payload and the host port. The Phase 1
- * executor calls it in-process; the Phase 2 worker calls the same function.
+ * The plugin-side harness: rebuilds a live context from a payload and the host port, so only plain
+ * data has to cross the boundary.
  */
-export function createRunContext(payload: RunPayload, port: HostPort): LiveRunContext {
+export function createRunContext(
+	payload: RunPayload,
+	port: HostPort,
+	options: HarnessOptions,
+): LiveRunContext {
 	const { component: _, ...data } = payload;
-	return { ...data, log: createLog(port, payload.runId), auth: { get: () => port.credentials() } };
+	return { ...data, log: createLog(port, payload.runId), ...authFacade(port, options) };
 }
 
-export function createTestContext(payload: TestPayload, port: HostPort): LiveTestContext {
-	return { ...payload, log: createLog(port, undefined), auth: { get: () => port.credentials() } };
+export function createTestContext(
+	payload: TestPayload,
+	port: HostPort,
+	options: HarnessOptions,
+): LiveTestContext {
+	return { ...payload, log: createLog(port, undefined), ...authFacade(port, options) };
 }

@@ -80,15 +80,20 @@ export function definePlugin<
 	return { ...definition, components };
 }
 
+/** The plain-data part of a plugin the runner reads before calling anything. */
+export const Handshake = z.object({
+	name: z.string().min(1),
+	description: z.string().min(1),
+	version: z.string().min(1),
+	mode: z.array(Mode).min(1).readonly(),
+	components: z.array(Component).min(1).readonly(),
+});
+
 /**
  * Any plugin, as the runner and registry hold it. Handlers are methods so that a plugin's narrowly
  * typed handlers are assignable here.
  */
-export interface Plugin {
-	name: string;
-	description: string;
-	version: string;
-	mode: readonly Mode[];
+export interface Plugin extends z.infer<typeof Handshake> {
 	auth?: AuthSpec | undefined;
 	persistentSettings?: SettingsSchema | undefined;
 	instanceSettings: InstanceSettings;
@@ -97,7 +102,6 @@ export interface Plugin {
 		modifiers?(ctx: LiveRunContext): Promise<SongDictInput>;
 		outputs?(ctx: LiveRunContext): Promise<OutputResult>;
 	};
-	components: readonly Component[];
 	test?(ctx: LiveTestContext): Promise<TestResult>;
 }
 

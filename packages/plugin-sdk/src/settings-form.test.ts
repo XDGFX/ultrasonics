@@ -23,7 +23,6 @@ describe("toFormSchema accepts the renderable subset (ADR-0019 §3)", () => {
 				.max(40)
 				.regex(/^[a-z]+$/),
 		],
-		["a URL string", z.string().url()],
 		["a number with bounds", z.number().min(0).max(1)],
 		["an integer", z.number().int()],
 		["a boolean", z.boolean()],
@@ -71,6 +70,8 @@ describe("toFormSchema rejects what a form cannot render, naming the path", () =
 		["a pipe", z.string().pipe(z.string().min(1))],
 		["a coerced number", z.coerce.number()],
 		["a date", z.date()],
+		["a URL string", z.url()],
+		["an email string", z.email()],
 		["an unknown", z.unknown()],
 	])("%s", (_, field) => {
 		const issues = issuesOf(z.object({ ok: z.string(), field }));
@@ -82,7 +83,15 @@ describe("toFormSchema rejects what a form cannot render, naming the path", () =
 			z.object({ mode: z.literal("a"), fine: z.string() }),
 			z.object({ mode: z.literal("b"), names: z.array(z.string()) }),
 		]);
-		expect(issuesOf(schema).map((issue) => issue.path)).toEqual([["names"]]);
+		expect(issuesOf(schema).map((issue) => issue.path)).toEqual([["mode=b", "names"]]);
+	});
+
+	test("a transform inside a union variant", () => {
+		const schema = z.discriminatedUnion("mode", [
+			z.object({ mode: z.literal("a"), fine: z.string() }),
+			z.object({ mode: z.literal("b"), size: z.string().transform((value) => value.length) }),
+		]);
+		expect(issuesOf(schema).map((issue) => issue.path)).toEqual([["mode=b", "size"]]);
 	});
 
 	test.each<[string, z.ZodType]>([

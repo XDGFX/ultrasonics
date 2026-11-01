@@ -3,20 +3,22 @@ import { expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { z } from "zod";
+import type { z } from "zod";
 import type { AuthSpec } from "./auth.ts";
 import { OutputResult } from "./output-result.ts";
-import { Component, Mode, type Plugin, TestResult } from "./plugin.ts";
+import { Component, Handshake, type Plugin, TestResult } from "./plugin.ts";
 import {
 	createRunContext,
 	createTestContext,
+	type HarnessOptions,
 	type HostPort,
 	type RunPayload,
 } from "./run-context.ts";
 import { Service } from "./service.ts";
 import { toFormSchema } from "./settings-form.ts";
 import { SongDict, type SongDictInput } from "./song-dict.ts";
-import { type IssuePath, validateSongDict } from "./song-dict-validator.ts";
+import { validateSongDict } from "./song-dict-validator.ts";
+import { type IssuePath, issuesOf } from "./validation-issue.ts";
 
 /** What conformance checks, in the order of spec #108 (ADR-0010 §5, ADR-0012 §8, ADR-0019–0021). */
 export const invariants = [
@@ -89,14 +91,6 @@ export const defaultSongDict = {
 		},
 	],
 } satisfies SongDictInput;
-
-const handshake = z.object({
-	name: z.string().min(1),
-	description: z.string().min(1),
-	version: z.string().min(1),
-	mode: z.array(Mode).min(1),
-	components: z.array(Component).min(1),
-});
 
 /** Builtins structured clone carries with their prototype; typed arrays are checked apart. */
 const cloneablePrototypes = new Set<unknown>([
@@ -197,8 +191,13 @@ function firstDifference(
 	return undefined;
 }
 
-function issuePath(path: PropertyKey[]): IssuePath {
-	return path.map((key) => (typeof key === "symbol" ? String(key) : key));
+/** A Zod error's issues as failures of one invariant, each path under `prefix`. */
+function failuresOf(
+	invariant: Invariant,
+	error: z.ZodError,
+	prefix: IssuePath = [],
+): ConformanceFailure[] {
+	return issuesOf(error, prefix).map((issue) => ({ invariant, ...issue }));
 }
 
 /** Parses each fixture value, returning the first valid one parsed, if it parses. */
@@ -211,16 +210,10 @@ function checkSettingsFixture(
 	let first: Record<string, unknown> | undefined;
 	for (const [index, value] of fixture.valid.entries()) {
 		const result = schema.safeParse(value);
-		if (result.success) {
-			if (index === 0) first = result.data as Record<string, unknown>;
-			continue;
-		}
-		for (const issue of result.error.issues) {
-			failures.push({
-				invariant: "settings-fixtures",
-				path: [...path, "valid", index, ...issuePath(issue.path)],
-				message: issue.message,
-			});
+		if (!result.success) {
+			failures.push(...failuresOf("settings-fixtures", result.error, [...path, "valid", index]));
+		} else if (index === 0) {
+			first = result.data as Record<string, unknown>;
 		}
 	}
 	for (const [index, value] of fixture.invalid.entries()) {
@@ -236,18 +229,9 @@ function checkSettingsFixture(
 }
 
 function staticFailures(plugin: Plugin): ConformanceFailure[] {
-	const failures: ConformanceFailure[] = [];
+	const shape = Handshake.safeParse(plugin);
+	const failures = shape.success ? [] : failuresOf("handshake", shape.error);
 
-	const shape = handshake.safeParse(plugin);
-	if (!shape.success) {
-		for (const issue of shape.error.issues) {
-			failures.push({
-				invariant: "handshake",
-				path: issuePath(issue.path),
-				message: issue.message,
-			});
-		}
-	}
 	for (const [key, handler] of Object.entries(plugin.run)) {
 		if (typeof handler !== "function") {
 			failures.push({ invariant: "handshake", path: ["run", key], message: "Expected a function" });
@@ -312,44 +296,39 @@ function staticFailures(plugin: Plugin): ConformanceFailure[] {
 	return failures;
 }
 
-function describeError(error: unknown): string {
-	return error instanceof Error ? error.message : JSON.stringify(error);
-}
-
-/**
- * Checks a plugin against every invariant, calling its real handlers with stub contexts built by
- * the runner's own harness. The plugin's test file stubs the network.
- */
-export async function checkConformance<P extends Plugin>(
+/** Persistent settings to run with: `{}` when none are declared, none when the fixture fails. */
+function persistentFixture<P extends Plugin>(
 	plugin: P,
 	fixtures: ConformanceFixtures<P>,
-): Promise<ConformanceFailure[]> {
-	const failures = staticFailures(plugin);
-
-	let persistent: Record<string, unknown> | undefined = {};
-	if (plugin.persistentSettings !== undefined) {
-		persistent = fixtures.persistentSettings
-			? checkSettingsFixture(
-					plugin.persistentSettings,
-					fixtures.persistentSettings,
-					["persistentSettings"],
-					failures,
-				)
-			: undefined;
-		if (!fixtures.persistentSettings) {
-			failures.push({
-				invariant: "settings-fixtures",
-				path: ["persistentSettings"],
-				message: "No fixture for the declared persistentSettings",
-			});
-		}
+	failures: ConformanceFailure[],
+): Record<string, unknown> | undefined {
+	if (plugin.persistentSettings === undefined) return {};
+	if (fixtures.persistentSettings === undefined) {
+		failures.push({
+			invariant: "settings-fixtures",
+			path: ["persistentSettings"],
+			message: "No fixture for the declared persistentSettings",
+		});
+		return undefined;
 	}
+	return checkSettingsFixture(
+		plugin.persistentSettings,
+		fixtures.persistentSettings,
+		["persistentSettings"],
+		failures,
+	);
+}
 
+/** Each component's instance settings to run with, where its fixture parses. */
+function instanceFixtures<P extends Plugin>(
+	plugin: P,
+	fixtures: ConformanceFixtures<P>,
+	failures: ConformanceFailure[],
+): Map<Component, Record<string, unknown>> {
 	const instances = new Map<Component, Record<string, unknown>>();
-	const instanceFixtures: Partial<Record<string, SettingsFixture<unknown>>> =
-		fixtures.instanceSettings;
+	const byKey: Partial<Record<string, SettingsFixture<unknown>>> = fixtures.instanceSettings;
 	for (const [key, schema] of Object.entries(plugin.instanceSettings)) {
-		const fixture = instanceFixtures[key];
+		const fixture = byKey[key];
 		if (fixture === undefined) {
 			failures.push({
 				invariant: "settings-fixtures",
@@ -362,124 +341,188 @@ export async function checkConformance<P extends Plugin>(
 		const component = Component.safeParse(key);
 		if (parsed && component.success) instances.set(component.data, parsed);
 	}
+	return instances;
+}
 
-	const songs = SongDict.safeParse(fixtures.songs ?? defaultSongDict);
-	if (!songs.success) {
-		failures.push({
-			invariant: "settings-fixtures",
-			path: ["songs"],
-			message: "The fixture song dict does not parse",
-		});
-	}
+function songsFixture(
+	input: SongDictInput | undefined,
+	failures: ConformanceFailure[],
+): SongDict | undefined {
+	const songs = SongDict.safeParse(input ?? defaultSongDict);
+	if (songs.success) return songs.data;
+	failures.push({
+		invariant: "settings-fixtures",
+		path: ["songs"],
+		message: "The fixture song dict does not parse",
+	});
+	return undefined;
+}
 
-	let credentials: unknown;
-	if (plugin.auth !== undefined) {
-		const parsed = plugin.auth.fields.safeParse(fixtures.credentials ?? {});
-		if (parsed.success) credentials = parsed.data;
-		else {
-			for (const issue of parsed.error.issues) {
-				failures.push({
-					invariant: "settings-fixtures",
-					path: ["credentials", ...issuePath(issue.path)],
-					message: issue.message,
-				});
-			}
-		}
-	}
+/** The credentials the stub port resolves, parsed by the plugin's auth fields. */
+function credentialsFixture<P extends Plugin>(
+	plugin: P,
+	fixtures: ConformanceFixtures<P>,
+	failures: ConformanceFailure[],
+): unknown {
+	if (plugin.auth === undefined) return undefined;
+	const parsed = plugin.auth.fields.safeParse(fixtures.credentials ?? {});
+	if (parsed.success) return parsed.data;
+	failures.push(...failuresOf("settings-fixtures", parsed.error, ["credentials"]));
+	return undefined;
+}
 
-	const logs: unknown[] = [];
-	const port: HostPort = {
+/** A host port that resolves the credentials fixture, if any, and drops log lines. */
+function stubPort(credentials: unknown): HostPort {
+	return {
 		credentials: () =>
-			plugin.auth === undefined || credentials === undefined
+			credentials === undefined
 				? Promise.reject(new Error("This plugin has no credentials fixture"))
 				: Promise.resolve(structuredClone(credentials)),
-		log: (entry) => logs.push(entry),
+		log: () => {},
 	};
-	const configDir = mkdtempSync(join(tmpdir(), `ultrasonics-conformance-${plugin.name}-`));
+}
 
-	if (persistent !== undefined && songs.success) {
-		for (const component of plugin.components) {
-			const handler = plugin.run[component];
-			const instance = instances.get(component);
-			if (typeof handler !== "function" || instance === undefined) continue;
+/** What every handler call and `test()` share. */
+interface Stubs {
+	configDir: string;
+	persistent: Record<string, unknown>;
+	port: HostPort;
+	harness: HarnessOptions;
+}
 
-			const fields = {
-				appletId: "conformance-applet",
-				runId: `conformance-${component}`,
-				deadlineMs: Date.now() + 60_000,
-				configDir,
-				persistent,
-				instance,
-			};
-			const payload: RunPayload =
-				component === "inputs"
-					? { component, ...fields }
-					: { component, ...fields, songs: structuredClone(songs.data) };
-			failures.push(...boundaryFailures(payload, ["payload", component]));
-			const before = structuredClone(payload);
-			const path: IssuePath = ["run", component];
+function songsOf(payload: RunPayload): SongDict | undefined {
+	return payload.component === "inputs" ? undefined : payload.songs;
+}
 
-			let result: unknown;
-			try {
-				result = await plugin.run[component]?.(createRunContext(payload, port));
-			} catch (error) {
-				failures.push({
-					invariant: component === "outputs" ? "output-completeness" : "valid-song-dict",
-					path,
-					message: `The handler threw: ${describeError(error)}`,
-				});
-				continue;
-			}
-			failures.push(...boundaryFailures(result, path));
+function describeError(error: unknown): string {
+	return error instanceof Error ? error.message : JSON.stringify(error);
+}
 
-			if (component === "outputs") {
-				failures.push(
-					...outputFailures(result, before.component === "inputs" ? undefined : before.songs),
-				);
-				if (before.component !== "inputs" && payload.component !== "inputs") {
-					const changed = firstDifference(before.songs, payload.songs);
-					if (changed) {
-						failures.push({
-							invariant: "output-immutability",
-							path: [...path, "songs", ...changed],
-							message: "An output changed the song dict it received",
-						});
-					}
-				}
-			} else {
-				const validation = validateSongDict(result, { strict: true });
-				for (const issue of validation.ok ? [] : validation.issues) {
-					failures.push({
-						invariant: "valid-song-dict",
-						path: [...path, ...issue.path],
-						message: issue.message,
-					});
-				}
-			}
-		}
+/** Calls one component's real handler, then checks what came back and what it did to its input. */
+async function handlerFailures(
+	plugin: Plugin,
+	component: Component,
+	instance: Record<string, unknown>,
+	songs: SongDict,
+	stubs: Stubs,
+): Promise<ConformanceFailure[]> {
+	if (typeof plugin.run[component] !== "function") return [];
+	const fields = {
+		appletId: "conformance-applet",
+		runId: `conformance-${component}`,
+		deadlineMs: Date.now() + 60_000,
+		configDir: stubs.configDir,
+		persistent: stubs.persistent,
+		instance,
+	};
+	const payload: RunPayload =
+		component === "inputs"
+			? { component, ...fields }
+			: { component, ...fields, songs: structuredClone(songs) };
+	const failures = boundaryFailures(payload, ["payload", component]);
+	const before = structuredClone(payload);
+	const path: IssuePath = ["run", component];
+
+	let result: unknown;
+	try {
+		result = await plugin.run[component]?.(createRunContext(payload, stubs.port, stubs.harness));
+	} catch (error) {
+		failures.push({
+			invariant: component === "outputs" ? "output-completeness" : "valid-song-dict",
+			path,
+			message: `The handler threw: ${describeError(error)}`,
+		});
+		return failures;
 	}
+	failures.push(...boundaryFailures(result, path));
 
-	if (typeof plugin.test === "function" && persistent !== undefined) {
-		try {
-			const result = await plugin.test(createTestContext({ persistent, configDir }, port));
-			const parsed = TestResult.safeParse(result);
-			for (const issue of parsed.success ? [] : parsed.error.issues) {
-				failures.push({
-					invariant: "test-result",
-					path: ["test", ...issuePath(issue.path)],
-					message: issue.message,
-				});
-			}
-		} catch (error) {
-			failures.push({
+	if (component !== "outputs") return [...failures, ...songDictFailures(result, path)];
+	return [
+		...failures,
+		...outputFailures(result, songsOf(before)),
+		...immutabilityFailures(before, payload, path),
+	];
+}
+
+function songDictFailures(result: unknown, path: IssuePath): ConformanceFailure[] {
+	const validation = validateSongDict(result, { strict: true });
+	return validation.ok
+		? []
+		: validation.issues.map((issue) => ({
+				invariant: "valid-song-dict" as const,
+				path: [...path, ...issue.path],
+				message: issue.message,
+			}));
+}
+
+/** An output leaves the song dict it received as it was. */
+function immutabilityFailures(
+	before: RunPayload,
+	after: RunPayload,
+	path: IssuePath,
+): ConformanceFailure[] {
+	const changed = firstDifference(songsOf(before), songsOf(after));
+	return changed
+		? [
+				{
+					invariant: "output-immutability",
+					path: [...path, "songs", ...changed],
+					message: "An output changed the song dict it received",
+				},
+			]
+		: [];
+}
+
+async function testFailures(plugin: Plugin, stubs: Stubs): Promise<ConformanceFailure[]> {
+	if (typeof plugin.test !== "function") return [];
+	try {
+		const { persistent, configDir } = stubs;
+		const context = createTestContext({ persistent, configDir }, stubs.port, stubs.harness);
+		const parsed = TestResult.safeParse(await plugin.test(context));
+		return parsed.success ? [] : failuresOf("test-result", parsed.error, ["test"]);
+	} catch (error) {
+		return [
+			{
 				invariant: "test-result",
 				path: ["test"],
 				message: `test() threw rather than returning a TestResult: ${describeError(error)}`,
-			});
-		}
+			},
+		];
 	}
+}
 
-	rmSync(configDir, { recursive: true, force: true });
+/**
+ * Checks a plugin against every invariant, calling its real handlers with stub contexts built by
+ * the runner's own harness. The plugin's test file stubs the network.
+ */
+export async function checkConformance<P extends Plugin>(
+	plugin: P,
+	fixtures: ConformanceFixtures<P>,
+): Promise<ConformanceFailure[]> {
+	const failures = staticFailures(plugin);
+	const persistent = persistentFixture(plugin, fixtures, failures);
+	const instances = instanceFixtures(plugin, fixtures, failures);
+	const songs = songsFixture(fixtures.songs, failures);
+	const port = stubPort(credentialsFixture(plugin, fixtures, failures));
+	if (persistent === undefined) return failures;
+
+	const configDir = mkdtempSync(join(tmpdir(), `ultrasonics-conformance-${plugin.name}-`));
+	const stubs: Stubs = {
+		configDir,
+		persistent,
+		port,
+		harness: { declaresAuth: plugin.auth !== undefined },
+	};
+	try {
+		for (const component of plugin.components) {
+			const instance = instances.get(component);
+			if (instance === undefined || songs === undefined) continue;
+			failures.push(...(await handlerFailures(plugin, component, instance, songs, stubs)));
+		}
+		failures.push(...(await testFailures(plugin, stubs)));
+	} finally {
+		rmSync(configDir, { recursive: true, force: true });
+	}
 	return failures;
 }
 
@@ -492,9 +535,7 @@ function outputFailures(result: unknown, songs: SongDict | undefined): Conforman
 		message,
 	});
 	const parsed = OutputResult.safeParse(result);
-	if (!parsed.success) {
-		return parsed.error.issues.map((issue) => fail(issuePath(issue.path), issue.message));
-	}
+	if (!parsed.success) return failuresOf("output-completeness", parsed.error, path);
 
 	const playlists = songs?.playlists ?? [];
 	const failures: ConformanceFailure[] = [];

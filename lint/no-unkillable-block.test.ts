@@ -12,8 +12,17 @@ function lint(relativeDir: string, source: string) {
 	mkdirSync(dir, { recursive: true });
 	const file = join(dir, "probe.ts");
 	writeFileSync(file, source);
-	const run = Bun.spawnSync(["bunx", "biome", "lint", "--max-diagnostics=50", file], { cwd: root });
-	return { exitCode: run.exitCode, output: run.stdout.toString() + run.stderr.toString() };
+	const run = Bun.spawnSync(
+		["bunx", "biome", "lint", "--reporter=json", "--max-diagnostics=50", file],
+		{ cwd: root },
+	);
+	const report = JSON.parse(run.stdout.toString()) as { diagnostics: Diagnostic[] };
+	return { exitCode: run.exitCode, diagnostics: report.diagnostics };
+}
+
+interface Diagnostic {
+	category: string;
+	location: { start: { line: number; column: number } };
 }
 
 afterAll(() => {
@@ -28,10 +37,18 @@ describe("the no-unkillable-block rule (ADR-0010 constraint 9)", () => {
 	test.each([
 		["Bun.sleepSync", "Bun.sleepSync(10);\n"],
 		["Atomics.wait", "export const wait = Atomics.wait;\n"],
-	])("rejects %s under packages/plugins", (_, source) => {
+	])("rejects %s under packages/plugins", (blocker, source) => {
 		const run = lint("packages/plugins", source);
 		expect(run.exitCode).not.toBe(0);
-		expect(run.output).toContain("terminate()");
+		// Grit diagnostics carry no rule name; this is the only plugin, at the blocker's span.
+		expect(run.diagnostics).toEqual([
+			expect.objectContaining({
+				category: "plugin",
+				location: expect.objectContaining({
+					start: { line: 1, column: source.indexOf(blocker) + 1 },
+				}),
+			}),
+		]);
 	});
 
 	test("allows Atomics.waitAsync, which a Worker can still terminate", () => {

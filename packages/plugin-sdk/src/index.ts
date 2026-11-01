@@ -26,6 +26,7 @@ export {
 export {
 	createRunContext,
 	createTestContext,
+	type HarnessOptions,
 	type HostPort,
 	type LiveRunContext,
 	type LiveTestContext,
@@ -57,9 +58,8 @@ export {
 	StrictSongDict,
 } from "./song-dict.ts";
 export {
-	type IssuePath,
 	type Rejection,
 	type SongDictValidation,
-	type ValidationIssue,
 	validateSongDict,
 } from "./song-dict-validator.ts";
+export type { IssuePath, ValidationIssue } from "./validation-issue.ts";

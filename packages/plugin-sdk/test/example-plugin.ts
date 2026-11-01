@@ -12,7 +12,7 @@ export const examplePlugin = definePlugin({
 		service: "plex",
 		flow: "token",
 		fields: z.object({
-			serverUrl: withMeta(z.string().url(), { title: "Server URL" }),
+			serverUrl: withMeta(z.string().regex(/^https?:\/\/\S+$/), { title: "Server URL" }),
 			token: withMeta(z.string().min(1), { title: "Token", secret: true }),
 		}),
 	}),

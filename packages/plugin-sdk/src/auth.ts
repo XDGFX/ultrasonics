@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isRecord } from "./record.ts";
 import { Service } from "./service.ts";
 import type { JSONSchema } from "./settings-form.ts";
 
@@ -58,7 +59,7 @@ export function defineAuth(
  * - `connect`: an `oauth2*` flow that is ready; the user presses Connect.
  */
 export const AuthRequirement = z.discriminatedUnion("kind", [
-	z.object({ kind: z.literal("fields"), schema: z.custom<JSONSchema>((value) => isObject(value)) }),
+	z.object({ kind: z.literal("fields"), schema: z.custom<JSONSchema>(isRecord) }),
 	z.object({ kind: z.literal("client"), service: Service }),
 	z.object({ kind: z.literal("connect") }),
 ]);
@@ -82,10 +83,6 @@ export type AuthFailure = z.infer<typeof AuthFailure>;
 /** Structural, not `instanceof`, so a failure stays recognisable across a clone (ADR-0010 #4). */
 export function isAuthFailure(value: unknown): value is AuthFailure {
 	return AuthFailure.safeParse(value).success;
-}
-
-function isObject(value: unknown): boolean {
-	return typeof value === "object" && value !== null;
 }
 
 /**

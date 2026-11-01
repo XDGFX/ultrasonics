@@ -29,10 +29,18 @@ const outputPayload: RunPayload = {
 	songs,
 };
 
+const withAuth = { declaresAuth: true };
+const withoutAuth = { declaresAuth: false };
+
 describe("createRunContext", () => {
+	test("gives a plugin that declares no auth no auth facade", () => {
+		const { port } = recordingPort(async () => ({}));
+		expect(createRunContext(outputPayload, port, withoutAuth)).not.toHaveProperty("auth");
+	});
+
 	test("carries the payload's data onto the context", () => {
 		const { port } = recordingPort(async () => ({}));
-		const ctx = createRunContext(outputPayload, port);
+		const ctx = createRunContext(outputPayload, port, withAuth);
 		expect(ctx).toMatchObject({
 			appletId: "applet-1",
 			runId: "run-7",
@@ -47,13 +55,13 @@ describe("createRunContext", () => {
 	test("gives an input no song dict", () => {
 		const { port } = recordingPort(async () => ({}));
 		const { songs: _, ...rest } = outputPayload;
-		const ctx = createRunContext({ ...rest, component: "inputs" }, port);
+		const ctx = createRunContext({ ...rest, component: "inputs" }, port, withAuth);
 		expect(ctx).not.toHaveProperty("songs");
 	});
 
 	test("sends each log line to the sink, attributed to the run", () => {
 		const { port, logs } = recordingPort(async () => ({}));
-		const ctx = createRunContext(outputPayload, port);
+		const ctx = createRunContext(outputPayload, port, withAuth);
 		ctx.log.debug("connecting");
 		ctx.log.info("found 3 playlists");
 		ctx.log.warn("skipping a local file");
@@ -68,13 +76,15 @@ describe("createRunContext", () => {
 
 	test("resolves credentials through the port", async () => {
 		const { port } = recordingPort(async () => ({ accessToken: "a" }));
-		expect(await createRunContext(outputPayload, port).auth?.get()).toEqual({ accessToken: "a" });
+		expect(await createRunContext(outputPayload, port, withAuth).auth?.get()).toEqual({
+			accessToken: "a",
+		});
 	});
 
 	test("passes an AuthFailure from the port to the caller, still recognisable", async () => {
 		const failure: AuthFailure = { service: "plex", code: "not-connected", message: "No grant" };
 		const { port } = recordingPort(() => Promise.reject(failure));
-		const rejection = await createRunContext(outputPayload, port)
+		const rejection = await createRunContext(outputPayload, port, withAuth)
 			.auth?.get()
 			.then(
 				() => undefined,
@@ -92,11 +102,21 @@ describe("createRunContext", () => {
 describe("createTestContext", () => {
 	test("has persistent settings, auth, log and configDir, and no instance", async () => {
 		const { port, logs } = recordingPort(async () => ({ token: "t" }));
-		const ctx = createTestContext({ persistent: { prefix: "" }, configDir: "/config" }, port);
+		const ctx = createTestContext(
+			{ persistent: { prefix: "" }, configDir: "/config" },
+			port,
+			withAuth,
+		);
 		ctx.log.info("testing");
 		expect(ctx).toMatchObject({ persistent: { prefix: "" }, configDir: "/config" });
 		expect(ctx).not.toHaveProperty("instance");
 		expect(await ctx.auth?.get()).toEqual({ token: "t" });
 		expect(logs).toEqual([{ level: "info", message: "testing" }]);
+	});
+
+	test("gives a plugin that declares no auth no auth facade", () => {
+		const { port } = recordingPort(async () => ({}));
+		const ctx = createTestContext({ persistent: {}, configDir: "/config" }, port, withoutAuth);
+		expect(ctx).not.toHaveProperty("auth");
 	});
 });

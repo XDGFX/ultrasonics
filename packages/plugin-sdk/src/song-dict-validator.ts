@@ -1,13 +1,7 @@
 import { z } from "zod";
+import { isRecord } from "./record.ts";
 import { Playlist, Song, SongDict, StrictSongDict } from "./song-dict.ts";
-
-/** Where in the value an issue sits, from the song dict's root. */
-export type IssuePath = (string | number)[];
-
-export interface ValidationIssue {
-	path: IssuePath;
-	message: string;
-}
+import { type IssuePath, issuesOf, type ValidationIssue } from "./validation-issue.ts";
 
 /** A playlist or song the validator dropped, located by position (ADR-0021 §5). */
 export interface Rejection {
@@ -26,17 +20,6 @@ export type SongDictValidation =
 const dictKeys = new Set(Object.keys(SongDict.shape));
 const playlistKeys = new Set(Object.keys(Playlist.in.shape));
 const songKeys = new Set(Object.keys(Song.in.shape));
-
-function issuesOf(error: z.ZodError, prefix: IssuePath): ValidationIssue[] {
-	return error.issues.map((issue) => ({
-		path: [...prefix, ...issue.path.map((key) => (typeof key === "symbol" ? String(key) : key))],
-		message: issue.message,
-	}));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === "object" && value !== null && !Array.isArray(value);
-}
 
 function unknownKeys(value: unknown, known: Set<string>, path: IssuePath): IssuePath[] {
 	return isRecord(value)
