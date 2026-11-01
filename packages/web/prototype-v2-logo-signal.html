@@ -43,7 +43,7 @@ const TEAL = "#1ce5b5", MAG = "#e234ce";
 const RAMP = " .:-=+*#%@";
 // Junk is what a bad packet decodes to: hex, half-width katakana, line noise.
 const JUNK = "0123456789ABCDEFｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ<>/\\|[]{}";
-const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, noise: .5, jp: .2, idle: true, light: false };
+const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, noise: .05, jp: .23, tune: 3.5, idle: true, light: false };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const demo = new URLSearchParams(location.search).has("demo");
 
@@ -107,7 +107,7 @@ class Layer {
       }
   }
 
-  step(t, dt) {
+  step(t, dt, detune) {
     const { cols, rows, field, next } = this;
     // Smear sideways (a damaged line bleeds along itself) and decay towards a clean signal.
     const k = Math.exp(-dt / opts.recovery), side = Math.min(.12, .12 * this.cw / 6);
@@ -120,12 +120,14 @@ class Layer {
     for (let j = 0; j < rows; j++) { let mx = 0; for (let i = 0; i < cols; i++) mx = Math.max(mx, field[j * cols + i]); this.rowC[j] = mx; }
     for (let j = 0; j < rows; j++) {
       const c = (this.rowC[Math.max(0, j - 1)] + 2 * this.rowC[j] + this.rowC[Math.min(rows - 1, j + 1)]) / 4;
-      const target = c * c * opts.tear * (noise((this.top + j * this.ch) * .045, t * 1.7) * 2 - 1);
+      const y = this.top + j * this.ch;
+      // While detuned, horizontal hold drifts too: broad bands sliding back and forth.
+      const target = c * c * opts.tear * (noise(y * .045, t * 1.7) * 2 - 1) + detune * detune * 46 * (noise(y * .012, t * 2.2) * 2 - 1);
       this.tearX[j] = lerp(this.tearX[j], target, 1 - Math.exp(-dt * 18));
     }
   }
 
-  draw(ctx, t, hum) {
+  draw(ctx, t, hum, k) {
     const { cols, rows, cw, ch, field, look, top } = this, light = opts.light;
     ctx.font = `700 ${this.cell}px 'Roboto Mono'`;
     const buckets = { face: [], teal: [], mag: [] };
@@ -136,17 +138,29 @@ class Layer {
       for (let i = 0; i < cols; i++) {
         const n = j * cols + i, c = Math.min(1, field[n]), r1 = this.r1[n], r2 = this.r2[n];
         // At rest the split is about a cell, so it survives quantisation; interference widens it sideways.
-        const d = cw * 1.1 + c * opts.chroma, dy = ch * .45 + c * opts.chroma * .1;
+        const d = cw * 1.1 + c * opts.chroma + k * 70, dy = ch * .45 + c * opts.chroma * .1 + k * 8;
+        // Tuning in: while detuned, each cell samples the picture from somewhere else, drifting smoothly
+        // and independently of its neighbours, so the logo is scattered like static and pulls together as k falls.
+        let jx = 0, jy = 0;
+        if (k > 0) {
+          jx = (noise(n * 1.618 + .5, t * 1.3 + r1 * 9) * 2 - 1) * k * 190;
+          jy = (noise(n * 2.414 + .5, t * 1.1 + r2 * 9) * 2 - 1) * k * 70;
+        }
         // Packet loss: each cell has its own threshold, so loss and recovery are staggered, never a fade.
         const loss = clamp((c - .06 - r1 * .5) * 2.4);
-        const fl = this.cov(i, j, sx, 0) * (1 - loss);
+        const fl = this.cov(i, j, sx + jx, jy) * (1 - loss);
         let idx = 0, bucket = null;
-        if (fl > .05) { idx = Math.round(Math.pow(Math.min(1, fl * 1.2), look.gamma) * look.max); bucket = "face"; }
+        if (fl > .05) { idx = Math.round(Math.pow(Math.min(1, fl * 1.2), look.gamma) * look.max * (1 - k * .45)); bucket = "face"; }
         else {
           // Sampling right-and-up draws the teal copy down-left, as v1.
-          const tl = this.cov(i, j, sx + d, -dy), mg = look.mag ? this.cov(i, j, sx - d, dy) : 0, v = Math.max(tl, mg);
+          const tl = this.cov(i, j, sx + jx + d, jy - dy), mg = look.mag ? this.cov(i, j, sx + jx - d, jy + dy) : 0, v = Math.max(tl, mg);
           // Chroma tops out lower on the ramp so the face always reads first.
           if (v > .08) { idx = Math.round(v * look.chromaMax); bucket = tl >= mg ? "teal" : "mag"; }
+        }
+        // Snow: off-station, empty cells light up at random, thinning out as the signal locks.
+        if (!bucket && k > 0 && hash(n * 13 + this.seedOff + Math.floor(t * 14 + r1 * 14)) < k * k * .16 * (this.cell / 10) ** 1.5) {
+          const s = hash(n * 7 + Math.floor(t * 14));
+          idx = 1 + Math.floor(s * 4); bucket = s < .5 ? "face" : s < .75 ? "teal" : "mag";
         }
         if (!bucket) continue;
         // Analogue flicker: each cell re-rolls about ten times a second, out of step with its neighbours,
@@ -199,9 +213,7 @@ class SignalLogo {
     this.canvas.width = W * d; this.canvas.height = this.H * d;
     this.canvas.style.width = W + "px"; this.canvas.style.height = this.H + "px";
     this.ctx = this.canvas.getContext("2d"); this.ctx.scale(d, d); this.ctx.textBaseline = "top";
-    // Arrival: everything starts corrupted, lower down later, so the logo comes in top to bottom.
-    for (const l of this.layers) for (let j = 0; j < l.rows; j++) for (let i = 0; i < l.cols; i++)
-      l.field[j * l.cols + i] = reduced ? 0 : 1 + (l.top + j * l.ch) / this.H * .9 + i / l.cols * .15;
+    this.t0 = null; this.detune = reduced ? 0 : 1;
     this.pointer = null; this.prev = null; this.pending = [];
     this.nextGlitch = 2 + Math.random() * 3;
     if (!reduced) this.listen();
@@ -216,7 +228,12 @@ class SignalLogo {
   deposit(p, amt, t) { for (const l of this.layers) l.deposit(p, amt, t); }
 
   step(t, dt) {
-    for (const l of this.layers) l.step(t, dt);
+    // Tuning in: the detune falls from 1 to 0, slowly at the end, and hunts past the station a couple
+    // of times on the way (the cosine), like a dial being turned by hand.
+    if (this.t0 === null) this.t0 = t;
+    const p = clamp((t - this.t0) / opts.tune);
+    this.detune = reduced ? 0 : Math.pow(1 - p, 1.5) * (.78 + .22 * Math.cos(p * Math.PI * 5));
+    for (const l of this.layers) l.step(t, dt, this.detune);
     if (this.pointer) {
       const p = this.pointer, q = this.prev || p, dist = Math.hypot(p.x - q.x, p.y - q.y);
       const speed = clamp(dist / 30), steps = Math.max(1, Math.ceil(dist / 6));
@@ -239,7 +256,7 @@ class SignalLogo {
     const ctx = this.ctx;
     ctx.fillStyle = opts.light ? "#fff" : "#111"; ctx.fillRect(0, 0, this.W, this.H);
     const hum = { y: ((t * .09) % 1.6 - .3) * this.H, w: this.H * .14 };
-    for (const l of this.layers) l.draw(ctx, t, hum);
+    for (const l of this.layers) l.draw(ctx, t, hum, this.detune);
   }
 }
 
@@ -258,7 +275,9 @@ function panel() {
   p.innerHTML = slider("gain", "interference", 0, 3, .1) + slider("recovery", "recovery (s)", .2, 3, .1) +
     slider("chroma", "chroma split", 0, 30, 1) + slider("tear", "line tear", 0, 60, 1) +
     slider("noise", "analogue noise", 0, 1.5, .05) + slider("jp", "katakana size", .12, .4, .01) +
-    `<div class="row"><label style="display:flex;gap:6px"><input type="checkbox" data-k="idle" ${opts.idle ? "checked" : ""}>idle glitches</label>
+    slider("tune", "tune-in (s)", 1, 8, .5) +
+    `<button id="retune" style="font:inherit">replay tune-in</button>
+     <div class="row"><label style="display:flex;gap:6px"><input type="checkbox" data-k="idle" ${opts.idle ? "checked" : ""}>idle glitches</label>
      <label style="display:flex;gap:6px"><input type="checkbox" data-k="light">light</label></div>`;
   p.oninput = e => {
     const k = e.target.dataset.k; if (!k) return;
@@ -267,6 +286,7 @@ function panel() {
     document.body.classList.toggle("light", opts.light);
     if (k === "jp") build();
   };
+  document.getElementById("retune").onclick = () => { for (const l of logos) l.t0 = null; };
 }
 
 (async () => {
