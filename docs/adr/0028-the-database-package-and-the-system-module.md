@@ -4,7 +4,7 @@
 **Date:** 2026-11-01
 **Refines:** ADR-0001 (which put persistence in `packages/server`), ADR-0009 §4 (which named two
 data-access modules)
-**Spec:** the Phase 1 database spec, map [Phase 1 specs](https://github.com/XDGFX/ultrasonics/issues/100)
+**Spec:** [Spec: the database, its stores and the initial migration](https://github.com/XDGFX/ultrasonics/issues/109)
 
 ## Context
 
