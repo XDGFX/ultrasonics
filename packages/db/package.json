@@ -1,0 +1,22 @@
+{
+	"name": "@ultrasonics/db",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./auth-store": "./src/auth-store.ts",
+		"./system": "./src/system.ts"
+	},
+	"scripts": {
+		"generate": "drizzle-kit generate"
+	},
+	"dependencies": {
+		"drizzle-orm": "0.45.4",
+		"drizzle-zod": "0.8.3",
+		"zod": "4.6.7"
+	},
+	"devDependencies": {
+		"drizzle-kit": "0.31.11"
+	}
+}

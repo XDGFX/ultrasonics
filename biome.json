@@ -6,7 +6,14 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["packages/**", "scripts/**", "*.json", "!**/*.vue", "!**/test/fixtures"]
+		"includes": [
+			"packages/**",
+			"scripts/**",
+			"*.json",
+			"!**/*.vue",
+			"!**/test/fixtures",
+			"!packages/db/migrations"
+		]
 	},
 	"formatter": {
 		"lineWidth": 100
@@ -17,6 +24,17 @@
 			"correctness": {
 				"noPrivateImports": "error"
 			},
+			"style": {
+				"noRestrictedImports": {
+					"level": "error",
+					"options": {
+						"paths": {
+							"@ultrasonics/db/auth-store": "The auth store is for the session middleware and boot only (ADR-0009 §4). Use storeFor(accountId).",
+							"@ultrasonics/db/system": "The system module is for boot, the scheduler and the webhook route only (ADR-0028). Use storeFor(accountId)."
+						}
+					}
+				}
+			},
 			"suspicious": {
 				"noImportCycles": {
 					"level": "error",
@@ -24,5 +42,45 @@
 				}
 			}
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["packages/db/**", "packages/server/src/boot.ts"],
+			"linter": { "rules": { "style": { "noRestrictedImports": "off" } } }
+		},
+		{
+			"includes": ["packages/server/src/session-middleware.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"@ultrasonics/db/system": "The system module is for boot, the scheduler and the webhook route only (ADR-0028). Use storeFor(accountId)."
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		{
+			"includes": ["packages/server/src/scheduler.ts", "packages/server/src/webhook-route.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"@ultrasonics/db/auth-store": "The auth store is for the session middleware and boot only (ADR-0009 §4). Use storeFor(accountId)."
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	]
 }
