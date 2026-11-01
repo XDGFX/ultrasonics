@@ -1,0 +1,280 @@
+<!doctype html>
+<!--
+  PROTOTYPE, throwaway. Round three of "The v2 logo" (XDGFX/ultrasonics#107): the wordmark as an
+  ASCII mosaic that arrives like a signal over a noisy network, and the cursor as interference.
+
+  The cursor deposits "corruption" into a field that smears sideways and decays. Corruption never
+  fades or moves glyphs; it drops cells down the character ramp, widens the teal/magenta
+  misregistration, tears scanlines sideways and swaps glyphs for junk. As it decays, cells resync
+  in a staggered order. Open the file in a browser; the panel tunes it live.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ultrasonics signal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@700&family=Noto+Sans+JP:wght@500&family=Roboto+Mono:wght@400;700&display=swap">
+<style>
+  :root { --teal: #1ce5b5; --mag: #e234ce; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #111; color: #cfcfcf; font: 12px "Roboto Mono", monospace; }
+  body.light { background: #fff; color: #333; }
+  .stage { display: grid; place-items: center; min-height: 72vh; padding: 40px 16px 10px; }
+  .logo { display: inline-grid; justify-items: center; }
+  canvas { display: block; cursor: crosshair; touch-action: none; }
+  .jp { font-family: "Noto Sans JP", sans-serif; font-weight: 500; color: var(--mag); opacity: .65;
+        display: flex; justify-content: space-between; margin-top: 6px; }
+  body.light .jp { color: #b5179e; }
+  .small { display: flex; gap: 48px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 10px 16px 40px; }
+  .small figure { margin: 0; text-align: center; color: #777; }
+  .panel { position: fixed; right: 12px; bottom: 12px; background: #1b1b1b; border: 1px solid #2b2b2b; border-radius: 6px;
+           padding: 10px 12px; display: grid; gap: 6px; width: 250px; color: #aaa; }
+  body.light .panel { background: #f4f4f4; border-color: #ddd; color: #444; }
+  .panel label { display: grid; grid-template-columns: 90px 1fr 34px; align-items: center; gap: 6px; }
+  .panel input[type=range] { width: 100%; accent-color: var(--teal); }
+  .panel .row { display: flex; gap: 14px; }
+  .hint { text-align: center; color: #666; padding-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="stage"><div class="logo" id="hero"></div></div>
+<div class="hint">move across it. hold still on it. then leave it alone.</div>
+<div class="small" id="small"></div>
+<div class="panel" id="panel"></div>
+
+<script>
+const TEAL = "#1ce5b5", MAG = "#e234ce";
+const RAMP = " .:-=+*#%@";
+// Junk is what a bad packet decodes to: hex, half-width katakana, line noise.
+const JUNK = "0123456789ABCDEFｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ<>/\\|[]{}";
+const opts = { gain: 1, recovery: .9, chroma: 12, tear: 22, idle: true, light: false };
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const demo = new URLSearchParams(location.search).has("demo");
+
+const clamp = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+function hash(n) {
+  n = Math.imul(n ^ (n >>> 16), 0x45d9f3b); n = Math.imul(n ^ (n >>> 16), 0x45d9f3b);
+  return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
+}
+function noise(x, y) {
+  const xi = Math.floor(x), yi = Math.floor(y), u = x - xi, v = y - yi, s = t => t * t * (3 - 2 * t);
+  const h = (a, b) => hash((Math.imul(a, 374761393) + Math.imul(b, 668265263)) | 0);
+  return lerp(lerp(h(xi, yi), h(xi + 1, yi), s(u)), lerp(h(xi, yi + 1), h(xi + 1, yi + 1), s(u)), s(v));
+}
+
+class SignalLogo {
+  constructor(host, { width, cell, interactive, katakana = true }) {
+    Object.assign(this, { width, cell, interactive });
+    this.canvas = document.createElement("canvas"); host.append(this.canvas);
+    if (katakana) { this.jp = document.createElement("div"); this.jp.className = "jp"; host.append(this.jp); }
+    this.layout();
+    if (interactive && !reduced) this.listen();
+  }
+
+  layout() {
+    const cw = this.cell * .6, ch = this.cell, d = devicePixelRatio || 1, S = 2;
+    const cols = Math.floor(this.width / cw), W = cols * cw;
+    const m = document.createElement("canvas").getContext("2d");
+    m.font = "700 100px 'Montserrat Alternates'";
+    const T = 100 * (W * .88) / m.measureText("ultrasonics").width;
+    const rows = Math.ceil(T * 1.15 / ch) + 2, H = rows * ch;
+    Object.assign(this, { cw, ch, cols, rows, W, H, T });
+
+    // Rasterise once at 2x and keep a summed-area table, so any shifted cell's coverage is O(1).
+    const hi = document.createElement("canvas"); hi.width = Math.round(W * S); hi.height = Math.round(H * S);
+    const g = hi.getContext("2d");
+    g.font = `700 ${T * S}px 'Montserrat Alternates'`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff";
+    g.fillText("ultrasonics", hi.width / 2, hi.height / 2 + T * S * .04);
+    const px = g.getImageData(0, 0, hi.width, hi.height).data, w1 = hi.width + 1;
+    const sat = new Float32Array(w1 * (hi.height + 1));
+    for (let y = 0; y < hi.height; y++) {
+      let run = 0;
+      for (let x = 0; x < hi.width; x++) { run += px[(y * hi.width + x) * 4 + 3] / 255; sat[(y + 1) * w1 + x + 1] = sat[y * w1 + x + 1] + run; }
+    }
+    Object.assign(this, { sat, w1, hw: hi.width, hh: hi.height, S });
+
+    const n = cols * rows;
+    this.field = new Float32Array(n); this.next = new Float32Array(n);
+    this.r1 = new Float32Array(n); this.r2 = new Float32Array(n);
+    for (let i = 0; i < n; i++) { this.r1[i] = hash(i * 2 + 1); this.r2[i] = hash(i * 2 + 7919); }
+    // Arrival: everything starts corrupted, lower rows later, so the logo comes in top to bottom.
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) this.field[j * cols + i] = 1 + j / rows * .9 + i / cols * .15;
+    if (!this.interactive || reduced) this.field.fill(0);
+    this.rowC = new Float32Array(rows); this.tearX = new Float32Array(rows);
+
+    this.canvas.width = W * d; this.canvas.height = H * d;
+    this.canvas.style.width = W + "px"; this.canvas.style.height = H + "px";
+    this.ctx = this.canvas.getContext("2d"); this.ctx.scale(d, d);
+    if (this.jp) {
+      m.font = `700 ${T}px 'Montserrat Alternates'`;
+      const tw = m.measureText("ultrasonics").width;
+      Object.assign(this.jp.style, { width: tw * .96 + "px", fontSize: Math.round(T * .3) + "px" });
+      this.jp.innerHTML = [..."ソニックス"].map(c => `<span>${c}</span>`).join("");
+    }
+    this.pointer = null; this.prev = null; this.pending = [];
+    this.nextGlitch = 2 + Math.random() * 3;
+  }
+
+  // Mean alpha of a cell-sized rect at cell (i, j), shifted by (dx, dy) CSS pixels.
+  cov(i, j, dx, dy) {
+    const S = this.S;
+    let x0 = Math.round((i * this.cw + dx) * S), y0 = Math.round((j * this.ch + dy) * S);
+    let x1 = x0 + Math.round(this.cw * S), y1 = y0 + Math.round(this.ch * S);
+    const area = (x1 - x0) * (y1 - y0);
+    x0 = clamp(x0, 0, this.hw); x1 = clamp(x1, 0, this.hw); y0 = clamp(y0, 0, this.hh); y1 = clamp(y1, 0, this.hh);
+    if (x1 <= x0 || y1 <= y0) return 0;
+    const s = this.sat, w = this.w1;
+    return (s[y1 * w + x1] - s[y0 * w + x1] - s[y1 * w + x0] + s[y0 * w + x0]) / area;
+  }
+
+  listen() {
+    const at = e => { const r = this.canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    this.canvas.addEventListener("pointermove", e => { this.pointer = at(e); });
+    this.canvas.addEventListener("pointerdown", e => { this.pointer = at(e); this.burst(this.pointer, .9); });
+    this.canvas.addEventListener("pointerleave", () => { this.pointer = null; this.prev = null; });
+  }
+
+  // Interference is wide and short (scanline-shaped) and ragged with noise, never a round brush.
+  deposit(p, amt, t) {
+    const ci = p.x / this.cw, cj = p.y / this.ch, rx = 7, ry = 1.7;
+    for (let j = Math.max(0, Math.floor(cj - ry * 2)); j <= Math.min(this.rows - 1, Math.ceil(cj + ry * 2)); j++)
+      for (let i = Math.max(0, Math.floor(ci - rx * 2)); i <= Math.min(this.cols - 1, Math.ceil(ci + rx * 2)); i++) {
+        const dx = (i - ci) / rx, dy = (j - cj) / ry, k = j * this.cols + i;
+        const gss = Math.exp(-(dx * dx + dy * dy));
+        if (gss < .01) continue;
+        this.field[k] = Math.min(1, this.field[k] + amt * gss * (.3 + .7 * noise(i * .22, j * .8 + t * 3)));
+      }
+  }
+  burst(p, amt) { this.pending.push({ p, amt, left: .14, dur: .14 }); }
+
+  step(t, dt) {
+    const { cols, rows, field, next } = this;
+    // Smear sideways (a damaged line bleeds along itself) and decay towards a clean signal.
+    const k = Math.exp(-dt / opts.recovery);
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const n = j * cols + i, l = i > 0 ? field[n - 1] : 0, r = i < cols - 1 ? field[n + 1] : 0;
+      next[n] = (field[n] * .76 + (l + r) * .12) * k;
+    }
+    this.field.set(next);
+
+    if (this.pointer) {
+      const p = this.pointer, q = this.prev || p, dist = Math.hypot(p.x - q.x, p.y - q.y);
+      const speed = clamp(dist / (this.cw * 5));
+      const steps = Math.max(1, Math.ceil(dist / this.cw));
+      for (let s = 1; s <= steps; s++) {
+        const pt = { x: lerp(q.x, p.x, s / steps), y: lerp(q.y, p.y, s / steps) };
+        this.deposit(pt, opts.gain * .5 * speed / steps, t);
+      }
+      // A cursor held still is a weak, steady source: the picture never quite settles under it.
+      this.deposit(p, opts.gain * .045 * dt * 60 * (1 - speed), t);
+      this.prev = { ...p };
+    }
+    // Bursts and idle glitches ramp in over a few frames rather than popping.
+    for (const b of this.pending) { const a = Math.min(b.left, dt); b.left -= a; this.deposit(b.p, b.amt * opts.gain * a / b.dur, t); }
+    this.pending = this.pending.filter(b => b.left > 0);
+    if (opts.idle && t > this.nextGlitch) {
+      this.nextGlitch = t + 3.5 + Math.random() * 6;
+      const y = (.2 + Math.random() * .6) * this.H;
+      for (let x = this.cw * 4; x < this.W; x += this.cw * 9) this.pending.push({ p: { x, y }, amt: .35, left: .18, dur: .18 });
+    }
+
+    // Row tear: rows share a smooth noise, so a band slips together instead of each line on its own.
+    for (let j = 0; j < rows; j++) { let mx = 0; for (let i = 0; i < cols; i++) mx = Math.max(mx, field[j * cols + i]); this.rowC[j] = mx; }
+    for (let j = 0; j < rows; j++) {
+      const c = (this.rowC[Math.max(0, j - 1)] + 2 * this.rowC[j] + this.rowC[Math.min(rows - 1, j + 1)]) / 4;
+      const target = c * c * opts.tear * (noise(j * .45, t * 1.7) * 2 - 1);
+      this.tearX[j] = lerp(this.tearX[j], target, 1 - Math.exp(-dt * 18));
+    }
+  }
+
+  draw(t) {
+    const { ctx, cols, rows, cw, ch, field } = this, light = opts.light;
+    ctx.fillStyle = light ? "#fff" : "#111"; ctx.fillRect(0, 0, this.W, this.H);
+    ctx.font = `700 ${this.cell}px 'Roboto Mono'`; ctx.textBaseline = "top";
+    const buckets = { face: [], teal: [], mag: [] };
+    for (let j = 0; j < rows; j++) {
+      const sx = this.tearX[j];
+      for (let i = 0; i < cols; i++) {
+        const n = j * cols + i, c = Math.min(1, field[n]), r1 = this.r1[n], r2 = this.r2[n];
+        // At rest the split is about a cell, so it survives quantisation; interference widens it sideways.
+        const d = cw * 1.1 + c * opts.chroma, dy = ch * .45 + c * opts.chroma * .1;
+        const face = this.cov(i, j, sx, 0);
+        // Packet loss: each cell has its own threshold, so loss and recovery are staggered, never a fade.
+        const loss = clamp((c - .06 - r1 * .5) * 2.4);
+        const fl = face * (1 - loss);
+        let glyph = "", bucket = null;
+        if (fl > .05) { glyph = RAMP[Math.round(Math.pow(fl, .85) * 9)]; bucket = "face"; }
+        else {
+          // Sampling right-and-up draws the teal copy down-left, as v1.
+          const tl = this.cov(i, j, sx + d, -dy), mg = this.cov(i, j, sx - d, dy), v = Math.max(tl, mg);
+          // Chroma tops out lower on the ramp so the face always reads first.
+          if (v > .08) { glyph = RAMP[Math.max(1, Math.round(v * 6))]; bucket = tl >= mg ? "teal" : "mag"; }
+        }
+        if (bucket && c > .42 + r2 * .5) {
+          glyph = JUNK[Math.floor(hash(n * 31 + Math.floor(t * 7 + r1 * 7)) * JUNK.length)];
+          if (hash(n + Math.floor(t * 3)) < c * .35) bucket = bucket === "teal" ? "mag" : "teal";
+        }
+        if (bucket && glyph !== " ") buckets[bucket].push(glyph, i * cw, j * ch);
+      }
+    }
+    for (const [b, col] of [["teal", TEAL], ["mag", MAG], ["face", light ? "#111" : "#fff"]]) {
+      ctx.fillStyle = col; const a = buckets[b];
+      for (let q = 0; q < a.length; q += 3) ctx.fillText(a[q], a[q + 1], a[q + 2]);
+    }
+  }
+}
+
+let logos = [];
+function build() {
+  const hero = document.getElementById("hero"), small = document.getElementById("small");
+  hero.innerHTML = ""; small.innerHTML = "";
+  const w = Math.min(1000, innerWidth - 32);
+  logos = [new SignalLogo(hero, { width: w, cell: w > 700 ? 10 : 7, interactive: true })];
+  for (const [label, width, cell] of [["360px, 6px cells", 360, 6], ["200px, 4px cells", 200, 4]]) {
+    const f = document.createElement("figure"); small.append(f);
+    logos.push(new SignalLogo(f, { width, cell, interactive: true, katakana: width > 300 }));
+    f.insertAdjacentHTML("beforeend", `<figcaption style="margin-top:8px">${label}</figcaption>`);
+  }
+}
+
+function panel() {
+  const p = document.getElementById("panel");
+  const slider = (key, label, min, max, st) => `<label>${label}<input type="range" data-k="${key}" min="${min}" max="${max}" step="${st}" value="${opts[key]}"><span>${opts[key]}</span></label>`;
+  p.innerHTML = slider("gain", "interference", 0, 3, .1) + slider("recovery", "recovery (s)", .2, 3, .1) +
+    slider("chroma", "chroma split", 0, 30, 1) + slider("tear", "line tear", 0, 60, 1) +
+    `<div class="row"><label style="display:flex;gap:6px"><input type="checkbox" data-k="idle" ${opts.idle ? "checked" : ""}>idle glitches</label>
+     <label style="display:flex;gap:6px"><input type="checkbox" data-k="light">light</label></div>`;
+  p.oninput = e => {
+    const k = e.target.dataset.k; if (!k) return;
+    opts[k] = e.target.type === "checkbox" ? e.target.checked : +e.target.value;
+    if (e.target.nextElementSibling) e.target.nextElementSibling.textContent = e.target.value;
+    document.body.classList.toggle("light", opts.light);
+  };
+}
+
+(async () => {
+  await Promise.all(["700 20px 'Montserrat Alternates'", "700 20px 'Roboto Mono'", "500 20px 'Noto Sans JP'"].map(f => document.fonts.load(f, "uソ")));
+  panel(); build();
+  // ?sim=N steps N seconds at 60fps before the first frame, so headless screenshots are deterministic.
+  const sim = +new URLSearchParams(location.search).get("sim");
+  if (sim) for (let f = 0; f < sim * 60; f++) {
+    const t = f / 60;
+    if (demo && t > sim - 1) { const h = logos[0], u = (t - sim + 1) * .8; h.pointer = { x: u * h.W, y: h.H * (.5 + .25 * Math.sin(u * 9)) }; }
+    for (const l of logos) l.step(t, 1 / 60);
+  }
+  if (sim) { for (const l of logos) l.draw(sim); return; }
+  let last = performance.now() / 1000;
+  const frame = now => {
+    const t = now / 1000, dt = Math.min(.05, t - last); last = t;
+    // ?demo sweeps a fake cursor across the hero, for screenshots.
+    if (demo && t > 3) { const h = logos[0], u = (t - 3) * .5 % 1; h.pointer = { x: u * h.W, y: h.H * (.5 + .25 * Math.sin(u * 9)) }; }
+    for (const l of logos) { if (!reduced) l.step(t, dt); l.draw(reduced ? 0 : t); }
+    if (!reduced) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(build, 200); });
+})();
+</script>
+</body>
+</html>
