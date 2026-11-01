@@ -1,5 +1,17 @@
+export {
+	AuthChallenge,
+	AuthFailure,
+	type AuthProvider,
+	AuthRequirement,
+	type AuthSpec,
+	type Credentials,
+	defineAuth,
+	Flow,
+	isAuthFailure,
+} from "./auth.ts";
 export { fromFileUri, toFileUri } from "./file-uri.ts";
 export { normaliseDate, normaliseIsrc } from "./normalise.ts";
+export { Service, services } from "./service.ts";
 export {
 	FormMeta,
 	type FormSchemaResult,
