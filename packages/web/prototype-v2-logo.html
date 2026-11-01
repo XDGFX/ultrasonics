@@ -3,11 +3,11 @@
   PROTOTYPE, throwaway. Answers "The v2 logo" (XDGFX/ultrasonics#107): should v2 redraw the
   ultrasonics logo, and what does it look like?
 
-  Five variants, switchable with ?variant=A..E (← → cycle). Each variant is shown in the same
+  Eight variants, switchable with ?variant=A..H (← → cycle). Each variant is shown in the same
   contexts so they compare fairly: the ADR-0025 nav rail, a browser tab, the first-run screen,
   a size ladder, a light README header and a home-screen icon.
 
-  Variants B, C and E set the wordmark in Montserrat Alternates 700 as a stand-in for v1's
+  Round two (F–H) follows Cal picking E. Variants B–H set the wordmark in Montserrat Alternates 700 as a stand-in for v1's
   letterforms; a real redraw would re-trace them as outlines. Open the file in a browser.
 -->
 <html lang="en-GB">
@@ -209,12 +209,86 @@ const V = {
       "Makes the Japanese the brand rather than a flourish: a bigger identity shift than the ticket asked for.",
     ],
   },
+  // Round two, after Cal's feedback: E's full-width katakana, quieter; then two pixel treatments of it.
+  F: {
+    name: "E, softened",
+    blurb: "E's full-width ソニックス, between E and C in weight: medium rather than bold, smaller, and magenta at reduced strength so the name leads.",
+    wordmark: (h, light) => `<div style="display:inline-grid;justify-items:stretch">
+        <span class="alt chroma ${light ? "light" : ""}" style="font-size:${h}px">ultrasonics</span>${jpRow(h, light)}</div>`,
+    railMark: () => V.E.railMark(),
+    hero: () => V.F.wordmark(70),
+    icon: px => V.E.icon(px),
+    notes: [
+      "Katakana at 34% of the wordmark's height in weight 500 and 65% magenta (E: 42%, 700, full magenta).",
+      "Still justified to the wordmark's width, so it scales with it rather than squashing.",
+    ],
+  },
+  G: {
+    name: "Chroma pixels",
+    blurb: "F's lockup with the wordmark rasterised to a coarse grid and the channels split into teal and magenta blocks. The pixel grid gets finer as the logo grows, so small sizes look deliberate rather than blurry.",
+    wordmark: (h, light) => `<div style="display:inline-grid;justify-items:stretch">${pixelText("ultrasonics", ALT, h, { light })}${jpRow(h, light)}</div>`,
+    railMark: () => pixelText("ソ", JP, 30, { block: 3 }),
+    hero: () => V.G.wordmark(70),
+    icon: px => canvasIcon(px, (g, p) => pixelInto(g, p, "ソ", JP, { block: Math.max(1, Math.round(p / 14)) })),
+    notes: [
+      "At 16px the favicon is honest pixel art: the grid and the canvas are the same thing.",
+      "Grid is about 26 blocks per wordmark height; coarser reads as retro, finer loses the effect.",
+      "Static here; v0 is exploring the animated, interactive version.",
+    ],
+  },
+  H: {
+    name: "LED mosaic",
+    blurb: "G's grid with a gap between cells, like an LED matrix or the scanline reference. Closer to the ASCII-mosaic direction, without the characters.",
+    wordmark: (h, light) => `<div style="display:inline-grid;justify-items:stretch">${pixelText("ultrasonics", ALT, h, { light, gap: .28 })}${jpRow(h, light)}</div>`,
+    railMark: () => pixelText("ソ", JP, 30, { block: 3, gap: .3 }),
+    hero: () => V.H.wordmark(70),
+    icon: px => canvasIcon(px, (g, p) => pixelInto(g, p, "ソ", JP, { block: Math.max(2, Math.round(p / 12)), gap: p >= 32 ? .28 : 0 })),
+    notes: [
+      "The gaps darken the face; it needs a larger size than G to read at the same weight.",
+      "Gaps are dropped below 32px, where they would only be noise.",
+    ],
+  },
 };
+
+function jpRow(h, light) {
+  return `<span class="jp" style="display:flex;justify-content:space-between;font-size:${Math.round(h * .34)}px;font-weight:500;color:${light ? "#b5179e" : MAG};opacity:.65;margin-top:${h * .16}px;padding:0 ${h * .1}px">${[..."ソニックス"].map(c => `<span>${c}</span>`).join("")}</span>`;
+}
+
+// Rasterise text to a grid of `block`-pixel cells, then draw each lit cell three times: teal down-left,
+// magenta up-right, face on top. `gap` is the fraction of each cell left dark.
+function pixelInto(g, px, text, font, { block, gap = 0, light = false, tile = true, h = px, w = px } = {}) {
+  if (tile) { g.fillStyle = "#111"; g.fillRect(0, 0, w, h); }
+  const cols = Math.ceil(w / block), rows = Math.ceil(h / block);
+  const lo = document.createElement("canvas"); lo.width = cols; lo.height = rows;
+  const l = lo.getContext("2d");
+  l.font = font.replace("SIZE", (h * .8) / block);
+  l.textAlign = "center"; l.textBaseline = "middle"; l.fillStyle = "#fff";
+  l.letterSpacing = `${(h * .8) / block * .05}px`; // the chroma offset closes Montserrat's tight spacing
+  l.fillText(text, cols / 2, rows / 2 + rows * .04);
+  const a = l.getImageData(0, 0, cols, rows).data, o = block * Math.max(1, Math.round(h * .035 / block)), s = block * (1 - gap);
+  const lit = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows && a[(y * cols + x) * 4 + 3] > 110, k = o / block;
+  // Chroma cells only land where the face is dark, so the split shows at the edges and never through the gaps.
+  for (const [c, dx, dy] of [[TEAL, -k, k], [MAG, k, -k], [light ? "#111" : "#fff", 0, 0]]) {
+    g.fillStyle = c;
+    for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++)
+      if (lit(x, y) && (c !== TEAL && c !== MAG || !lit(x + dx, y + dy))) g.fillRect((x + dx) * block, (y + dy) * block, s, s);
+  }
+}
+function pixelText(text, font, h, { block = Math.max(1, Math.round(h / 26)), gap = 0, light = false } = {}) {
+  const m = document.createElement("canvas").getContext("2d");
+  m.font = font.replace("SIZE", h);
+  const w = Math.ceil(m.measureText(text).width * 1.06 + h * .3), H = Math.ceil(h * 1.25), d = devicePixelRatio || 1;
+  const c = document.createElement("canvas"); c.width = w * d; c.height = H * d;
+  const g = c.getContext("2d"); g.scale(d, d);
+  pixelInto(g, 0, text, font, { block, gap, light, tile: false, h: H, w });
+  return `<img src="${c.toDataURL()}" width="${w}" height="${H}" alt="${text}" style="display:block">`;
+}
 const KEYS = Object.keys(V);
 
 async function render(k) {
   const v = V[k];
-  await document.fonts.ready;
+  // Canvas text does not trigger a web font load, so load them explicitly.
+  await Promise.all([ALT, MONO, JP].map(f => document.fonts.load(f.replace("SIZE", 20), "uソニックス")));
   const [i16, i32, i64, i180] = await Promise.all([16, 32, 64, 180].map(px => v.icon(px)));
   document.getElementById("favicon").href = i32;
   document.getElementById("lbl").textContent = `${k} (${v.name})`;
