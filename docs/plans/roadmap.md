@@ -67,8 +67,9 @@ that Phase 0 froze as decisions (ADR-0012, ADR-0013): nothing there is built yet
 (ADR-0003), self-host still login-free. Build the **scheduler and the inbound webhook route** here:
 ADR-0011 makes triggers server capabilities rather than plugins, so this phase owns them outright
 (OR semantics, queue-depth-of-one on a same-applet collision) and Phase 2 has no trigger cells to
-port. Architecture is map ticket [Scheduler architecture](https://github.com/XDGFX/ultrasonics/issues/85). Write the v1 SQLite
-**importer**.
+port. Architecture is map ticket [Scheduler architecture](https://github.com/XDGFX/ultrasonics/issues/85). The v1
+**importer** moved to Phase 2: it proves nothing about the pipe, and Phase 2's gate needs every
+plugin's mapping anyway.
 
 **Note on this phase's exit gate.** That it targets Spotify → **Plex**, which Cal has no setup to
 test personally, was raised and deliberately reaffirmed on 2026-08-04: it is the most-requested
@@ -76,7 +77,7 @@ pairing and the work has to happen regardless, so the plan is not rearranged aro
 Not a live question — do not re-raise it.
 
 **Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · the matcher meets
-its accuracy target on the match dataset · importer reads a v1 `ultrasonics.db` · self-host first run reaches a
+its accuracy target on the match dataset · self-host first run reaches a
 working applet without a login prompt.
 
 ## Phase 2 — Plugin parity (fan out)
@@ -95,6 +96,9 @@ capabilities, not plugins** — the schedule and the inbound webhook route are P
 hosted product many accounts share (ADR-0002/0003), and the self-host case is served by the webhook trigger and
 the CLI runner. `rickroll` and `skeleton` are v1 samples, not features. Subsonic is net-new, so it
 sits in Phase 3 with the other new services rather than under a parity gate.
+
+**First in this phase: the v1 importer** (ADR-0017), moved here from Phase 1. It reads a v1
+`ultrasonics.db`; each plugin port then adds its own mapping, Spotify's and Plex's included.
 
 **Also in this phase: adopt `WorkerExecutor`.** ADR-0010 freezes the plugin boundary as
 Worker-shaped but ships Phase 1 running plugins in-process, on the grounds that first-party reviewed

@@ -32,6 +32,11 @@ long. Context is rarely the binding constraint; *reviewability* is. Equally, don
 one contract across three cells just to look parallel: the coordination costs more than the
 concurrency wins.
 
+In practice the bar is `/code-review`: each reviewer covers the whole diff in under 400 words, and
+the Spec reviewer checks it against the ticket its commits reference. So a ticket is one coherent
+slice that a review that size can cover, and its body names the parts of its spec it owns, so the
+parts left to other tickets don't read as missing. A spec typically needs one to three tickets.
+
 ## The wave — how a phase becomes parallel work
 
 A batch of cells dispatched together. Slice the phase into independently reviewable cells, draw
