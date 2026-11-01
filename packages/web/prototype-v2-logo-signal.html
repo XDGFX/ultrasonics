@@ -13,7 +13,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ultrasonics signal</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@700&family=Noto+Sans+JP:wght@500&family=Roboto+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@700&family=Noto+Sans+JP:wght@700&family=Roboto+Mono:wght@400;700&display=swap">
 <style>
   :root { --teal: #1ce5b5; --mag: #e234ce; }
   * { box-sizing: border-box; }
@@ -22,11 +22,6 @@
   .stage { display: grid; place-items: center; min-height: 72vh; padding: 40px 16px 10px; }
   .logo { display: inline-grid; justify-items: center; }
   canvas { display: block; cursor: crosshair; touch-action: none; }
-  .jp { font-family: "Noto Sans JP", sans-serif; font-weight: 500; color: var(--mag); opacity: .65;
-        display: flex; justify-content: space-between; margin-top: 6px; }
-  body.light .jp { color: #b5179e; }
-  .small { display: flex; gap: 48px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 10px 16px 40px; }
-  .small figure { margin: 0; text-align: center; color: #777; }
   .panel { position: fixed; right: 12px; bottom: 12px; background: #1b1b1b; border: 1px solid #2b2b2b; border-radius: 6px;
            padding: 10px 12px; display: grid; gap: 6px; width: 250px; color: #aaa; }
   body.light .panel { background: #f4f4f4; border-color: #ddd; color: #444; }
@@ -39,7 +34,6 @@
 <body>
 <div class="stage"><div class="logo" id="hero"></div></div>
 <div class="hint">move across it. hold still on it. then leave it alone.</div>
-<div class="small" id="small"></div>
 <div class="panel" id="panel"></div>
 
 <script>
@@ -47,7 +41,7 @@ const TEAL = "#1ce5b5", MAG = "#e234ce";
 const RAMP = " .:-=+*#%@";
 // Junk is what a bad packet decodes to: hex, half-width katakana, line noise.
 const JUNK = "0123456789ABCDEFｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ<>/\\|[]{}";
-const opts = { gain: 1, recovery: .9, chroma: 12, tear: 22, idle: true, light: false };
+const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, idle: true, light: false };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const demo = new URLSearchParams(location.search).has("demo");
 
@@ -64,10 +58,9 @@ function noise(x, y) {
 }
 
 class SignalLogo {
-  constructor(host, { width, cell, interactive, katakana = true }) {
+  constructor(host, { width, cell, interactive }) {
     Object.assign(this, { width, cell, interactive });
     this.canvas = document.createElement("canvas"); host.append(this.canvas);
-    if (katakana) { this.jp = document.createElement("div"); this.jp.className = "jp"; host.append(this.jp); }
     this.layout();
     if (interactive && !reduced) this.listen();
   }
@@ -77,22 +70,32 @@ class SignalLogo {
     const cols = Math.floor(this.width / cw), W = cols * cw;
     const m = document.createElement("canvas").getContext("2d");
     m.font = "700 100px 'Montserrat Alternates'";
-    const T = 100 * (W * .88) / m.measureText("ultrasonics").width;
-    const rows = Math.ceil(T * 1.15 / ch) + 2, H = rows * ch;
+    const tw = W * .88, T = 100 * tw / m.measureText("ultrasonics").width;
+    // The katakana is double its old 0.3T so it gets enough rows to read as mosaic, justified to the wordmark.
+    const K = T * .6, wordBand = T * 1.15, gap = T * .04, jpBand = K * 1.1;
+    const rows = Math.ceil((wordBand + gap + jpBand) / ch) + 2, H = rows * ch;
     Object.assign(this, { cw, ch, cols, rows, W, H, T });
 
-    // Rasterise once at 2x and keep a summed-area table, so any shifted cell's coverage is O(1).
-    const hi = document.createElement("canvas"); hi.width = Math.round(W * S); hi.height = Math.round(H * S);
-    const g = hi.getContext("2d");
-    g.font = `700 ${T * S}px 'Montserrat Alternates'`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff";
-    g.fillText("ultrasonics", hi.width / 2, hi.height / 2 + T * S * .04);
-    const px = g.getImageData(0, 0, hi.width, hi.height).data, w1 = hi.width + 1;
-    const sat = new Float32Array(w1 * (hi.height + 1));
-    for (let y = 0; y < hi.height; y++) {
-      let run = 0;
-      for (let x = 0; x < hi.width; x++) { run += px[(y * hi.width + x) * 4 + 3] / 255; sat[(y + 1) * w1 + x + 1] = sat[y * w1 + x + 1] + run; }
-    }
-    Object.assign(this, { sat, w1, hw: hi.width, hh: hi.height, S });
+    // Rasterise once at 2x and keep a summed-area table per layer, so any shifted cell's coverage is O(1).
+    const hw = Math.round(W * S), hh = Math.round(H * S), w1 = hw + 1;
+    const satOf = paint => {
+      const hi = document.createElement("canvas"); hi.width = hw; hi.height = hh;
+      const g = hi.getContext("2d"); g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff";
+      g.scale(S, S); paint(g);
+      const px = g.getImageData(0, 0, hw, hh).data, sat = new Float32Array(w1 * (hh + 1));
+      for (let y = 0; y < hh; y++) {
+        let run = 0;
+        for (let x = 0; x < hw; x++) { run += px[(y * hw + x) * 4 + 3] / 255; sat[(y + 1) * w1 + x + 1] = sat[y * w1 + x + 1] + run; }
+      }
+      return sat;
+    };
+    const word = satOf(g => { g.font = `700 ${T}px 'Montserrat Alternates'`; g.fillText("ultrasonics", W / 2, ch + wordBand / 2 + T * .04); });
+    const jp = satOf(g => {
+      g.font = `700 ${K}px 'Noto Sans JP'`;
+      const span = tw * .96, left = (W - span) / 2 + K / 2, y = ch + wordBand + gap + jpBand / 2;
+      [..."ソニックス"].forEach((c, k) => g.fillText(c, left + k * (span - K) / 4, y));
+    });
+    Object.assign(this, { word, jp, w1, hw, hh, S });
 
     const n = cols * rows;
     this.field = new Float32Array(n); this.next = new Float32Array(n);
@@ -106,25 +109,19 @@ class SignalLogo {
     this.canvas.width = W * d; this.canvas.height = H * d;
     this.canvas.style.width = W + "px"; this.canvas.style.height = H + "px";
     this.ctx = this.canvas.getContext("2d"); this.ctx.scale(d, d);
-    if (this.jp) {
-      m.font = `700 ${T}px 'Montserrat Alternates'`;
-      const tw = m.measureText("ultrasonics").width;
-      Object.assign(this.jp.style, { width: tw * .96 + "px", fontSize: Math.round(T * .3) + "px" });
-      this.jp.innerHTML = [..."ソニックス"].map(c => `<span>${c}</span>`).join("");
-    }
     this.pointer = null; this.prev = null; this.pending = [];
     this.nextGlitch = 2 + Math.random() * 3;
   }
 
   // Mean alpha of a cell-sized rect at cell (i, j), shifted by (dx, dy) CSS pixels.
-  cov(i, j, dx, dy) {
+  cov(s, i, j, dx, dy) {
     const S = this.S;
     let x0 = Math.round((i * this.cw + dx) * S), y0 = Math.round((j * this.ch + dy) * S);
     let x1 = x0 + Math.round(this.cw * S), y1 = y0 + Math.round(this.ch * S);
     const area = (x1 - x0) * (y1 - y0);
     x0 = clamp(x0, 0, this.hw); x1 = clamp(x1, 0, this.hw); y0 = clamp(y0, 0, this.hh); y1 = clamp(y1, 0, this.hh);
     if (x1 <= x0 || y1 <= y0) return 0;
-    const s = this.sat, w = this.w1;
+    const w = this.w1;
     return (s[y1 * w + x1] - s[y0 * w + x1] - s[y1 * w + x0] + s[y0 * w + x0]) / area;
   }
 
@@ -192,22 +189,25 @@ class SignalLogo {
     const { ctx, cols, rows, cw, ch, field } = this, light = opts.light;
     ctx.fillStyle = light ? "#fff" : "#111"; ctx.fillRect(0, 0, this.W, this.H);
     ctx.font = `700 ${this.cell}px 'Roboto Mono'`; ctx.textBaseline = "top";
-    const buckets = { face: [], teal: [], mag: [] };
+    const buckets = { face: [], teal: [], mag: [], jp: [] };
     for (let j = 0; j < rows; j++) {
       const sx = this.tearX[j];
       for (let i = 0; i < cols; i++) {
         const n = j * cols + i, c = Math.min(1, field[n]), r1 = this.r1[n], r2 = this.r2[n];
         // At rest the split is about a cell, so it survives quantisation; interference widens it sideways.
         const d = cw * 1.1 + c * opts.chroma, dy = ch * .45 + c * opts.chroma * .1;
-        const face = this.cov(i, j, sx, 0);
         // Packet loss: each cell has its own threshold, so loss and recovery are staggered, never a fade.
         const loss = clamp((c - .06 - r1 * .5) * 2.4);
-        const fl = face * (1 - loss);
+        const fl = this.cov(this.word, i, j, sx, 0) * (1 - loss), jl = this.cov(this.jp, i, j, sx, 0) * (1 - loss);
         let glyph = "", bucket = null;
-        if (fl > .05) { glyph = RAMP[Math.round(Math.pow(fl, .85) * 9)]; bucket = "face"; }
+        // The face leans dense (a low gamma) so the name reads at a glance.
+        if (fl > .05) { glyph = RAMP[Math.round(Math.pow(Math.min(1, fl * 1.2), .55) * 9)]; bucket = "face"; }
+        // The katakana is magenta and stops at "#", so it sits under the name rather than beside it.
+        else if (jl > .06) { glyph = RAMP[Math.max(1, Math.round(Math.pow(jl, .7) * 7))]; bucket = "jp"; }
         else {
           // Sampling right-and-up draws the teal copy down-left, as v1.
-          const tl = this.cov(i, j, sx + d, -dy), mg = this.cov(i, j, sx - d, dy), v = Math.max(tl, mg);
+          const tl = Math.max(this.cov(this.word, i, j, sx + d, -dy), this.cov(this.jp, i, j, sx + d, -dy) * .7);
+          const mg = this.cov(this.word, i, j, sx - d, dy), v = Math.max(tl, mg);
           // Chroma tops out lower on the ramp so the face always reads first.
           if (v > .08) { glyph = RAMP[Math.max(1, Math.round(v * 6))]; bucket = tl >= mg ? "teal" : "mag"; }
         }
@@ -218,7 +218,7 @@ class SignalLogo {
         if (bucket && glyph !== " ") buckets[bucket].push(glyph, i * cw, j * ch);
       }
     }
-    for (const [b, col] of [["teal", TEAL], ["mag", MAG], ["face", light ? "#111" : "#fff"]]) {
+    for (const [b, col] of [["teal", TEAL], ["mag", MAG], ["jp", light ? "#b5179e" : MAG], ["face", light ? "#111" : "#fff"]]) {
       ctx.fillStyle = col; const a = buckets[b];
       for (let q = 0; q < a.length; q += 3) ctx.fillText(a[q], a[q + 1], a[q + 2]);
     }
@@ -227,15 +227,11 @@ class SignalLogo {
 
 let logos = [];
 function build() {
-  const hero = document.getElementById("hero"), small = document.getElementById("small");
-  hero.innerHTML = ""; small.innerHTML = "";
+  const hero = document.getElementById("hero");
+  hero.innerHTML = "";
+  // Full size only: below this the mosaic stops reading, and the static mark takes over.
   const w = Math.min(1000, innerWidth - 32);
   logos = [new SignalLogo(hero, { width: w, cell: w > 700 ? 10 : 7, interactive: true })];
-  for (const [label, width, cell] of [["360px, 6px cells", 360, 6], ["200px, 4px cells", 200, 4]]) {
-    const f = document.createElement("figure"); small.append(f);
-    logos.push(new SignalLogo(f, { width, cell, interactive: true, katakana: width > 300 }));
-    f.insertAdjacentHTML("beforeend", `<figcaption style="margin-top:8px">${label}</figcaption>`);
-  }
 }
 
 function panel() {
@@ -254,7 +250,7 @@ function panel() {
 }
 
 (async () => {
-  await Promise.all(["700 20px 'Montserrat Alternates'", "700 20px 'Roboto Mono'", "500 20px 'Noto Sans JP'"].map(f => document.fonts.load(f, "uソ")));
+  await Promise.all(["700 20px 'Montserrat Alternates'", "700 20px 'Roboto Mono'", "700 20px 'Noto Sans JP'"].map(f => document.fonts.load(f, "uソ")));
   panel(); build();
   // ?sim=N steps N seconds at 60fps before the first frame, so headless screenshots are deterministic.
   const sim = +new URLSearchParams(location.search).get("sim");
