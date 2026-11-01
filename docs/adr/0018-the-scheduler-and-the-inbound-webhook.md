@@ -106,6 +106,6 @@ weeks, noted in the import report. The zone comes from `TZ`, or UTC when it is u
 - A scheduled run starts up to 60 seconds late. With a one-hour minimum, nobody will notice.
 - The webhook is the only unauthenticated route that starts work in an account. Its token is a
   credential, and a leaked database cannot be used to trigger anyone's applets.
-- `runs` retention is still undecided (ADR-0009 §5); this ADR adds columns but does not settle it.
+- `runs` retention is decided in ADR-0009 §5: the last 100 runs per applet, pruned when a run finishes.
 - If the hosted tier ever needs more than one instance, the single loop needs a lease. ADR-0009 §2
   already names that as its own revisit trigger.

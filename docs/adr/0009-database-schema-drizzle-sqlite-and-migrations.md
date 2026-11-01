@@ -129,8 +129,24 @@ exact failure §4 exists to prevent.
 **Session tokens are stored hashed**, so a database leak does not hand over live sessions —
 consistent with ADR-0008's "ultrasonics never stores a login credential".
 
-**`runs` is net-new**; v1 had no run history at all, only log files. It is the only table that grows
-without bound, so retention needs an answer before hosted carries real traffic — noted, not decided.
+**`runs` is net-new**; v1 had no run history at all, only log files. It is the only table that would
+otherwise grow without bound, and ADR-0020's stored unmatched songs make a row a few hundred KB, so:
+
+- **The last 100 runs per applet are kept.** It is a single constant, the same on both tiers and not
+  configurable. A limit by age was rejected: an hourly applet would keep 24 times as much as a daily
+  one, and an applet that last ran months ago would show no history at all.
+- **Pruning happens when a run finishes**, in the same transaction that writes its final status. It
+  deletes that applet's whole rows beyond the newest 100. A `running` run is never counted, and no
+  sweep is needed. Keeping summary rows longer than full ones was rejected: nothing in Phase 1 needs
+  a long trend.
+- **Deleting an applet deletes its runs** (cascade). Runs left orphaned would need a second limit,
+  and a run view that can show a run with no applet.
+- **A run's log is capped** at 1 MB or 10,000 lines. Over the cap, the runner keeps the head (the
+  applet context that must-still-work #8 asks the log to open with) and the tail (whatever ended the
+  run), with an "*N lines omitted*" marker between them.
+
+Decided by the ticket
+[Run records: retention, and results for inputs and modifiers](https://github.com/XDGFX/ultrasonics/issues/103).
 
 **Device metadata on `sessions` (user agent, IP) is deliberately deferred**, even though ADR-0007's
 per-device logout will eventually want a label. `sessions` is the one table where a retrofit is free
@@ -213,5 +229,5 @@ disk annoyance; rollback needs a real answer not worth guessing before a single 
   for the importer can be graduated with that in hand.
 - **`GLOSSARY.md`'s "frictionless" wording is tightened to "no login wall"**, so the over-reading
   corrected in the Context above is harder for the next reader to repeat.
-- **Two triggers to revisit this ADR**, neither of which is a defect: SQLite's single-writer ceiling
-  if hosted needs multiple app instances, and `runs` retention once hosted carries real traffic.
+- **A trigger to revisit this ADR**, which is not a defect: SQLite's single-writer ceiling if hosted
+  needs multiple app instances.
