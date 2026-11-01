@@ -1,6 +1,6 @@
 # ADR-0028 — The database is its own package, with a narrow system module
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-11-01
 **Refines:** ADR-0001 (which put persistence in `packages/server`), ADR-0009 §4 (which named two
 data-access modules)
