@@ -64,4 +64,5 @@ operating model was largely a hand-rolled version of what `/wayfinder` and `AGEN
 - **0021** — The runner validates the song dict at each plugin boundary
 - **0022** — Design the song dict and the matcher fresh *(supersedes 0006)*
 - **0023** — The v2 song dict's shape
+- **0024** — The server's HTTP framework is Hono *(Proposed)*
 Start with `../GLOSSARY.md` (domain glossary) and `plans/roadmap.md` (where the work is going).
