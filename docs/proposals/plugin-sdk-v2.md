@@ -131,7 +131,7 @@ before any applet exists.
 ```ts
 const spotifyOAuth = defineAuth({
   service: "spotify",
-  flow: "oauth2-pkce",                // pkce | oauth2 | apiKey | serverUrl | none
+  flow: "oauth2-pkce",                // oauth2-pkce | oauth2 | token | none (ADR-0013)
   scopes: ["playlist-read-private", "playlist-modify-private"],
 });
 ```
@@ -142,7 +142,7 @@ The plugin references an `AuthSpec`; the active `AuthProvider` (BYO / PKCE / Pro
 
 **The boundary against `persistentSettings`:** *if you cannot open an authenticated connection to
 the service without it, it is auth — not a setting.* So Plex's `server_url` and its TLS-verification
-toggle belong to the `AuthSpec` (the `serverUrl` flow), while its `plex_prepend` /
+toggle are `fields` of a `token`-flow `AuthSpec`, while its `plex_prepend` /
 `ultrasonics_prepend` path mapping is `persistentSettings`. v1's `handshake.settings` conflated an
 auth button, connection configuration and genuine preferences in one list; this rule separates them.
 The `AuthSpec`'s own surface is ticket [AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76).
