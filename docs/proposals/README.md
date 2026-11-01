@@ -32,8 +32,8 @@ proposal graduates; small ones can just reach `Implemented` without an ADR.
 
 | Proposal | Status | Notes |
 |---|---|---|
-| `plugin-sdk-v2.md` | Draft | Fleshes ADR-0004 into a concrete surface. Checkpoint gate; freeze via ticket [Plugin SDK surface freeze](https://github.com/XDGFX/ultrasonics/issues/75) before any plugin. |
-| `auth-provider-v2.md` | Draft | Fleshes ADR-0005 into a concrete surface. Checkpoint gate; freeze via ticket [AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76). |
+| `plugin-sdk-v2.md` | Approved | Fleshes ADR-0004 into a concrete surface. Frozen by ticket [Plugin SDK surface freeze](https://github.com/XDGFX/ultrasonics/issues/75) as ADR-0012. |
+| `auth-provider-v2.md` | Approved | Fleshes ADR-0005 into a concrete surface. Frozen by ticket [AuthProvider surface freeze](https://github.com/XDGFX/ultrasonics/issues/76) as ADR-0013. |
 
 ## Note on ambiguous cases
 

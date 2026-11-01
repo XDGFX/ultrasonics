@@ -13,7 +13,7 @@ Decisions **not yet made** are tickets on an open wayfinder map (a GitHub issue 
 ---
 
 ## Phase 0 — Foundations
-**Status:** in progress — contracts frozen ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70) closed, 2026-10-15); scaffold landed (2026-10-15); song dict landed (2026-10-19) · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
+**Status:** done 2026-10-19 — contracts frozen ([Phase 0 contracts](https://github.com/XDGFX/ultrasonics/issues/70) closed, 2026-10-15); scaffold landed (2026-10-15); song dict landed (2026-10-19) · **Owner mix:** mostly agents; Cal approves ADRs + SDK/auth contracts
 
 Build the factory, not the product. Scaffold the Bun monorepo and CI. Freeze the plugin SDK
 (ADR-0004) and `AuthProvider` (ADR-0005) as typed contracts *before* any plugin. Settle the
@@ -56,13 +56,14 @@ model + initial account-scoped schema decided (ADR'd) · trigger model settled �
 + its tests merged · docs skeleton and ADRs in place · **the Phase 0 contracts map is closed**.
 
 ## Phase 1 — Vertical slice (prove the whole pipe)
-**Status:** not started · **Owner mix:** agents build; Cal reviews the slice end-to-end
+**Status:** planning — map [Phase 1 specs](https://github.com/XDGFX/ultrasonics/issues/100) · **Owner mix:** agents build; Cal reviews the slice end-to-end
 
 The make-or-break phase. Build the **matcher**, designed fresh and measured against a labelled
 **match dataset** (ADR-0022),
 the applet runner, one input (**Spotify**, BYO + PKCE), one output (**Plex**, via the PlexAPI-style
-approach — the most-requested pairing in the issues), and a minimal Vue UI to build and run *one*
-applet. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
+approach — the most-requested pairing in the issues), and the Vue screens to build and run *one*
+applet, in the v2 design rather than v1's. First, write the plugin SDK and `AuthProvider` types
+that Phase 0 froze as decisions (ADR-0012, ADR-0013): nothing there is built yet. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
 (ADR-0003), self-host still login-free. Build the **scheduler and the inbound webhook route** here:
 ADR-0011 makes triggers server capabilities rather than plugins, so this phase owns them outright
 (OR semantics, queue-depth-of-one on a same-applet collision) and Phase 2 has no trigger cells to
