@@ -75,5 +75,5 @@ ADR-0019's renderer from the declared `fields` and `requirements()`. No service 
 
 - The Vue UI spec builds these screens: first run, applet list, builder, run view, settings and the
   service-auth wizard.
-- The v1 wordmark is used until the logo is redesigned. That redesign is a separate ticket.
+- The logo is redesigned in ADR-0027; the v1 SVGs are retired.
 - Signing in through plex.tv is out of scope for Phase 1. It is a future auth flow, not a UI change.
