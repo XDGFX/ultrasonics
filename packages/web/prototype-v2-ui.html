@@ -1,0 +1,677 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. Ticket: "The v2 UI: design direction and Phase 1 screens" (#105).
+  Three radically different design directions for v2, switchable with ?variant=A|B|C, each
+  drawing the Phase 1 screens (?screen=applets|builder|run|settings|first-run), plus two
+  shared screens that answer the ticket's two open questions:
+    ?screen=forms   radio vs select for a discriminated union (ADR-0019 §4)
+    ?screen=wizard  whether the service-auth wizard uses the ADR-0019 renderer (ADR-0013)
+  All data is mocked in memory. Open the file in a browser; ← → cycle variants.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ultrasonics v2 — UI prototype</title>
+<script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  button { font: inherit; cursor: pointer; }
+  input, select, textarea { font: inherit; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  /* ---------- Variant A: Sentence (IFTTT-faithful, warm, one column) ---------- */
+  .vA { --font: "Inter", system-ui, sans-serif; --bg: #faf6f0; --fg: #1d1a16; --muted: #7a7166;
+        --card: #fff; --line: #e8dfd2; --accent: #e8572a; --accent-fg: #fff; --ok: #2f8f4e;
+        --warn: #b7791f; --bad: #c53030; --radius: 18px; }
+  /* ---------- Variant B: Pipeline (dark, dense, node flow + inspector) ---------- */
+  .vB { --font: "Inter", system-ui, sans-serif; --bg: #0e1013; --fg: #e6e8eb; --muted: #8b929c;
+        --card: #171a1f; --line: #262b33; --accent: #7c5cff; --accent-fg: #fff; --ok: #3ecf8e;
+        --warn: #f5a524; --bad: #f2555a; --radius: 8px; font-size: 13px; }
+  /* ---------- Variant C: Ledger (neutral list–detail, document-like) ---------- */
+  .vC { --font: system-ui, -apple-system, "Segoe UI", sans-serif; --bg: #ffffff; --fg: #18181b;
+        --muted: #71717a; --card: #fafafa; --line: #e4e4e7; --accent: #18181b; --accent-fg: #fff;
+        --ok: #15803d; --warn: #a16207; --bad: #b91c1c; --radius: 6px; font-size: 14px; }
+
+  .root { min-height: 100vh; padding-bottom: 96px; font-family: var(--font); background: var(--bg); color: var(--fg); }
+  .muted { color: var(--muted); }
+  .btn { border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: var(--radius);
+         padding: 8px 14px; }
+  .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+  .btn.ghost { background: transparent; }
+  .pill { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 600; }
+  .s-succeeded, .s-written { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }
+  .s-partial, .s-skipped, .s-queued { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .s-failed { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+  .s-interrupted, .s-disabled { background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }
+  .s-running { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+
+  /* ---------- Shared form renderer (ADR-0019) ---------- */
+  .form { display: grid; gap: 16px; }
+  .form .intro { color: var(--muted); margin: 0; }
+  .field label.lbl { display: block; font-weight: 600; margin-bottom: 4px; }
+  .field .help { color: var(--muted); font-size: .9em; margin-top: 4px; }
+  .field .warning { margin-top: 6px; padding: 8px 10px; border-left: 3px solid var(--warn);
+                    background: color-mix(in srgb, var(--warn) 10%, transparent); font-size: .92em; }
+  .field .issue { color: var(--bad); font-size: .9em; margin-top: 4px; }
+  .field input[type=text], .field input[type=password], .field input[type=number], .field select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: calc(var(--radius) * .6);
+    background: var(--bg); color: var(--fg); }
+  .field.has-issue input { border-color: var(--bad); }
+  .form-issues { padding: 10px 12px; border-radius: var(--radius); background: color-mix(in srgb, var(--bad) 10%, transparent);
+                 color: var(--bad); }
+  .choice-cards { display: grid; gap: 8px; }
+  .choice-card { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 12px;
+                 border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--fg); }
+  .choice-card.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .choice-card .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); flex: none; margin-top: 2px; }
+  .choice-card.on .dot { border: 5px solid var(--accent); }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .seg button { border: 0; background: var(--card); color: var(--fg); padding: 8px 14px; border-right: 1px solid var(--line); }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--accent); color: var(--accent-fg); }
+  .toggle { display: inline-flex; align-items: center; gap: 10px; }
+  .toggle .sw { width: 38px; height: 22px; border-radius: 11px; background: var(--line); position: relative; border: 0; }
+  .toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+                       border-radius: 50%; background: #fff; transition: left .15s; }
+  .toggle .sw.on { background: var(--accent); }
+  .toggle .sw.on::after { left: 19px; }
+
+  /* ---------- Variant A layout ---------- */
+  .vA .top { display: flex; align-items: center; justify-content: space-between; max-width: 760px; margin: 0 auto; padding: 28px 20px; }
+  .vA .logo { font-weight: 800; font-size: 22px; letter-spacing: -.02em; }
+  .vA .logo span { color: var(--accent); }
+  .vA .wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+  .vA h1 { font-size: 40px; letter-spacing: -.03em; margin: 8px 0 24px; }
+  .vA .tile { display: block; border-radius: var(--radius); padding: 24px; margin-bottom: 14px; color: #fff; position: relative; }
+  .vA .tile .sent { font-size: 24px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; }
+  .vA .tile .meta { margin-top: 14px; opacity: .85; font-size: 14px; display: flex; gap: 14px; align-items: center; }
+  .vA .tile .pill { background: rgba(255,255,255,.22); color: #fff; }
+  .vA .sentence { font-size: 34px; font-weight: 800; line-height: 1.6; letter-spacing: -.02em; }
+  .vA .blank { display: inline-block; padding: 0 14px; border-radius: 12px; background: var(--card); border: 2px dashed var(--line);
+               color: var(--muted); font-weight: 700; margin: 2px 0; }
+  .vA .blank.filled { border: 0; color: #fff; }
+  .vA .blank.active { outline: 3px solid var(--fg); outline-offset: 2px; }
+  .vA .sheet { margin-top: 28px; background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,.08); }
+  .vA .story { border-left: 3px solid var(--line); padding-left: 20px; display: grid; gap: 18px; }
+  .vA .story .beat { position: relative; }
+  .vA .story .beat::before { content: ""; position: absolute; left: -28px; top: 4px; width: 13px; height: 13px; border-radius: 50%; background: var(--c, var(--line)); }
+  .vA .card { background: var(--card); border-radius: var(--radius); padding: 22px; margin-bottom: 14px; }
+
+  /* ---------- Variant B layout ---------- */
+  .vB .shell { display: grid; grid-template-columns: 56px 1fr; min-height: 100vh; }
+  .vB .rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; }
+  .vB .rail .r { width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; color: var(--muted); }
+  .vB .rail .r.on { background: var(--card); color: var(--fg); }
+  .vB .rail .brand { font-weight: 900; color: var(--accent); margin-bottom: 10px; }
+  .vB .main { display: grid; grid-template-rows: 48px 1fr; min-width: 0; }
+  .vB .bar { border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; padding: 0 16px; }
+  .vB .bar .crumb { color: var(--muted); }
+  .vB .bar .crumb b { color: var(--fg); }
+  .vB .body { display: grid; grid-template-columns: 1fr 340px; min-height: 0; }
+  .vB .body.full { grid-template-columns: 1fr; }
+  .vB .canvas { padding: 24px; background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 18px 18px; overflow: auto; }
+  .vB .inspector { border-left: 1px solid var(--line); padding: 16px; overflow: auto; }
+  .vB .inspector h3 { margin: 0 0 4px; font-size: 14px; }
+  .vB .flow { display: flex; align-items: center; gap: 0; }
+  .vB .col { display: grid; gap: 10px; }
+  .vB .col .h { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .vB .node { width: 200px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+  .vB .node.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .vB .node .t { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .vB .node .d { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .vB .node.add { border-style: dashed; color: var(--muted); text-align: center; }
+  .vB .wire { width: 48px; height: 2px; background: var(--line); position: relative; }
+  .vB .wire .n { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--ok); white-space: nowrap; }
+  .vB .dotc { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .vB table { width: 100%; border-collapse: collapse; }
+  .vB td, .vB th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .vB th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .vB .console { background: #08090b; border-top: 1px solid var(--line); padding: 10px 16px; font-size: 12px; height: 220px; overflow: auto; }
+  .vB .console div { white-space: pre; }
+  .vB .lv-warn { color: var(--warn); } .vB .lv-err { color: var(--bad); } .vB .lv-info { color: var(--muted); }
+
+  /* ---------- Variant C layout ---------- */
+  .vC .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  .vC .side { border-right: 1px solid var(--line); background: var(--card); padding: 14px 10px; }
+  .vC .side .brand { font-weight: 700; padding: 6px 10px 14px; }
+  .vC .side .sec { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 14px 10px 6px; }
+  .vC .side a { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; border-radius: var(--radius); color: var(--fg); text-decoration: none; }
+  .vC .side a.on { background: #ececef; font-weight: 600; }
+  .vC .doc { max-width: 820px; padding: 28px 40px; }
+  .vC h1 { font-size: 22px; margin: 0 0 4px; }
+  .vC .sub { color: var(--muted); margin-bottom: 20px; }
+  .vC .tabs { display: flex; gap: 18px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+  .vC .tabs a { padding: 8px 0; color: var(--muted); text-decoration: none; }
+  .vC .tabs a.on { color: var(--fg); border-bottom: 2px solid var(--fg); }
+  .vC .section { display: grid; grid-template-columns: 160px 1fr; gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+  .vC .section h2 { font-size: 14px; margin: 0; }
+  .vC .section .k { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .vC .slot { border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; }
+  .vC .slot .hd { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
+  .vC .slot .bd { border-top: 1px solid var(--line); padding: 14px; }
+  .vC table { width: 100%; border-collapse: collapse; }
+  .vC td, .vC th { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+  .vC th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .vC .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; }
+
+  /* ---------- Shared screens (forms lab, wizard) ---------- */
+  .lab { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+  .lab h1 { margin: 0 0 6px; font-size: 24px; }
+  .lab .q { color: var(--muted); max-width: 70ch; margin-bottom: 22px; }
+  .lab .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+  .lab .opt { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .lab .opt h2 { font-size: 15px; margin: 0 0 4px; }
+  .lab .opt .why { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+  .steps { display: grid; gap: 12px; }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+  .step .n { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--line); font-weight: 700; font-size: 13px; }
+  .step.done .n { background: var(--ok); color: #fff; }
+  .step.cur .n { background: var(--accent); color: var(--accent-fg); }
+  .copy { display: flex; gap: 8px; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: calc(var(--radius) * .6); padding: 6px 8px; font-size: 13px; }
+
+  /* ---------- Prototype chrome (not part of any design) ---------- */
+  .proto { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 99; display: flex; gap: 6px; align-items: center;
+           background: #111; color: #fff; border-radius: 999px; padding: 6px 8px; box-shadow: 0 8px 30px rgba(0,0,0,.35);
+           font: 12px/1 ui-monospace, Menlo, monospace; outline: 2px solid #ff0; }
+  .proto button { background: transparent; color: #fff; border: 0; padding: 7px 9px; border-radius: 999px; font: inherit; white-space: nowrap; }
+  .proto button.on { background: #ff0; color: #111; }
+  .proto .lbl { padding: 0 8px; min-width: 150px; text-align: center; font-weight: 700; }
+  .proto .sep { width: 1px; height: 18px; background: #444; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const { createApp, reactive, ref, computed, watch } = Vue;
+
+// ---------- Mock data (shapes follow GLOSSARY.md; no backend) ----------
+const SPOTIFY_INPUT = {
+  // z.toJSONSchema(..., { io: "input" }) of a discriminatedUnion over `source` (ADR-0019 §1, §4)
+  title: "Spotify input",
+  description: "Which Spotify songs this applet reads.",
+  discriminator: "source",
+  oneOf: [
+    { const: "playlists", title: "Playlists I choose", description: "Only the playlists you list here.",
+      properties: { playlists: { type: "string", title: "Playlist links", description: "Paste Spotify playlist links, separated by commas.", placeholder: "https://open.spotify.com/playlist/…" } },
+      required: ["playlists"] },
+    { const: "all", title: "All my playlists", description: "Every playlist you own or follow.",
+      properties: { exclude: { type: "string", title: "Except", description: "Playlist names to leave out, separated by commas." },
+                    followed: { type: "boolean", title: "Include playlists I follow", default: true } } },
+    { const: "saved", title: "Liked songs", description: "Your Liked Songs, as one playlist.",
+      properties: { name: { type: "string", title: "Playlist name", default: "Liked Songs" } },
+      warning: "Spotify returns Liked Songs newest first, so the order on the other side follows that." },
+  ],
+};
+const PLEX_OUTPUT = {
+  title: "Plex output", description: "Where songs land in Plex.",
+  properties: {
+    library: { type: "string", title: "Music library", default: "Music" },
+    prefix: { type: "string", title: "Playlist name prefix", description: "Optional. Added to every playlist this applet writes.", placeholder: "e.g. 🎧 " },
+    replace: { type: "boolean", title: "Replace existing playlist contents", default: true,
+               warning: "Tracks already in a playlist with the same name will be removed." },
+  },
+};
+const PLEX_AUTH = { // ADR-0013: token flow, plugin-declared fields; secret only legal here
+  title: "Connect Plex", description: "ultrasonics talks to your Plex server directly.",
+  properties: {
+    serverUrl: { type: "string", title: "Server address", placeholder: "http://192.168.1.20:32400" },
+    token: { type: "string", title: "Plex token", secret: true, description: "Plex Web → any item → ⋯ → Get info → View XML; the token is the X-Plex-Token in the address." },
+    verifyTls: { type: "boolean", title: "Check the server's certificate", default: true, description: "Turn off only for a self-signed certificate." },
+  }, required: ["serverUrl", "token"],
+};
+const SPOTIFY_AUTH_FIELDS = { // BYO + PKCE: the client ID is what the UI must collect first (requirements())
+  title: "Your Spotify app", properties: {
+    clientId: { type: "string", title: "Client ID", placeholder: "32 hex characters", description: "From your app's page on the Spotify developer dashboard." } },
+  required: ["clientId"],
+};
+const SCHEDULE = { every: 1, unit: "days", anchor: "07:00", tz: "Australia/Sydney" };
+
+const applets = [
+  { id: 1, name: "Discover Weekly to Plex", colour: "#e8572a", state: "succeeded", last: "Today 07:00", next: "Tomorrow 07:00",
+    inputs: [{ plugin: "Spotify", sum: "Discover Weekly, Release Radar" }], modifiers: [{ plugin: "Deduplicate", sum: "by ISRC" }],
+    outputs: [{ plugin: "Plex", sum: "Music library, replace" }], trigger: "Every day at 07:00", webhook: false, enabled: true },
+  { id: 2, name: "Liked songs backup", colour: "#2b6cb0", state: "partial", last: "Sun 03:00", next: "Sun 03:00",
+    inputs: [{ plugin: "Spotify", sum: "Liked songs" }], modifiers: [], outputs: [{ plugin: "Plex", sum: "prefix “♥ ”" }],
+    trigger: "Every week on Sunday at 03:00", webhook: true, enabled: true },
+  { id: 3, name: "Gym mix", colour: "#6b46c1", state: "disabled", last: "12 Oct", next: "—",
+    inputs: [{ plugin: "Spotify", sum: "Gym" }], modifiers: [], outputs: [{ plugin: "Plex", sum: "Music library" }],
+    trigger: "Manual only", webhook: false, enabled: false },
+];
+const runs = [
+  { id: 412, when: "Today 07:00", trigger: "schedule", ended: "succeeded", dur: "41 s", written: 2, unmatched: 3, rejected: 0 },
+  { id: 405, when: "Yesterday 07:00", trigger: "schedule", ended: "partial", dur: "38 s", written: 1, unmatched: 5, rejected: 0 },
+  { id: 401, when: "Tue 21:14", trigger: "manual", ended: "failed", dur: "4 s", written: 0, unmatched: 0, rejected: 0, error: "Plex: could not reach http://192.168.1.20:32400 (connection refused)" },
+  { id: 398, when: "Tue 07:00", trigger: "schedule", ended: "interrupted", dur: "—", written: 0, unmatched: 0, rejected: 0 },
+];
+const run = { // the run view's subject: output result per playlist (ADR-0020), rejections (ADR-0021)
+  id: 412, applet: "Discover Weekly to Plex", trigger: "schedule", ended: "succeeded", started: "Today 07:00:02", dur: "41 s",
+  stages: [
+    { k: "Input", plugin: "Spotify", note: "2 playlists, 60 songs", st: "succeeded" },
+    { k: "Modifier", plugin: "Deduplicate", note: "60 → 57 songs", st: "succeeded" },
+    { k: "Output", plugin: "Plex", note: "2 written · 3 unmatched", st: "succeeded" },
+  ],
+  playlists: [
+    { name: "Discover Weekly", result: "written", songs: 30, matched: 28, unmatched: [
+      { title: "Lake Effect", artists: "Hania Rani" }, { title: "Doppelgänger (Live)", artists: "Kiasmos" } ] },
+    { name: "Release Radar", result: "written", songs: 27, matched: 26, unmatched: [ { title: "Hand Over", artists: "Peggy Gou" } ] },
+  ],
+  rejections: [],
+  log: [
+    ["07:00:02", "info", "Run 412 started by schedule"],
+    ["07:00:03", "info", "Spotify: fetched “Discover Weekly” (30 songs)"],
+    ["07:00:04", "info", "Spotify: fetched “Release Radar” (30 songs)"],
+    ["07:00:04", "info", "Deduplicate: 60 → 57 songs (3 duplicates by ISRC)"],
+    ["07:00:09", "info", "Plex: matching 30 songs for “Discover Weekly”"],
+    ["07:00:22", "warn", "Plex: no match for “Lake Effect” — Hania Rani"],
+    ["07:00:23", "warn", "Plex: no match for “Doppelgänger (Live)” — Kiasmos"],
+    ["07:00:24", "info", "Plex: wrote “Discover Weekly” (28 tracks)"],
+    ["07:00:37", "warn", "Plex: no match for “Hand Over” — Peggy Gou"],
+    ["07:00:43", "info", "Plex: wrote “Release Radar” (26 tracks)"],
+    ["07:00:43", "info", "Run 412 succeeded in 41 s"],
+  ],
+};
+const services = [
+  { service: "spotify", name: "Spotify", status: "connected", detail: "as cal · BYO app, PKCE", plugins: "Spotify" },
+  { service: "plex", name: "Plex", status: "expired", detail: "token rejected 2 days ago", plugins: "Plex" },
+];
+
+// ---------- Shared: the ADR-0019 form renderer, with a pluggable choice control ----------
+const FormRenderer = {
+  name: "FormRenderer",
+  props: { schema: Object, choice: { type: String, default: "auto" }, issues: { type: Array, default: () => [] } },
+  setup(props) {
+    const values = reactive({});
+    const s = props.schema;
+    if (s.oneOf) values[s.discriminator] = s.oneOf[0].const;
+    const all = s.oneOf ? s.oneOf.flatMap(v => Object.entries(v.properties)) : Object.entries(s.properties);
+    for (const [k, f] of all) if (f.default !== undefined) values[k] = f.default; // hidden branches keep values (§4)
+    const active = computed(() => s.oneOf ? s.oneOf.find(v => v.const === values[s.discriminator]) : s);
+    const style = computed(() => props.choice !== "auto" ? props.choice : (s.oneOf && s.oneOf.length <= 4 ? "cards" : "select"));
+    const issueFor = k => props.issues.find(i => i.path === k)?.message;
+    const formIssues = computed(() => props.issues.filter(i => !i.path));
+    return { values, s, active, style, issueFor, formIssues };
+  },
+  template: `
+  <div class="form">
+    <p v-if="s.description" class="intro">{{ s.description }}</p>
+    <div v-if="formIssues.length" class="form-issues"><div v-for="i in formIssues">{{ i.message }}</div></div>
+    <div v-if="s.oneOf" class="field">
+      <label class="lbl">Source</label>
+      <div v-if="style==='cards'" class="choice-cards">
+        <button v-for="v in s.oneOf" class="choice-card" :class="{on: values[s.discriminator]===v.const}" @click="values[s.discriminator]=v.const">
+          <span class="dot"></span><span><b>{{ v.title }}</b><br><span class="muted">{{ v.description }}</span></span>
+        </button>
+      </div>
+      <template v-else-if="style==='select'">
+        <select v-model="values[s.discriminator]"><option v-for="v in s.oneOf" :value="v.const">{{ v.title }}</option></select>
+        <div class="help">{{ active.description }}</div>
+      </template>
+      <template v-else-if="style==='segmented'">
+        <div class="seg"><button v-for="v in s.oneOf" :class="{on: values[s.discriminator]===v.const}" @click="values[s.discriminator]=v.const">{{ v.title }}</button></div>
+        <div class="help">{{ active.description }}</div>
+      </template>
+      <div v-if="active.warning" class="field"><div class="warning">⚠ {{ active.warning }}</div></div>
+    </div>
+    <div v-for="(f, k) in active.properties" class="field" :class="{'has-issue': issueFor(k)}">
+      <template v-if="f.type==='boolean'">
+        <span class="toggle"><button class="sw" :class="{on: values[k]}" @click="values[k]=!values[k]"></button><b>{{ f.title }}</b></span>
+      </template>
+      <template v-else>
+        <label class="lbl">{{ f.title }}<span v-if="!(s.required||active.required||[]).includes(k) && f.default===undefined" class="muted" style="font-weight:400"> · optional</span></label>
+        <input :type="f.secret ? 'password' : 'text'" v-model="values[k]" :placeholder="f.placeholder">
+      </template>
+      <div v-if="f.description" class="help">{{ f.description }}</div>
+      <div v-if="f.warning" class="warning">⚠ {{ f.warning }}</div>
+      <div v-if="issueFor(k)" class="issue">{{ issueFor(k) }}</div>
+    </div>
+  </div>`,
+};
+
+const StatusPill = { props: ["s"], template: `<span class="pill" :class="'s-'+s">{{ s }}</span>` };
+
+// ======================= Variant A — Sentence =======================
+const A = {
+  name: "Sentence", components: { FormRenderer, StatusPill }, props: ["screen", "go"],
+  setup() { const blank = ref("input"); return { applets, run, runs, services, SPOTIFY_INPUT, PLEX_OUTPUT, blank }; },
+  template: `
+  <div>
+    <div class="top">
+      <div class="logo">ultra<span>sonics</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" @click="go('applets')">My applets</button>
+        <button class="btn ghost" @click="go('settings')">Settings</button>
+        <button class="btn primary" @click="go('builder')">Create</button>
+      </div>
+    </div>
+    <div class="wrap">
+
+      <template v-if="screen==='applets'">
+        <h1>My applets</h1>
+        <a v-for="a in applets" class="tile" :style="{background: a.enabled ? a.colour : '#9b9286'}" @click="go('run')">
+          <div class="sent">When it's {{ a.trigger.toLowerCase().replace('every','every').replace('manual only','your call') }}, take {{ a.inputs[0].sum }} from {{ a.inputs[0].plugin }}<template v-if="a.modifiers.length">, {{ a.modifiers[0].plugin.toLowerCase() }} it</template>, and put it in {{ a.outputs[0].plugin }}.</div>
+          <div class="meta"><StatusPill :s="a.state"/> <span>Last run {{ a.last }}</span><span v-if="a.enabled">Next {{ a.next }}</span><span v-else>Off</span></div>
+        </a>
+      </template>
+
+      <template v-if="screen==='builder'">
+        <h1 style="font-size:20px" class="muted">New applet</h1>
+        <div class="sentence">
+          When <span class="blank filled" style="background:#3d3a36" :class="{active: blank==='trigger'}" @click="blank='trigger'">every day at 07:00</span>,
+          take <span class="blank filled" style="background:#1db954" :class="{active: blank==='input'}" @click="blank='input'">Spotify · Playlists I choose</span>,
+          <span class="blank" :class="{active: blank==='modifier'}" @click="blank='modifier'">+ change it</span>
+          and put it in <span class="blank filled" style="background:#e5a00d" :class="{active: blank==='output'}" @click="blank='output'">Plex · Music</span>.
+        </div>
+        <div class="sheet">
+          <template v-if="blank==='input'"><FormRenderer :schema="SPOTIFY_INPUT"/></template>
+          <template v-if="blank==='output'"><FormRenderer :schema="PLEX_OUTPUT"/></template>
+          <template v-if="blank==='modifier'"><p class="muted">Pick a step: Deduplicate · Filter · Merge · Substitute</p></template>
+          <template v-if="blank==='trigger'">
+            <p><b>Run it</b></p>
+            <p>Every <input value="1" style="width:50px"> <select><option>days</option><option>hours</option><option>weeks</option></select> at <input value="07:00" style="width:80px"> <span class="muted">Australia/Sydney</span></p>
+            <span class="toggle"><button class="sw"></button>Also when a webhook is called</span>
+          </template>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px"><button class="btn">Run once</button><button class="btn primary">Save applet</button></div>
+      </template>
+
+      <template v-if="screen==='run'">
+        <h1 style="font-size:30px">This morning, ultrasonics put 54 songs in Plex.</h1>
+        <p class="muted">Discover Weekly to Plex · run {{ run.id }} · started by the schedule at 07:00 · 41 s · <StatusPill :s="run.ended"/></p>
+        <div class="story" style="margin-top:24px">
+          <div class="beat" style="--c:#1db954"><b>Took 60 songs from Spotify</b><div class="muted">Discover Weekly and Release Radar.</div></div>
+          <div class="beat" style="--c:#3d3a36"><b>Removed 3 duplicates</b><div class="muted">They were on both playlists.</div></div>
+          <div class="beat" style="--c:#e5a00d" v-for="p in run.playlists"><b>Wrote “{{ p.name }}” to Plex</b> <StatusPill :s="p.result"/>
+            <div class="muted">{{ p.matched }} of {{ p.songs }} songs. Couldn't find:</div>
+            <div v-for="u in p.unmatched" style="margin-top:4px">· {{ u.title }} — <span class="muted">{{ u.artists }}</span></div>
+          </div>
+        </div>
+        <details style="margin-top:28px"><summary class="muted">Full log</summary><pre class="mono" style="font-size:12px">{{ run.log.map(l=>l.join('  ')).join('\\n') }}</pre></details>
+        <h2 style="margin-top:32px">Earlier</h2>
+        <div class="card" v-for="r in runs.slice(1)" style="display:flex;justify-content:space-between"><span>{{ r.when }} · {{ r.trigger }}</span><StatusPill :s="r.ended"/></div>
+      </template>
+
+      <template v-if="screen==='settings'">
+        <h1>Settings</h1>
+        <h2>Connected services</h2>
+        <div class="card" v-for="s in services" style="display:flex;justify-content:space-between;align-items:center">
+          <div><b style="font-size:18px">{{ s.name }}</b><div class="muted">{{ s.detail }}</div></div>
+          <button class="btn" :class="{primary: s.status!=='connected'}" @click="go('wizard')">{{ s.status==='connected' ? 'Manage' : 'Reconnect' }}</button>
+        </div>
+        <h2>General</h2>
+        <div class="card">Time zone: <b>Australia/Sydney</b> <span class="muted">· used by every schedule</span></div>
+      </template>
+
+      <template v-if="screen==='first-run'">
+        <h1>Let's sync your first playlist.</h1>
+        <p class="muted" style="font-size:18px">Three steps. Nothing to sign in to — this is your ultrasonics.</p>
+        <div class="card" style="display:flex;gap:16px;align-items:center"><span style="font-size:30px">①</span><div style="flex:1"><b>Connect Spotify</b><div class="muted">You'll need a free Spotify developer app; we'll walk you through it.</div></div><button class="btn primary" @click="go('wizard')">Connect</button></div>
+        <div class="card" style="display:flex;gap:16px;align-items:center;opacity:.6"><span style="font-size:30px">②</span><div style="flex:1"><b>Connect Plex</b><div class="muted">Your server address and a token.</div></div><button class="btn">Connect</button></div>
+        <div class="card" style="display:flex;gap:16px;align-items:center;opacity:.6"><span style="font-size:30px">③</span><div style="flex:1"><b>Make an applet</b><div class="muted">When …, take …, and put it in ….</div></div><button class="btn">Create</button></div>
+        <p class="muted">Coming from ultrasonics 1? <a href="#">Import your v1 database</a>.</p>
+      </template>
+    </div>
+  </div>`,
+};
+
+// ======================= Variant B — Pipeline =======================
+const B = {
+  name: "Pipeline", components: { FormRenderer, StatusPill }, props: ["screen", "go"],
+  setup() { const sel = ref("input"); return { applets, run, runs, services, SPOTIFY_INPUT, PLEX_OUTPUT, PLEX_AUTH, sel }; },
+  template: `
+  <div class="shell">
+    <nav class="rail">
+      <div class="brand">u</div>
+      <a class="r" :class="{on: ['applets','builder','run'].includes(screen)}" @click="go('applets')" title="Applets">▦</a>
+      <a class="r" :class="{on: screen==='settings'}" @click="go('settings')" title="Settings">⚙</a>
+    </nav>
+    <div class="main">
+      <div class="bar">
+        <span class="crumb" v-if="screen==='applets'"><b>Applets</b></span>
+        <span class="crumb" v-if="screen==='builder'">Applets / <b>Discover Weekly to Plex</b></span>
+        <span class="crumb" v-if="screen==='run'">Applets / Discover Weekly to Plex / <b>Run 412</b></span>
+        <span class="crumb" v-if="screen==='settings'"><b>Settings</b></span>
+        <span class="crumb" v-if="screen==='first-run'"><b>Welcome</b></span>
+        <span style="flex:1"></span>
+        <template v-if="screen==='builder'"><span class="muted">Every day 07:00 · webhook off</span><button class="btn">Run now</button><button class="btn primary">Save</button></template>
+        <button v-if="screen==='applets'" class="btn primary" @click="go('builder')">New applet</button>
+      </div>
+
+      <div v-if="screen==='applets'" class="body full"><div style="padding:16px">
+        <table><tr><th></th><th>Applet</th><th>Pipeline</th><th>Trigger</th><th>Last run</th><th>Next</th><th></th></tr>
+          <tr v-for="a in applets" @click="go('builder')" style="cursor:pointer">
+            <td><span class="dotc" :style="{background: a.enabled ? 'var(--ok)' : 'var(--muted)'}"></span></td>
+            <td><b>{{ a.name }}</b></td>
+            <td class="muted mono">{{ a.inputs[0].plugin }} → <template v-for="m in a.modifiers">{{ m.plugin }} → </template>{{ a.outputs[0].plugin }}</td>
+            <td class="muted">{{ a.trigger }}<span v-if="a.webhook"> + webhook</span></td>
+            <td><StatusPill :s="a.state"/> <span class="muted">{{ a.last }}</span></td>
+            <td class="muted">{{ a.next }}</td><td><button class="btn" @click.stop="go('run')">▶</button></td>
+          </tr></table>
+      </div></div>
+
+      <div v-if="screen==='builder'" class="body">
+        <div class="canvas">
+          <div class="flow">
+            <div class="col"><div class="h">Trigger</div>
+              <div class="node" :class="{sel: sel==='trigger'}" @click="sel='trigger'"><div class="t">⏱ Schedule</div><div class="d">Every day at 07:00</div></div>
+              <div class="node add">+ webhook</div></div>
+            <div class="wire"></div>
+            <div class="col"><div class="h">Inputs</div>
+              <div class="node" :class="{sel: sel==='input'}" @click="sel='input'"><div class="t"><span class="dotc" style="background:#1db954"></span>Spotify</div><div class="d">Playlists I choose · 2</div></div>
+              <div class="node add">+ input</div></div>
+            <div class="wire"></div>
+            <div class="col"><div class="h">Modifiers</div>
+              <div class="node" :class="{sel: sel==='mod'}" @click="sel='mod'"><div class="t">⧉ Deduplicate</div><div class="d">by ISRC</div></div>
+              <div class="node add">+ modifier</div></div>
+            <div class="wire"></div>
+            <div class="col"><div class="h">Outputs</div>
+              <div class="node" :class="{sel: sel==='output'}" @click="sel='output'"><div class="t"><span class="dotc" style="background:#e5a00d"></span>Plex</div><div class="d">Music · replace</div></div>
+              <div class="node add">+ output</div></div>
+          </div>
+        </div>
+        <aside class="inspector">
+          <template v-if="sel==='input'"><h3>Spotify · input</h3><p class="muted" style="margin-top:0">Connected as cal</p><FormRenderer :schema="SPOTIFY_INPUT" choice="select"/></template>
+          <template v-if="sel==='output'"><h3>Plex · output</h3><FormRenderer :schema="PLEX_OUTPUT"/></template>
+          <template v-if="sel==='mod'"><h3>Deduplicate</h3><p class="muted">No settings.</p></template>
+          <template v-if="sel==='trigger'"><h3>Schedule</h3><p>Every <input value="1" style="width:44px"> <select><option>days</option></select> from <input value="07:00" style="width:70px"></p><p class="muted">Australia/Sydney</p></template>
+        </aside>
+      </div>
+
+      <div v-if="screen==='run'" class="body full" style="grid-template-rows: auto 1fr auto">
+        <div class="canvas" style="padding-bottom:12px">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:18px"><StatusPill :s="run.ended"/><span class="muted">schedule · {{ run.started }} · {{ run.dur }}</span><span style="flex:1"></span><button class="btn">Run again</button></div>
+          <div class="flow">
+            <template v-for="(st, i) in run.stages">
+              <div class="wire" v-if="i"><span class="n">{{ ['60 songs','57 songs'][i-1] }}</span></div>
+              <div class="node"><div class="t"><span class="dotc" style="background:var(--ok)"></span>{{ st.plugin }}</div><div class="d">{{ st.note }}</div></div>
+            </template>
+          </div>
+        </div>
+        <div style="padding:16px"><table><tr><th>Playlist</th><th>Result</th><th>Matched</th><th>Unmatched</th></tr>
+          <tr v-for="p in run.playlists"><td><b>{{ p.name }}</b></td><td><StatusPill :s="p.result"/></td><td>{{ p.matched }}/{{ p.songs }}</td>
+            <td class="muted">{{ p.unmatched.map(u => u.title + ' — ' + u.artists).join(' · ') }}</td></tr></table>
+          <p class="muted">Rejections: none</p></div>
+        <div class="console mono"><div v-for="l in run.log" :class="'lv-'+l[1]">{{ l[0] }}  {{ l[1].padEnd(4) }}  {{ l[2] }}</div></div>
+      </div>
+
+      <div v-if="screen==='settings'" class="body"><div style="padding:16px">
+        <h3>Services</h3>
+        <table><tr><th>Service</th><th>Status</th><th>Detail</th><th>Used by</th><th></th></tr>
+          <tr v-for="s in services"><td><b>{{ s.name }}</b> <span class="muted mono">{{ s.service }}</span></td><td><StatusPill :s="s.status==='connected'?'succeeded':'failed'"/></td><td class="muted">{{ s.detail }}</td><td class="muted">{{ s.plugins }}</td><td><button class="btn" @click="go('wizard')">{{ s.status==='connected'?'Edit':'Reconnect' }}</button></td></tr></table>
+        <h3 style="margin-top:24px">Plugins</h3><p class="muted">Only plugins with account-wide settings are listed (ADR-0019 §6). None in Phase 1.</p>
+        <h3 style="margin-top:24px">General</h3><p>Time zone <span class="mono">Australia/Sydney</span></p>
+      </div><aside class="inspector"><h3>Plex</h3><FormRenderer :schema="PLEX_AUTH" :issues="[{path:'token', message:'Plex rejected this token (401).'}]"/></aside></div>
+
+      <div v-if="screen==='first-run'" class="body full"><div class="canvas" style="display:grid;place-items:center">
+        <div style="max-width:520px">
+          <h2 style="margin:0 0 6px">Empty pipeline</h2><p class="muted">Your install is ready; there's nothing to log in to. Build the first applet: each empty slot tells you what it needs.</p>
+          <div class="flow" style="margin-top:20px">
+            <div class="node add" style="width:150px">+ Spotify<br><span style="font-size:11px">connect first</span></div><div class="wire"></div>
+            <div class="node add" style="width:150px">+ Plex<br><span style="font-size:11px">connect first</span></div>
+          </div>
+          <p style="margin-top:20px"><button class="btn primary" @click="go('wizard')">Connect Spotify</button> <button class="btn">Import v1 database</button></p>
+        </div></div></div>
+    </div>
+  </div>`,
+};
+
+// ======================= Variant C — Ledger =======================
+const C = {
+  name: "Ledger", components: { FormRenderer, StatusPill }, props: ["screen", "go"],
+  setup() { const open = ref("input"); return { applets, run, runs, services, SPOTIFY_INPUT, PLEX_OUTPUT, PLEX_AUTH, open }; },
+  template: `
+  <div class="shell">
+    <aside class="side">
+      <div class="brand">ultrasonics</div>
+      <div class="sec">Applets</div>
+      <a v-for="a in applets" :class="{on: a.id===1 && ['builder','run'].includes(screen)}" @click="go('builder')"><span>{{ a.name }}</span><StatusPill :s="a.state"/></a>
+      <a @click="go('builder')" class="muted">+ New applet</a>
+      <div class="sec">Account</div>
+      <a :class="{on: screen==='settings'}" @click="go('settings')">Services <span class="pill s-failed">1</span></a>
+      <a>General</a>
+    </aside>
+    <main class="doc">
+
+      <template v-if="screen==='applets'">
+        <h1>Applets</h1><div class="sub">3 applets · 1 needs attention</div>
+        <table><tr><th>Name</th><th>Last run</th><th>Next run</th><th>Trigger</th></tr>
+          <tr v-for="a in applets"><td><a @click="go('builder')"><b>{{ a.name }}</b></a></td><td><StatusPill :s="a.state"/> <span class="muted">{{ a.last }}</span></td><td class="muted">{{ a.next }}</td><td class="muted">{{ a.trigger }}</td></tr></table>
+        <div style="margin-top:20px;padding:12px;border:1px solid var(--line);border-radius:var(--radius)"><b>Plex needs reconnecting.</b> <span class="muted">2 applets will fail until it is.</span> <a @click="go('settings')">Reconnect →</a></div>
+      </template>
+
+      <template v-if="screen==='builder' || screen==='run'">
+        <h1>Discover Weekly to Plex</h1>
+        <div class="sub">Every day at 07:00 · next run tomorrow 07:00 · <a>Run now</a></div>
+        <div class="tabs"><a :class="{on: screen==='builder'}" @click="go('builder')">Setup</a><a :class="{on: screen==='run'}" @click="go('run')">Runs</a></div>
+      </template>
+
+      <template v-if="screen==='builder'">
+        <div class="section"><div><h2>When</h2><div class="k">Any trigger firing runs the applet.</div></div><div>
+          <div class="kv"><span class="muted">Schedule</span><span>Every <b>1 day</b> from <b>07:00</b>, Australia/Sydney</span><span class="muted">Webhook</span><span><span class="toggle"><button class="sw"></button>Off</span></span></div></div></div>
+        <div class="section"><div><h2>Inputs</h2><div class="k">Where songs come from.</div></div><div>
+          <div class="slot"><div class="hd" @click="open = open==='input' ? '' : 'input'"><span><b>Spotify</b> <span class="muted">· Playlists I choose · 2 playlists</span></span><span class="muted">{{ open==='input' ? '▾' : '▸' }}</span></div>
+            <div class="bd" v-if="open==='input'"><FormRenderer :schema="SPOTIFY_INPUT" choice="cards"/></div></div>
+          <a class="muted">+ Add input</a></div></div>
+        <div class="section"><div><h2>Modifiers</h2><div class="k">Optional changes on the way.</div></div><div>
+          <div class="slot"><div class="hd"><span><b>Deduplicate</b> <span class="muted">· by ISRC</span></span><span class="muted">▸</span></div></div><a class="muted">+ Add modifier</a></div></div>
+        <div class="section"><div><h2>Outputs</h2><div class="k">Where songs go.</div></div><div>
+          <div class="slot"><div class="hd" @click="open = open==='output' ? '' : 'output'"><span><b>Plex</b> <span class="muted">· Music · replace</span></span><span class="muted">▸</span></div>
+            <div class="bd" v-if="open==='output'"><FormRenderer :schema="PLEX_OUTPUT"/></div></div>
+          <a class="muted">+ Add output</a></div></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px"><button class="btn">Discard</button><button class="btn primary">Save</button></div>
+      </template>
+
+      <template v-if="screen==='run'">
+        <table><tr><th>Run</th><th>Started</th><th>By</th><th>Ended</th><th>Written</th><th>Unmatched</th><th>Time</th></tr>
+          <tr v-for="r in runs" :style="r.id===412 ? 'background:var(--card)' : ''"><td class="mono">#{{ r.id }}</td><td>{{ r.when }}</td><td class="muted">{{ r.trigger }}</td><td><StatusPill :s="r.ended"/></td><td>{{ r.written }}</td><td>{{ r.unmatched }}</td><td class="muted">{{ r.dur }}</td></tr></table>
+        <h2 style="font-size:16px;margin-top:28px">Run #412</h2>
+        <div class="kv" style="margin-bottom:16px"><span class="muted">Ended</span><span><StatusPill :s="run.ended"/> in {{ run.dur }}</span><span class="muted">Read</span><span>60 songs from Spotify (2 playlists)</span><span class="muted">Changed</span><span>Deduplicate removed 3</span><span class="muted">Rejected</span><span>none</span></div>
+        <div class="slot" v-for="p in run.playlists"><div class="hd"><span><b>Plex · {{ p.name }}</b> <span class="muted">{{ p.matched }}/{{ p.songs }} matched</span></span><StatusPill :s="p.result"/></div>
+          <div class="bd"><div class="muted" style="margin-bottom:6px">Unmatched</div><div v-for="u in p.unmatched">{{ u.title }} <span class="muted">— {{ u.artists }}</span></div></div></div>
+        <details><summary class="muted">Log (11 lines)</summary><pre class="mono" style="font-size:12px">{{ run.log.map(l=>l.join('  ')).join('\\n') }}</pre></details>
+      </template>
+
+      <template v-if="screen==='settings'">
+        <h1>Services</h1><div class="sub">One connection per service, shared by every plugin that uses it.</div>
+        <div class="section" v-for="s in services"><div><h2>{{ s.name }}</h2><div class="k">Used by {{ s.plugins }}</div></div><div>
+          <p><StatusPill :s="s.status==='connected'?'succeeded':'failed'"/> {{ s.detail }}</p>
+          <template v-if="s.service==='plex'"><FormRenderer :schema="PLEX_AUTH" :issues="[{path:'token', message:'Plex rejected this token (401).'}]"/><p><button class="btn primary">Test and save</button></p></template>
+          <button v-else class="btn" @click="go('wizard')">Reconnect</button></div></div>
+      </template>
+
+      <template v-if="screen==='first-run'">
+        <h1>Welcome to ultrasonics</h1><div class="sub">This install has one account, and you're in it. No sign-in needed.</div>
+        <div class="section"><div><h2>1 · Services</h2><div class="k">Connect what you'll sync.</div></div><div>
+          <div class="slot"><div class="hd"><span><b>Spotify</b> <span class="muted">· not connected</span></span><button class="btn primary" @click="go('wizard')">Connect</button></div></div>
+          <div class="slot"><div class="hd"><span><b>Plex</b> <span class="muted">· not connected</span></span><button class="btn">Connect</button></div></div></div></div>
+        <div class="section"><div><h2>2 · First applet</h2><div class="k">Once a service is connected.</div></div><div class="muted">Spotify → Plex, every day. <a>Start from this</a> or <a>build your own</a>.</div></div>
+        <div class="section"><div><h2>Upgrading?</h2></div><div class="muted">Point at your v1 <span class="mono">ultrasonics.db</span> and we'll bring your applets across. <a>Import</a></div></div>
+      </template>
+    </main>
+  </div>`,
+};
+
+// ======================= Shared: Forms lab (radio vs select) =======================
+const Forms = {
+  components: { FormRenderer },
+  setup: () => ({ SPOTIFY_INPUT }),
+  template: `
+  <div class="lab">
+    <h1>Forms lab: the discriminator's choice control</h1>
+    <p class="q">ADR-0019 §4 leaves radios vs select to this prototype. Same schema, Spotify input's <code>source</code> union, three ways. Switch the source and watch the hidden branch keep its values.</p>
+    <div class="grid">
+      <div class="opt"><h2>1 · Radio cards</h2><p class="why">Every option's description is visible before you choose. Costs height; fine up to about 4.</p><FormRenderer :schema="SPOTIFY_INPUT" choice="cards"/></div>
+      <div class="opt"><h2>2 · Select + description</h2><p class="why">Compact and scales to many options; you see only the chosen option's explanation.</p><FormRenderer :schema="SPOTIFY_INPUT" choice="select"/></div>
+      <div class="opt"><h2>3 · Segmented</h2><p class="why">Reads as tabs. Tight in a narrow inspector; titles must be short.</p><FormRenderer :schema="SPOTIFY_INPUT" choice="segmented"/></div>
+    </div>
+    <p class="q" style="margin-top:22px">The "auto" rule the renderer could ship: <b>radio cards up to 4 options, select above that</b>. Variant C uses cards, B uses a select in its inspector.</p>
+  </div>`,
+};
+
+// ======================= Shared: Service-auth wizard =======================
+const Wizard = {
+  components: { FormRenderer },
+  setup() { const w = ref("shell"); return { w, SPOTIFY_AUTH_FIELDS, PLEX_AUTH }; },
+  template: `
+  <div class="lab">
+    <h1>Connect a service</h1>
+    <p class="q">ADR-0013 leaves open whether the setup wizard renders its <code>fields</code> through the ADR-0019 renderer or its own UI. Both options use the same Spotify (BYO, PKCE) and Plex (token) flows.</p>
+    <div class="seg" style="margin-bottom:18px"><button :class="{on: w==='shell'}" @click="w='shell'">W1 · Wizard shell + shared renderer</button><button :class="{on: w==='bespoke'}" @click="w='bespoke'">W2 · Bespoke per flow</button></div>
+    <div class="grid" v-if="w==='shell'">
+      <div class="opt"><h2>Spotify · oauth2-pkce</h2><p class="why">The shell owns the steps, the copyable redirect URI and the Connect button. Step 2 is the renderer drawing <code>requirements()</code>.</p>
+        <div class="steps">
+          <div class="step done"><span class="n">✓</span><div><b>Create a Spotify app</b><div class="muted">At developer.spotify.com → Dashboard → Create app. Add this redirect URI:</div><div class="copy mono">http://127.0.0.1:5500/auth/spotify/callback <button class="btn" style="padding:2px 8px">Copy</button></div></div></div>
+          <div class="step cur"><span class="n">2</span><div><FormRenderer :schema="SPOTIFY_AUTH_FIELDS"/></div></div>
+          <div class="step"><span class="n">3</span><div><b>Connect</b><div class="muted">Spotify asks you to approve; you come straight back here.</div><button class="btn primary" style="margin-top:8px">Connect with Spotify</button></div></div>
+        </div></div>
+      <div class="opt"><h2>Plex · token</h2><p class="why">A token flow is one step: the renderer draws the plugin's declared fields, and the shell adds "Test and save" (<code>configure()</code>).</p>
+        <FormRenderer :schema="PLEX_AUTH" :issues="[{message:'Could not reach the server: connection refused.'}]"/>
+        <p><button class="btn primary">Test and save</button></p></div>
+    </div>
+    <div class="grid" v-else>
+      <div class="opt"><h2>Spotify · bespoke page</h2><p class="why">Hand-built for Spotify: illustrated steps and inline validation of the client ID's format. Every new OAuth service needs its own page, and its fields drift from the declared schema.</p>
+        <div style="padding:14px;border-radius:var(--radius);background:var(--bg)"><div style="font-size:40px">🟢</div><b>Link Spotify</b><p class="muted">Paste the Client ID from your app.</p><input type="text" placeholder="Client ID" style="width:100%;padding:9px"><p class="muted mono" style="font-size:12px">✓ looks like a valid client ID</p><button class="btn primary">Continue</button></div></div>
+      <div class="opt"><h2>Plex · bespoke page</h2><p class="why">A second hand-built page. "Find my server" (plex.tv discovery) would be easy here and impossible in W1 without widening the SDK.</p>
+        <div style="padding:14px;border-radius:var(--radius);background:var(--bg)"><b>Find my Plex server</b><p class="muted">Sign in to plex.tv to list your servers, or enter one by hand.</p><button class="btn">Sign in to plex.tv</button></div></div>
+    </div>
+  </div>`,
+};
+
+// ======================= Switcher + app =======================
+const VARIANTS = { A, B, C };
+const SCREENS = ["first-run", "applets", "builder", "run", "settings", "forms", "wizard"];
+const qs = new URLSearchParams(location.search);
+createApp({
+  components: { A, B, C, Forms, Wizard },
+  setup() {
+    const variant = ref(VARIANTS[qs.get("variant")] ? qs.get("variant") : "A");
+    const screen = ref(SCREENS.includes(qs.get("screen")) ? qs.get("screen") : "applets");
+    const keys = Object.keys(VARIANTS);
+    const cycle = d => { variant.value = keys[(keys.indexOf(variant.value) + d + keys.length) % keys.length]; };
+    const go = s => { screen.value = s; window.scrollTo(0, 0); };
+    watch([variant, screen], () => {
+      const u = new URL(location); u.searchParams.set("variant", variant.value); u.searchParams.set("screen", screen.value);
+      history.replaceState(null, "", u);
+    }, { immediate: true });
+    addEventListener("keydown", e => {
+      if (e.target.closest("input, textarea, select, [contenteditable]")) return;
+      if (e.key === "ArrowLeft") cycle(-1); if (e.key === "ArrowRight") cycle(1);
+    });
+    return { variant, screen, cycle, go, SCREENS, name: computed(() => VARIANTS[variant.value].name) };
+  },
+  template: `
+  <div class="root" :class="'v'+variant">
+    <Forms v-if="screen==='forms'"/>
+    <Wizard v-else-if="screen==='wizard'"/>
+    <component v-else :is="variant" :screen="screen" :go="go"/>
+    <div class="proto">
+      <button @click="cycle(-1)">◀</button><span class="lbl">{{ variant }} · {{ name }}</span><button @click="cycle(1)">▶</button>
+      <span class="sep"></span>
+      <button v-for="s in SCREENS" :class="{on: screen===s}" @click="go(s)">{{ s }}</button>
+    </div>
+  </div>`,
+}).mount("#app");
+</script>
+</body>
+</html>
