@@ -92,6 +92,11 @@ _Avoid_: "cron", "timer" — a schedule is not a cron expression.
 the outputs attempted, or something was rejected), or **failed** (nothing was written). Unmatched
 songs never change how a run ends. A run cut short by the server stopping is **interrupted**, not failed, and is not rerun.
 
+**Run event** — One thing that happened during a run, as the run view sees it: a log line, a
+component starting or finishing with its song counts, a rejection, an output's result, or the end.
+A finished run's record is the run events it produced (ADR-0026).
+_Avoid_: "run log" for the whole stream; the log is only its log lines.
+
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists
 into a songs-mode output is unsupported and should warn.

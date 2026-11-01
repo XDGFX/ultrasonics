@@ -4,7 +4,8 @@
 **Date:** 2026-08-03
 **Refines:** ADR-0001 (names the "real ORM" it left unnamed), ADR-0003 and ADR-0007 (expresses the
 account scope concretely), ADR-0008 (spends the schema it handed over)
-**Amended by:** [ADR-0020](0020-outputs-return-a-result.md) — `runs` gains `results` and a defined set of outcomes
+**Amended by:** [ADR-0020](0020-outputs-return-a-result.md) — `runs` gains `results` and a defined set of outcomes;
+[ADR-0026](0026-run-events-are-server-sent-events.md) — structured log lines and a `stages` column
 
 ## Context
 
@@ -144,9 +145,13 @@ otherwise grow without bound, and ADR-0020's stored unmatched songs make a row a
 - **A run's log is capped** at 1 MB or 10,000 lines. Over the cap, the runner keeps the head (the
   applet context that must-still-work #8 asks the log to open with) and the tail (whatever ended the
   run), with an "*N lines omitted*" marker between them.
+- **A run's log is structured lines**, the `log` run events of ADR-0026, and `runs` gains a `stages`
+  JSON column holding each component's song counts. The row is written during the run as well as
+  at its end, so an interrupted run keeps what it had logged (ADR-0026 §4).
 
-Decided by the ticket
-[Run records: retention, and results for inputs and modifiers](https://github.com/XDGFX/ultrasonics/issues/103).
+Decided by the tickets
+[Run records: retention, and results for inputs and modifiers](https://github.com/XDGFX/ultrasonics/issues/103)
+and [Run-log streaming: transport and message shape](https://github.com/XDGFX/ultrasonics/issues/106).
 
 **Device metadata on `sessions` (user agent, IP) is deliberately deferred**, even though ADR-0007's
 per-device logout will eventually want a label. `sessions` is the one table where a retrofit is free
