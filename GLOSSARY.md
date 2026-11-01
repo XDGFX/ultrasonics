@@ -117,9 +117,9 @@ weights and regexes are reference only (ADR-0022, `docs/reference/legacy-archite
 (they share an ISRC, which the test hides from the matcher), or different recordings that look
 alike. The matcher's accuracy is measured on it (ADR-0022).
 
-**Matcher strategy** — A proposed seam for more than one matching approach: a deterministic
-`"fuzzy"` default and a future opt-in `"llm"` strategy (ADR-0002 keeps product AI out of Phase 1).
-Whether the seam exists is for the matcher's spec to decide (ADR-0022).
+**Matcher strategy** — A proposed choice between matching approaches, such as `"fuzzy"` or
+`"llm"`. v2 has none: there is one matcher, and any future alternative replaces or sits behind
+its interface.
 
 ## Auth
 
