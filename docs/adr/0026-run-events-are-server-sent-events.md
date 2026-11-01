@@ -31,7 +31,8 @@ A **run event** is a Zod discriminated union shared by the server and the UI. Ev
 - `log` — `level`, `source` (`runner` or the component's plugin), `text`
 - `stage` — the component's position and plugin, `started` or `finished`; on `finished`, songs
   out, playlists out and rejected count. A stage is one component instance; there is no progress
-  within one.
+  within one. A stage that failed also carries an `error` with a `code`, a `message` and, when
+  service auth failed, the `AuthFailure`, from which the UI builds the reconnect action.
 - `rejection` — one per rejection, in the shape ADR-0021 stores
 - `result` — one per output as it finishes, carrying its ADR-0020 result
 - `end` — the run's final status
