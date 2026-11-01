@@ -1,0 +1,266 @@
+<!doctype html>
+<!--
+  PROTOTYPE, throwaway. Answers "The v2 logo" (XDGFX/ultrasonics#107): should v2 redraw the
+  ultrasonics logo, and what does it look like?
+
+  Five variants, switchable with ?variant=A..E (← → cycle). Each variant is shown in the same
+  contexts so they compare fairly: the ADR-0025 nav rail, a browser tab, the first-run screen,
+  a size ladder, a light README header and a home-screen icon.
+
+  Variants B, C and E set the wordmark in Montserrat Alternates 700 as a stand-in for v1's
+  letterforms; a real redraw would re-trace them as outlines. Open the file in a browser.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ultrasonics</title>
+<link rel="icon" id="favicon">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:wght@700&family=Noto+Sans+JP:wght@500;700&family=Roboto+Mono:wght@400;500;700&display=swap">
+<style>
+  :root { --teal: #1ce5b5; --mag: #e234ce; --bg: #111; --card: #171717; --line: #2b2b2b; --muted: #8a8a8a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #111 url(../../ultrasonics/static/images/static.png); color: #f2f2f2;
+         font: 13px "Roboto Mono", ui-monospace, monospace; padding-bottom: 90px; }
+  h2 { font-size: 11px; font-weight: 500; color: var(--mag); margin: 0 0 10px; }
+  .page { max-width: 1100px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 28px; }
+  .intro { color: var(--muted); line-height: 1.6; }
+  .intro b { color: #fff; font-weight: 500; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* chromatic text: white face, teal down-left, magenta up-right, as v1 */
+  .chroma { color: #fff; text-shadow: -.035em .025em 0 var(--teal), .035em -.025em 0 var(--mag); }
+  .chroma.light { color: #111; }
+  .alt { font-family: "Montserrat Alternates", sans-serif; font-weight: 700; letter-spacing: -.01em; line-height: 1; }
+  .mono { font-family: "Roboto Mono", monospace; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+  .jp { font-family: "Noto Sans JP", sans-serif; }
+
+  /* app shell, after ADR-0025 */
+  .shell { display: grid; grid-template-columns: 56px 1fr; height: 300px; border: 1px solid var(--line); background: rgba(17,17,17,.9); }
+  .rail { border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; }
+  .rail .brand { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 10px; }
+  .rail .r { width: 36px; height: 36px; border-radius: 4px; display: grid; place-items: center; color: var(--muted); }
+  .rail .r.on { background: var(--card); color: #fff; }
+  .bar { height: 44px; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 16px; gap: 6px; color: var(--muted); }
+  .bar b { color: var(--teal); font-weight: 500; }
+  .content { padding: 18px; }
+  .row { background: #1d1d1d; border-radius: 4px; padding: 10px 12px; margin-bottom: 8px; color: #cfcfcf; }
+  .row .t { color: var(--teal); } .row .t2 { color: var(--mag); }
+
+  /* browser tab */
+  .chrome { background: #202124; border-radius: 8px 8px 0 0; padding: 8px 8px 0; display: flex; gap: 4px; }
+  .tab { background: #35363a; color: #e8eaed; border-radius: 8px 8px 0 0; padding: 8px 12px; display: flex; gap: 8px; align-items: center;
+         font: 12px system-ui, sans-serif; width: 200px; }
+  .tab.off { background: transparent; color: #9aa0a6; }
+  .tab img { width: 16px; height: 16px; }
+  .fav-sizes { display: flex; gap: 18px; align-items: end; padding: 14px; background: #35363a; }
+  .fav-sizes figure { margin: 0; text-align: center; color: #9aa0a6; font-size: 11px; }
+  .fav-sizes img { display: block; margin: 0 auto 4px; image-rendering: auto; }
+
+  /* first run */
+  .hero { border: 1px solid var(--line); background: rgba(17,17,17,.9); min-height: 340px; display: grid; place-items: center; text-align: center; padding: 30px; }
+  .hero p { color: var(--muted); margin: 26px 0 16px; }
+  .btn { background: var(--teal); color: #111; border: 0; padding: 8px 16px; border-radius: 4px; font: inherit; font-weight: 500; }
+
+  .ladder { display: flex; flex-direction: column; gap: 22px; border: 1px solid var(--line); padding: 20px; background: rgba(17,17,17,.9); }
+  .ladder .step { display: flex; align-items: center; gap: 18px; }
+  .ladder .step > span:first-child { width: 52px; color: var(--muted); font-size: 11px; flex: none; }
+
+  .readme { background: #fff; color: #1f2328; border: 1px solid #d0d7de; border-radius: 6px; padding: 28px; font: 14px system-ui, sans-serif; }
+  .readme .md { margin-top: 18px; color: #59636e; }
+  .homescreen { display: flex; gap: 22px; align-items: end; padding: 20px; border: 1px solid var(--line);
+                background: linear-gradient(160deg, #3a4a6b, #6b3a5e); }
+  .homescreen figure { margin: 0; text-align: center; color: #fff; font: 11px system-ui, sans-serif; }
+  .homescreen img { display: block; border-radius: 22%; margin-bottom: 6px; }
+
+  .notes { border-left: 2px solid var(--teal); padding: 4px 0 4px 14px; color: #cfcfcf; line-height: 1.7; }
+  .notes li::marker { color: var(--mag); }
+
+  /* prototype switcher: deliberately not part of the design */
+  .switcher { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px;
+              background: #fff; color: #111; border-radius: 999px; padding: 4px; box-shadow: 0 6px 24px rgba(0,0,0,.5);
+              font: 600 13px system-ui, sans-serif; z-index: 9; }
+  .switcher button { border: 0; background: #eee; width: 32px; height: 32px; border-radius: 999px; cursor: pointer; font-size: 15px; }
+  .switcher .lbl { padding: 0 14px; min-width: 250px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="page" id="page"></div>
+<div class="switcher"><button id="prev" aria-label="Previous variant">←</button><div class="lbl" id="lbl"></div><button id="next" aria-label="Next variant">→</button></div>
+
+<script>
+const IMG = "../../ultrasonics/static/images/";
+const TEAL = "#1ce5b5", MAG = "#e234ce";
+
+// The v1 icon's geometry, minus the katakana: two clipped diagonal bands and a white ring.
+function ring(size, { bg = "#111", inner = "" } = {}) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 200 200" aria-label="ultrasonics">
+    <defs><clipPath id="rc${size}"><circle cx="100" cy="100" r="97.9"/></clipPath></defs>
+    <g clip-path="url(#rc${size})" transform="rotate(-23.2 100 100)">
+      <rect x="-60" y="122" width="320" height="56" fill="${TEAL}"/>
+      <rect x="-60" y="22" width="320" height="56" fill="${MAG}"/>
+    </g>
+    <circle cx="100" cy="100" r="59" fill="none" stroke="${bg}" stroke-width="50"/>
+    <circle cx="100" cy="100" r="59" fill="none" stroke="#fff" stroke-width="27"/>
+    ${inner}</svg>`;
+}
+
+// Draw a mark into a square canvas and return a data URL, for favicons and home-screen icons.
+function canvasIcon(px, draw) {
+  const c = document.createElement("canvas"); c.width = c.height = px;
+  const g = c.getContext("2d"); draw(g, px); return c.toDataURL();
+}
+function chromaGlyph(g, px, text, font, { tile = true, scale = .78, dy = 0 } = {}) {
+  if (tile) { g.fillStyle = "#111"; g.fillRect(0, 0, px, px); }
+  g.font = `${font.replace("SIZE", Math.round(px * scale))}`;
+  g.textAlign = "center"; g.textBaseline = "middle";
+  const o = Math.max(1, px * .045), y = px / 2 + px * dy;
+  g.fillStyle = TEAL; g.fillText(text, px / 2 - o, y + o * .7);
+  g.fillStyle = MAG; g.fillText(text, px / 2 + o, y - o * .7);
+  g.fillStyle = "#fff"; g.fillText(text, px / 2, y);
+}
+function svgToDataUrl(svg) { return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg); }
+async function rasterSvg(px, svg, bg) {
+  const im = new Image(); im.src = svgToDataUrl(svg.replace(/width="\d+" height="\d+"/, `width="${px}" height="${px}"`));
+  await im.decode();
+  return canvasIcon(px, g => { if (bg) { g.fillStyle = bg; g.fillRect(0, 0, px, px); } g.drawImage(im, 0, 0, px, px); });
+}
+
+const ALT = "700 SIZEpx 'Montserrat Alternates'", MONO = "700 SIZEpx 'Roboto Mono'", JP = "700 SIZEpx 'Noto Sans JP'";
+
+const V = {
+  A: {
+    name: "v1 as is",
+    blurb: "Baseline. The v1 SVGs, unchanged: the wordmark with ソニックス tucked under it, and the round icon with the katakana across it.",
+    wordmark: (h, light) => `<img src="${IMG}logo.svg" style="height:${h * 1.75}px" alt="ultrasonics">`,
+    railMark: () => `<img src="${IMG}logo-icon.svg" width="34" alt="ultrasonics">`,
+    hero: () => `<img src="${IMG}logo.svg" width="460" alt="ultrasonics">`,
+    icon: async () => IMG + "logo-icon.svg",
+    notes: [
+      "The katakana is ~20% of the wordmark's height, so it is illegible below about 240px wide.",
+      "Every shape carries a solid #111 halo. On the light README it prints as black blobs; it only works on v1's exact background.",
+      "The icon at 16px is a pink-and-white smudge: ring, bands and five katakana compete for four pixels each.",
+    ],
+  },
+  B: {
+    name: "v1 re-cut",
+    blurb: "Same letterforms and chroma, redrawn clean: no halo, a light version, and ソニックス sized off the wordmark and dropped below a minimum. The rail and favicon take the chromatic “u”.",
+    wordmark: (h, light) => {
+      const showJp = h >= 30;
+      return `<div style="display:inline-flex;flex-direction:column;align-items:flex-end">
+        <span class="alt chroma ${light ? "light" : ""}" style="font-size:${h}px">ultrasonics</span>
+        ${showJp ? `<span class="jp" style="font-size:${Math.round(h * .3)}px;font-weight:500;color:${light ? "#b5179e" : MAG};letter-spacing:.12em;margin-top:${h * .12}px">ソニックス</span>` : ""}
+      </div>`;
+    },
+    railMark: () => `<span class="alt chroma" style="font-size:30px">u</span>`,
+    hero: () => V.B.wordmark(78),
+    icon: px => canvasIcon(px, (g, p) => chromaGlyph(g, p, "u", ALT, { scale: .95, dy: -.06 })),
+    notes: [
+      "Katakana is 30% of the wordmark's height (v1: ~20%) and simply absent below 30px; it is a flourish, not part of the name.",
+      "Cheapest change: nobody would notice the logo changed, only that it stopped breaking.",
+      "The “u” alone reads as a letter, not a mark. It is fine in a rail, weaker as a home-screen icon.",
+    ],
+  },
+  C: {
+    name: "Mono",
+    blurb: "Typographic, in the UI's own Roboto Mono. The mark is “u_”, a terminal prompt. ソニックス moves out of the logo and onto the first-run screen only.",
+    wordmark: (h, light) => `<span class="mono chroma ${light ? "light" : ""}" style="font-size:${h}px">ultrasonics<span style="color:${MAG};text-shadow:none">_</span></span>`,
+    railMark: () => `<span class="mono chroma" style="font-size:22px">u<span style="color:${MAG};text-shadow:none">_</span></span>`,
+    hero: () => `<div>${V.C.wordmark(66)}<div class="jp" style="color:var(--muted);font-size:15px;letter-spacing:.5em;margin-top:14px">ソニックス</div></div>`,
+    icon: px => canvasIcon(px, (g, p) => {
+      chromaGlyph(g, p, "u", MONO, { scale: .8, dy: -.08 });
+      g.fillStyle = MAG; g.fillRect(p * .26, p * .76, p * .48, Math.max(2, p * .09));
+    }),
+    notes: [
+      "Ties the logo to the type the whole UI is set in (ADR-0025 §1), so the brand and the app read as one thing.",
+      "Loses v1's rounded, friendly letterforms; monospace makes “ultrasonics” long and flat.",
+      "The underscore is what makes the 16px favicon recognisable; without it it is a plain “u”.",
+    ],
+  },
+  D: {
+    name: "Ring",
+    blurb: "The v1 icon is the mark, with the katakana taken out so it survives at 16px: two bands and a ring (a speaker, a record). Horizontal lockup with the wordmark; ソニックス returns inside the ring at hero size.",
+    wordmark: (h, light) => `<span style="display:inline-flex;align-items:center;gap:${h * .3}px">
+        ${ring(Math.round(h * 1.15), { bg: light ? "#fff" : "#111" }).replace('stroke="#fff" stroke-width="27"', `stroke="${light ? "#111" : "#fff"}" stroke-width="27"`)}
+        <span class="alt chroma ${light ? "light" : ""}" style="font-size:${h}px">ultrasonics</span></span>`,
+    railMark: () => ring(34),
+    hero: () => `<div>${ring(200, { inner: `<text x="100" y="108" text-anchor="middle" font-family="Noto Sans JP" font-weight="700" font-size="34" fill="#fff" stroke="#111" stroke-width="10" paint-order="stroke">ソニックス</text>` })}
+                 <div style="margin-top:18px">${`<span class="alt chroma" style="font-size:44px">ultrasonics</span>`}</div></div>`,
+    icon: px => rasterSvg(px, ring(px), "#111"),
+    notes: [
+      "The only variant whose small mark is a picture, not a letter; it reads at 16px and as a home-screen icon.",
+      "Keeps the most of v1: the bands and ring are v1's icon, minus the part that broke.",
+      "The lockup is wider; in the README header the ring does the work the katakana used to.",
+    ],
+  },
+  E: {
+    name: "Katakana-led",
+    blurb: "Leans into ソニックス instead of shrinking it: set full width under the wordmark, so it scales with it, and ソ alone is the rail mark and favicon.",
+    wordmark: (h, light) => `<div style="display:inline-grid;justify-items:stretch">
+        <span class="alt chroma ${light ? "light" : ""}" style="font-size:${h}px">ultrasonics</span>
+        <span class="jp" style="display:flex;justify-content:space-between;font-size:${Math.round(h * .42)}px;font-weight:700;color:${light ? "#b5179e" : MAG};margin-top:${h * .14}px;padding:0 ${h * .08}px">${[..."ソニックス"].map(c => `<span>${c}</span>`).join("")}</span></div>`,
+    railMark: () => `<span class="jp chroma" style="font-size:28px;font-weight:700">ソ</span>`,
+    hero: () => V.E.wordmark(70),
+    icon: px => canvasIcon(px, (g, p) => chromaGlyph(g, p, "ソ", JP, { scale: .82, dy: .02 })),
+    notes: [
+      "Fixes the squash by giving the katakana the wordmark's full width; it is legible down to the smallest step.",
+      "ソ on its own is distinctive at 16px, but it is meaningless to anyone who does not read katakana, and it is not the first letter of the name.",
+      "Makes the Japanese the brand rather than a flourish: a bigger identity shift than the ticket asked for.",
+    ],
+  },
+};
+const KEYS = Object.keys(V);
+
+async function render(k) {
+  const v = V[k];
+  await document.fonts.ready;
+  const [i16, i32, i64, i180] = await Promise.all([16, 32, 64, 180].map(px => v.icon(px)));
+  document.getElementById("favicon").href = i32;
+  document.getElementById("lbl").textContent = `${k} (${v.name})`;
+  document.getElementById("page").innerHTML = `
+    <div class="intro"><b>${k}: ${v.name}.</b> ${v.blurb}</div>
+    <div class="grid2">
+      <section><h2>nav rail (ADR-0025)</h2>
+        <div class="shell"><nav class="rail"><div class="brand">${v.railMark()}</div>
+          <div class="r on">▤</div><div class="r">◷</div><div class="r">⚿</div><div class="r">⚙</div></nav>
+          <div><div class="bar">applets / <b>spotify → plex</b></div>
+          <div class="content">
+            <div class="row">when <span class="t">it's sunday</span>, take <span class="t">discover weekly</span> and put it in <span class="t2">plex</span></div>
+            <div class="row">when <span class="t">a webhook fires</span>, take <span class="t">liked songs</span> and put it in <span class="t2">plex</span></div>
+          </div></div></div>
+      </section>
+      <section><h2>browser tab</h2>
+        <div class="chrome"><div class="tab"><img src="${i16}" alt="">ultrasonics</div><div class="tab off">GitHub</div></div>
+        <div class="fav-sizes">${[[i16, 16], [i32, 32], [i64, 64]].map(([s, n]) => `<figure><img src="${s}" width="${n}" height="${n}" alt="">${n}px</figure>`).join("")}
+          <figure><img src="${i16}" width="64" height="64" style="image-rendering:pixelated" alt="">16px, zoomed</figure></div>
+      </section>
+    </div>
+    <section><h2>first run</h2><div class="hero"><div>${v.hero()}<p>no accounts yet. create the first one to finish setting up this server.</p><button class="btn">create account</button></div></div></section>
+    <div class="grid2">
+      <section><h2>size ladder</h2><div class="ladder">${[64, 40, 24, 14].map(h => `<div class="step"><span>${h}px</span>${v.wordmark(h, false)}</div>`).join("")}</div></section>
+      <section><h2>light README header</h2><div class="readme">${v.wordmark(48, true)}<div class="md">Sync playlists between music services.</div></div>
+        <h2 style="margin-top:22px">home-screen icon</h2>
+        <div class="homescreen"><figure><img src="${i180}" width="76" height="76" alt="">ultrasonics</figure>
+          <figure><img src="${i180}" width="44" height="44" alt="">small</figure></div>
+      </section>
+    </div>
+    <section><h2>what this variant shows</h2><ul class="notes">${v.notes.map(n => `<li>${n}</li>`).join("")}</ul></section>`;
+}
+
+function go(k) {
+  const u = new URL(location); u.searchParams.set("variant", k); history.replaceState(null, "", u); render(k);
+}
+function step(d) { const i = KEYS.indexOf(current()); go(KEYS[(i + d + KEYS.length) % KEYS.length]); }
+function current() { const k = new URLSearchParams(location.search).get("variant"); return KEYS.includes(k) ? k : "A"; }
+document.getElementById("prev").onclick = () => step(-1);
+document.getElementById("next").onclick = () => step(1);
+addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, [contenteditable]")) return;
+  if (e.key === "ArrowLeft") step(-1);
+  if (e.key === "ArrowRight") step(1);
+});
+render(current());
+</script>
+</body>
+</html>
