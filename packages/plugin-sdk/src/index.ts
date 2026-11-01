@@ -1,6 +1,13 @@
 export { fromFileUri, toFileUri } from "./file-uri.ts";
 export { normaliseDate, normaliseIsrc } from "./normalise.ts";
 export {
+	FormMeta,
+	type FormSchemaResult,
+	type JSONSchema,
+	toFormSchema,
+	withMeta,
+} from "./settings-form.ts";
+export {
 	Playlist,
 	type PlaylistInput,
 	Song,
