@@ -3,6 +3,12 @@ import type { IssuePath, ValidationIssue } from "./song-dict-validator.ts";
 
 export type JSONSchema = z.core.JSONSchema.BaseSchema;
 
+/**
+ * A settings schema's top level: a flat object or a discriminated union of them (ADR-0019 §3).
+ * `toFormSchema` checks what lies inside.
+ */
+export type SettingsSchema = z.ZodObject | z.ZodDiscriminatedUnion;
+
 /** The fixed copy vocabulary a settings form renders (ADR-0019 §2). All values are plain text. */
 export const FormMeta = z
 	.object({

@@ -11,11 +11,39 @@ export {
 } from "./auth.ts";
 export { fromFileUri, toFileUri } from "./file-uri.ts";
 export { normaliseDate, normaliseIsrc } from "./normalise.ts";
+export { OutputResult, PlaylistResult } from "./output-result.ts";
+export {
+	Component,
+	type DefinedPlugin,
+	definePlugin,
+	type InstanceSettings,
+	Mode,
+	type Plugin,
+	type PluginDefinition,
+	type PluginRegistry,
+	TestResult,
+} from "./plugin.ts";
+export {
+	createRunContext,
+	createTestContext,
+	type HostPort,
+	type LiveRunContext,
+	type LiveTestContext,
+	type Log,
+	LogEntry,
+	LogLevel,
+	type RunContext,
+	RunPayload,
+	type SongsContext,
+	type TestContext,
+	TestPayload,
+} from "./run-context.ts";
 export { Service, services } from "./service.ts";
 export {
 	FormMeta,
 	type FormSchemaResult,
 	type JSONSchema,
+	type SettingsSchema,
 	toFormSchema,
 	withMeta,
 } from "./settings-form.ts";
