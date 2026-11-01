@@ -14,6 +14,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ultrasonics v2 — UI prototype</title>
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Roboto+Mono:wght@400;500;700&display=swap">
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; }
@@ -155,6 +156,49 @@
   .vC td, .vC th { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
   .vC th { color: var(--muted); font-weight: 500; font-size: 12px; }
   .vC .kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; }
+
+  /* ---------- Variant D: Pipeline × Sentence × v1 charm. Reuses B's layout (the root carries .vB too) ---------- */
+  .vD { --font: "Roboto Mono", ui-monospace, monospace; --bg: #111111; --fg: #f2f2f2; --muted: #8a8a8a; --card: #171717;
+        --line: #2b2b2b; --accent: #1ce5b5; --accent-fg: #111; --p2: #e234ce; --ok: #1ce5b5; --warn: #f5a524; --bad: #ff5c6c;
+        --radius: 4px; font-size: 13px;
+        background: #111 url(../../ultrasonics/static/images/static.png); }
+  .vD ::selection { background: var(--accent); color: #171717; }
+  .vD .p2 { color: var(--p2); } .vD .p1 { color: var(--accent); }
+  .vD .chroma { color: #fff; text-shadow: -2px 1px 0 var(--accent), 2px -1px 0 var(--p2); font-family: Montserrat, sans-serif; font-weight: 800; letter-spacing: -.01em; }
+  .vD .wordmark { font-family: Montserrat, sans-serif; font-weight: 800; color: #fff; text-shadow: -1px 1px 0 var(--accent), 1px -1px 0 var(--p2); }
+  .vD .canvas { background-image: none; }
+  .vD .bar { background: rgba(17,17,17,.85); }
+  .vD .crumb b { color: var(--accent); }
+  .vD .rail { background: rgba(17,17,17,.9); }
+  .vD .rail .brand img { width: 30px; }
+  .vD .main { background: transparent; }
+  .vD .tagname { background: var(--accent); color: #111; padding: 4px 10px; font-weight: 500; white-space: nowrap; }
+  .vD .row { display: grid; grid-template-columns: 34px auto 1fr auto auto; align-items: stretch; background: #1d1d1d; margin-bottom: 10px; border-radius: var(--radius); overflow: hidden; }
+  .vD .row > * { display: flex; align-items: center; padding: 8px 12px; }
+  .vD .row .st { justify-content: center; background: #171717; }
+  .vD .row .acts { gap: 2px; padding: 0; }
+  .vD .row .acts a { padding: 8px 10px; color: #fff; }
+  .vD .row .acts a:hover { background: var(--accent); color: #111; }
+  .vD .row .acts a.del:hover { background: var(--p2); color: #fff; }
+  .vD .row .sum { color: #cfcfcf; display: block; align-self: center; line-height: 1.5; }
+  .vD .row .sum .tok { color: var(--accent); } .vD .row .sum .tok2 { color: var(--p2); }
+  .vD .sentence { font-size: 22px; line-height: 1.5; margin: 0 0 22px; color: #ddd; }
+  .vD .sentence .tok { color: #111; background: var(--accent); padding: 0 8px; border-radius: 3px; }
+  .vD .sentence .tok2 { color: #fff; background: var(--p2); padding: 0 8px; border-radius: 3px; }
+  .vD .node { background: #151515; width: 176px; }
+  .vD .wire { width: 24px; }
+  .vD .node .v { color: var(--accent); font-size: 11px; margin-left: auto; }
+  .vD .col .h { color: var(--p2); text-transform: lowercase; letter-spacing: 0; font-size: 12px; }
+  .vD .kv b { color: var(--p2); font-weight: 400; }
+  .vD .btn { border-radius: var(--radius); }
+  .vD .s-running { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+  .vD .progress { height: 2px; background: var(--line); position: relative; overflow: hidden; }
+  .vD .progress::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, var(--accent), var(--p2)); animation: slide 1.4s linear infinite; }
+  @keyframes slide { from { left: -40%; } to { left: 100%; } }
+  .vD .console .ts { color: var(--p2); }
+  .vD .foot { text-align: center; color: var(--muted); padding: 30px 0; }
+  .vD .foot b { color: #fff; }
 
   /* ---------- Shared screens (forms lab, wizard) ---------- */
   .lab { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
@@ -592,6 +636,123 @@ const C = {
   </div>`,
 };
 
+// ======================= Variant D — Pipeline × Sentence × v1 =======================
+// B's fixed columns and side panel, A's sentence as each applet's summary, v1's wordmark, mono type,
+// teal/magenta pair, static texture and lowercase voice.
+const LOGO = "../../ultrasonics/static/images/logo.svg", ICON = "../../ultrasonics/static/images/logo-icon.svg";
+const D = {
+  name: "Pipeline × v1", components: { FormRenderer, StatusPill }, props: ["screen", "go"],
+  setup() {
+    const sel = ref("input");
+    const dApplets = applets.map((a, i) => i === 0 ? { ...a, state: "running" } : a); // #6: live status in the list
+    const glyph = s => ({ succeeded: "✓", partial: "◐", failed: "✗", disabled: "–", running: "⟳" })[s] ?? "?";
+    return { applets: dApplets, run, services, SPOTIFY_INPUT, PLEX_OUTPUT, PLEX_AUTH, sel, glyph, LOGO, ICON };
+  },
+  template: `
+  <div class="shell">
+    <nav class="rail">
+      <div class="brand"><img :src="ICON" alt="ultrasonics"></div>
+      <a class="r" :class="{on: ['applets','builder','run'].includes(screen)}" @click="go('applets')" title="applets">▦</a>
+      <a class="r" :class="{on: screen==='settings'}" @click="go('settings')" title="settings">⚙</a>
+    </nav>
+    <div class="main">
+      <div class="bar">
+        <span class="crumb" v-if="screen==='applets'">home &gt; <b>applets</b></span>
+        <span class="crumb" v-if="screen==='builder'">home &gt; applets &gt; <b>discover weekly to plex</b></span>
+        <span class="crumb" v-if="screen==='run'">home &gt; applets &gt; discover weekly to plex &gt; <b>run 412</b></span>
+        <span class="crumb" v-if="screen==='settings'">home &gt; <b>settings</b></span>
+        <span class="crumb" v-if="screen==='first-run'"><b>welcome</b></span>
+        <span style="flex:1"></span>
+        <template v-if="screen==='builder'"><button class="btn">▶ run now</button><button class="btn primary">save</button></template>
+        <button v-if="screen==='applets'" class="btn primary" @click="go('builder')">new applet</button>
+      </div>
+
+      <div v-if="screen==='applets'" class="body full" style="place-items:center"><div style="padding:40px 28px;max-width:1100px;width:100%">
+        <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px"><span class="p2">applets:</span><span class="muted">3 · 1 running</span></div>
+        <div class="row" v-for="a in applets">
+          <span class="st" :title="'last run ' + a.last">{{ glyph(a.state) }}</span>
+          <span style="padding:0"><span class="tagname" style="height:100%;display:flex;align-items:center" :style="!a.enabled && 'background:#4a4a4a;color:#ddd'">{{ a.name.toLowerCase() }}</span></span>
+          <span class="sum">when <span class="tok2">{{ a.trigger.toLowerCase() }}</span>, take <span class="tok">{{ a.inputs[0].sum.toLowerCase() }}</span> from {{ a.inputs[0].plugin.toLowerCase() }}<template v-if="a.modifiers.length">, {{ a.modifiers[0].plugin.toLowerCase() }} it</template>, put it in <span class="tok">{{ a.outputs[0].plugin.toLowerCase() }}</span></span>
+          <span class="muted" style="flex-direction:column;align-items:flex-end;font-size:11px">
+            <template v-if="a.state==='running'"><StatusPill s="running"/><span style="width:120px;margin-top:4px" class="progress"></span></template>
+            <template v-else><span>last {{ a.last.toLowerCase() }}</span><span>next {{ a.next.toLowerCase() }}</span></template></span>
+          <span class="acts"><a @click="go('run')" title="run">▶</a><a @click="go('builder')" title="edit">✎</a><a class="del" title="delete">×</a></span>
+        </div>
+        <div class="foot"><b>ultrasonics</b> by <span class="p1">XDGFX</span>. do more with your music.</div>
+      </div></div>
+
+      <div v-if="screen==='builder'" class="body">
+        <div class="canvas" style="padding:28px;display:flex;flex-direction:column;justify-content:center;align-items:center">
+          <p class="sentence" style="text-align:center;max-width:860px">when <span class="tok2">every day at 07:00</span>, take <span class="tok">discover weekly, release radar</span> from spotify, deduplicate it, and put it in <span class="tok">plex</span>.</p>
+          <div class="flow" style="align-items:flex-start">
+            <div class="col"><div class="h">when:</div>
+              <div class="node" :class="{sel: sel==='trigger'}" @click="sel='trigger'"><div class="t">⏱ schedule</div><div class="d">every day at 07:00</div></div>
+              <div class="node add">+ webhook</div></div>
+            <div class="wire" style="margin-top:46px"></div>
+            <div class="col"><div class="h">inputs:</div>
+              <div class="node" :class="{sel: sel==='input'}" @click="sel='input'"><div class="t">spotify <span class="v">v2.0</span></div><div class="d">playlists i choose · 2</div></div>
+              <div class="node add">+ input</div></div>
+            <div class="wire" style="margin-top:46px"></div>
+            <div class="col"><div class="h">modifiers:</div>
+              <div class="node" :class="{sel: sel==='mod'}" @click="sel='mod'"><div class="t">deduplicate <span class="v">v2.0</span></div><div class="d">by isrc</div></div>
+              <div class="node add">+ modifier</div></div>
+            <div class="wire" style="margin-top:46px"></div>
+            <div class="col"><div class="h">outputs:</div>
+              <div class="node" :class="{sel: sel==='output'}" @click="sel='output'"><div class="t">plex <span class="v">v2.0</span></div><div class="d">music · replace</div></div>
+              <div class="node add">+ output</div></div>
+          </div>
+        </div>
+        <aside class="inspector">
+          <template v-if="sel==='input'"><h3><span class="p2">input:</span> spotify</h3><p class="muted" style="margin-top:0">connected as cal ✓</p><FormRenderer :schema="SPOTIFY_INPUT" choice="cards"/></template>
+          <template v-if="sel==='output'"><h3><span class="p2">output:</span> plex</h3><FormRenderer :schema="PLEX_OUTPUT"/></template>
+          <template v-if="sel==='mod'"><h3><span class="p2">modifier:</span> deduplicate</h3><p class="muted">no settings.</p></template>
+          <template v-if="sel==='trigger'"><h3><span class="p2">when:</span> schedule</h3><p>every <input value="1" style="width:44px"> <select><option>days</option></select> from <input value="07:00" style="width:70px"></p><p class="muted">australia/sydney</p></template>
+        </aside>
+      </div>
+
+      <div v-if="screen==='run'" class="body full" style="grid-template-rows: auto 1fr auto">
+        <div class="canvas" style="padding:36px 28px 12px;max-width:1100px;width:100%;margin:0 auto">
+          <h2 style="font-size:20px;font-weight:500;margin:0 0 8px">run 412 <span class="muted">·</span> 54 songs written to plex</h2>
+          <div class="kv" style="display:flex;gap:18px;margin-bottom:20px"><span><b>ended:</b> <StatusPill :s="run.ended"/></span><span><b>by:</b> schedule</span><span><b>at:</b> today 07:00:02</span><span><b>took:</b> 41 s</span><span style="flex:1"></span><button class="btn">▶ run again</button></div>
+          <div class="flow">
+            <template v-for="(st, i) in run.stages">
+              <div class="wire" v-if="i" style="width:70px"><span class="n">{{ ['60 songs','57 songs'][i-1] }}</span></div>
+              <div class="node"><div class="t"><span style="color:var(--ok)">✓</span> {{ st.plugin.toLowerCase() }}</div><div class="d">{{ st.note }}</div></div>
+            </template>
+          </div>
+        </div>
+        <div style="padding:8px 28px;max-width:1100px;width:100%;margin:0 auto"><table><tr><th>playlist</th><th>result</th><th>matched</th><th>unmatched</th></tr>
+          <tr v-for="p in run.playlists"><td>{{ p.name.toLowerCase() }}</td><td><StatusPill :s="p.result"/></td><td>{{ p.matched }}/{{ p.songs }}</td>
+            <td class="muted">{{ p.unmatched.map(u => u.title + ' — ' + u.artists).join(' · ') }}</td></tr></table>
+          <p class="muted"><span class="p2">rejected:</span> none</p></div>
+        <div class="console mono"><div v-for="l in run.log" :class="'lv-'+l[1]"><span class="ts">{{ l[0] }}</span>  {{ l[1].padEnd(4) }}  {{ l[2] }}</div></div>
+      </div>
+
+      <div v-if="screen==='settings'" class="body"><div style="padding:40px 28px;max-width:860px;width:100%;margin:0 auto">
+        <h3 class="p2" style="font-weight:400">services:</h3>
+        <div class="row" v-for="s in services" style="grid-template-columns:34px auto 1fr auto">
+          <span class="st">{{ s.status==='connected' ? '✓' : '✗' }}</span>
+          <span style="padding:0"><span class="tagname" style="height:100%;display:flex;align-items:center" :style="s.status!=='connected' && 'background:var(--p2);color:#fff'">{{ s.service }}</span></span>
+          <span class="muted">{{ s.detail }} · used by {{ s.plugins.toLowerCase() }}</span>
+          <span class="acts"><a @click="go('wizard')">{{ s.status==='connected' ? '✎' : 'reconnect' }}</a></span>
+        </div>
+        <h3 class="p2" style="font-weight:400;margin-top:28px">general:</h3><p><span class="muted">time zone</span> australia/sydney</p>
+      </div><aside class="inspector"><h3><span class="p2">service:</span> plex</h3><FormRenderer :schema="PLEX_AUTH" :issues="[{path:'token', message:'plex rejected this token (401).'}]"/><p><button class="btn primary">test and save</button></p></aside></div>
+
+      <div v-if="screen==='first-run'" class="body full"><div class="canvas" style="display:grid;place-items:center;padding:48px 24px">
+        <div style="max-width:640px;width:100%">
+          <img :src="LOGO" style="width:100%;max-width:520px;display:block;margin:0 auto 8px">
+          <p style="text-align:center" class="muted">do more with your music.</p>
+          <p style="text-align:center;margin:28px 0">welcome. this ultrasonics is yours — nothing to log in to.</p>
+          <div class="row" style="grid-template-columns:34px 1fr auto"><span class="st p2">1</span><span>connect spotify <span class="muted">&nbsp;· needs a free spotify developer app</span></span><span class="acts"><a @click="go('wizard')" style="background:var(--accent);color:#111">connect</a></span></div>
+          <div class="row" style="grid-template-columns:34px 1fr auto;opacity:.55"><span class="st p2">2</span><span>connect plex <span class="muted">&nbsp;· server address and a token</span></span><span class="acts"><a>connect</a></span></div>
+          <div class="row" style="grid-template-columns:34px 1fr auto;opacity:.55"><span class="st p2">3</span><span>make an applet <span class="muted">&nbsp;· when …, take …, put it in …</span></span><span class="acts"><a>new applet</a></span></div>
+          <p class="muted" style="text-align:center;margin-top:20px">coming from ultrasonics 1? <a class="p1">import your v1 database</a></p>
+        </div></div></div>
+    </div>
+  </div>`,
+};
+
 // ======================= Shared: Forms lab (radio vs select) =======================
 const Forms = {
   components: { FormRenderer },
@@ -639,13 +800,13 @@ const Wizard = {
 };
 
 // ======================= Switcher + app =======================
-const VARIANTS = { A, B, C };
+const VARIANTS = { A, B, C, D };
 const SCREENS = ["first-run", "applets", "builder", "run", "settings", "forms", "wizard"];
 const qs = new URLSearchParams(location.search);
 createApp({
-  components: { A, B, C, Forms, Wizard },
+  components: { A, B, C, D, Forms, Wizard },
   setup() {
-    const variant = ref(VARIANTS[qs.get("variant")] ? qs.get("variant") : "A");
+    const variant = ref(VARIANTS[qs.get("variant")] ? qs.get("variant") : "D");
     const screen = ref(SCREENS.includes(qs.get("screen")) ? qs.get("screen") : "applets");
     const keys = Object.keys(VARIANTS);
     const cycle = d => { variant.value = keys[(keys.indexOf(variant.value) + d + keys.length) % keys.length]; };
@@ -661,7 +822,7 @@ createApp({
     return { variant, screen, cycle, go, SCREENS, name: computed(() => VARIANTS[variant.value].name) };
   },
   template: `
-  <div class="root" :class="'v'+variant">
+  <div class="root" :class="['v'+variant, variant==='D' && 'vB']">
     <Forms v-if="screen==='forms'"/>
     <Wizard v-else-if="screen==='wizard'"/>
     <component v-else :is="variant" :screen="screen" :go="go"/>
