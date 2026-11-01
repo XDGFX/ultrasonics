@@ -3,10 +3,14 @@
   PROTOTYPE, throwaway. Round three of "The v2 logo" (XDGFX/ultrasonics#107): the wordmark as an
   ASCII mosaic that arrives like a signal over a noisy network, and the cursor as interference.
 
-  The cursor deposits "corruption" into a field that smears sideways and decays. Corruption never
-  fades or moves glyphs; it drops cells down the character ramp, widens the teal/magenta
-  misregistration, tears scanlines sideways and swaps glyphs for junk. As it decays, cells resync
-  in a staggered order. Underneath, a constant analogue flicker nudges cells along the ramp.
+  Tuning in: the screen starts black apart from a noise floor. Every point on screen has its own
+  tuning, offset by a slow drifting noise field, so patches of the picture lock in at different
+  times while the dial eases round. Where a patch is near the station, static rises, values climb
+  up the character ramp from black, and the picture swims into place.
+
+  Once tuned, the cursor deposits "corruption" into a field that smears sideways and decays. It
+  drops cells down the ramp, widens the teal/magenta misregistration, tears scanlines and swaps
+  glyphs for junk; cells resync in a staggered order. A faint analogue flicker runs underneath.
   The katakana is its own finer grid so it can be small and still read. Open the file in a
   browser; the panel tunes it live.
 -->
@@ -19,22 +23,21 @@
 <style>
   :root { --teal: #1ce5b5; --mag: #e234ce; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #111; color: #cfcfcf; font: 12px "Roboto Mono", monospace; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body { background: #111; color: #cfcfcf; font: 12px "Roboto Mono", monospace; }
   body.light { background: #fff; color: #333; }
-  .stage { display: grid; place-items: center; min-height: 72vh; padding: 40px 16px 10px; }
-  .logo { display: inline-grid; justify-items: center; }
-  canvas { display: block; cursor: crosshair; touch-action: none; }
+  canvas { position: fixed; inset: 0; display: block; cursor: crosshair; touch-action: none; }
   .panel { position: fixed; right: 12px; bottom: 12px; background: #1b1b1b; border: 1px solid #2b2b2b; border-radius: 6px;
-           padding: 10px 12px; display: grid; gap: 6px; width: 250px; color: #aaa; }
+           padding: 10px 12px; display: grid; gap: 6px; width: 250px; color: #aaa; z-index: 2; }
   body.light .panel { background: #f4f4f4; border-color: #ddd; color: #444; }
   .panel label { display: grid; grid-template-columns: 90px 1fr 34px; align-items: center; gap: 6px; }
   .panel input[type=range] { width: 100%; accent-color: var(--teal); }
   .panel .row { display: flex; gap: 14px; }
-  .hint { text-align: center; color: #666; padding-bottom: 6px; }
+  .hint { position: fixed; left: 0; right: 0; bottom: 16px; text-align: center; color: #555; z-index: 1; pointer-events: none; }
 </style>
 </head>
 <body>
-<div class="stage"><div class="logo" id="hero"></div></div>
+<div id="hero"></div>
 <div class="hint">move across it. hold still on it. then leave it alone.</div>
 <div class="panel" id="panel"></div>
 
@@ -43,12 +46,15 @@ const TEAL = "#1ce5b5", MAG = "#e234ce";
 const RAMP = " .:-=+*#%@";
 // Junk is what a bad packet decodes to: hex, half-width katakana, line noise.
 const JUNK = "0123456789ABCDEFｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ<>/\\|[]{}";
-const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, noise: .05, jp: .23, tune: 3.5, idle: true, light: false };
+const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, noise: .05, jp: .23, tune: 6, floor: .03, idle: true, light: false };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const demo = new URLSearchParams(location.search).has("demo");
+const LOCKED = 1; // dial value at which every point on screen is tuned
 
 const clamp = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (e0, e1, x) => { const u = clamp((x - e0) / (e1 - e0)); return u * u * (3 - 2 * u); };
+const smoother = x => x * x * x * (x * (x * 6 - 15) + 10);
 function hash(n) {
   n = Math.imul(n ^ (n >>> 16), 0x45d9f3b); n = Math.imul(n ^ (n >>> 16), 0x45d9f3b);
   return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
@@ -59,17 +65,17 @@ function noise(x, y) {
   return lerp(lerp(h(xi, yi), h(xi + 1, yi), s(u)), lerp(h(xi, yi + 1), h(xi + 1, yi + 1), s(u)), s(v));
 }
 
-// One character grid over one band of the canvas. Interference is specified in CSS pixels, so a
-// coarse and a fine grid react to the same cursor in the same place.
+// One character grid over one band of the screen. Positions and interference are in CSS pixels, so
+// a coarse and a fine grid react to the same cursor and the same tuning in the same place.
 class Layer {
-  constructor({ cell, W, top, height, paint, look, seed }) {
-    const cw = cell * .6, ch = cell, S = 2, cols = Math.floor(W / cw), rows = Math.ceil(height / ch);
-    Object.assign(this, { cell, cw, ch, cols, rows, top, W, H: rows * ch, look, S });
-    // Rasterise once at 2x and keep a summed-area table, so any shifted cell's coverage is O(1).
-    const hw = Math.round(W * S), hh = Math.round(this.H * S), w1 = hw + 1;
+  constructor({ cell, W, top, height, paint, look, seed, S = 1, floor = false }) {
+    const cw = cell * .6, ch = cell, cols = Math.ceil(W / cw) + 1, rows = Math.ceil(height / ch);
+    Object.assign(this, { cell, cw, ch, cols, rows, top, W, H: rows * ch, look, S, floor, seed });
+    // Rasterise once and keep a summed-area table, so any shifted cell's coverage is O(1).
+    const hw = Math.round(cols * cw * S), hh = Math.round(this.H * S), w1 = hw + 1;
     const hi = document.createElement("canvas"); hi.width = hw; hi.height = hh;
     const g = hi.getContext("2d"); g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff";
-    g.scale(S, S); paint(g, this.H);
+    g.scale(S, S); paint(g);
     const px = g.getImageData(0, 0, hw, hh).data, sat = new Float32Array(w1 * (hh + 1));
     for (let y = 0; y < hh; y++) {
       let run = 0;
@@ -107,7 +113,7 @@ class Layer {
       }
   }
 
-  step(t, dt, detune) {
+  step(t, dt) {
     const { cols, rows, field, next } = this;
     // Smear sideways (a damaged line bleeds along itself) and decay towards a clean signal.
     const k = Math.exp(-dt / opts.recovery), side = Math.min(.12, .12 * this.cw / 6);
@@ -120,15 +126,13 @@ class Layer {
     for (let j = 0; j < rows; j++) { let mx = 0; for (let i = 0; i < cols; i++) mx = Math.max(mx, field[j * cols + i]); this.rowC[j] = mx; }
     for (let j = 0; j < rows; j++) {
       const c = (this.rowC[Math.max(0, j - 1)] + 2 * this.rowC[j] + this.rowC[Math.min(rows - 1, j + 1)]) / 4;
-      const y = this.top + j * this.ch;
-      // While detuned, horizontal hold drifts too: broad bands sliding back and forth.
-      const target = c * c * opts.tear * (noise(y * .045, t * 1.7) * 2 - 1) + detune * detune * 46 * (noise(y * .012, t * 2.2) * 2 - 1);
+      const target = c * c * opts.tear * (noise((this.top + j * this.ch) * .045, t * 1.7) * 2 - 1);
       this.tearX[j] = lerp(this.tearX[j], target, 1 - Math.exp(-dt * 18));
     }
   }
 
-  draw(ctx, t, hum, k) {
-    const { cols, rows, cw, ch, field, look, top } = this, light = opts.light;
+  draw(ctx, t, hum, logo) {
+    const { cols, rows, cw, ch, field, look, top } = this, light = opts.light, tuned = logo.dial >= LOCKED;
     ctx.font = `700 ${this.cell}px 'Roboto Mono'`;
     const buckets = { face: [], teal: [], mag: [] };
     for (let j = 0; j < rows; j++) {
@@ -136,36 +140,46 @@ class Layer {
       // The hum bar: a soft band rolling slowly down the picture, where the flicker is stronger.
       const h = Math.exp(-(((y - hum.y) / hum.w) ** 2));
       for (let i = 0; i < cols; i++) {
-        const n = j * cols + i, c = Math.min(1, field[n]), r1 = this.r1[n], r2 = this.r2[n];
-        // At rest the split is about a cell, so it survives quantisation; interference widens it sideways.
-        const d = cw * 1.1 + c * opts.chroma + k * 70, dy = ch * .45 + c * opts.chroma * .1 + k * 8;
-        // Tuning in: while detuned, each cell samples the picture from somewhere else, drifting smoothly
-        // and independently of its neighbours, so the logo is scattered like static and pulls together as k falls.
-        let jx = 0, jy = 0;
-        if (k > 0) {
-          jx = (noise(n * 1.618 + .5, t * 1.3 + r1 * 9) * 2 - 1) * k * 190;
-          jy = (noise(n * 2.414 + .5, t * 1.1 + r2 * 9) * 2 - 1) * k * 70;
+        const n = j * cols + i, c = Math.min(1, field[n]), r1 = this.r1[n], r2 = this.r2[n], x = i * cw;
+        // q: how well this point on screen is tuned. m: how far off it still is.
+        const q = tuned ? 1 : logo.tunedAt(x + cw / 2, y + ch / 2, t), m = 1 - q;
+        // Signal strength rises with tuning, so values climb from black rather than fading in.
+        const amp = Math.pow(q, 1.4);
+        // Off-station the picture swims: a smooth warp, coherent between neighbours, easing to nothing.
+        let wx = 0, wy = 0;
+        if (m > 0) {
+          wx = (noise(x * .011 + 5, y * .018 + t * .25) * 2 - 1) * m * 38;
+          wy = (noise(x * .011 + 50, y * .018 + t * .25 + 9) * 2 - 1) * m * 12;
         }
+        // At rest the split is about a cell; interference and mistuning both widen it.
+        const d = cw * 1.1 + c * opts.chroma + m * 22, dy = ch * .45 + c * opts.chroma * .1 + m * 5;
         // Packet loss: each cell has its own threshold, so loss and recovery are staggered, never a fade.
         const loss = clamp((c - .06 - r1 * .5) * 2.4);
-        const fl = this.cov(i, j, sx + jx, jy) * (1 - loss);
+        const fl = this.cov(i, j, sx + wx, wy) * (1 - loss);
         let idx = 0, bucket = null;
-        if (fl > .05) { idx = Math.round(Math.pow(Math.min(1, fl * 1.2), look.gamma) * look.max * (1 - k * .45)); bucket = "face"; }
+        // Dithered by the cell's own random, so a weak signal shows as sparse low glyphs, not a dim one.
+        if (fl > .05) idx = Math.floor(Math.pow(Math.min(1, fl * 1.2), look.gamma) * look.max * amp + r1 * .999);
+        if (idx >= 1) bucket = "face";
         else {
           // Sampling right-and-up draws the teal copy down-left, as v1.
-          const tl = this.cov(i, j, sx + jx + d, jy - dy), mg = look.mag ? this.cov(i, j, sx + jx - d, jy + dy) : 0, v = Math.max(tl, mg);
+          const tl = this.cov(i, j, sx + wx + d, wy - dy), mg = look.mag ? this.cov(i, j, sx + wx - d, wy + dy) : 0, v = Math.max(tl, mg);
           // Chroma tops out lower on the ramp so the face always reads first.
-          if (v > .08) { idx = Math.round(v * look.chromaMax); bucket = tl >= mg ? "teal" : "mag"; }
+          if (v > .08) { idx = Math.floor(v * look.chromaMax * amp + r1 * .999); if (idx >= 1) bucket = tl >= mg ? "teal" : "mag"; }
         }
-        // Snow: off-station, empty cells light up at random, thinning out as the signal locks.
-        if (!bucket && k > 0 && hash(n * 13 + this.seedOff + Math.floor(t * 14 + r1 * 14)) < k * k * .16 * (this.cell / 10) ** 1.5) {
-          const s = hash(n * 7 + Math.floor(t * 14));
-          idx = 1 + Math.floor(s * 4); bucket = s < .5 ? "face" : s < .75 ? "teal" : "mag";
+        // The noise floor: sparse flickering static everywhere until a region locks, peaking at the
+        // tuning front where the receiver is closest to finding the station.
+        if (!bucket && this.floor && q < 1) {
+          const pf = opts.floor * m + .07 * 4 * q * m;
+          const roll = hash(n * 13 + Math.floor(t * 12 + r1 * 12));
+          if (roll < pf) {
+            const s = hash(n * 7 + Math.floor(t * 12 + r2 * 12));
+            idx = 1 + Math.floor(s * s * (1 + 3 * q)); bucket = s < .6 ? "face" : s < .8 ? "teal" : "mag";
+          }
         }
         if (!bucket) continue;
         // Analogue flicker: each cell re-rolls about ten times a second, out of step with its neighbours,
         // and usually steps one notch down the ramp, occasionally one up.
-        const roll = hash(n * 17 + this.seedOff + Math.floor(t * 10 + this.r3[n] * 10));
+        const roll = hash(n * 17 + this.seed + Math.floor(t * 10 + this.r3[n] * 10));
         const p = opts.noise * (.07 + .18 * h);
         if (roll < p) idx -= 1; else if (roll > 1 - p * .35) idx += 1;
         let glyph = RAMP[clamp(idx, 1, 9)];
@@ -173,7 +187,7 @@ class Layer {
           glyph = JUNK[Math.floor(hash(n * 31 + Math.floor(t * 7 + r1 * 7)) * JUNK.length)];
           if (hash(n + Math.floor(t * 3)) < c * .35) bucket = bucket === "teal" ? "mag" : "teal";
         }
-        buckets[bucket].push(glyph, i * cw, y);
+        buckets[bucket].push(glyph, x, y);
       }
     }
     for (const [b, col] of [["teal", TEAL], ["mag", MAG], ["face", look.face(light)]]) {
@@ -184,39 +198,49 @@ class Layer {
 }
 
 class SignalLogo {
-  constructor(host, { width, cell }) {
+  constructor(host, { cell }) {
     this.canvas = document.createElement("canvas"); host.append(this.canvas);
+    const W = innerWidth, H = innerHeight;
     const m = document.createElement("canvas").getContext("2d");
     m.font = "700 100px 'Montserrat Alternates'";
-    const W = Math.floor(width / (cell * .6)) * cell * .6, tw = W * .88, T = 100 * tw / m.measureText("ultrasonics").width;
+    const tw = Math.min(1000, W - 32) * .88, T = 100 * tw / m.measureText("ultrasonics").width;
     const K = T * opts.jp, fine = Math.max(3, Math.round(cell * .45 * 10) / 10);
+    const yWord = H * .42, yJp = yWord + T * .55 + K * .7;
+    // The wordmark's grid covers the whole screen, so the noise floor and the tuning have no edges.
     const word = new Layer({
-      cell, W, top: 0, height: T * 1.15 + cell * 2, seed: 0,
-      paint: (g, h) => { g.font = `700 ${T}px 'Montserrat Alternates'`; g.fillText("ultrasonics", W / 2, h / 2 + T * .06); },
+      cell, W, top: 0, height: H + cell, seed: 0, floor: true,
+      paint: g => { g.font = `700 ${T}px 'Montserrat Alternates'`; g.fillText("ultrasonics", W / 2, yWord + T * .06); },
       // The face leans dense (a low gamma) so the name reads at a glance.
       look: { gamma: .55, max: 9, chromaMax: 6, mag: true, face: l => l ? "#111" : "#fff" },
     });
     // The katakana gets a finer grid of its own: on the wordmark's cells it would only have three rows.
-    const jp = new Layer({
-      cell: fine, W, top: word.H, height: K * 1.3 + fine * 3, seed: 1e6,
-      paint: (g, h) => {
+    const jpTop = yJp - K, jp = new Layer({
+      cell: fine, W, top: jpTop, height: K * 2, seed: 1e6, S: 2,
+      paint: g => {
         g.font = `700 ${K}px 'Noto Sans JP'`;
         const span = tw * .96, left = (W - span) / 2 + K / 2;
-        [..."ソニックス"].forEach((c, k) => g.fillText(c, left + k * (span - K) / 4, h / 2 - fine * .5));
+        [..."ソニックス"].forEach((c, k) => g.fillText(c, left + k * (span - K) / 4, yJp - jpTop));
       },
       // Magenta and capped at "#", so it sits under the name rather than beside it.
       look: { gamma: .7, max: 7, chromaMax: 5, mag: false, face: l => l ? "#b5179e" : MAG },
     });
-    jp.seedOff = 7777; word.seedOff = 0;
-    Object.assign(this, { layers: [word, jp], W, H: word.H + jp.H });
+    Object.assign(this, { layers: [word, jp], W, H, yWord, T });
     const d = devicePixelRatio || 1;
-    this.canvas.width = W * d; this.canvas.height = this.H * d;
-    this.canvas.style.width = W + "px"; this.canvas.style.height = this.H + "px";
+    this.canvas.width = W * d; this.canvas.height = H * d;
+    this.canvas.style.width = W + "px"; this.canvas.style.height = H + "px";
     this.ctx = this.canvas.getContext("2d"); this.ctx.scale(d, d); this.ctx.textBaseline = "top";
-    this.t0 = null; this.detune = reduced ? 0 : 1;
+    this.t0 = null; this.dial = reduced ? LOCKED : 0;
     this.pointer = null; this.prev = null; this.pending = [];
-    this.nextGlitch = 2 + Math.random() * 3;
+    this.nextGlitch = opts.tune + 2 + Math.random() * 3;
     if (!reduced) this.listen();
+  }
+
+  // Each point's tuning is the dial plus a slow, drifting spatial offset, so regions lock in at
+  // different times and the front between tuned and untuned wanders organically.
+  tunedAt(x, y, t) {
+    const o = noise(x * .0035 + 11, y * .006 + t * .04) * .65 + noise(x * .011 + 3, y * .017 - t * .07) * .35;
+    // A wide window: each point takes most of the dial's travel to lock, so the whole tune-in does visible work.
+    return smooth(0, 1, this.dial * 1.6 - .3 + .7 * (o - .5));
   }
 
   listen() {
@@ -228,12 +252,10 @@ class SignalLogo {
   deposit(p, amt, t) { for (const l of this.layers) l.deposit(p, amt, t); }
 
   step(t, dt) {
-    // Tuning in: the detune falls from 1 to 0, slowly at the end, and hunts past the station a couple
-    // of times on the way (the cosine), like a dial being turned by hand.
+    // The dial eases in and out (smootherstep), so the picture never snaps into place at the end.
     if (this.t0 === null) this.t0 = t;
-    const p = clamp((t - this.t0) / opts.tune);
-    this.detune = reduced ? 0 : Math.pow(1 - p, 1.5) * (.78 + .22 * Math.cos(p * Math.PI * 5));
-    for (const l of this.layers) l.step(t, dt, this.detune);
+    if (!reduced) this.dial = LOCKED * smoother(clamp((t - this.t0) / opts.tune));
+    for (const l of this.layers) l.step(t, dt);
     if (this.pointer) {
       const p = this.pointer, q = this.prev || p, dist = Math.hypot(p.x - q.x, p.y - q.y);
       const speed = clamp(dist / 30), steps = Math.max(1, Math.ceil(dist / 6));
@@ -245,9 +267,9 @@ class SignalLogo {
     // Bursts and idle glitches ramp in over a few frames rather than popping.
     for (const b of this.pending) { const a = Math.min(b.left, dt); b.left -= a; this.deposit(b.p, b.amt * opts.gain * a / b.dur, t); }
     this.pending = this.pending.filter(b => b.left > 0);
-    if (opts.idle && t > this.nextGlitch) {
+    if (opts.idle && t > this.nextGlitch && this.dial >= LOCKED) {
       this.nextGlitch = t + 3.5 + Math.random() * 6;
-      const y = (.15 + Math.random() * .7) * this.H;
+      const y = this.yWord + (Math.random() - .5) * this.T * .9;
       for (let x = 24; x < this.W; x += 54) this.pending.push({ p: { x, y }, amt: .35, left: .18, dur: .18 });
     }
   }
@@ -256,7 +278,7 @@ class SignalLogo {
     const ctx = this.ctx;
     ctx.fillStyle = opts.light ? "#fff" : "#111"; ctx.fillRect(0, 0, this.W, this.H);
     const hum = { y: ((t * .09) % 1.6 - .3) * this.H, w: this.H * .14 };
-    for (const l of this.layers) l.draw(ctx, t, hum, this.detune);
+    for (const l of this.layers) l.draw(ctx, t, hum, this);
   }
 }
 
@@ -264,9 +286,8 @@ let logos = [];
 function build() {
   const hero = document.getElementById("hero");
   hero.innerHTML = "";
-  // Full size only: below this the mosaic stops reading, and the static mark takes over.
-  const w = Math.min(1000, innerWidth - 32);
-  logos = [new SignalLogo(hero, { width: w, cell: w > 700 ? 10 : 7 })];
+  // Full size only: on small screens the mosaic stops reading, and the static mark takes over.
+  logos = [new SignalLogo(hero, { cell: innerWidth > 760 ? 10 : 7 })];
 }
 
 function panel() {
@@ -275,7 +296,7 @@ function panel() {
   p.innerHTML = slider("gain", "interference", 0, 3, .1) + slider("recovery", "recovery (s)", .2, 3, .1) +
     slider("chroma", "chroma split", 0, 30, 1) + slider("tear", "line tear", 0, 60, 1) +
     slider("noise", "analogue noise", 0, 1.5, .05) + slider("jp", "katakana size", .12, .4, .01) +
-    slider("tune", "tune-in (s)", 1, 8, .5) +
+    slider("tune", "tune-in (s)", 2, 15, .5) + slider("floor", "noise floor", 0, .15, .005) +
     `<button id="retune" style="font:inherit">replay tune-in</button>
      <div class="row"><label style="display:flex;gap:6px"><input type="checkbox" data-k="idle" ${opts.idle ? "checked" : ""}>idle glitches</label>
      <label style="display:flex;gap:6px"><input type="checkbox" data-k="light">light</label></div>`;
@@ -286,7 +307,7 @@ function panel() {
     document.body.classList.toggle("light", opts.light);
     if (k === "jp") build();
   };
-  document.getElementById("retune").onclick = () => { for (const l of logos) l.t0 = null; };
+  document.getElementById("retune").onclick = () => { for (const l of logos) { l.t0 = null; l.dial = 0; } };
 }
 
 (async () => {
@@ -296,16 +317,16 @@ function panel() {
   const sim = +new URLSearchParams(location.search).get("sim");
   if (sim) for (let f = 0; f < sim * 60; f++) {
     const t = f / 60;
-    if (demo && t > sim - 1) { const h = logos[0], u = (t - sim + 1) * .8; h.pointer = { x: u * h.W, y: h.H * (.4 + .3 * Math.sin(u * 9)) }; }
+    if (demo && t > sim - 1) { const h = logos[0], u = (t - sim + 1) * .8; h.pointer = { x: u * h.W, y: h.yWord + h.T * .3 * Math.sin(u * 9) }; }
     for (const l of logos) l.step(t, 1 / 60);
   }
   if (sim) { for (const l of logos) l.draw(sim); return; }
   let last = performance.now() / 1000;
   const frame = now => {
     const t = now / 1000, dt = Math.min(.05, t - last); last = t;
-    // ?demo sweeps a fake cursor across the hero.
-    if (demo && t > 3) { const h = logos[0], u = (t - 3) * .5 % 1; h.pointer = { x: u * h.W, y: h.H * (.4 + .3 * Math.sin(u * 9)) }; }
-    for (const l of logos) { if (!reduced) l.step(t, dt); l.draw(reduced ? 0 : t); }
+    // ?demo sweeps a fake cursor across the logo once it has tuned in.
+    if (demo && logos[0].dial >= LOCKED) { const h = logos[0], u = t * .5 % 1; h.pointer = { x: u * h.W, y: h.yWord + h.T * .3 * Math.sin(u * 9) }; }
+    for (const l of logos) { l.step(t, dt); l.draw(t); }
     if (!reduced) requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
