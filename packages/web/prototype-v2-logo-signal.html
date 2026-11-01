@@ -46,7 +46,7 @@ const TEAL = "#1ce5b5", MAG = "#e234ce";
 const RAMP = " .:-=+*#%@";
 // Junk is what a bad packet decodes to: hex, half-width katakana, line noise.
 const JUNK = "0123456789ABCDEFｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ<>/\\|[]{}";
-const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, noise: .05, jp: .23, tune: 6, floor: .03, idle: true, light: false };
+const opts = { gain: 1.2, recovery: 1.3, chroma: 3, tear: 3, noise: .05, jp: .23, tune: 6, floor: 0, idle: true, light: false };
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const demo = new URLSearchParams(location.search).has("demo");
 const LOCKED = 1; // dial value at which every point on screen is tuned
@@ -54,7 +54,6 @@ const LOCKED = 1; // dial value at which every point on screen is tuned
 const clamp = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
 const lerp = (a, b, t) => a + (b - a) * t;
 const smooth = (e0, e1, x) => { const u = clamp((x - e0) / (e1 - e0)); return u * u * (3 - 2 * u); };
-const smoother = x => x * x * x * (x * (x * 6 - 15) + 10);
 function hash(n) {
   n = Math.imul(n ^ (n >>> 16), 0x45d9f3b); n = Math.imul(n ^ (n >>> 16), 0x45d9f3b);
   return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
@@ -166,10 +165,12 @@ class Layer {
           // Chroma tops out lower on the ramp so the face always reads first.
           if (v > .08) { idx = Math.floor(v * look.chromaMax * amp + r1 * .999); if (idx >= 1) bucket = tl >= mg ? "teal" : "mag"; }
         }
-        // The noise floor: sparse flickering static everywhere until a region locks, peaking at the
-        // tuning front where the receiver is closest to finding the station.
-        if (!bucket && this.floor && q < 1) {
-          const pf = opts.floor * m + .07 * 4 * q * m;
+        // Static: an optional floor until a region locks, plus a burst at the tuning front where the
+        // receiver is closest to the station, and a trace wherever the cursor is interfering. Front and
+        // cursor static both fall away with distance from the logo.
+        if (!bucket && this.floor && (q < 1 || c > .02)) {
+          const prox = logo.proxAt(x, y);
+          const pf = opts.floor * m + (.07 * 4 * q * m + c * .05) * prox;
           const roll = hash(n * 13 + Math.floor(t * 12 + r1 * 12));
           if (roll < pf) {
             const s = hash(n * 7 + Math.floor(t * 12 + r2 * 12));
@@ -224,6 +225,8 @@ class SignalLogo {
       // Magenta and capped at "#", so it sits under the name rather than beside it.
       look: { gamma: .7, max: 7, chromaMax: 5, mag: false, face: l => l ? "#b5179e" : MAG },
     });
+    const boxTop = yWord - T * .45, boxBottom = yJp + K * .6;
+    this.box = { cx: W / 2, cy: (boxTop + boxBottom) / 2, hw: tw / 2, hh: (boxBottom - boxTop) / 2 };
     Object.assign(this, { layers: [word, jp], W, H, yWord, T });
     const d = devicePixelRatio || 1;
     this.canvas.width = W * d; this.canvas.height = H * d;
@@ -239,8 +242,15 @@ class SignalLogo {
   // different times and the front between tuned and untuned wanders organically.
   tunedAt(x, y, t) {
     const o = noise(x * .0035 + 11, y * .006 + t * .04) * .65 + noise(x * .011 + 3, y * .017 - t * .07) * .35;
-    // A wide window: each point takes most of the dial's travel to lock, so the whole tune-in does visible work.
-    return smooth(0, 1, this.dial * 1.6 - .3 + .7 * (o - .5));
+    // A wide window: each point takes most of the dial's travel to lock, so the whole tune-in does visible
+    // work. Near the logo starts a little ahead, so static appears there from the first frame.
+    return smooth(0, 1, this.dial * 1.65 - .25 + .7 * (o - .5) + .25 * this.proxAt(x, y));
+  }
+
+  // 1 on the logo, falling smoothly to 0 about 130px from its bounding box.
+  proxAt(x, y) {
+    const b = this.box, dx = Math.max(0, Math.abs(x - b.cx) - b.hw), dy = Math.max(0, Math.abs(y - b.cy) - b.hh);
+    return Math.exp(-((dx * dx + dy * dy) / (130 * 130)));
   }
 
   listen() {
@@ -252,9 +262,9 @@ class SignalLogo {
   deposit(p, amt, t) { for (const l of this.layers) l.deposit(p, amt, t); }
 
   step(t, dt) {
-    // The dial eases in and out (smootherstep), so the picture never snaps into place at the end.
+    // The dial moves from the first frame and eases out, so the picture never snaps into place at the end.
     if (this.t0 === null) this.t0 = t;
-    if (!reduced) this.dial = LOCKED * smoother(clamp((t - this.t0) / opts.tune));
+    if (!reduced) this.dial = LOCKED * (1 - Math.pow(1 - clamp((t - this.t0) / opts.tune), 2.2));
     for (const l of this.layers) l.step(t, dt);
     if (this.pointer) {
       const p = this.pointer, q = this.prev || p, dist = Math.hypot(p.x - q.x, p.y - q.y);
