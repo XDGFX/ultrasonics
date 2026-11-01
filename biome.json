@@ -9,6 +9,7 @@
 		"includes": [
 			"packages/**",
 			"scripts/**",
+			"lint/**",
 			"*.json",
 			"!**/*.vue",
 			"!**/test/fixtures",
@@ -44,6 +45,10 @@
 		}
 	},
 	"overrides": [
+		{
+			"includes": ["packages/plugins/**"],
+			"plugins": ["./lint/no-unkillable-block.grit"]
+		},
 		{
 			"includes": ["packages/db/**", "packages/server/src/boot.ts"],
 			"linter": { "rules": { "style": { "noRestrictedImports": "off" } } }

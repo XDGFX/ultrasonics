@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { useTempDir, useTwoAccounts } from "./test-support.ts";
 
@@ -12,12 +12,13 @@ const FIXTURE = readFileSync(
 describe("the narrow subpaths", () => {
 	const tempDir = useTempDir();
 
-	/** Lints the fixture as though it lived at `path`, under a copy of the repo's Biome config. */
+	/** Lints the fixture as though it lived at `path`, under a copy of the repo's Biome config and plugins. */
 	function restrictedImportsAt(path: string): unknown[] {
 		const root = tempDir();
 		mkdirSync(dirname(join(root, path)), { recursive: true });
 		writeFileSync(join(root, path), FIXTURE);
 		copyFileSync(join(REPO_ROOT, "biome.json"), join(root, "biome.json"));
+		cpSync(join(REPO_ROOT, "lint"), join(root, "lint"), { recursive: true });
 		const result = Bun.spawnSync(
 			[BIOME, "lint", "--vcs-enabled=false", "--reporter=json", "--max-diagnostics=none", path],
 			{ cwd: root, stdout: "pipe", stderr: "pipe" },

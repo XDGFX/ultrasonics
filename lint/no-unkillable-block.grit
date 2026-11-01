@@ -1,0 +1,9 @@
+language js
+
+or { `Bun.sleepSync`, `Atomics.wait` } as $blocker where {
+	register_diagnostic(
+		span = $blocker,
+		message = "A Worker's terminate() cannot interrupt this block (ADR-0010 constraint 9); await a timer instead.",
+		severity = "error"
+	)
+}
