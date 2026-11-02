@@ -159,7 +159,9 @@ button {
 	*,
 	*::before,
 	*::after {
+		/* biome-ignore lint/complexity/noImportantStyles: reduced motion must beat every component's rule. */
 		animation: none !important;
+		/* biome-ignore lint/complexity/noImportantStyles: as above. */
 		transition: none !important;
 	}
 }
