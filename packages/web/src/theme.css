@@ -1,0 +1,165 @@
+/* Variant D's tokens (ADR-0025 §1). */
+:root {
+	--bg: #111111;
+	--fg: #f2f2f2;
+	--muted: #8a8a8a;
+	--surface-1: #151515;
+	--surface-2: #171717;
+	--surface-3: #1d1d1d;
+	--line: #2b2b2b;
+	--accent: #1ce5b5;
+	--accent-fg: #111111;
+	--p2: #e234ce;
+	--warn: #f5a524;
+	--bad: #ff5c6c;
+	--radius: 4px;
+	--font: "Roboto Mono", ui-monospace, monospace;
+	color-scheme: dark;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: var(--font);
+	font-size: 13px;
+	color: var(--fg);
+	background: var(--bg) url("/static.png");
+}
+
+::selection {
+	background: var(--accent);
+	color: var(--accent-fg);
+}
+a {
+	color: var(--accent);
+}
+button,
+input,
+select,
+textarea {
+	font: inherit;
+}
+button {
+	cursor: pointer;
+}
+
+.muted {
+	color: var(--muted);
+}
+.accent {
+	color: var(--accent);
+}
+.key {
+	color: var(--p2);
+}
+
+/* The chromatic effect is for the wordmark only. */
+.wordmark {
+	font-family: "Montserrat Alternates", sans-serif;
+	font-weight: 700;
+	color: #fff;
+	text-shadow:
+		-1px 1px 0 var(--accent),
+		1px -1px 0 var(--p2);
+}
+.wordmark.hero {
+	text-shadow:
+		-3px 2px 0 var(--accent),
+		3px -2px 0 var(--p2);
+}
+
+.btn {
+	display: inline-block;
+	padding: 7px 14px;
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	background: var(--surface-2);
+	color: var(--fg);
+	text-decoration: none;
+}
+.btn.primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-fg);
+}
+.btn.danger {
+	background: var(--p2);
+	border-color: var(--p2);
+	color: #fff;
+}
+.btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.row {
+	display: grid;
+	align-items: stretch;
+	margin-bottom: 10px;
+	border-radius: var(--radius);
+	overflow: hidden;
+	background: var(--surface-3);
+}
+.row > * {
+	display: flex;
+	align-items: center;
+	padding: 8px 12px;
+}
+
+.pill {
+	display: inline-block;
+	padding: 2px 9px;
+	border-radius: 999px;
+	font-size: 12px;
+}
+.pill.running {
+	color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 18%, transparent);
+	animation: pulse 1.2s ease-in-out infinite;
+}
+.pill.queued {
+	color: var(--warn);
+	background: color-mix(in srgb, var(--warn) 18%, transparent);
+}
+
+.progress {
+	display: block;
+	height: 2px;
+	position: relative;
+	overflow: hidden;
+	background: var(--line);
+}
+.progress::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	width: 40%;
+	background: linear-gradient(90deg, var(--accent), var(--p2));
+	animation: slide 1.4s linear infinite;
+}
+
+@keyframes pulse {
+	50% {
+		opacity: 0.45;
+	}
+}
+@keyframes slide {
+	from {
+		left: -40%;
+	}
+	to {
+		left: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation: none !important;
+		transition: none !important;
+	}
+}
