@@ -133,8 +133,8 @@ export interface ApiClient {
 	};
 	runs: {
 		get(id: string): Promise<RunSummary>;
-		/** Replays from the first event, follows live, resumes after a drop, and ends after `end`. */
-		events(id: string): AsyncIterable<RunEvent>;
+		/** Replays from the first event, follows live, resumes after a drop, and ends after `end` or on abort. */
+		events(id: string, signal?: AbortSignal): AsyncIterable<RunEvent>;
 	};
 	settings: {
 		get(plugin: string): Promise<StoredSettings>;

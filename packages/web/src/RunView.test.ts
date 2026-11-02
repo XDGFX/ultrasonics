@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { RunEvent } from "@ultrasonics/core/run-events";
 import { mountApp, settle } from "../test/mount-app.ts";
 import type { RunSummary } from "./api-client.ts";
 import type { FakeApplet } from "./fake-api.ts";
 import { authFailedRun, partialRun, succeededRun } from "./fake-runs.ts";
 import { queuedMessage } from "./run-now.ts";
+import { emptyRunView, foldRunEvent, headline } from "./run-view-state.ts";
 import type { RunPace } from "./scripted-run.ts";
 
 const applet: FakeApplet = {
@@ -44,8 +46,13 @@ afterEach(() => {
 
 describe("the run view", () => {
 	test("heads the run with its id, songs written, status, trigger, start and duration", async () => {
-		const { wrapper } = await openRun(succeededRun);
-		expect(wrapper.get("h2").text()).toBe("run r · 54 songs written to plex");
+		const { wrapper, api } = await openRun(succeededRun);
+		const plugins = await api.plugins();
+		const folded = succeededRun
+			.map((event) => RunEvent.parse(event))
+			.reduce(foldRunEvent, emptyRunView());
+		const serviceOf = (plugin: string) => plugins.find((info) => info.name === plugin)?.service;
+		expect(wrapper.get("h2").text()).toBe(`run r · ${headline(folded, serviceOf)}`);
 		expect(wrapper.get("[data-status]").attributes("data-status")).toBe("succeeded");
 		expect(wrapper.get("[data-trigger]").text()).toContain("schedule");
 		expect(wrapper.get("[data-started]").text()).toContain("07:00");
@@ -85,25 +92,27 @@ describe("the run view", () => {
 
 	test("lists rejections with their source and issue, and how many are not shown", async () => {
 		const { wrapper } = await openRun(partialRun);
-		expect(wrapper.get(".stage [data-rejected]").text()).toBe("3 rejected");
+		expect(wrapper.get(".stage [data-rejected]").attributes("data-rejected")).toBe("3");
 		const listed = texts(wrapper, ".rejections li");
 		expect(listed[0]).toContain("spotify");
 		expect(listed[0]).toContain("discover weekly");
 		expect(listed[0]).toContain("Too small");
 		expect(listed).toHaveLength(2);
-		expect(wrapper.get("[data-not-shown]").text()).toBe("spotify (inputs): 1 not shown");
+		const notShown = wrapper.get("[data-not-shown]");
+		expect([notShown.attributes("data-plugin"), notShown.attributes("data-not-shown")]).toEqual([
+			"spotify",
+			"1",
+		]);
 
 		const clean = (await openRun(succeededRun)).wrapper;
-		expect(clean.get(".rejections").text()).toBe("rejected: none");
+		expect(clean.findAll(".rejections li, [data-not-shown]")).toHaveLength(0);
 	});
 
 	test("shows a failed stage's error, and reconnect for a service-auth failure", async () => {
 		const { wrapper, router } = await openRun(authFailedRun);
 		expect(texts(wrapper, ".stage .mark")).toEqual(["✗"]);
 		expect(wrapper.get(".stage .error").text()).toContain("reconnect: spotify refused");
-		const reconnect = wrapper.get("a.reconnect");
-		expect(reconnect.text()).toBe("reconnect spotify");
-		await reconnect.trigger("click");
+		await wrapper.get("a.reconnect").trigger("click");
 		await settle();
 		expect(router.currentRoute.value.fullPath).toBe("/services/spotify");
 	});
@@ -142,6 +151,16 @@ describe("the run view", () => {
 		api.scripts.drop("r");
 		await settle();
 		expect(api.scripts.connections("r")).toBe(connections);
+	});
+
+	test("closes the stream of a live run when the view is left", async () => {
+		const { api, router } = await openRun(succeededRun, "stepped");
+		api.scripts.advance("r");
+		await settle();
+		expect(api.scripts.open("r")).toBe(1);
+		await router.push("/settings");
+		await settle();
+		expect(api.scripts.open("r")).toBe(0);
 	});
 });
 

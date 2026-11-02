@@ -13,7 +13,7 @@ export const months = [
 	"dec",
 ];
 
-const pad = (value: number) => String(value).padStart(2, "0");
+export const pad = (value: number) => String(value).padStart(2, "0");
 
 /** A time as "today 07:00", "yesterday 07:00", "tomorrow 07:00" or "01 nov 07:00", in local time. */
 export function formatWhen(at: number, now: number = Date.now()): string {

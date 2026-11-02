@@ -17,9 +17,11 @@ export interface ScriptedRun {
 	/** Closes every open connection, as a dropped network would; followers reconnect. */
 	drop(): void;
 	/** Replays from the first event, follows live, resumes after a drop, and ends after `end`. */
-	follow(): AsyncIterable<RunEvent>;
+	follow(signal?: AbortSignal): AsyncIterable<RunEvent>;
 	/** How many connections have been opened, counting reconnects. */
 	readonly connections: number;
+	/** How many connections are open now. */
+	readonly open: number;
 }
 
 /** One scripted run's events; `startedAt` moves them to start then, as a run started now would. */
@@ -33,6 +35,7 @@ export function scriptedRun(
 	const events = parsed.map((event) => ({ ...event, at: event.at + shift }));
 	let released = 0;
 	let connections = 0;
+	let open = 0;
 	let epoch = 0;
 	const waiting = new Set<() => void>();
 
@@ -49,19 +52,25 @@ export function scriptedRun(
 		wake();
 	};
 
-	async function* connect(after: number): AsyncGenerator<RunEvent> {
+	async function* connect(after: number, signal?: AbortSignal): AsyncGenerator<RunEvent> {
 		connections++;
+		open++;
 		const opened = epoch;
+		const closed = () => epoch !== opened || signal?.aborted === true;
 		let cursor = after;
-		for (;;) {
-			for (const event of events.slice(0, released)) {
-				if (event.seq <= cursor) continue;
-				cursor = event.seq;
-				yield structuredClone(event);
+		try {
+			for (;;) {
+				for (const event of events.slice(0, released)) {
+					if (event.seq <= cursor) continue;
+					cursor = event.seq;
+					yield structuredClone(event);
+				}
+				if (closed()) return;
+				await new Promise<void>((resolve) => waiting.add(resolve));
+				if (closed()) return;
 			}
-			if (epoch !== opened) return;
-			await new Promise<void>((resolve) => waiting.add(resolve));
-			if (epoch !== opened) return;
+		} finally {
+			open--;
 		}
 	}
 
@@ -82,11 +91,12 @@ export function scriptedRun(
 			epoch++;
 			wake();
 		},
-		follow: () => ({
+		follow: (signal) => ({
 			async *[Symbol.asyncIterator]() {
+				signal?.addEventListener("abort", wake, { once: true });
 				let after = 0;
-				for (;;) {
-					for await (const event of connect(after)) {
+				while (!signal?.aborted) {
+					for await (const event of connect(after, signal)) {
 						after = event.seq;
 						yield event;
 						if (event.type === "end") return;
@@ -96,6 +106,9 @@ export function scriptedRun(
 		}),
 		get connections() {
 			return connections;
+		},
+		get open() {
+			return open;
 		},
 	};
 }

@@ -21,25 +21,24 @@ const summary = ref<RunSummary | null>(null);
 const catalogue = ref<PluginInfo[]>([]);
 const state = ref(emptyRunView());
 
-// Each follow gets a token, so a superseded or unmounted one folds nothing more.
-let following = 0;
+// Aborting a superseded or unmounted follow closes its stream, so it folds nothing more.
+let following = new AbortController();
 async function follow(id: string) {
-	const token = ++following;
+	following.abort();
+	const { signal } = (following = new AbortController());
 	state.value = emptyRunView();
 	queued.value = false;
 	const [run, plugins] = await Promise.all([api.runs.get(id), api.plugins()]);
-	if (token !== following) return;
+	if (signal.aborted) return;
 	summary.value = run;
 	catalogue.value = plugins;
-	for await (const event of api.runs.events(id)) {
-		if (token !== following) return;
+	for await (const event of api.runs.events(id, signal)) {
+		if (signal.aborted) return;
 		state.value = foldRunEvent(state.value, event);
 	}
 }
 watch(() => props.id, follow, { immediate: true });
-onBeforeUnmount(() => {
-	following++;
-});
+onBeforeUnmount(() => following.abort());
 
 const serviceOf = (plugin: string) => catalogue.value.find((info) => info.name === plugin)?.service;
 const title = computed(() => `run ${props.id} · ${headline(state.value, serviceOf)}`);
@@ -94,7 +93,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 							<span class="plugin">{{ stage.plugin }}</span>
 						</p>
 						<p class="muted">{{ stage.component }}</p>
-						<p v-if="stage.finished?.rejected" class="warn" data-rejected>{{ stage.finished.rejected }} rejected</p>
+						<p v-if="stage.finished?.rejected" class="warn" :data-rejected="stage.finished.rejected">{{ stage.finished.rejected }} rejected</p>
 						<template v-if="stage.finished?.error">
 							<p class="error">{{ stage.finished.error.code }}: {{ stage.finished.error.message }}</p>
 							<RouterLink
@@ -146,7 +145,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 							>: {{ rejection.issues.map((issue) => issue.message).join("; ") }}
 						</li>
 					</ul>
-					<p v-for="stage in cappedStages" :key="`${stage.component}-${stage.index}`" class="muted" data-not-shown>
+					<p v-for="stage in cappedStages" :key="`${stage.component}-${stage.index}`" class="muted" :data-not-shown="stage.notShown" :data-plugin="stage.plugin">
 						{{ stage.plugin }} ({{ stage.component }}): {{ stage.notShown }} not shown
 					</p>
 				</template>

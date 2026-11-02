@@ -280,11 +280,9 @@ async function runOutput(
 	}
 	const playlists = parsed.data.playlists.map((entry): ResultPlaylist => {
 		// `incompleteness` has checked every position, so the fallbacks are never reached.
-		const given = songs.playlists[entry.playlist]?.songs ?? [];
-		const named = {
-			playlistName: songs.playlists[entry.playlist]?.name ?? "",
-			supplied: given.length,
-		};
+		const playlist = songs.playlists[entry.playlist];
+		const given = playlist?.songs ?? [];
+		const named = { playlistName: playlist?.name ?? "", supplied: given.length };
 		if (entry.status !== "written") return { ...entry, ...named };
 		const unmatchedSongs = entry.unmatched.flatMap((position) => {
 			const song = given[position];

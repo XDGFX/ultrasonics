@@ -1,7 +1,7 @@
 import {
 	type AuthRequirement,
 	type AuthSpec,
-	type Component,
+	Component,
 	type Mode,
 	type Service,
 	type SettingsSchema,
@@ -95,6 +95,7 @@ export interface ScriptControl {
 	advance(runId: string, count?: number): void;
 	drop(runId: string): void;
 	connections(runId: string): number;
+	open(runId: string): number;
 }
 
 /** An in-memory `ApiClient` for tests and the fake-backed dev server. */
@@ -175,7 +176,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 	const checkDraft = (draft: AppletDraft): ValidationIssue[] => {
 		const issues: ValidationIssue[] =
 			draft.name.trim() === "" ? [{ path: ["name"], message: "An applet needs a name" }] : [];
-		for (const component of ["inputs", "modifiers", "outputs"] as const) {
+		for (const component of Component.options) {
 			for (const [index, slot] of draft.definition[component].entries()) {
 				const path = [component, index];
 				const schema = plugins.get(slot.plugin)?.instanceSettings[component];
@@ -246,12 +247,13 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 				if (!run) throw new Error(`No run ${id}`);
 				return structuredClone(run);
 			},
-			events: (id) => script(id).follow(),
+			events: (id, signal) => script(id).follow(signal),
 		},
 		scripts: {
 			advance: (runId, count) => script(runId).advance(count),
 			drop: (runId) => script(runId).drop(),
 			connections: (runId) => script(runId).connections,
+			open: (runId) => script(runId).open,
 		},
 		settings: {
 			get: async (plugin) => {

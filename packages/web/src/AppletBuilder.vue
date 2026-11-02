@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Component, JSONSchema, ValidationIssue } from "@ultrasonics/plugin-sdk";
+import { Component, type JSONSchema, type ValidationIssue } from "@ultrasonics/plugin-sdk";
 import { computed, onMounted, reactive, ref, shallowRef, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import {
@@ -33,7 +33,7 @@ type Selection =
 	| { kind: "schedule" }
 	| { kind: "webhook" };
 
-const columns: Component[] = ["inputs", "modifiers", "outputs"];
+const columns = Component.options;
 const singular: Record<Component, string> = { inputs: "input", modifiers: "modifier", outputs: "output" };
 
 const props = defineProps<{ id?: string }>();
@@ -184,7 +184,7 @@ function selectSchedule() {
 
 function editSchedule(value: Record<string, unknown>) {
 	const result = scheduleOf(value);
-	if (result.ok) schedule.value = result.schedule;
+	if (result.ok) schedule.value = result.value;
 	scheduleProblem.value = result.ok ? null : result.issues;
 }
 
@@ -229,20 +229,31 @@ async function save() {
 	issues.value = [];
 	const isNew = appletId.value === undefined;
 	appletId.value = result.value.id;
-	if (JSON.stringify(schedule.value) !== savedSchedule.value) {
-		const scheduled = await api.triggers.setSchedule(result.value.id, schedule.value);
-		if (!scheduled.ok) {
-			scheduleProblem.value = scheduled.issues;
-			showScheduleIssues.value = true;
-			selectSchedule();
-			return;
-		}
+	const scheduled =
+		JSON.stringify(schedule.value) === savedSchedule.value
+			? undefined
+			: await api.triggers.setSchedule(result.value.id, schedule.value);
+	if (scheduled?.ok !== false) markSaved();
+	if (isNew) await moveTo(result.value.id);
+	if (scheduled?.ok === false) {
+		scheduleProblem.value = scheduled.issues;
+		showScheduleIssues.value = true;
+		selectSchedule();
 	}
-	markSaved();
-	if (isNew) await router.replace({ name: "builder", params: { id: result.value.id } });
 }
 
-const leaving = useUnsavedChanges(dirty);
+/** The applet now exists, so its address moves to it whatever is still unsaved. */
+const moving = ref(false);
+async function moveTo(id: string) {
+	moving.value = true;
+	try {
+		await router.replace({ name: "builder", params: { id } });
+	} finally {
+		moving.value = false;
+	}
+}
+
+const leaving = useUnsavedChanges(computed(() => dirty.value && !moving.value));
 const { runNow, queued } = useRunNow();
 </script>
 
