@@ -120,7 +120,7 @@ const broken: [Invariant, Plugin, ConformanceFixtures<Plugin>, (string | number)
 			},
 		},
 		exampleFixtures,
-		["run", "outputs", "playlists", 0],
+		["run", "outputs", "playlists"],
 	],
 	[
 		"valid-song-dict",
@@ -204,6 +204,26 @@ describe("checkConformance", () => {
 			invariant: "valid-song-dict",
 			path: ["run", "inputs"],
 			message: expect.stringContaining("401 Unauthorised"),
+		});
+	});
+
+	test("fails an output that reports a song unmatched twice, as the runner would", async () => {
+		const repeating: Plugin = {
+			...examplePlugin,
+			run: {
+				...run,
+				async outputs(ctx) {
+					const { playlists } = await writeAll(ctx.songs);
+					return { playlists: playlists.map((entry) => ({ ...entry, unmatched: [0, 0] })) };
+				},
+			},
+		};
+		const first = defaultSongDict.playlists.findIndex((playlist) => playlist.songs.length > 0);
+		const failures = await checkConformance<Plugin>(repeating, exampleFixtures);
+		expect(failures).toContainEqual({
+			invariant: "output-completeness",
+			path: ["run", "outputs", "playlists", first, "unmatched", 1],
+			message: expect.any(String),
 		});
 	});
 
