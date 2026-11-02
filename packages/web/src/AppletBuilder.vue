@@ -264,7 +264,16 @@ const { runNow, queued } = useRunNow();
 				<span>enabled</span>
 			</label>
 			<QueuedNote v-if="queued" />
-			<button v-if="appletId" type="button" class="btn run-now" @click="runNow(appletId)">▶ run now</button>
+			<button
+				v-if="appletId"
+				type="button"
+				class="btn run-now"
+				:disabled="dirty"
+				:title="dirty ? 'save first: a run uses the saved applet' : undefined"
+				@click="runNow(appletId)"
+			>
+				▶ run now
+			</button>
 			<button type="button" class="btn primary" :disabled="!loaded" @click="save">save</button>
 		</template>
 

@@ -174,11 +174,16 @@ describe("run now", () => {
 		expect(router.currentRoute.value.name).toBe("run");
 	});
 
-	test("the builder offers run now only once the applet is saved, and says queued", async () => {
-		const unsaved = (await mountApp("/applets/new", { applets: [applet] })).wrapper;
-		expect(unsaved.find("button.run-now").exists()).toBe(false);
-		document.body.innerHTML = "";
+	test("the builder offers run now once the applet is saved, and not over unsaved edits", async () => {
+		const { wrapper } = await mountApp("/applets/a", { applets: [applet] });
+		await wrapper.get('input[name="applet-name"]').setValue("renamed");
+		expect(wrapper.get("button.run-now").attributes("disabled")).toBeDefined();
 
+		const fresh = (await mountApp("/applets/new", { applets: [applet] })).wrapper;
+		expect(fresh.find("button.run-now").exists()).toBe(false);
+	});
+
+	test("run now in the builder says queued and stays put", async () => {
 		const { wrapper, router } = await mountApp("/applets/a", {
 			applets: [{ ...applet, state: "running" }],
 		});
