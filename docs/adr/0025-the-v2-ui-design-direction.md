@@ -1,6 +1,6 @@
 # ADR-0025 — The v2 UI design direction
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-11-01
 **Builds on:** ADR-0001 (Vue 3 + Vite), ADR-0011 (triggers are server configuration), ADR-0019
 (settings forms from JSON Schema), ADR-0020 (outputs return a result), ADR-0021 (rejections)
