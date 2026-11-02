@@ -8,8 +8,9 @@ import {
 	type SettingsSchema,
 	toFormSchema,
 	type ValidationIssue,
+	withMeta,
 } from "@ultrasonics/plugin-sdk";
-import type { z } from "zod";
+import { z } from "zod";
 import type {
 	ApiClient,
 	Applet,
@@ -48,6 +49,14 @@ export interface FakeSeed {
 	/** `oauth2*` services whose operator has not registered an app. */
 	unregisteredClients?: Service[];
 }
+
+/** A guess at the `client` step's form until open question 2 of spec #118 is settled. */
+const clientCredentials = z.object({
+	clientId: withMeta(z.string().min(1), {
+		title: "client id",
+		description: "from your app's page on the service's developer dashboard",
+	}),
+});
 
 function formSchema(schema: z.ZodType, options: { auth?: boolean } = {}) {
 	const result = toFormSchema(schema, options);
@@ -98,6 +107,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 		ServiceStatus["status"]
 	>;
 	const runs = new Map((seed.runs ?? []).map((run) => [run.id, run]));
+	const unregistered = new Set(seed.unregisteredClients);
 	let nextId = 1;
 
 	const authSpec = (service: Service): AuthSpec => {
@@ -252,11 +262,18 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 						: [{ kind: "fields", schema: fields }];
 				}
 				if (spec.flow === "none") return [];
-				return seed.unregisteredClients?.includes(service)
+				return unregistered.has(service)
 					? [{ kind: "client", service }, { kind: "connect" }]
 					: [{ kind: "connect" }];
 			},
 			redirectUri: async (service) => `http://localhost:5173/services/${service}`,
+			clientForm: async () => formSchema(clientCredentials, { auth: true }),
+			registerClient: async (service, input) => {
+				const parsed = clientCredentials.safeParse(input);
+				if (!parsed.success) return { ok: false, issues: issuesOf(parsed.error) };
+				unregistered.delete(service);
+				return { ok: true, value: null };
+			},
 			configure: async (service, input) => {
 				const parsed = authSpec(service).fields.safeParse(input);
 				if (!parsed.success) return { kind: "invalid", issues: issuesOf(parsed.error) };
