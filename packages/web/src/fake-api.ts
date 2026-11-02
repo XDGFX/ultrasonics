@@ -2,6 +2,7 @@ import {
 	type AuthRequirement,
 	type AuthSpec,
 	Component,
+	issuesOf,
 	type Mode,
 	type Service,
 	type SettingsSchema,
@@ -22,7 +23,6 @@ import type {
 	ServiceStatus,
 } from "./api-client.ts";
 import { type RunScript, type ScriptedRun, scriptedRun } from "./scripted-run.ts";
-import { issuesOf } from "./zod-issues.ts";
 
 /** A plugin as the fake holds it: Zod schemas, which the fake serves through `toFormSchema`. */
 export interface FakePlugin {

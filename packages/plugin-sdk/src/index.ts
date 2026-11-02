@@ -62,4 +62,4 @@ export {
 	type SongDictValidation,
 	validateSongDict,
 } from "./song-dict-validator.ts";
-export type { IssuePath, ValidationIssue } from "./validation-issue.ts";
+export { type IssuePath, issuesOf, type ValidationIssue } from "./validation-issue.ts";

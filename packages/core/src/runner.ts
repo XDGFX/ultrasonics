@@ -4,6 +4,7 @@ import {
 	type AuthProvider,
 	type Component,
 	isAuthFailure,
+	issuesOf,
 	type LogLevel,
 	OutputResult,
 	outputResultIssues,
@@ -14,7 +15,6 @@ import {
 	type ValidationIssue,
 	validateSongDict,
 } from "@ultrasonics/plugin-sdk";
-import type { z } from "zod";
 import { describeError, InProcessExecutor, type PluginExecutor } from "./plugin-executor.ts";
 import type {
 	FinishedRunStatus,
@@ -87,13 +87,6 @@ function where({ component, index, plugin }: Stage): Stage {
 	return { component, index, plugin };
 }
 
-function prefixed(prefix: string, error: z.ZodError): ValidationIssue[] {
-	return error.issues.map((issue) => ({
-		path: [prefix, ...issue.path.map((key) => (typeof key === "symbol" ? String(key) : key))],
-		message: issue.message,
-	}));
-}
-
 function describeIssues(issues: ValidationIssue[]): string {
 	return issues
 		.map(({ path, message }) => (path.length ? `${path.join(".")}: ${message}` : message))
@@ -149,8 +142,8 @@ async function prepare(
 	};
 	const instance = schema.safeParse(slot.settings ?? {});
 	const issues = [
-		...(persistent.success ? [] : prefixed("persistent", persistent.error)),
-		...(instance.success ? [] : prefixed("instance", instance.error)),
+		...(persistent.success ? [] : issuesOf(persistent.error, ["persistent"])),
+		...(instance.success ? [] : issuesOf(instance.error, ["instance"])),
 	];
 	if (!persistent.success || !instance.success) {
 		return { code: "settings-invalid", message: `Invalid settings: ${describeIssues(issues)}` };
