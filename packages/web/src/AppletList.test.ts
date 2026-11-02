@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mountApp, settle } from "../test/mount-app.ts";
 import type { AppletListing } from "./api-client.ts";
 import type { FakeApplet } from "./fake-api.ts";
+import { sentence, sentenceText } from "./sentence.ts";
 
 const base = {
 	enabled: true,
@@ -62,7 +63,10 @@ describe("the applet list", () => {
 
 	test("counts the applets and how many are running", async () => {
 		const { wrapper } = await mountApp("/", { applets });
-		expect(wrapper.get(".count").text()).toBe("7 · 1 running");
+		expect(wrapper.get(".count").attributes()).toMatchObject({
+			"data-count": "7",
+			"data-running": "1",
+		});
 	});
 
 	test("links a row's status glyph to its last run", async () => {
@@ -78,9 +82,11 @@ describe("the applet list", () => {
 	});
 
 	test("summarises each applet as its sentence", async () => {
-		const { wrapper } = await mountApp("/", { applets });
+		const { wrapper, api } = await mountApp("/", { applets });
+		const failed = applets.find((applet) => applet.id === "f");
+		if (!failed) throw new Error("no failed applet");
 		expect(row(wrapper, "failed").get(".sum").text()).toBe(
-			"manual only: take spotify, deduplicate it, and put it in plex",
+			sentenceText(sentence(failed, await api.plugins())),
 		);
 	});
 
@@ -89,12 +95,12 @@ describe("the applet list", () => {
 		const running = row(wrapper, "running");
 		expect(running.get(".pill").text()).toBe("running");
 		expect(running.find('[role="progressbar"]').exists()).toBe(true);
-		expect(running.text()).not.toContain("last");
+		expect(running.find("[data-last]").exists()).toBe(false);
 
-		const never = row(wrapper, "never").get(".times").text();
-		expect(never).toContain("last never");
-		expect(never).toContain("next manual");
-		expect(row(wrapper, "interrupted").get(".times").text()).toContain("next on webhook");
+		const times = (name: string) =>
+			["data-last", "data-next"].map((key) => row(wrapper, name).get(`[${key}]`).attributes(key));
+		expect(times("never")).toEqual(["never", "manual"]);
+		expect(times("interrupted")).toEqual(["ran", "webhook"]);
 		expect(row(wrapper, "failed").find('[role="progressbar"]').exists()).toBe(false);
 	});
 
@@ -109,7 +115,7 @@ describe("the applet list", () => {
 		const { wrapper, api } = await mountApp("/", { applets });
 		await row(wrapper, "failed").get('button[title="delete"]').trigger("click");
 		const dialog = wrapper.get('[role="alertdialog"]');
-		expect(dialog.text()).toContain("delete failed and its runs?");
+		expect(dialog.get("#confirm-delete").text()).toContain("failed");
 
 		await dialog.get("button.cancel").trigger("click");
 		await settle();

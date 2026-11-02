@@ -103,6 +103,11 @@ describe("the sentence", () => {
 		);
 	});
 
+	test("holds an empty column's place while the applet is being built", () => {
+		const empty = applet({ definition: { inputs: [], modifiers: [], outputs: [] } });
+		expect(sentenceText(sentence(empty, catalogue))).toBe("manual only: take …, and put it in …");
+	});
+
 	test("tags plugins and triggers so they can be coloured", () => {
 		const parts = sentence(applet({ hasWebhook: true }), catalogue);
 		expect(parts.filter((part) => part.kind === "trigger").map((part) => part.text)).toEqual([

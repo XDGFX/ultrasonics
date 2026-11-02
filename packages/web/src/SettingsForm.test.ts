@@ -272,6 +272,12 @@ describe("the settings-form renderer", () => {
 		expect(wrapper.find('button[type="submit"]').attributes("disabled")).toBeDefined();
 	});
 
+	test("refills when the stored value arrives after the form is shown", async () => {
+		const wrapper = render(leaves);
+		await wrapper.setProps({ value: { title: "late" } });
+		expect((wrapper.find('[name="title"]').element as HTMLInputElement).value).toBe("late");
+	});
+
 	test("renders nothing for an empty object", () => {
 		expect(
 			render(form(z.object({})))

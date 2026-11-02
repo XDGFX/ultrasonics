@@ -14,7 +14,7 @@ import { type InjectionKey, inject } from "vue";
 // View types are web-local until the server spec fixes its schemas; the HTTP client reconciles them.
 
 export interface InstanceInfo {
-	/** Reachable from a public address in `bootstrapped` mode (ADR-0015 §6). */
+	/** Reachable from a public address while the session source is `bootstrapped` (ADR-0015 §6). */
 	exposed: boolean;
 }
 

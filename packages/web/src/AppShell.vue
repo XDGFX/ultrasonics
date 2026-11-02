@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { type RouteLocationRaw, useRoute } from "vue-router";
 import { useApi } from "./api-client.ts";
 
@@ -17,8 +17,7 @@ onMounted(async () => {
 	exposed.value = (await api.instance()).exposed;
 });
 
-const inApplets = () => ["applets", "first-run", "new-applet", "builder", "run"].includes(String(route.name));
-const inSettings = () => ["settings", "wizard"].includes(String(route.name));
+const section = computed(() => route.meta.section);
 </script>
 
 <template>
@@ -27,10 +26,10 @@ const inSettings = () => ["settings", "wizard"].includes(String(route.name));
 			<RouterLink to="/" class="brand" aria-label="ultrasonics">
 				<span class="wordmark">ultrasonics</span>
 			</RouterLink>
-			<RouterLink to="/" class="r" :class="{ on: inApplets() }" title="applets">
+			<RouterLink to="/" class="r" :class="{ on: section === 'applets' }" :data-active="section === 'applets'" title="applets">
 				<span aria-hidden="true">▦</span><small>applets</small>
 			</RouterLink>
-			<RouterLink to="/settings" class="r" :class="{ on: inSettings() }" title="settings">
+			<RouterLink to="/settings" class="r" :class="{ on: section === 'settings' }" :data-active="section === 'settings'" title="settings">
 				<span aria-hidden="true">⚙</span><small>settings</small>
 			</RouterLink>
 		</nav>

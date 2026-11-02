@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { JSONSchema, ValidationIssue } from "@ultrasonics/plugin-sdk";
-import { computed, reactive, ref, useId, watch } from "vue";
+import { computed, ref, useId, watch } from "vue";
 import {
 	emitted,
 	type Field,
@@ -24,8 +24,13 @@ const emit = defineEmits<{ submit: [value: Record<string, unknown>] }>();
 
 const id = useId();
 const shape = computed(() => shapeOf(props.schema));
-const raw = reactive(initialRaw(shape.value, props.value));
+const raw = ref(initialRaw(shape.value, props.value));
 const active = ref(initialVariant(shape.value, props.value));
+// A caller may pass the stored value after mounting, once its fetch resolves.
+watch([shape, () => props.value], () => {
+	raw.value = initialRaw(shape.value, props.value);
+	active.value = initialVariant(shape.value, props.value);
+});
 const variant = computed(
 	() => shape.value.variants.find((candidate) => candidate.value === active.value) ?? shape.value.variants[0],
 );
@@ -49,7 +54,7 @@ const blocked = computed(() => props.issues.length > 0 && !changedSinceIssues.va
 const inputId = (field: Field) => `${id}-${active.value}-${field.key}`;
 
 function set(field: Field, value: Raw) {
-	const branch = raw[active.value];
+	const branch = raw.value[active.value];
 	if (branch) branch[field.key] = value;
 	changedSinceIssues.value = true;
 }
@@ -60,13 +65,13 @@ function choose(value: string) {
 }
 
 function textOf(field: Field): string {
-	const value = raw[active.value]?.[field.key];
+	const value = raw.value[active.value]?.[field.key];
 	return typeof value === "string" ? value : "";
 }
 
 function submit() {
 	if (blocked.value || !variant.value) return;
-	emit("submit", emitted(shape.value, variant.value, raw[active.value] ?? {}));
+	emit("submit", emitted(shape.value, variant.value, raw.value[active.value] ?? {}));
 }
 
 const placeholderOf = ({ schema }: Field) =>

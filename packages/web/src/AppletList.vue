@@ -36,9 +36,15 @@ function statusOf(applet: AppletListing): Exclude<Status, "idle"> {
 	return applet.lastRun?.status ?? "never-run";
 }
 
+function nextKind(applet: AppletListing): "scheduled" | "webhook" | "manual" {
+	if (applet.nextRunAt !== null) return "scheduled";
+	return applet.hasWebhook ? "webhook" : "manual";
+}
+
 function nextRun(applet: AppletListing): string {
-	if (applet.nextRunAt !== null) return formatWhen(applet.nextRunAt);
-	return applet.hasWebhook ? "on webhook" : "manual";
+	const kind = nextKind(applet);
+	if (kind === "scheduled" && applet.nextRunAt !== null) return formatWhen(applet.nextRunAt);
+	return kind === "webhook" ? "on webhook" : "manual";
 }
 
 async function remove(applet: AppletListing) {
@@ -55,7 +61,7 @@ async function remove(applet: AppletListing) {
 			<RouterLink :to="{ name: 'new-applet' }" class="btn primary">new applet</RouterLink>
 		</template>
 
-		<p class="heading"><span class="key">applets:</span> <span class="muted count">{{ applets.length }} · {{ running }} running</span></p>
+		<p class="heading"><span class="key">applets:</span> <span class="muted count" :data-count="applets.length" :data-running="running">{{ applets.length }} · {{ running }} running</span></p>
 
 		<div v-for="applet in applets" :key="applet.id" class="row" :data-applet="applet.id">
 			<RouterLink
@@ -78,8 +84,8 @@ async function remove(applet: AppletListing) {
 				</template>
 				<template v-else>
 					<span v-if="applet.state === 'queued'" class="pill queued">queued</span>
-					<span>last {{ applet.lastRun ? formatWhen(applet.lastRun.at) : "never" }}</span>
-					<span>next {{ nextRun(applet) }}</span>
+					<span :data-last="applet.lastRun ? 'ran' : 'never'">last {{ applet.lastRun ? formatWhen(applet.lastRun.at) : "never" }}</span>
+					<span :data-next="nextKind(applet)">next {{ nextRun(applet) }}</span>
 				</template>
 			</span>
 			<span class="acts">

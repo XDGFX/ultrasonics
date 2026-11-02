@@ -83,15 +83,14 @@ function pluginInfo(plugin: FakePlugin): PluginInfo {
 	};
 }
 
+const neverRun = { state: "idle", lastRun: null, nextRunAt: null } as const;
+
 /** An in-memory `ApiClient` for tests and the fake-backed dev server. */
 export function createFakeApi(seed: FakeSeed): ApiClient {
 	const plugins = new Map(seed.plugins.map((plugin) => [plugin.name, plugin]));
 	const catalogue = seed.plugins.map(pluginInfo);
 	const applets = new Map<string, AppletListing>(
-		(seed.applets ?? []).map((applet) => [
-			applet.id,
-			{ state: "idle", lastRun: null, nextRunAt: null, ...applet },
-		]),
+		(seed.applets ?? []).map((applet) => [applet.id, { ...neverRun, ...applet }]),
 	);
 	const settings = new Map(Object.entries(seed.settings ?? {}));
 	const grants = new Map(Object.entries(seed.grants ?? {})) as Map<
@@ -130,9 +129,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 		if (issues.length > 0) return { ok: false, issues };
 		const existing = applets.get(id);
 		const listing: AppletListing = {
-			state: "idle",
-			lastRun: null,
-			nextRunAt: null,
+			...neverRun,
 			schedule: null,
 			hasWebhook: false,
 			...existing,

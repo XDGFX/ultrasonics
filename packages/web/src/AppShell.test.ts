@@ -30,6 +30,12 @@ describe("the shell", () => {
 		);
 	});
 
+	test("marks the rail entry the current screen belongs under", async () => {
+		const { wrapper } = await mountApp("/services/plex", { applets: [applet] });
+		const active = wrapper.findAll('nav.rail a[data-active="true"]');
+		expect(active.map((link) => link.attributes("href"))).toEqual(["/settings"]);
+	});
+
 	test("shows where the user is in the breadcrumb bar", async () => {
 		const { wrapper } = await mountApp("/applets/a1", { applets: [applet] });
 		const crumbs = wrapper.get('nav[aria-label="breadcrumb"]');

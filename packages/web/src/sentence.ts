@@ -1,12 +1,11 @@
 import type { Applet, PluginInfo, Schedule } from "./api-client.ts";
+import { months } from "./clock.ts";
 
 /** Plugins are coloured teal and triggers magenta wherever the sentence is shown. */
 export interface SentencePart {
 	kind: "text" | "plugin" | "trigger";
 	text: string;
 }
-
-const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
 
 function describeSchedule({ unit, count, anchor }: Schedule): string {
 	const [date = "", time = ""] = anchor.split("T");
@@ -17,8 +16,9 @@ function describeSchedule({ unit, count, anchor }: Schedule): string {
 	return `${every} from ${day} ${months[Number(month) - 1]} at ${clock}`;
 }
 
-/** `a`, `a and b`, `a, b and c`, each item a part of its own kind. */
+/** `a`, `a and b`, `a, b and c`, each item a part of its own kind; "…" holds an empty column's place. */
 function list(items: string[], kind: SentencePart["kind"], conjunction = "and"): SentencePart[] {
+	if (items.length === 0) return [text("…")];
 	return items.flatMap((item, index) => {
 		if (index === 0) return [{ kind, text: item }];
 		const separator = index === items.length - 1 ? ` ${conjunction} ` : ", ";
