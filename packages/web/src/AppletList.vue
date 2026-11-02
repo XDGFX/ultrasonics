@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { type AppletListing, type PluginInfo, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import { formatWhen } from "./clock.ts";
+import { queuedMessage, useRunNow } from "./run-now.ts";
 import { sentence } from "./sentence.ts";
 
 type Status = AppletListing["state"] | NonNullable<AppletListing["lastRun"]>["status"] | "never-run";
@@ -47,6 +48,12 @@ function nextRun(applet: AppletListing): string {
 	return kind === "webhook" ? "on webhook" : "manual";
 }
 
+const { runNow, queued } = useRunNow();
+async function run(applet: AppletListing) {
+	await runNow(applet.id);
+	if (queued.value) await load();
+}
+
 async function remove(applet: AppletListing) {
 	confirming.value = null;
 	await api.applets.delete(applet.id);
@@ -58,6 +65,7 @@ async function remove(applet: AppletListing) {
 <template>
 	<AppShell :crumbs="[{ label: 'applets' }]">
 		<template #actions>
+			<p v-if="queued" class="queued muted" role="status" data-queued>{{ queuedMessage }}</p>
 			<RouterLink :to="{ name: 'new-applet' }" class="btn primary">new applet</RouterLink>
 		</template>
 
@@ -89,6 +97,7 @@ async function remove(applet: AppletListing) {
 				</template>
 			</span>
 			<span class="acts">
+				<button type="button" title="run now" @click="run(applet)">▶</button>
 				<RouterLink :to="{ name: 'builder', params: { id: applet.id } }" title="edit">✎</RouterLink>
 				<button type="button" class="del" title="delete" @click="confirming = applet">×</button>
 			</span>
@@ -129,6 +138,7 @@ async function remove(applet: AppletListing) {
 .acts a, .acts button { padding: 8px 10px; color: #fff; background: none; border: 0; text-decoration: none; }
 .acts a:hover { background: var(--accent); color: var(--accent-fg); }
 .acts .del:hover { background: var(--p2); color: #fff; }
+.queued { margin: 0; }
 .foot { text-align: center; color: var(--muted); padding: 30px 0; }
 .foot b { color: #fff; font-weight: 400; }
 .scrim { position: fixed; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / 0.6); }
