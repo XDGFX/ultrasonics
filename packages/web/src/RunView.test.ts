@@ -143,6 +143,16 @@ describe("the run view", () => {
 		await settle();
 		expect(api.scripts.connections("r")).toBe(connections);
 	});
+
+	test("closes the stream of a live run when the view is left", async () => {
+		const { api, router } = await openRun(succeededRun, "stepped");
+		api.scripts.advance("r");
+		await settle();
+		expect(api.scripts.open("r")).toBe(1);
+		await router.push("/settings");
+		await settle();
+		expect(api.scripts.open("r")).toBe(0);
+	});
 });
 
 describe("run now", () => {

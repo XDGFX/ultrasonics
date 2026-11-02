@@ -21,25 +21,24 @@ const summary = ref<RunSummary | null>(null);
 const catalogue = ref<PluginInfo[]>([]);
 const state = ref(emptyRunView());
 
-// Each follow gets a token, so a superseded or unmounted one folds nothing more.
-let following = 0;
+// Aborting a superseded or unmounted follow closes its stream, so it folds nothing more.
+let following = new AbortController();
 async function follow(id: string) {
-	const token = ++following;
+	following.abort();
+	const { signal } = (following = new AbortController());
 	state.value = emptyRunView();
 	queued.value = false;
 	const [run, plugins] = await Promise.all([api.runs.get(id), api.plugins()]);
-	if (token !== following) return;
+	if (signal.aborted) return;
 	summary.value = run;
 	catalogue.value = plugins;
-	for await (const event of api.runs.events(id)) {
-		if (token !== following) return;
+	for await (const event of api.runs.events(id, signal)) {
+		if (signal.aborted) return;
 		state.value = foldRunEvent(state.value, event);
 	}
 }
 watch(() => props.id, follow, { immediate: true });
-onBeforeUnmount(() => {
-	following++;
-});
+onBeforeUnmount(() => following.abort());
 
 const serviceOf = (plugin: string) => catalogue.value.find((info) => info.name === plugin)?.service;
 const title = computed(() => `run ${props.id} · ${headline(state.value, serviceOf)}`);
