@@ -174,6 +174,20 @@ describe("run now", () => {
 		expect(router.currentRoute.value.name).toBe("run");
 	});
 
+	test("the builder offers run now only once the applet is saved, and says queued", async () => {
+		const unsaved = (await mountApp("/applets/new", { applets: [applet] })).wrapper;
+		expect(unsaved.find("button.run-now").exists()).toBe(false);
+		document.body.innerHTML = "";
+
+		const { wrapper, router } = await mountApp("/applets/a", {
+			applets: [{ ...applet, state: "running" }],
+		});
+		await wrapper.get("button.run-now").trigger("click");
+		await settle();
+		expect(router.currentRoute.value.fullPath).toBe("/applets/a");
+		expect(wrapper.get("[data-queued]").text()).toBe(queuedMessage);
+	});
+
 	test("run again on the run view opens the next run, or says queued", async () => {
 		const { wrapper, router } = await mountApp("/runs/r", {
 			applets: [ran],

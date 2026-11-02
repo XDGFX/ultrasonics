@@ -278,6 +278,17 @@ describe("the settings-form renderer", () => {
 		expect((wrapper.find('[name="title"]').element as HTMLInputElement).value).toBe("late");
 	});
 
+	test("emits each edit as it is made, and draws no submit button when it has no label", async () => {
+		const wrapper = mount(SettingsForm, { props: { schema: leaves, submitLabel: null } });
+		expect(wrapper.find('button[type="submit"]').exists()).toBe(false);
+		await wrapper.find('[name="title"]').setValue("mix");
+		await wrapper.find('[name="limit"]').setValue("");
+		expect(wrapper.emitted("change")?.map(([value]) => value)).toEqual([
+			{ title: "mix" },
+			{ title: "mix" },
+		]);
+	});
+
 	test("renders nothing for an empty object", () => {
 		expect(
 			render(form(z.object({})))

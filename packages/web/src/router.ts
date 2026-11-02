@@ -1,3 +1,4 @@
+import { Service } from "@ultrasonics/plugin-sdk";
 import { createRouter, createWebHistory, type RouterHistory } from "vue-router";
 
 declare module "vue-router" {
@@ -55,6 +56,8 @@ export function createAppRouter(api: ApiClient, history: RouterHistory = createW
 				component: ServiceWizard,
 				props: true,
 				meta: settings,
+				beforeEnter: (to) =>
+					Service.safeParse(to.params.service).success ? true : { name: "settings" },
 			},
 			{ path: "/:unknown(.*)*", redirect: { name: "applets" } },
 		],

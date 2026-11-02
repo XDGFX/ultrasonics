@@ -7,7 +7,7 @@ export interface SentencePart {
 	text: string;
 }
 
-function describeSchedule({ unit, count, anchor }: Schedule): string {
+export function describeSchedule({ unit, count, anchor }: Schedule): string {
 	const [date = "", time = ""] = anchor.split("T");
 	const [, month = "1", day = "1"] = date.split("-");
 	const clock = time.slice(0, 5);

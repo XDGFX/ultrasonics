@@ -6,6 +6,7 @@ import {
 	type Field,
 	initialRaw,
 	initialVariant,
+	isEmptyForm,
 	placeIssues,
 	type Raw,
 	shapeOf,
@@ -16,11 +17,15 @@ const props = withDefaults(
 		schema: JSONSchema;
 		value?: unknown;
 		issues?: ValidationIssue[];
-		submitLabel?: string;
+		/** `null` draws no submit button, for a form whose caller saves it with something else. */
+		submitLabel?: string | null;
 	}>(),
 	{ value: undefined, issues: () => [], submitLabel: "save" },
 );
-const emit = defineEmits<{ submit: [value: Record<string, unknown>] }>();
+const emit = defineEmits<{
+	submit: [value: Record<string, unknown>];
+	change: [value: Record<string, unknown>];
+}>();
 
 const id = useId();
 const shape = computed(() => shapeOf(props.schema));
@@ -37,9 +42,7 @@ const variant = computed(
 const placed = computed(() =>
 	variant.value ? placeIssues(shape.value, variant.value, props.issues) : { byField: new Map(), above: [] },
 );
-const isEmpty = computed(
-	() => !shape.value.discriminator && (variant.value?.fields.length ?? 0) === 0,
-);
+const isEmpty = computed(() => isEmptyForm(props.schema));
 
 // Issues mean the server rejected what is shown, so submitting it again waits for a change (ADR-0019 §7).
 const changedSinceIssues = ref(false);
@@ -56,12 +59,19 @@ const inputId = (field: Field) => `${id}-${active.value}-${field.key}`;
 function set(field: Field, value: Raw) {
 	const branch = raw.value[active.value];
 	if (branch) branch[field.key] = value;
-	changedSinceIssues.value = true;
+	changed();
 }
 
 function choose(value: string) {
 	active.value = value;
+	changed();
+}
+
+function changed() {
 	changedSinceIssues.value = true;
+	if (variant.value) {
+		emit("change", emitted(shape.value, variant.value, raw.value[active.value] ?? {}));
+	}
 }
 
 function textOf(field: Field): string {
@@ -183,7 +193,7 @@ const hints = (field: Field) => {
 			<p v-for="message in placed.byField.get(field.key) ?? []" :key="message" class="issue">{{ message }}</p>
 		</div>
 
-		<div class="actions">
+		<div v-if="submitLabel !== null" class="actions">
 			<button type="submit" class="btn primary" :disabled="blocked">{{ submitLabel }}</button>
 		</div>
 	</form>

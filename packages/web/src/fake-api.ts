@@ -2,14 +2,14 @@ import {
 	type AuthRequirement,
 	type AuthSpec,
 	type Component,
-	type IssuePath,
 	type Mode,
 	type Service,
 	type SettingsSchema,
 	toFormSchema,
 	type ValidationIssue,
+	withMeta,
 } from "@ultrasonics/plugin-sdk";
-import type { z } from "zod";
+import { z } from "zod";
 import type {
 	ApiClient,
 	Applet,
@@ -22,6 +22,7 @@ import type {
 	ServiceStatus,
 } from "./api-client.ts";
 import { type RunScript, type ScriptedRun, scriptedRun } from "./scripted-run.ts";
+import { issuesOf } from "./zod-issues.ts";
 
 /** A plugin as the fake holds it: Zod schemas, which the fake serves through `toFormSchema`. */
 export interface FakePlugin {
@@ -52,19 +53,20 @@ export interface FakeSeed {
 	unregisteredClients?: Service[];
 }
 
+/** A guess at the `client` step's form until open question 2 of spec #118 is settled. */
+const clientCredentials = z.object({
+	clientId: withMeta(z.string().min(1), {
+		title: "client id",
+		description: "from your app's page on the service's developer dashboard",
+	}),
+});
+
 function formSchema(schema: z.ZodType, options: { auth?: boolean } = {}) {
 	const result = toFormSchema(schema, options);
 	if (!result.ok) {
 		throw new Error(`A fake plugin's schema is not renderable: ${JSON.stringify(result.issues)}`);
 	}
 	return result.jsonSchema;
-}
-
-function issuesOf(error: z.ZodError, prefix: IssuePath = []): ValidationIssue[] {
-	return error.issues.map((issue) => ({
-		path: [...prefix, ...issue.path.map((key) => (typeof key === "symbol" ? String(key) : key))],
-		message: issue.message,
-	}));
 }
 
 function pluginInfo(plugin: FakePlugin): PluginInfo {
@@ -109,6 +111,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 	>;
 	const runs = new Map<string, RunSummary>();
 	const scripts = new Map<string, ScriptedRun>();
+	const unregistered = new Set(seed.unregisteredClients);
 	let nextId = 1;
 
 	const startRun = (summary: RunSummary, script: RunScript, startedNow: boolean) => {
@@ -231,7 +234,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 			},
 			generateWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = true;
-				return { url: `/hooks/${appletId}/${crypto.randomUUID()}` };
+				return { url: `http://localhost:5173/hooks/${appletId}/${crypto.randomUUID()}` };
 			},
 			removeWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = false;
@@ -295,11 +298,18 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 						: [{ kind: "fields", schema: fields }];
 				}
 				if (spec.flow === "none") return [];
-				return seed.unregisteredClients?.includes(service)
+				return unregistered.has(service)
 					? [{ kind: "client", service }, { kind: "connect" }]
 					: [{ kind: "connect" }];
 			},
 			redirectUri: async (service) => `http://localhost:5173/services/${service}`,
+			clientForm: async () => formSchema(clientCredentials, { auth: true }),
+			registerClient: async (service, input) => {
+				const parsed = clientCredentials.safeParse(input);
+				if (!parsed.success) return { ok: false, issues: issuesOf(parsed.error) };
+				unregistered.delete(service);
+				return { ok: true, value: null };
+			},
 			configure: async (service, input) => {
 				const parsed = authSpec(service).fields.safeParse(input);
 				if (!parsed.success) return { kind: "invalid", issues: issuesOf(parsed.error) };
