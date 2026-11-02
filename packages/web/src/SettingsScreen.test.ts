@@ -44,7 +44,9 @@ describe("settings", () => {
 	});
 
 	test("opens a plugin's stored settings in the side panel and saves them through the API", async () => {
-		const { wrapper, api } = await mountApp("/settings", { settings: { plex: { library: "music" } } });
+		const { wrapper, api } = await mountApp("/settings", {
+			settings: { plex: { library: "music" } },
+		});
 		await wrapper.get('[data-plugin="plex"] button').trigger("click");
 		await settle();
 		const input = wrapper.get('.panel input[name="library"]');
@@ -53,7 +55,7 @@ describe("settings", () => {
 		await input.setValue("audiobooks");
 		await wrapper.get(".panel form").trigger("submit");
 		await settle();
-		expect(wrapper.get(".panel [data-saved]").exists()).toBe(true);
+		expect(wrapper.find(".panel [data-saved]").exists()).toBe(true);
 		expect((await api.settings.get("plex")).value).toEqual({ library: "audiobooks" });
 	});
 

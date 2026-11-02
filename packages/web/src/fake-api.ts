@@ -198,7 +198,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 			},
 			generateWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = true;
-				return { url: `/hooks/${appletId}/${crypto.randomUUID()}` };
+				return { url: `http://localhost:5173/hooks/${appletId}/${crypto.randomUUID()}` };
 			},
 			removeWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = false;
