@@ -1,5 +1,3 @@
-import type { Point } from "./mosaic.ts";
-
 export interface Rect {
 	left: number;
 	top: number;
@@ -17,7 +15,10 @@ export interface Viewport {
  * Where the mosaic's canvas goes, relative to the hero's slot, so its grid covers the whole first
  * screen (ADR-0027 §2) and scrolls with the page; the logo sits on the slot's centre.
  */
-export function screenGrid(slot: Rect, viewport: Viewport): Rect & { anchor: Point } {
+export function screenGrid(
+	slot: Rect,
+	viewport: Viewport,
+): Rect & { anchor: { x: number; y: number } } {
 	const left = slot.left + viewport.scrollX;
 	const top = slot.top + viewport.scrollY;
 	return {

@@ -73,19 +73,23 @@ describe("the mosaic", () => {
 	});
 
 	test("centres the logo on the anchor it is given, anywhere in the grid", () => {
+		// Where the wordmark's face is, in pixels.
 		const middle = (frame: Frame) => {
-			const word = (frame.layers[0] as Frame["layers"][number]).cells.filter(
-				(c) => c.tone === "face",
-			);
-			const mean = (f: (c: Cell) => number) => word.reduce((s, c) => s + f(c), 0) / word.length;
-			return { col: mean((c) => c.col), row: mean((c) => c.row) };
+			const layer = frame.layers[0] as Frame["layers"][number];
+			const face = layer.cells.filter((c) => c.tone === "face");
+			const mean = (f: (c: Cell) => number) => face.reduce((s, c) => s + f(c), 0) / face.length;
+			return {
+				x: mean((c) => c.col * layer.cellWidth),
+				y: mean((c) => layer.top + c.row * layer.cell),
+			};
 		};
 		const still = (anchor?: { x: number; y: number }) =>
 			createMosaic({ seed: 1, ...size, glyphs: boxGlyphs, reduced: true, anchor }).frame(0);
+		const shift = { x: 30, y: -30 };
 		const centred = middle(still());
-		const moved = middle(still({ x: size.width / 2 + 30, y: size.height / 2 - 30 }));
-		expect(moved.col).toBeCloseTo(centred.col + 30 / 6, 0);
-		expect(moved.row).toBeCloseTo(centred.row - 30 / 10, 0);
+		const moved = middle(still({ x: size.width / 2 + shift.x, y: size.height / 2 + shift.y }));
+		expect(moved.x - centred.x).toBeCloseTo(shift.x, -1);
+		expect(moved.y - centred.y).toBeCloseTo(shift.y, -1);
 	});
 
 	test("draws a different picture for another seed", () => {

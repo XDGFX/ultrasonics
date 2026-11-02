@@ -4,29 +4,41 @@ import { canvasGlyphs, drawFrame, loadLogoFonts } from "./canvas-glyphs.ts";
 import { createMosaic, type Mosaic } from "./mosaic.ts";
 import { screenGrid } from "./screen-grid.ts";
 
-const slot = ref<HTMLDivElement>();
+const place = ref<HTMLDivElement>();
 const canvas = ref<HTMLCanvasElement>();
 let mosaic: Mosaic | null = null;
 let frameId = 0;
 let resizeTimer: ReturnType<typeof setTimeout> | undefined;
 let motion: MediaQueryList | undefined;
+let layout: ResizeObserver | undefined;
+let placed = "";
 let alive = true;
+// Presses on these are the page's own, not interference.
+const INTERACTIVE =
+	"a, button, input, select, textarea, label, summary, [role=button], [contenteditable]";
 
-function build() {
-	const el = slot.value;
+/** Lays the grid out again, restarting the tune-in only when it actually moved or `force`d. */
+function build(force = false) {
+	const el = place.value;
 	const c = canvas.value;
 	const g = c?.getContext("2d");
+	// Hidden below full size, where the static lockup stands in.
+	const visible = el && c && g && el.clientWidth > 0;
+	const page = document.documentElement;
+	const grid = visible
+		? screenGrid(el.getBoundingClientRect(), {
+				width: page.clientWidth,
+				height: page.clientHeight,
+				scrollX,
+				scrollY,
+			})
+		: null;
+	const key = JSON.stringify(grid);
+	if (!force && key === placed) return;
+	placed = key;
 	cancelAnimationFrame(frameId);
 	mosaic = null;
-	// Hidden below full size, where the static lockup stands in.
-	if (!el || !c || !g || el.clientWidth === 0) return;
-	const page = document.documentElement;
-	const grid = screenGrid(el.getBoundingClientRect(), {
-		width: page.clientWidth,
-		height: page.clientHeight,
-		scrollX,
-		scrollY,
-	});
+	if (!grid || !c || !g) return;
 	Object.assign(c.style, {
 		left: `${grid.left}px`,
 		top: `${grid.top}px`,
@@ -63,9 +75,10 @@ function build() {
 	frameId = requestAnimationFrame(tick);
 }
 
+const rebuildNow = () => build(true);
 const rebuildSoon = () => {
 	clearTimeout(resizeTimer);
-	resizeTimer = setTimeout(build, 200);
+	resizeTimer = setTimeout(() => build(), 200);
 };
 const at = (e: PointerEvent) => {
 	const r = canvas.value?.getBoundingClientRect();
@@ -74,7 +87,7 @@ const at = (e: PointerEvent) => {
 // The grid lies behind the page, so the cursor interferes wherever it is on screen.
 const move = (e: PointerEvent) => mosaic?.pointer(at(e));
 const press = (e: PointerEvent) => {
-	if (!(e.target instanceof Element && e.target.closest("a, button, input, select, textarea, label")))
+	if (!(e.target instanceof Element && e.target.closest(INTERACTIVE)))
 		mosaic?.press(at(e));
 };
 const leave = () => mosaic?.pointer(null);
@@ -84,19 +97,23 @@ onMounted(async () => {
 	await loadLogoFonts();
 	if (!alive) return;
 	motion = matchMedia("(prefers-reduced-motion: reduce)");
-	motion.addEventListener("change", build);
+	motion.addEventListener("change", rebuildNow);
 	addEventListener("resize", rebuildSoon);
+	// A late banner or scrollbar moves the place without resizing the window.
+	layout = new ResizeObserver(rebuildSoon);
+	layout.observe(document.body);
 	addEventListener("pointermove", move);
 	addEventListener("pointerdown", press);
 	document.documentElement.addEventListener("pointerleave", leave);
-	build();
+	build(true);
 });
 onBeforeUnmount(() => {
 	alive = false;
 	cancelAnimationFrame(frameId);
 	clearTimeout(resizeTimer);
-	motion?.removeEventListener("change", build);
+	motion?.removeEventListener("change", rebuildNow);
 	removeEventListener("resize", rebuildSoon);
+	layout?.disconnect();
 	removeEventListener("pointermove", move);
 	removeEventListener("pointerdown", press);
 	document.documentElement.removeEventListener("pointerleave", leave);
@@ -104,13 +121,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div ref="slot" class="mosaic" role="img" aria-label="ultrasonics" data-logo="mosaic">
+	<div ref="place" class="mosaic" role="img" aria-label="ultrasonics" data-logo="mosaic">
 		<canvas ref="canvas"></canvas>
 	</div>
 </template>
 
 <style scoped>
-/* The slot holds the logo's place in the page; the canvas spreads from it over the whole screen, behind everything. */
+/* This holds the logo's place in the page; the canvas spreads from it over the whole screen, behind everything. */
 .mosaic { position: relative; }
 canvas { position: absolute; z-index: -1; display: block; pointer-events: none; }
 </style>
