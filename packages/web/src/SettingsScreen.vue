@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from "vue";
 import { type PluginInfo, type ServiceStatus, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import SettingsForm from "./SettingsForm.vue";
+import { statusDetail, wizardAction } from "./service-status.ts";
 
 const api = useApi();
 const services = ref<ServiceStatus[]>([]);
@@ -14,20 +15,15 @@ onMounted(async () => {
 
 const configurable = computed(() => catalogue.value.filter((plugin) => plugin.persistentSettings));
 
-const detail = ({ status }: ServiceStatus) => {
-	if (status.kind === "failed") return status.failure.message;
-	return status.kind === "connected" ? "connected" : "not connected";
-};
-
-const open = ref<{ plugin: PluginInfo; value: unknown; issues: ValidationIssue[]; saved: boolean }>();
+const editing = ref<{ plugin: PluginInfo; value: unknown; issues: ValidationIssue[]; saved: boolean }>();
 
 async function edit(plugin: PluginInfo) {
 	const stored = await api.settings.get(plugin.name);
-	open.value = { plugin, ...stored, saved: false };
+	editing.value = { plugin, ...stored, saved: false };
 }
 
 async function save(value: Record<string, unknown>) {
-	const current = open.value;
+	const current = editing.value;
 	if (!current) return;
 	const result = await api.settings.save(current.plugin.name, value);
 	current.issues = result.ok ? [] : result.issues;
@@ -39,14 +35,14 @@ async function save(value: Record<string, unknown>) {
 	<AppShell :crumbs="[{ label: 'settings' }]">
 		<h3 class="key">services:</h3>
 		<div v-for="entry in services" :key="entry.service" class="row" :data-service="entry.service">
-			<span class="st">{{ entry.status.kind === "connected" ? "✓" : "✗" }}</span>
+			<span class="st" :data-status="entry.status.kind">{{ entry.status.kind === "connected" ? "✓" : "✗" }}</span>
 			<span class="tag-cell"
 				><span class="tag" :data-needs-action="entry.status.kind !== 'connected'">{{ entry.service }}</span></span
 			>
-			<span class="muted">{{ detail(entry) }} · used by {{ entry.usedBy.join(", ") }}</span>
+			<span class="muted">{{ statusDetail(entry.status) }} · used by {{ entry.usedBy.join(", ") }}</span>
 			<span class="acts">
 				<RouterLink :to="{ name: 'wizard', params: { service: entry.service } }" :title="`connect ${entry.service}`">{{
-					entry.status.kind === "connected" ? "✎" : "reconnect"
+					wizardAction[entry.status.kind]
 				}}</RouterLink>
 			</span>
 		</div>
@@ -57,17 +53,17 @@ async function save(value: Record<string, unknown>) {
 			<span class="acts"><button type="button" title="edit settings" @click="edit(plugin)">✎</button></span>
 		</div>
 
-		<template v-if="open" #panel>
-			<h3><span class="key">plugin:</span> {{ open.plugin.name }}</h3>
+		<template v-if="editing" #panel>
+			<h3><span class="key">plugin:</span> {{ editing.plugin.name }}</h3>
 			<SettingsForm
-				v-if="open.plugin.persistentSettings"
-				:key="open.plugin.name"
-				:schema="open.plugin.persistentSettings"
-				:value="open.value"
-				:issues="open.issues"
+				v-if="editing.plugin.persistentSettings"
+				:key="editing.plugin.name"
+				:schema="editing.plugin.persistentSettings"
+				:value="editing.value"
+				:issues="editing.issues"
 				@submit="save"
 			/>
-			<p v-if="open.saved" class="accent" role="status" data-saved>saved.</p>
+			<p v-if="editing.saved" class="accent" role="status" data-saved>saved.</p>
 		</template>
 	</AppShell>
 </template>

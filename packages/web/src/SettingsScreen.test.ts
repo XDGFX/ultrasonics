@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mountApp, settle } from "../test/mount-app.ts";
+import { wizardAction } from "./service-status.ts";
 
 afterEach(() => {
 	document.body.innerHTML = "";
@@ -22,18 +23,25 @@ describe("settings", () => {
 			},
 		});
 		const plex = serviceRow(wrapper, "plex");
-		expect(plex.get(".st").text()).toBe("✓");
+		expect(plex.get(".st").attributes("data-status")).toBe("connected");
 		expect(plex.text()).toContain("used by plex");
 		expect(plex.get(".tag").attributes("data-needs-action")).toBe("false");
-		expect(plex.get(".acts a").text()).toBe("✎");
+		expect(plex.get(".acts a").text()).toBe(wizardAction.connected);
 		expect(plex.get(".acts a").attributes("href")).toBe("/services/plex");
 
 		const spotify = serviceRow(wrapper, "spotify");
-		expect(spotify.get(".st").text()).toBe("✗");
+		expect(spotify.get(".st").attributes("data-status")).toBe("failed");
 		expect(spotify.text()).toContain("the grant was revoked");
 		expect(spotify.get(".tag").attributes("data-needs-action")).toBe("true");
-		expect(spotify.get(".acts a").text()).toBe("reconnect");
+		expect(spotify.get(".acts a").text()).toBe(wizardAction.failed);
 		expect(spotify.get(".acts a").attributes("href")).toBe("/services/spotify");
+	});
+
+	test("offers connect, not reconnect, for a service never connected", async () => {
+		const { wrapper } = await mountApp("/settings");
+		const spotify = serviceRow(wrapper, "spotify");
+		expect(spotify.get(".st").attributes("data-status")).toBe("not-connected");
+		expect(spotify.get(".acts a").text()).toBe(wizardAction["not-connected"]);
 	});
 
 	test("lists only the plugins that have persistent settings", async () => {

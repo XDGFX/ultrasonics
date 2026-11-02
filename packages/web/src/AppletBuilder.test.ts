@@ -26,12 +26,12 @@ const applet: FakeApplet = {
 const open = (seed: Partial<FakeSeed> = {}, path = "/applets/a1") =>
 	mountApp(path, { applets: [applet], grants: { plex: { kind: "connected" } }, ...seed });
 
-const nodes = (wrapper: Wrapper, component: Component) =>
-	wrapper.findAll(`[data-column="${component}"] [data-node]`);
+const slots = (wrapper: Wrapper, component: Component) =>
+	wrapper.findAll(`[data-column="${component}"] [data-slot]`);
 
-const node = (wrapper: Wrapper, component: Component, index: number) => {
-	const found = nodes(wrapper, component)[index];
-	if (!found) throw new Error(`no ${component} node ${index}`);
+const placed = (wrapper: Wrapper, component: Component, index: number) => {
+	const found = slots(wrapper, component)[index];
+	if (!found) throw new Error(`no ${component} placed ${index}`);
 	return found;
 };
 
@@ -60,17 +60,17 @@ describe("the builder", () => {
 			"outputs:",
 		]);
 		expect(sentence(wrapper)).toBe("manual only: take spotify, deduplicate it, and put it in plex");
-		await click(wrapper, '[data-column="modifiers"] [data-node] button[title="remove"]');
+		await click(wrapper, '[data-column="modifiers"] [data-slot] button[title="remove"]');
 		expect(sentence(wrapper)).toBe("manual only: take spotify, and put it in plex");
 	});
 
-	test("shows each node's name, version and a one-line summary", async () => {
+	test("shows each slot's name, version and a one-line summary", async () => {
 		const { wrapper } = await open();
-		const spotify = node(wrapper, "inputs", 0);
-		expect(spotify.get(".t").text()).toContain("spotify");
-		expect(spotify.get(".v").text()).toBe("v2.0.0");
-		expect(spotify.get(".d").text()).toBe("chosen · discover weekly");
-		expect(node(wrapper, "modifiers", 0).get(".d").text()).toBe("removes repeated songs");
+		const spotify = placed(wrapper, "inputs", 0);
+		expect(spotify.get(".title").text()).toContain("spotify");
+		expect(spotify.get(".version").text()).toBe("v2.0.0");
+		expect(spotify.get(".summary").text()).toBe("chosen · discover weekly");
+		expect(placed(wrapper, "modifiers", 0).get(".summary").text()).toBe("removes repeated songs");
 	});
 
 	test("offers only the plugins implementing a column's component", async () => {
@@ -84,14 +84,14 @@ describe("the builder", () => {
 		expect(await offered("outputs")).toEqual(["plex"]);
 	});
 
-	test("adds a plugin with its defaults, reorders and removes nodes, and saves the order", async () => {
+	test("adds a plugin with its defaults, reorders and removes slots, and saves the order", async () => {
 		const { wrapper, api } = await open();
 		await click(wrapper, '[data-column="inputs"] [data-add]');
 		await click(wrapper, ".panel [data-offer]");
-		expect(nodes(wrapper, "inputs")).toHaveLength(2);
+		expect(slots(wrapper, "inputs")).toHaveLength(2);
 
-		await node(wrapper, "inputs", 0).get('button[title="move down"]').trigger("click");
-		await click(wrapper, '[data-column="modifiers"] [data-node] button[title="remove"]');
+		await placed(wrapper, "inputs", 0).get('button[title="move down"]').trigger("click");
+		await click(wrapper, '[data-column="modifiers"] [data-slot] button[title="remove"]');
 		await save(wrapper);
 
 		const saved = await api.applets.get("a1");
@@ -102,13 +102,13 @@ describe("the builder", () => {
 		expect(saved.definition.modifiers).toEqual([]);
 	});
 
-	test("opens a node's instance settings in the side panel, and saves what is edited there", async () => {
+	test("opens a slot's instance settings in the side panel, and saves what is edited there", async () => {
 		const { wrapper, api } = await open();
-		await click(wrapper, '[data-column="inputs"] [data-node] .select');
+		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
 		const names = wrapper.get('.panel input[name="names"]');
 		expect((names.element as HTMLInputElement).value).toBe("discover weekly");
 		await names.setValue("release radar");
-		expect(node(wrapper, "inputs", 0).get(".d").text()).toBe("chosen · release radar");
+		expect(placed(wrapper, "inputs", 0).get(".summary").text()).toBe("chosen · release radar");
 		await save(wrapper);
 		expect((await api.applets.get("a1")).definition.inputs[0]?.settings).toEqual({
 			source: "chosen",
@@ -116,31 +116,31 @@ describe("the builder", () => {
 		});
 	});
 
-	test("says a node with no settings has none", async () => {
+	test("says a slot with no settings has none", async () => {
 		const { wrapper } = await open();
-		await click(wrapper, '[data-column="modifiers"] [data-node] .select');
-		expect(wrapper.get(".panel").text()).toContain("no settings.");
+		await click(wrapper, '[data-column="modifiers"] [data-slot] .select');
+		expect(wrapper.find(".panel [data-no-settings]").exists()).toBe(true);
 		expect(wrapper.find(".panel form").exists()).toBe(false);
 	});
 
-	test("links a node whose service isn't connected to its wizard", async () => {
+	test("links a slot whose service isn't connected to its wizard", async () => {
 		const { wrapper } = await open();
-		expect(node(wrapper, "inputs", 0).find("[data-needs-service]").exists()).toBe(true);
-		expect(node(wrapper, "outputs", 0).find("[data-needs-service]").exists()).toBe(false);
-		await click(wrapper, '[data-column="inputs"] [data-node] .select');
+		expect(placed(wrapper, "inputs", 0).find("[data-needs-service]").exists()).toBe(true);
+		expect(placed(wrapper, "outputs", 0).find("[data-needs-service]").exists()).toBe(false);
+		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
 		expect(wrapper.get(".panel [data-service-link]").attributes("href")).toBe("/services/spotify");
 	});
 
-	test("places each issue a save returns on its node and field", async () => {
+	test("places each issue a save returns on its slot and field", async () => {
 		const { wrapper, api } = await open();
-		await click(wrapper, '[data-column="inputs"] [data-node] .select');
+		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
 		await wrapper.get('.panel input[name="names"]').setValue("");
-		await click(wrapper, '[data-column="outputs"] [data-node] .select');
+		await click(wrapper, '[data-column="outputs"] [data-slot] .select');
 		await save(wrapper);
 
-		expect(node(wrapper, "inputs", 0).attributes("data-issues")).toBe("1");
-		expect(node(wrapper, "outputs", 0).attributes("data-issues")).toBe("0");
-		await click(wrapper, '[data-column="inputs"] [data-node] .select');
+		expect(placed(wrapper, "inputs", 0).attributes("data-issues")).toBe("1");
+		expect(placed(wrapper, "outputs", 0).attributes("data-issues")).toBe("0");
+		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
 		const field = wrapper.get('.panel input[name="names"]').element.closest(".field");
 		expect(field?.querySelector(".issue")?.textContent).toBeTruthy();
 		expect((await api.applets.get("a1")).definition.inputs[0]?.settings).toEqual(
@@ -229,7 +229,7 @@ describe("the builder", () => {
 			await click(first.wrapper, '[data-column="when"] [data-add="webhook"]');
 			const url = first.wrapper.get(".panel [data-copy] code").text();
 			expect(url).toMatch(/\/hooks\/a1\/.+/);
-			expect(first.wrapper.get(".panel").text()).toContain("won't be shown again");
+			expect(first.wrapper.find(".panel [data-shown-once]").exists()).toBe(true);
 			expect(sentence(first.wrapper)).toStartWith("when on webhook");
 
 			await click(first.wrapper, '[data-column="when"] [data-trigger="webhook"] .select');

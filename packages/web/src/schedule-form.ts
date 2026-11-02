@@ -1,8 +1,7 @@
 import { toFormSchema, type ValidationIssue, withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import type { Schedule } from "./api-client.ts";
-
-// The schedule is drawn by the settings-form renderer like every other form on the builder.
+import { issuesOf } from "./zod-issues.ts";
 
 const fields = z.object({
 	unit: withMeta(z.enum(["hour", "day", "week"]).default("day"), { title: "every" }),
@@ -48,13 +47,7 @@ export function scheduleOf(
 ): { ok: true; schedule: Schedule } | { ok: false; issues: ValidationIssue[] } {
 	const parsed = fields.safeParse(value);
 	if (!parsed.success) {
-		return {
-			ok: false,
-			issues: parsed.error.issues.map((issue) => ({
-				path: issue.path.map((key) => (typeof key === "symbol" ? String(key) : key)),
-				message: issue.message,
-			})),
-		};
+		return { ok: false, issues: issuesOf(parsed.error) };
 	}
 	const { unit, count, date, time } = parsed.data;
 	return {

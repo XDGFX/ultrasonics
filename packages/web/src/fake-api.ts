@@ -2,7 +2,6 @@ import {
 	type AuthRequirement,
 	type AuthSpec,
 	type Component,
-	type IssuePath,
 	type Mode,
 	type Service,
 	type SettingsSchema,
@@ -22,6 +21,7 @@ import type {
 	SaveResult,
 	ServiceStatus,
 } from "./api-client.ts";
+import { issuesOf } from "./zod-issues.ts";
 
 /** A plugin as the fake holds it: Zod schemas, which the fake serves through `toFormSchema`. */
 export interface FakePlugin {
@@ -64,13 +64,6 @@ function formSchema(schema: z.ZodType, options: { auth?: boolean } = {}) {
 		throw new Error(`A fake plugin's schema is not renderable: ${JSON.stringify(result.issues)}`);
 	}
 	return result.jsonSchema;
-}
-
-function issuesOf(error: z.ZodError, prefix: IssuePath = []): ValidationIssue[] {
-	return error.issues.map((issue) => ({
-		path: [...prefix, ...issue.path.map((key) => (typeof key === "symbol" ? String(key) : key))],
-		message: issue.message,
-	}));
 }
 
 function pluginInfo(plugin: FakePlugin): PluginInfo {

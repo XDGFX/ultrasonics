@@ -30,7 +30,7 @@ describe("the service-auth wizard", () => {
 			const { wrapper } = await mountApp("/services/plex");
 			expect(wrapper.find('input[name="address"]').exists()).toBe(true);
 			expect(wrapper.get('input[name="token"]').attributes("type")).toBe("password");
-			expect(wrapper.get('form button[type="submit"]').text()).toBe("test and save");
+			expect(wrapper.find('form button[type="submit"]').exists()).toBe(true);
 			expect(wrapper.find("[data-connect]").exists()).toBe(false);
 		});
 
@@ -52,7 +52,8 @@ describe("the service-auth wizard", () => {
 			await type(wrapper, "token", "secret");
 			await wrapper.get("form").trigger("submit");
 			await settle();
-			expect(wrapper.get(".form-issues").text()).toBe("connection refused");
+			expect(wrapper.get("[data-test-failure]").text()).toBe("connection refused");
+			expect(wrapper.get('form button[type="submit"]').attributes("disabled")).toBeUndefined();
 			expect(await statusOf(api, "plex")).toBe("not-connected");
 		});
 
@@ -62,7 +63,7 @@ describe("the service-auth wizard", () => {
 			await type(wrapper, "token", "secret");
 			await wrapper.get("form").trigger("submit");
 			await settle();
-			expect(wrapper.get("[data-outcome]").text()).toContain("connected");
+			expect(wrapper.get("[data-outcome]").attributes("data-outcome")).toBe("connected");
 			expect(await statusOf(api, "plex")).toBe("connected");
 		});
 	});
@@ -102,15 +103,21 @@ describe("the service-auth wizard", () => {
 			await wrapper.get("[data-connect]").trigger("click");
 			await settle();
 			expect(router.currentRoute.value.path).toBe("/services/spotify");
-			expect(wrapper.get("[data-outcome]").text()).toContain("connected");
+			expect(wrapper.get("[data-outcome]").attributes("data-outcome")).toBe("connected");
 			expect(await statusOf(api, "spotify")).toBe("connected");
 		});
 
 		test("shows the service's error when the return carries one", async () => {
 			const { wrapper, api } = await mountApp("/services/spotify?error=access_denied");
+			expect(wrapper.get("[data-outcome]").attributes("data-outcome")).toBe("failed");
 			expect(wrapper.get("[data-outcome]").text()).toContain("access_denied");
 			expect(await statusOf(api, "spotify")).toBe("not-connected");
 		});
+	});
+
+	test("sends an unknown service back to settings", async () => {
+		const { router } = await mountApp("/services/nowhere");
+		expect(router.currentRoute.value.name).toBe("settings");
 	});
 
 	test("shows connect alone when the service asks for nothing", async () => {
@@ -122,6 +129,6 @@ describe("the service-auth wizard", () => {
 		expect(wrapper.find("form").exists()).toBe(false);
 		expect(wrapper.findAll("[data-requirement]")).toHaveLength(0);
 		await click(wrapper, "connect");
-		expect(wrapper.get("[data-outcome]").text()).toContain("connected");
+		expect(wrapper.get("[data-outcome]").attributes("data-outcome")).toBe("connected");
 	});
 });

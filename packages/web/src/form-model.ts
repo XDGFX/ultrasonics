@@ -190,3 +190,9 @@ export function defaultsOf(schema: JSONSchema): Record<string, unknown> {
 	if (!variant) return {};
 	return emitted(shape, variant, initialRaw(shape, undefined)[variant.value] ?? {});
 }
+
+/** A form with nothing to fill in, which the caller shows as "no settings.". */
+export function isEmptyForm(schema: JSONSchema): boolean {
+	const shape = shapeOf(schema);
+	return !shape.discriminator && (shape.variants[0]?.fields.length ?? 0) === 0;
+}

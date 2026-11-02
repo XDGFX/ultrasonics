@@ -6,6 +6,7 @@ import {
 	type Field,
 	initialRaw,
 	initialVariant,
+	isEmptyForm,
 	placeIssues,
 	type Raw,
 	shapeOf,
@@ -41,9 +42,7 @@ const variant = computed(
 const placed = computed(() =>
 	variant.value ? placeIssues(shape.value, variant.value, props.issues) : { byField: new Map(), above: [] },
 );
-const isEmpty = computed(
-	() => !shape.value.discriminator && (variant.value?.fields.length ?? 0) === 0,
-);
+const isEmpty = computed(() => isEmptyForm(props.schema));
 
 // Issues mean the server rejected what is shown, so submitting it again waits for a change (ADR-0019 §7).
 const changedSinceIssues = ref(false);

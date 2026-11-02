@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Component, JSONSchema, ValidationIssue } from "@ultrasonics/plugin-sdk";
-import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw } from "vue";
-import { onBeforeRouteLeave, useRouter } from "vue-router";
+import { computed, onMounted, reactive, ref, shallowRef, toRaw } from "vue";
+import { useRouter } from "vue-router";
 import {
 	type AppletDefinition,
 	type PluginInfo,
@@ -11,21 +11,22 @@ import {
 } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import CopyValue from "./CopyValue.vue";
-import { defaultsOf } from "./form-model.ts";
-import { summarise } from "./node-summary.ts";
+import { defaultsOf, isEmptyForm } from "./form-model.ts";
+import { summarise } from "./slot-summary.ts";
 import { scheduleForm, scheduleFormValue, scheduleOf, browserTimeZone, newSchedule } from "./schedule-form.ts";
 import { describeSchedule, sentence } from "./sentence.ts";
 import SettingsForm from "./SettingsForm.vue";
+import { useUnsavedChanges } from "./unsaved-changes.ts";
 
-interface Node {
-	/** Stable across reordering, so a node's open form survives a move. */
+interface PlacedSlot {
+	/** Stable across reordering, so a slot's open form survives a move. */
 	key: number;
 	plugin: string;
 	settings: unknown;
 }
 
 type Selection =
-	| { kind: "node"; column: Component; key: number }
+	| { kind: "slot"; column: Component; key: number }
 	| { kind: "add"; column: Component }
 	| { kind: "schedule" }
 	| { kind: "webhook" };
@@ -42,7 +43,7 @@ const services = ref<ServiceStatus[]>([]);
 const appletId = ref(props.id);
 const name = ref("new applet");
 const enabled = ref(true);
-const nodes = reactive<Record<Component, Node[]>>({ inputs: [], modifiers: [], outputs: [] });
+const slots = reactive<Record<Component, PlacedSlot[]>>({ inputs: [], modifiers: [], outputs: [] });
 const schedule = shallowRef<Schedule | null>(null);
 /** The schedule form's issues while what it holds isn't a schedule. */
 const scheduleProblem = ref<ValidationIssue[] | null>(null);
@@ -52,19 +53,22 @@ const hasWebhook = ref(false);
 const revealedUrl = ref<string | null>(null);
 const issues = ref<ValidationIssue[]>([]);
 const selected = ref<Selection | null>(null);
-/** The open form's starting value, kept apart from the node so the form isn't refilled as it emits. */
+/** The open form's starting value, kept apart from the slot so the form isn't refilled as it emits. */
 const panelValue = ref<unknown>();
 const savedState = ref("");
+const savedSchedule = ref("null");
 const loaded = ref(false);
 let nextKey = 1;
 
-const toNodes = (slots: AppletDefinition[Component]): Node[] =>
-	slots.map((slot) => ({ key: nextKey++, plugin: slot.plugin, settings: slot.settings }));
+const toPlaced = (saved: AppletDefinition[Component]): PlacedSlot[] =>
+	saved.map(({ plugin, settings }) => ({ key: nextKey++, plugin, settings }));
 
+const stored = (column: Component) =>
+	slots[column].map(({ plugin, settings }) => ({ plugin, settings: structuredClone(toRaw(settings)) }));
 const definition = (): AppletDefinition => ({
-	inputs: nodes.inputs.map(({ plugin, settings }) => ({ plugin, settings: structuredClone(toRaw(settings)) })),
-	modifiers: nodes.modifiers.map(({ plugin, settings }) => ({ plugin, settings: structuredClone(toRaw(settings)) })),
-	outputs: nodes.outputs.map(({ plugin, settings }) => ({ plugin, settings: structuredClone(toRaw(settings)) })),
+	inputs: stored("inputs"),
+	modifiers: stored("modifiers"),
+	outputs: stored("outputs"),
 });
 
 const state = () =>
@@ -82,34 +86,37 @@ onMounted(async () => {
 	if (applet) {
 		name.value = applet.name;
 		enabled.value = applet.enabled;
-		for (const column of columns) nodes[column] = toNodes(applet.definition[column]);
+		for (const column of columns) slots[column] = toPlaced(applet.definition[column]);
 		schedule.value = applet.schedule;
 		hasWebhook.value = applet.hasWebhook;
 	}
-	savedState.value = state();
+	markSaved();
 	loaded.value = true;
 });
 
-const parts = computed(() =>
+function markSaved() {
+	savedState.value = state();
+	savedSchedule.value = JSON.stringify(schedule.value);
+}
+
+const sentenceParts = computed(() =>
 	sentence({ definition: definition(), schedule: schedule.value, hasWebhook: hasWebhook.value }, catalogue.value),
 );
 
 const pluginOf = (name: string) => catalogue.value.find((plugin) => plugin.name === name);
-const schemaOf = (column: Component, node: Node) => pluginOf(node.plugin)?.instanceSettings[column];
-const hasFields = (schema: JSONSchema | undefined) =>
-	schema !== undefined && (schema.oneOf !== undefined || Object.keys(schema.properties ?? {}).length > 0);
+const schemaOf = (column: Component, placed: PlacedSlot) => pluginOf(placed.plugin)?.instanceSettings[column];
 
-function unconnectedService(node: Node) {
-	const service = pluginOf(node.plugin)?.service;
+function unconnectedService(placed: PlacedSlot) {
+	const service = pluginOf(placed.plugin)?.service;
 	if (!service) return undefined;
 	const status = services.value.find((entry) => entry.service === service);
 	return status?.status.kind === "connected" ? undefined : service;
 }
 
-const summaryOf = (column: Component, node: Node) =>
-	summarise(node.settings, schemaOf(column, node), pluginOf(node.plugin)?.description ?? "");
+const summaryOf = (column: Component, placed: PlacedSlot) =>
+	summarise(placed.settings, schemaOf(column, placed), pluginOf(placed.plugin)?.description ?? "");
 
-/** A save's issues for one node, with the path made relative to its settings form. */
+/** A save's issues for one slot, with the path made relative to its settings form. */
 function issuesOf(column: Component, index: number): ValidationIssue[] {
 	return issues.value.flatMap((issue) => {
 		const [head, at, settings, ...rest] = issue.path;
@@ -122,20 +129,20 @@ const unplaced = computed(() =>
 	issues.value.filter((issue) => !columns.includes(issue.path[0] as Component)),
 );
 
-const selectedNode = computed(() => {
+const selectedSlot = computed(() => {
 	const selection = selected.value;
-	if (selection?.kind !== "node") return undefined;
-	const index = nodes[selection.column].findIndex((node) => node.key === selection.key);
-	const node = nodes[selection.column][index];
-	return node ? { column: selection.column, index, node } : undefined;
+	if (selection?.kind !== "slot") return undefined;
+	const index = slots[selection.column].findIndex((placed) => placed.key === selection.key);
+	const placed = slots[selection.column][index];
+	return placed ? { column: selection.column, index, placed } : undefined;
 });
 
-const isSelected = (column: Component, node: Node) =>
-	selected.value?.kind === "node" && selected.value.column === column && selected.value.key === node.key;
+const isSelected = (column: Component, placed: PlacedSlot) =>
+	selected.value?.kind === "slot" && selected.value.column === column && selected.value.key === placed.key;
 
-function selectNode(column: Component, node: Node) {
-	panelValue.value = structuredClone(toRaw(node.settings));
-	selected.value = { kind: "node", column, key: node.key };
+function selectSlot(column: Component, placed: PlacedSlot) {
+	panelValue.value = structuredClone(toRaw(placed.settings));
+	selected.value = { kind: "slot", column, key: placed.key };
 }
 
 const offers = (column: Component) =>
@@ -143,23 +150,23 @@ const offers = (column: Component) =>
 
 function add(column: Component, plugin: PluginInfo) {
 	const schema = plugin.instanceSettings[column];
-	const node = { key: nextKey++, plugin: plugin.name, settings: schema ? defaultsOf(schema) : {} };
-	nodes[column].push(node);
+	const placed = { key: nextKey++, plugin: plugin.name, settings: schema ? defaultsOf(schema) : {} };
+	slots[column].push(placed);
 	issues.value = [];
-	selectNode(column, node);
+	selectSlot(column, placed);
 }
 
 function move(column: Component, index: number, by: -1 | 1) {
-	const list = nodes[column];
-	const [node] = list.splice(index, 1);
-	if (node) list.splice(index + by, 0, node);
-	// Issue paths name slots by index, so they no longer point at the right node.
+	const list = slots[column];
+	const [placed] = list.splice(index, 1);
+	if (placed) list.splice(index + by, 0, placed);
+	// Issue paths name slots by index, so they no longer point at the right slot.
 	issues.value = [];
 }
 
 function remove(column: Component, index: number) {
-	const [node] = nodes[column].splice(index, 1);
-	if (node && isSelected(column, node)) selected.value = null;
+	const [placed] = slots[column].splice(index, 1);
+	if (placed && isSelected(column, placed)) selected.value = null;
 	issues.value = [];
 }
 
@@ -220,7 +227,7 @@ async function save() {
 	issues.value = [];
 	const isNew = appletId.value === undefined;
 	appletId.value = result.value.id;
-	if (JSON.stringify(result.value.schedule) !== JSON.stringify(schedule.value)) {
+	if (JSON.stringify(schedule.value) !== savedSchedule.value) {
 		const scheduled = await api.triggers.setSchedule(result.value.id, schedule.value);
 		if (!scheduled.ok) {
 			scheduleProblem.value = scheduled.issues;
@@ -229,27 +236,11 @@ async function save() {
 			return;
 		}
 	}
-	savedState.value = state();
+	markSaved();
 	if (isNew) await router.replace({ name: "builder", params: { id: result.value.id } });
 }
 
-const leaving = ref<((leave: boolean) => void) | null>(null);
-onBeforeRouteLeave(() =>
-	dirty.value
-		? new Promise<boolean>((resolve) => {
-				leaving.value = (leave) => {
-					leaving.value = null;
-					resolve(leave);
-				};
-			})
-		: true,
-);
-
-const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-	if (dirty.value) event.preventDefault();
-};
-onMounted(() => window.addEventListener("beforeunload", warnBeforeUnload));
-onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnload));
+const leaving = useUnsavedChanges(dirty);
 </script>
 
 <template>
@@ -273,7 +264,7 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 		</template>
 
 		<p class="sentence">
-			<span v-for="(part, index) in parts" :key="index" :class="part.kind">{{ part.text }}</span>
+			<span v-for="(part, index) in sentenceParts" :key="index" :class="part.kind">{{ part.text }}</span>
 		</p>
 
 		<div v-if="unplaced.length > 0" class="form-issues" role="alert">
@@ -283,45 +274,45 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 		<div class="flow">
 			<div class="col" data-column="when">
 				<div class="h">when:</div>
-				<div v-if="schedule" class="node" data-trigger="schedule" :class="{ sel: selected?.kind === 'schedule' }">
+				<div v-if="schedule" class="slot" data-trigger="schedule" :class="{ sel: selected?.kind === 'schedule' }">
 					<button type="button" class="select" @click="selectSchedule">
-						<span class="t">⏱ schedule</span>
-						<span class="d">{{ describeSchedule(schedule) }}</span>
+						<span class="title">⏱ schedule</span>
+						<span class="summary">{{ describeSchedule(schedule) }}</span>
 					</button>
 				</div>
-				<button v-else type="button" class="node add" data-add="schedule" @click="addSchedule">+ schedule</button>
-				<div v-if="hasWebhook" class="node" data-trigger="webhook" :class="{ sel: selected?.kind === 'webhook' }">
+				<button v-else type="button" class="slot add" data-add="schedule" @click="addSchedule">+ schedule</button>
+				<div v-if="hasWebhook" class="slot" data-trigger="webhook" :class="{ sel: selected?.kind === 'webhook' }">
 					<button type="button" class="select" @click="selected = { kind: 'webhook' }">
-						<span class="t">⚓ webhook</span>
-						<span class="d">on webhook</span>
+						<span class="title">⚓ webhook</span>
+						<span class="summary">on webhook</span>
 					</button>
 				</div>
-				<button v-else type="button" class="node add" data-add="webhook" @click="addWebhook">+ webhook</button>
+				<button v-else type="button" class="slot add" data-add="webhook" @click="addWebhook">+ webhook</button>
 			</div>
 
 			<div v-for="column in columns" :key="column" class="col" :data-column="column">
 				<div class="h">{{ column }}:</div>
 				<div
-					v-for="(node, index) in nodes[column]"
-					:key="node.key"
-					class="node"
-					:class="{ sel: isSelected(column, node) }"
-					data-node
+					v-for="(placed, index) in slots[column]"
+					:key="placed.key"
+					class="slot"
+					:class="{ sel: isSelected(column, placed) }"
+					data-slot
 					:data-issues="issuesOf(column, index).length"
 				>
-					<button type="button" class="select" @click="selectNode(column, node)">
-						<span class="t">{{ node.plugin }} <span class="v">v{{ pluginOf(node.plugin)?.version }}</span></span>
-						<span class="d">{{ summaryOf(column, node) }}</span>
-						<span v-if="unconnectedService(node)" class="needs" data-needs-service>⚠ {{ unconnectedService(node) }} not connected</span>
+					<button type="button" class="select" @click="selectSlot(column, placed)">
+						<span class="title">{{ placed.plugin }} <span class="version">v{{ pluginOf(placed.plugin)?.version }}</span></span>
+						<span class="summary">{{ summaryOf(column, placed) }}</span>
+						<span v-if="unconnectedService(placed)" class="needs" data-needs-service>⚠ {{ unconnectedService(placed) }} not connected</span>
 						<span v-if="issuesOf(column, index).length > 0" class="needs">✗ {{ issuesOf(column, index).length }} to fix</span>
 					</button>
 					<span class="tools">
 						<button type="button" title="move up" :disabled="index === 0" @click="move(column, index, -1)">↑</button>
-						<button type="button" title="move down" :disabled="index === nodes[column].length - 1" @click="move(column, index, 1)">↓</button>
+						<button type="button" title="move down" :disabled="index === slots[column].length - 1" @click="move(column, index, 1)">↓</button>
 						<button type="button" title="remove" @click="remove(column, index)">×</button>
 					</span>
 				</div>
-				<button type="button" class="node add" data-add @click="selected = { kind: 'add', column }">+ {{ singular[column] }}</button>
+				<button type="button" class="slot add" data-add @click="selected = { kind: 'add', column }">+ {{ singular[column] }}</button>
 			</div>
 		</div>
 
@@ -337,28 +328,28 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 		</div>
 
 		<template #panel>
-			<template v-if="selectedNode">
-				<h3><span class="key">{{ singular[selectedNode.column] }}:</span> {{ selectedNode.node.plugin }}</h3>
-				<p v-if="unconnectedService(selectedNode.node)" class="needs">
-					⚠ {{ unconnectedService(selectedNode.node) }} isn't connected.
-					<RouterLink :to="{ name: 'wizard', params: { service: unconnectedService(selectedNode.node) } }" data-service-link
-						>connect {{ unconnectedService(selectedNode.node) }}</RouterLink
+			<template v-if="selectedSlot">
+				<h3><span class="key">{{ singular[selectedSlot.column] }}:</span> {{ selectedSlot.placed.plugin }}</h3>
+				<p v-if="unconnectedService(selectedSlot.placed)" class="needs">
+					⚠ {{ unconnectedService(selectedSlot.placed) }} isn't connected.
+					<RouterLink :to="{ name: 'wizard', params: { service: unconnectedService(selectedSlot.placed) } }" data-service-link
+						>connect {{ unconnectedService(selectedSlot.placed) }}</RouterLink
 					>
 				</p>
 				<SettingsForm
-					v-if="hasFields(schemaOf(selectedNode.column, selectedNode.node))"
-					:key="selectedNode.node.key"
-					:schema="schemaOf(selectedNode.column, selectedNode.node) as JSONSchema"
+					v-if="!isEmptyForm(schemaOf(selectedSlot.column, selectedSlot.placed) ?? {})"
+					:key="selectedSlot.placed.key"
+					:schema="schemaOf(selectedSlot.column, selectedSlot.placed) as JSONSchema"
 					:value="panelValue"
-					:issues="issuesOf(selectedNode.column, selectedNode.index)"
+					:issues="issuesOf(selectedSlot.column, selectedSlot.index)"
 					:submit-label="null"
-					@change="(value) => { if (selectedNode) selectedNode.node.settings = value; }"
+					@change="(value) => { if (selectedSlot) selectedSlot.placed.settings = value; }"
 				/>
 				<template v-else>
-					<div v-if="issuesOf(selectedNode.column, selectedNode.index).length > 0" class="form-issues" role="alert">
-						<p v-for="(issue, index) in issuesOf(selectedNode.column, selectedNode.index)" :key="index">{{ issue.message }}</p>
+					<div v-if="issuesOf(selectedSlot.column, selectedSlot.index).length > 0" class="form-issues" role="alert">
+						<p v-for="(issue, index) in issuesOf(selectedSlot.column, selectedSlot.index)" :key="index">{{ issue.message }}</p>
 					</div>
-					<p class="muted">no settings.</p>
+					<p class="muted" data-no-settings>no settings.</p>
 				</template>
 			</template>
 
@@ -372,7 +363,7 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 					:data-offer="plugin.name"
 					@click="selected?.kind === 'add' && add(selected.column, plugin)"
 				>
-					<b>{{ plugin.name }}</b> <span class="v">v{{ plugin.version }}</span>
+					<b>{{ plugin.name }}</b> <span class="version">v{{ plugin.version }}</span>
 					<span class="muted">{{ plugin.description }}</span>
 				</button>
 			</template>
@@ -397,7 +388,7 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 					<template v-if="revealedUrl">
 						<p>call this url to run the applet:</p>
 						<CopyValue :value="revealedUrl" />
-						<p class="warning" role="note">⚠ it holds the token, and won't be shown again.</p>
+						<p class="warning" role="note" data-shown-once>⚠ it holds the token, and won't be shown again.</p>
 					</template>
 					<p v-else-if="hasWebhook" class="muted">a webhook is set. its token isn't shown again; regenerate it for a new one.</p>
 					<div class="panel-actions">
@@ -407,7 +398,7 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 				</template>
 			</template>
 
-			<p v-else class="muted">select a node to see its settings.</p>
+			<p v-else class="muted">select a slot to see its settings.</p>
 		</template>
 	</AppShell>
 </template>
@@ -426,23 +417,23 @@ onBeforeUnmount(() => window.removeEventListener("beforeunload", warnBeforeUnloa
 .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; align-items: start; }
 .col { display: grid; gap: 10px; }
 .col .h { color: var(--p2); font-size: 12px; }
-.node { display: flex; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-1); }
-.node.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.node .select { flex: 1; min-width: 0; display: grid; gap: 4px; padding: 10px; text-align: left; background: none; border: 0; color: var(--fg); }
-.node .t { display: flex; gap: 6px; }
-.node .v { color: var(--accent); font-size: 11px; margin-left: auto; }
-.node .d { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.node .tools { display: flex; flex-direction: column; border-left: 1px solid var(--line); }
-.node .tools button { flex: 1; padding: 0 8px; background: none; border: 0; color: var(--muted); }
-.node .tools button:hover:not(:disabled) { color: var(--fg); background: var(--surface-3); }
-.node .tools button:disabled { opacity: 0.3; cursor: default; }
-.node.add { justify-content: center; padding: 10px; border-style: dashed; color: var(--muted); }
-.node.add:hover { color: var(--fg); border-color: var(--accent); }
+.slot { display: flex; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-1); }
+.slot.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.slot .select { flex: 1; min-width: 0; display: grid; gap: 4px; padding: 10px; text-align: left; background: none; border: 0; color: var(--fg); }
+.slot .title { display: flex; gap: 6px; }
+.slot .version { color: var(--accent); font-size: 11px; margin-left: auto; }
+.slot .summary { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot .tools { display: flex; flex-direction: column; border-left: 1px solid var(--line); }
+.slot .tools button { flex: 1; padding: 0 8px; background: none; border: 0; color: var(--muted); }
+.slot .tools button:hover:not(:disabled) { color: var(--fg); background: var(--surface-3); }
+.slot .tools button:disabled { opacity: 0.3; cursor: default; }
+.slot.add { justify-content: center; padding: 10px; border-style: dashed; color: var(--muted); }
+.slot.add:hover { color: var(--fg); border-color: var(--accent); }
 .needs { color: var(--p2); }
 h3 { font-weight: 400; margin: 0 0 12px; }
 .offer { display: grid; gap: 4px; width: 100%; margin-bottom: 8px; padding: 10px; text-align: left; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); color: var(--fg); }
 .offer:hover { border-color: var(--accent); }
-.offer .v { color: var(--accent); font-size: 11px; }
+.offer .version { color: var(--accent); font-size: 11px; }
 .warning { padding: 8px 10px; border: 1px solid var(--warn); border-radius: var(--radius); }
 .panel-actions { display: flex; gap: 8px; margin-top: 12px; }
 .scrim { position: fixed; inset: 0; display: grid; place-items: center; background: rgb(0 0 0 / 0.6); }

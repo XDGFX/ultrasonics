@@ -6,10 +6,12 @@ import { type ConnectOutcome, type ServiceStatus, useApi } from "./api-client.ts
 import AppShell from "./AppShell.vue";
 import CopyValue from "./CopyValue.vue";
 import SettingsForm from "./SettingsForm.vue";
+import { statusDetail } from "./service-status.ts";
 
 // Driven by the flow and the requirement list alone, never by the service's name (ADR-0025 §6).
 
 const props = defineProps<{ service: string }>();
+// The router lets only a known service through to this screen.
 const service = computed(() => props.service as Service);
 const api = useApi();
 const route = useRoute();
@@ -20,6 +22,8 @@ const requirements = ref<AuthRequirement[]>([]);
 const redirectUri = ref("");
 const clientForm = ref<JSONSchema>();
 const fieldIssues = ref<ValidationIssue[]>([]);
+// Kept apart from field issues: the renderer holds submit back while it shows issues, and a test may pass on retry.
+const testFailure = ref<string>();
 const clientIssues = ref<ValidationIssue[]>([]);
 const outcome = ref<ConnectOutcome>();
 
@@ -50,29 +54,28 @@ watch(
 		const callback = callbackOf(query);
 		if (callback.code !== undefined || callback.error !== undefined) {
 			outcome.value = await api.services.outcome(service.value, callback);
-			// A code is single-use, so a reload must not send it again.
+			// A code is single-use, so a reload must not send it again; the replace loads the wizard.
 			await router.replace({ query: {} });
+			return;
 		}
 		await load();
 	},
 	{ immediate: true },
 );
 
-const detail = computed(() => {
-	const current = status.value?.status;
-	if (!current) return "";
-	if (current.kind === "failed") return current.failure.message;
-	return current.kind === "connected" ? "connected" : "not connected";
-});
+const detail = computed(() => (status.value ? statusDetail(status.value.status) : ""));
 
 async function testAndSave(input: Record<string, unknown>) {
 	const result = await api.services.configure(service.value, input);
 	if (result.kind === "invalid") {
 		fieldIssues.value = result.issues;
+		testFailure.value = undefined;
 	} else if (result.kind === "test-failed") {
-		fieldIssues.value = [{ path: [], message: result.message }];
+		fieldIssues.value = [];
+		testFailure.value = result.message;
 	} else {
 		fieldIssues.value = [];
+		testFailure.value = undefined;
 		outcome.value = { kind: "connected" };
 		await load();
 	}
@@ -100,7 +103,7 @@ async function connect() {
 				<span v-if="status" class="muted">· {{ status.flow }} · {{ detail }}</span>
 			</h2>
 
-			<p v-if="outcome" class="outcome" :class="outcome.kind" role="status" data-outcome>
+			<p v-if="outcome" class="outcome" :class="outcome.kind" role="status" :data-outcome="outcome.kind">
 				<template v-if="outcome.kind === 'connected'">✓ connected.</template>
 				<template v-else>✗ couldn't connect: {{ outcome.message }}</template>
 			</p>
@@ -116,6 +119,7 @@ async function connect() {
 					<div class="what">
 						<template v-if="requirement.kind === 'fields'">
 							<b>enter your {{ service }} details</b>
+							<p v-if="testFailure" class="test-failure" role="alert" data-test-failure>{{ testFailure }}</p>
 							<SettingsForm
 								:schema="requirement.schema"
 								:issues="fieldIssues"
@@ -152,6 +156,7 @@ async function connect() {
 h2 { font-size: 16px; font-weight: 400; margin: 0 0 20px; }
 .outcome { padding: 10px 12px; border: 1px solid var(--accent); border-radius: var(--radius); }
 .outcome.failed { border-color: var(--bad); color: var(--bad); }
+.test-failure { margin: 0; padding: 10px 12px; border: 1px solid var(--bad); border-radius: var(--radius); color: var(--bad); }
 .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .step { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 14px; border-radius: var(--radius); background: var(--surface-3); }
 .step .n { color: var(--p2); }
