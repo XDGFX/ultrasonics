@@ -37,36 +37,39 @@ const steps = computed(() => {
 
 <template>
 	<AppShell :crumbs="[{ label: 'welcome' }]">
-		<LogoMosaic class="hero-mosaic" />
-		<div class="first-run">
-			<div class="hero-lockup"><LogoLockup /></div>
-			<p class="muted tagline">do more with your music.</p>
-			<p class="welcome">welcome. this ultrasonics is yours — nothing to log in to.</p>
-			<ol class="steps">
-				<li
-					v-for="(step, index) in steps"
-					:key="step.key"
-					class="row"
-					:class="{ current: step.current, done: step.done }"
-					:data-step="step.key"
-					:data-done="step.done"
-					:aria-current="step.current ? 'step' : undefined"
-				>
-					<span class="st">{{ step.done ? "✓" : index + 1 }}</span>
-					<span class="what">{{ step.label }} <span class="muted">· {{ step.detail }}</span></span>
-					<span class="acts"><RouterLink :to="step.to">{{ step.action }}</RouterLink></span>
-				</li>
-			</ol>
+		<div class="welcome-page">
+			<LogoMosaic class="hero-mosaic" />
+			<div class="first-run">
+				<div class="hero-lockup"><LogoLockup /></div>
+				<p class="muted tagline">do more with your music.</p>
+				<p class="welcome">welcome. this ultrasonics is yours — nothing to log in to.</p>
+				<ol class="steps">
+					<li
+						v-for="(step, index) in steps"
+						:key="step.key"
+						class="row"
+						:class="{ current: step.current, done: step.done }"
+						:data-step="step.key"
+						:data-done="step.done"
+						:aria-current="step.current ? 'step' : undefined"
+					>
+						<span class="st">{{ step.done ? "✓" : index + 1 }}</span>
+						<span class="what">{{ step.label }} <span class="muted">· {{ step.detail }}</span></span>
+						<span class="acts"><RouterLink :to="step.to">{{ step.action }}</RouterLink></span>
+					</li>
+				</ol>
+			</div>
 		</div>
 	</AppShell>
 </template>
 
 <style scoped>
 .first-run { max-width: 640px; margin: 0 auto; padding-top: 24px; }
-/* The mosaic is for full size only (ADR-0027 §2); below it the static lockup stands in. */
+/* The mosaic is for full size only (ADR-0027 §2), judged by the room it gets; below it the lockup stands in. */
+.welcome-page { container-type: inline-size; }
 .hero-mosaic { height: clamp(260px, 40vh, 420px); margin: -40px -28px 8px; }
 .hero-lockup { display: none; font-size: 48px; text-align: center; margin: 0 0 8px; }
-@media (max-width: 760px) {
+@container (max-width: 760px) {
 	.hero-mosaic { display: none; }
 	.hero-lockup { display: block; }
 }

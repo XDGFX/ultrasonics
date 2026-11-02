@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { THEMES } from "../src/logo-palette.ts";
 import type { Frame } from "../src/mosaic.ts";
 import { readmeSvg } from "./readme-svg.ts";
 
@@ -9,6 +10,7 @@ const frame = (glyph: string): Frame => ({
 		{
 			face: "word",
 			cell: 10,
+			cellWidth: 6,
 			top: 0,
 			cols: 10,
 			rows: 2,
@@ -63,11 +65,11 @@ describe("the README SVG", () => {
 
 	test("has no background, and a face colour for the theme it is made for", () => {
 		expect(doc.querySelector("rect")).toBeNull();
-		expect(style).toContain(".face{fill:#fff}");
+		expect(style).toContain(`.face{fill:${THEMES.dark.word}}`);
 		const light = parse(readmeSvg({ ...frames, theme: "light" })).querySelector(
 			"style",
 		)?.textContent;
-		expect(light).toContain(".face{fill:#111}");
+		expect(light).toContain(`.face{fill:${THEMES.light.word}}`);
 	});
 
 	test("crops to the window it is given", () => {

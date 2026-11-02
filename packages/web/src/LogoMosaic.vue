@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from "vue";
-import { canvasGlyphs, DARK, drawFrame, loadLogoFonts } from "./canvas-glyphs.ts";
+import { canvasGlyphs, drawFrame, loadLogoFonts } from "./canvas-glyphs.ts";
 import { createMosaic, type Mosaic } from "./mosaic.ts";
 
 const host = ref<HTMLDivElement>();
@@ -9,8 +9,8 @@ let mosaic: Mosaic | null = null;
 let frameId = 0;
 let resizeTimer: ReturnType<typeof setTimeout> | undefined;
 let observer: ResizeObserver | undefined;
+let motion: MediaQueryList | undefined;
 let alive = true;
-const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function build() {
 	const el = host.value;
@@ -26,17 +26,11 @@ function build() {
 	c.width = width * dpr;
 	c.height = height * dpr;
 	g.setTransform(dpr, 0, 0, dpr, 0, 0);
-	const m = createMosaic({
-		seed: 1,
-		width,
-		height,
-		cell: width > 760 ? 10 : 7,
-		glyphs: canvasGlyphs,
-		reduced: reduced(),
-	});
+	const reduced = motion?.matches ?? false;
+	const m = createMosaic({ seed: 1, width, height, cell: 10, glyphs: canvasGlyphs, reduced });
 	mosaic = m;
-	if (reduced()) {
-		drawFrame(g, m.frame(0), DARK);
+	if (reduced) {
+		drawFrame(g, m.frame(0));
 		return;
 	}
 	let last: number | null = null;
@@ -44,7 +38,7 @@ function build() {
 		const t = now / 1000;
 		m.step(t, Math.min(0.05, last === null ? 1 / 60 : t - last));
 		last = t;
-		drawFrame(g, m.frame(t), DARK);
+		drawFrame(g, m.frame(t));
 		frameId = requestAnimationFrame(tick);
 	};
 	frameId = requestAnimationFrame(tick);
@@ -62,6 +56,8 @@ onMounted(async () => {
 	if (!canvas.value?.getContext("2d")) return;
 	await loadLogoFonts();
 	if (!alive) return;
+	motion = matchMedia("(prefers-reduced-motion: reduce)");
+	motion.addEventListener("change", build);
 	build();
 	observer = new ResizeObserver(() => {
 		clearTimeout(resizeTimer);
@@ -74,6 +70,7 @@ onBeforeUnmount(() => {
 	cancelAnimationFrame(frameId);
 	clearTimeout(resizeTimer);
 	observer?.disconnect();
+	motion?.removeEventListener("change", build);
 });
 </script>
 
@@ -84,6 +81,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.mosaic { position: relative; background: #111; }
+.mosaic { position: relative; }
 canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
 </style>

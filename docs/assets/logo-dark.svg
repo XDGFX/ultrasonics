@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="51 0 930 252" width="930" height="252" role="img" aria-label="ultrasonics">
 <style>
 text{font-family:"Roboto Mono",ui-monospace,Menlo,Consolas,"DejaVu Sans Mono",monospace;font-weight:700}
-.face{fill:#fff}.katakana .face{fill:#e234ce}.teal{fill:#1ce5b5}.magenta{fill:#e234ce}
+.face{fill:#ffffff}.katakana .face{fill:#e234ce}.teal{fill:#1ce5b5}.magenta{fill:#e234ce}
 .f{visibility:hidden}
 @keyframes on{from,to{visibility:visible}}
 @keyframes loop{0%{visibility:visible}2.86%,100%{visibility:hidden}}

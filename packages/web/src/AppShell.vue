@@ -25,7 +25,7 @@ const section = computed(() => route.meta.section);
 	<div class="shell">
 		<nav class="rail" aria-label="main">
 			<RouterLink to="/" class="brand" aria-label="ultrasonics">
-				<img :src="`/${MARK}`" alt="" width="30" height="30" />
+				<img :src="`/${MARK}`" alt="" width="32" height="32" />
 			</RouterLink>
 			<RouterLink to="/" class="r" :class="{ on: section === 'applets' }" :data-active="section === 'applets'" title="applets">
 				<span aria-hidden="true">▦</span><small>applets</small>

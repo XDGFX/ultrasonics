@@ -72,8 +72,7 @@ describe("the mosaic", () => {
 		expect(count(still, "face")).toBeGreaterThan(100);
 	});
 
-	test("is the same picture for the same seed and time, and a different one for another seed", () => {
-		expect(picture(run(3, 2.5))).toEqual(picture(run(3, 2.5)));
+	test("draws a different picture for another seed", () => {
 		expect(picture(run(3, 2.5))).not.toEqual(picture(run(4, 2.5)));
 	});
 

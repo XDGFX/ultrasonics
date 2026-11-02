@@ -1,4 +1,13 @@
-import type { Face, Frame, Glyphs, Tone } from "./mosaic.ts";
+import { MAGENTA, TEAL, THEMES } from "./logo-palette.ts";
+import {
+	type Face,
+	type Frame,
+	type Glyphs,
+	KATAKANA,
+	TONES,
+	type Tone,
+	WORDMARK,
+} from "./mosaic.ts";
 
 const FAMILY: Record<Face, string> = {
 	word: "'Montserrat Alternates'",
@@ -9,8 +18,8 @@ const font = (face: Face, size: number) => `700 ${size}px ${FAMILY[face]}`;
 /** Canvas text does not trigger a web-font load, so the logo's faces are loaded first. */
 export async function loadLogoFonts() {
 	await Promise.all([
-		document.fonts.load(font("word", 20), "u"),
-		document.fonts.load(font("katakana", 20), "ソニックス"),
+		document.fonts.load(font("word", 20), WORDMARK),
+		document.fonts.load(font("katakana", 20), KATAKANA),
 		document.fonts.load("700 20px 'Roboto Mono'", "@"),
 	]);
 }
@@ -44,38 +53,22 @@ export const canvasGlyphs: Glyphs = {
 	},
 };
 
-export interface Palette {
-	background: string;
-	word: string;
-	katakana: string;
-	teal: string;
-	magenta: string;
-}
-export const DARK: Palette = {
-	background: "#111111",
-	word: "#ffffff",
-	katakana: "#e234ce",
-	teal: "#1ce5b5",
-	magenta: "#e234ce",
-};
-
-export function drawFrame(g: CanvasRenderingContext2D, frame: Frame, palette: Palette) {
-	g.fillStyle = palette.background;
-	g.fillRect(0, 0, frame.width, frame.height);
+/** Draws a frame on a transparent canvas, so the page shows through and the grid has no edge. */
+export function drawFrame(g: CanvasRenderingContext2D, frame: Frame) {
+	g.clearRect(0, 0, frame.width, frame.height);
 	g.textBaseline = "top";
 	for (const layer of frame.layers) {
 		g.font = `700 ${layer.cell}px 'Roboto Mono'`;
-		const cw = layer.cell * 0.6;
 		const colour: Record<Tone, string> = {
-			face: palette[layer.face],
-			teal: palette.teal,
-			magenta: palette.magenta,
+			face: THEMES.dark[layer.face],
+			teal: TEAL,
+			magenta: MAGENTA,
 		};
-		// The copies first, so the face always sits on top.
-		for (const tone of ["teal", "magenta", "face"] as const) {
+		for (const tone of TONES) {
 			g.fillStyle = colour[tone];
 			for (const c of layer.cells)
-				if (c.tone === tone) g.fillText(c.glyph, c.col * cw, layer.top + c.row * layer.cell);
+				if (c.tone === tone)
+					g.fillText(c.glyph, c.col * layer.cellWidth, layer.top + c.row * layer.cell);
 		}
 	}
 }

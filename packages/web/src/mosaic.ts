@@ -20,6 +20,8 @@ export interface MaskRequest {
 }
 
 export type Tone = "face" | "teal" | "magenta";
+/** The order tones are painted in, so the face always sits on top of its copies. */
+export const TONES: readonly Tone[] = ["teal", "magenta", "face"];
 export interface Cell {
 	col: number;
 	row: number;
@@ -28,8 +30,9 @@ export interface Cell {
 }
 export interface FrameLayer {
 	face: Face;
-	/** Font size of a glyph; a cell is 0.6 of it wide. */
+	/** Font size of a glyph, and the height of its cell. */
 	cell: number;
+	cellWidth: number;
 	top: number;
 	cols: number;
 	rows: number;
@@ -53,18 +56,20 @@ export interface MosaicOptions {
 	idleGlitches?: boolean;
 }
 
+export const WORDMARK = "ultrasonics";
+export const KATAKANA = "ソニックス";
 export const TUNE_SECONDS = 6;
 export const RAMP = " .:-=+*#%@";
 // Junk is what a bad packet decodes to: hex, half-width katakana, line noise.
 const JUNK = "0123456789ABCDEFｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ<>/\\|[]{}";
-const WORD = "ultrasonics";
-const KATAKANA = "ソニックス";
+// A monospace glyph's advance, as a fraction of its size.
+const ASPECT = 0.6;
 const GAIN = 1.2;
 const RECOVERY = 1.3;
 const CHROMA = 3;
 const TEAR = 3;
 const NOISE = 0.05;
-const JP_RATIO = 0.23;
+const KATAKANA_RATIO = 0.23;
 
 interface Look {
 	gamma: number;
@@ -77,10 +82,31 @@ interface Point {
 	y: number;
 }
 interface Burst {
-	p: Point;
-	amt: number;
+	at: Point;
+	amount: number;
 	left: number;
-	dur: number;
+	duration: number;
+}
+/** What a layer needs to know of the whole picture's tuning while it draws. */
+interface Signal {
+	locked: boolean;
+	tunedAt(x: number, y: number, t: number): number;
+	nearLogo(x: number, y: number): number;
+}
+interface LayerOptions {
+	face: Face;
+	cell: number;
+	top: number;
+	width: number;
+	height: number;
+	look: Look;
+	seed: number;
+	/** Mask pixels per CSS pixel. */
+	scale: number;
+	/** Whether static can appear off the letterforms. */
+	staticFloor: boolean;
+	glyphs: Glyphs;
+	texts: MaskRequest["texts"];
 }
 
 const clamp = (v: number, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
@@ -110,92 +136,99 @@ function noise(x: number, y: number) {
 
 /** One character grid over one band of the picture; positions and interference are in CSS pixels. */
 class Layer {
-	readonly cw: number;
-	readonly ch: number;
+	readonly face: Face;
+	readonly cell: number;
+	readonly top: number;
+	readonly cellWidth: number;
 	readonly cols: number;
 	readonly rows: number;
-	private readonly sat: Float32Array;
-	private readonly w1: number;
-	private readonly hw: number;
-	private readonly hh: number;
-	private field: Float32Array;
-	private next: Float32Array;
-	private readonly r1: Float32Array;
-	private readonly r2: Float32Array;
-	private readonly r3: Float32Array;
+	private readonly look: Look;
+	private readonly seed: number;
+	private readonly scale: number;
+	private readonly staticFloor: boolean;
+	private readonly maskWidth: number;
+	private readonly maskHeight: number;
+	/** A summed-area table of the mask, so any shifted cell's coverage is O(1). */
+	private readonly coverageSums: Float32Array;
+	/** Interference per cell, 0–1. */
+	private damage: Float32Array;
+	private nextDamage: Float32Array;
+	// Each cell's own fixed randoms: its dither and loss threshold, its junk threshold, its flicker phase.
+	private readonly grain: Float32Array;
+	private readonly fragility: Float32Array;
+	private readonly phase: Float32Array;
 	private readonly tearX: Float32Array;
-	private readonly rowC: Float32Array;
+	private readonly rowDamage: Float32Array;
 
-	constructor(
-		readonly face: Face,
-		readonly cell: number,
-		readonly top: number,
-		height: number,
-		width: number,
-		readonly look: Look,
-		readonly seed: number,
-		readonly scale: number,
-		readonly floor: boolean,
-		glyphs: Glyphs,
-		texts: MaskRequest["texts"],
-	) {
-		this.cw = cell * 0.6;
-		this.ch = cell;
-		this.cols = Math.ceil(width / this.cw) + 1;
-		this.rows = Math.ceil(height / this.ch);
-		this.hw = Math.round(this.cols * this.cw * scale);
-		this.hh = Math.round(this.rows * this.ch * scale);
-		const alpha = glyphs.mask({ width: this.hw, height: this.hh, scale, face, texts });
-		// A summed-area table makes any shifted cell's coverage O(1).
-		this.w1 = this.hw + 1;
-		this.sat = new Float32Array(this.w1 * (this.hh + 1));
-		for (let y = 0; y < this.hh; y++) {
+	constructor(o: LayerOptions) {
+		this.face = o.face;
+		this.cell = o.cell;
+		this.top = o.top;
+		this.look = o.look;
+		this.seed = o.seed;
+		this.scale = o.scale;
+		this.staticFloor = o.staticFloor;
+		this.cellWidth = o.cell * ASPECT;
+		this.cols = Math.ceil(o.width / this.cellWidth) + 1;
+		this.rows = Math.ceil(o.height / o.cell);
+		this.maskWidth = Math.round(this.cols * this.cellWidth * o.scale);
+		this.maskHeight = Math.round(this.rows * o.cell * o.scale);
+		const alpha = o.glyphs.mask({
+			width: this.maskWidth,
+			height: this.maskHeight,
+			scale: o.scale,
+			face: o.face,
+			texts: o.texts,
+		});
+		const stride = this.maskWidth + 1;
+		this.coverageSums = new Float32Array(stride * (this.maskHeight + 1));
+		for (let y = 0; y < this.maskHeight; y++) {
 			let run = 0;
-			for (let x = 0; x < this.hw; x++) {
-				run += alpha[y * this.hw + x] ?? 0;
-				this.sat[(y + 1) * this.w1 + x + 1] = (this.sat[y * this.w1 + x + 1] ?? 0) + run;
+			for (let x = 0; x < this.maskWidth; x++) {
+				run += alpha[y * this.maskWidth + x] ?? 0;
+				this.coverageSums[(y + 1) * stride + x + 1] =
+					(this.coverageSums[y * stride + x + 1] ?? 0) + run;
 			}
 		}
 		const n = this.cols * this.rows;
-		this.field = new Float32Array(n);
-		this.next = new Float32Array(n);
-		this.r1 = new Float32Array(n);
-		this.r2 = new Float32Array(n);
-		this.r3 = new Float32Array(n);
+		this.damage = new Float32Array(n);
+		this.nextDamage = new Float32Array(n);
+		this.grain = new Float32Array(n);
+		this.fragility = new Float32Array(n);
+		this.phase = new Float32Array(n);
 		for (let i = 0; i < n; i++) {
-			this.r1[i] = hash(seed + i * 3 + 1);
-			this.r2[i] = hash(seed + i * 3 + 7919);
-			this.r3[i] = hash(seed + i * 3 + 104729);
+			this.grain[i] = hash(o.seed + i * 3 + 1);
+			this.fragility[i] = hash(o.seed + i * 3 + 7919);
+			this.phase[i] = hash(o.seed + i * 3 + 104729);
 		}
 		this.tearX = new Float32Array(this.rows);
-		this.rowC = new Float32Array(this.rows);
+		this.rowDamage = new Float32Array(this.rows);
 	}
 
 	/** Mean alpha of a cell-sized rect at cell (i, j), shifted by (dx, dy) CSS pixels. */
-	private cov(i: number, j: number, dx: number, dy: number) {
+	private coverage(i: number, j: number, dx: number, dy: number) {
 		const S = this.scale;
-		const s = this.sat;
-		const w = this.w1;
-		let x0 = Math.round((i * this.cw + dx) * S);
-		let y0 = Math.round((j * this.ch + dy) * S);
-		let x1 = x0 + Math.round(this.cw * S);
-		let y1 = y0 + Math.round(this.ch * S);
+		const stride = this.maskWidth + 1;
+		let x0 = Math.round((i * this.cellWidth + dx) * S);
+		let y0 = Math.round((j * this.cell + dy) * S);
+		let x1 = x0 + Math.round(this.cellWidth * S);
+		let y1 = y0 + Math.round(this.cell * S);
 		const area = (x1 - x0) * (y1 - y0);
-		x0 = clamp(x0, 0, this.hw);
-		x1 = clamp(x1, 0, this.hw);
-		y0 = clamp(y0, 0, this.hh);
-		y1 = clamp(y1, 0, this.hh);
+		x0 = clamp(x0, 0, this.maskWidth);
+		x1 = clamp(x1, 0, this.maskWidth);
+		y0 = clamp(y0, 0, this.maskHeight);
+		y1 = clamp(y1, 0, this.maskHeight);
 		if (x1 <= x0 || y1 <= y0) return 0;
-		const at = (x: number, y: number) => s[y * w + x] ?? 0;
-		return (at(x1, y1) - at(x1, y0) - at(x0, y1) + at(x0, y0)) / area;
+		const sum = (x: number, y: number) => this.coverageSums[y * stride + x] ?? 0;
+		return (sum(x1, y1) - sum(x1, y0) - sum(x0, y1) + sum(x0, y0)) / area;
 	}
 
 	/** Interference is wide and short (scanline-shaped) and ragged with noise, never a round brush. */
-	deposit(p: Point, amt: number, t: number) {
-		const rx = 42 / this.cw;
-		const ry = 17 / this.ch;
-		const ci = p.x / this.cw;
-		const cj = (p.y - this.top) / this.ch;
+	deposit(p: Point, amount: number, t: number) {
+		const rx = 42 / this.cellWidth;
+		const ry = 17 / this.cell;
+		const ci = p.x / this.cellWidth;
+		const cj = (p.y - this.top) / this.cell;
 		for (
 			let j = Math.max(0, Math.floor(cj - ry * 2));
 			j <= Math.min(this.rows - 1, Math.ceil(cj + ry * 2));
@@ -208,124 +241,125 @@ class Layer {
 			) {
 				const dx = (i - ci) / rx;
 				const dy = (j - cj) / ry;
-				const g = Math.exp(-(dx * dx + dy * dy));
-				if (g < 0.01) continue;
+				const falloff = Math.exp(-(dx * dx + dy * dy));
+				if (falloff < 0.01) continue;
 				const k = j * this.cols + i;
-				const x = i * this.cw;
-				const y = this.top + j * this.ch;
+				const x = i * this.cellWidth;
+				const y = this.top + j * this.cell;
 				const ragged = 0.3 + 0.7 * noise(x * 0.037, y * 0.08 + t * 3);
-				this.field[k] = Math.min(1, (this.field[k] ?? 0) + amt * g * ragged);
+				this.damage[k] = Math.min(1, (this.damage[k] ?? 0) + amount * falloff * ragged);
 			}
 	}
 
 	step(t: number, dt: number) {
-		const { cols, rows, field, next } = this;
+		const { cols, rows, damage, nextDamage } = this;
 		// A damaged line bleeds along itself and decays towards a clean signal.
-		const k = Math.exp(-dt / RECOVERY);
-		const side = Math.min(0.12, (0.12 * this.cw) / 6);
+		const decay = Math.exp(-dt / RECOVERY);
+		const side = Math.min(0.12, (0.12 * this.cellWidth) / 6);
 		for (let j = 0; j < rows; j++)
 			for (let i = 0; i < cols; i++) {
 				const n = j * cols + i;
-				const l = i > 0 ? (field[n - 1] ?? 0) : 0;
-				const r = i < cols - 1 ? (field[n + 1] ?? 0) : 0;
-				next[n] = ((field[n] ?? 0) * (1 - 2 * side) + (l + r) * side) * k;
+				const l = i > 0 ? (damage[n - 1] ?? 0) : 0;
+				const r = i < cols - 1 ? (damage[n + 1] ?? 0) : 0;
+				nextDamage[n] = ((damage[n] ?? 0) * (1 - 2 * side) + (l + r) * side) * decay;
 			}
-		this.field = next;
-		this.next = field;
+		this.damage = nextDamage;
+		this.nextDamage = damage;
 		// Rows share a smooth noise in pixel space, so a band slips together across both grids.
 		for (let j = 0; j < rows; j++) {
-			let mx = 0;
-			for (let i = 0; i < cols; i++) mx = Math.max(mx, this.field[j * cols + i] ?? 0);
-			this.rowC[j] = mx;
+			let most = 0;
+			for (let i = 0; i < cols; i++) most = Math.max(most, this.damage[j * cols + i] ?? 0);
+			this.rowDamage[j] = most;
 		}
 		for (let j = 0; j < rows; j++) {
 			const c =
-				((this.rowC[Math.max(0, j - 1)] ?? 0) +
-					2 * (this.rowC[j] ?? 0) +
-					(this.rowC[Math.min(rows - 1, j + 1)] ?? 0)) /
+				((this.rowDamage[Math.max(0, j - 1)] ?? 0) +
+					2 * (this.rowDamage[j] ?? 0) +
+					(this.rowDamage[Math.min(rows - 1, j + 1)] ?? 0)) /
 				4;
-			const target = c * c * TEAR * (noise((this.top + j * this.ch) * 0.045, t * 1.7) * 2 - 1);
+			const target = c * c * TEAR * (noise((this.top + j * this.cell) * 0.045, t * 1.7) * 2 - 1);
 			this.tearX[j] = lerp(this.tearX[j] ?? 0, target, 1 - Math.exp(-dt * 18));
 		}
 	}
 
-	draw(t: number, hum: { y: number; w: number }, logo: Mosaic): FrameLayer {
-		const { cols, rows, cw, ch, look, top } = this;
-		const tuned = logo.dial >= 1;
+	draw(t: number, hum: { y: number; w: number }, signal: Signal): FrameLayer {
+		const { cols, rows, cellWidth, cell, look, top } = this;
 		const cells: Cell[] = [];
 		for (let j = 0; j < rows; j++) {
-			const sx = this.tearX[j] ?? 0;
-			const y = top + j * ch;
+			const tear = this.tearX[j] ?? 0;
+			const y = top + j * cell;
 			// The hum bar: a soft band rolling slowly down the picture, where the flicker is stronger.
-			const h = Math.exp(-(((y - hum.y) / hum.w) ** 2));
+			const humming = Math.exp(-(((y - hum.y) / hum.w) ** 2));
 			for (let i = 0; i < cols; i++) {
 				const n = j * cols + i;
-				const c = Math.min(1, this.field[n] ?? 0);
-				const r1 = this.r1[n] ?? 0;
-				const r2 = this.r2[n] ?? 0;
-				const x = i * cw;
-				// q: how well this point is tuned. m: how far off it still is.
-				const q = tuned ? 1 : logo.tunedAt(x + cw / 2, y + ch / 2, t);
-				const m = 1 - q;
+				const damage = Math.min(1, this.damage[n] ?? 0);
+				const grain = this.grain[n] ?? 0;
+				const fragility = this.fragility[n] ?? 0;
+				const x = i * cellWidth;
+				const tuning = signal.locked ? 1 : signal.tunedAt(x + cellWidth / 2, y + cell / 2, t);
+				const mistuning = 1 - tuning;
 				// Signal strength rises with tuning, so values climb from black rather than fading in.
-				const amp = q ** 1.4;
+				const strength = tuning ** 1.4;
 				// Off-station the picture swims: a smooth warp, coherent between neighbours.
 				let wx = 0;
 				let wy = 0;
-				if (m > 0) {
-					wx = (noise(x * 0.011 + 5, y * 0.018 + t * 0.25) * 2 - 1) * m * 38;
-					wy = (noise(x * 0.011 + 50, y * 0.018 + t * 0.25 + 9) * 2 - 1) * m * 12;
+				if (mistuning > 0) {
+					wx = (noise(x * 0.011 + 5, y * 0.018 + t * 0.25) * 2 - 1) * mistuning * 38;
+					wy = (noise(x * 0.011 + 50, y * 0.018 + t * 0.25 + 9) * 2 - 1) * mistuning * 12;
 				}
 				// At rest the split is about a cell; interference and mistuning both widen it.
-				const d = cw * 1.1 + c * CHROMA + m * 22;
-				const dy = ch * 0.45 + c * CHROMA * 0.1 + m * 5;
+				const splitX = cellWidth * 1.1 + damage * CHROMA + mistuning * 22;
+				const splitY = cell * 0.45 + damage * CHROMA * 0.1 + mistuning * 5;
 				// Each cell has its own loss threshold, so loss and recovery are staggered, never a fade.
-				const loss = clamp((c - 0.06 - r1 * 0.5) * 2.4);
-				const fl = this.cov(i, j, sx + wx, wy) * (1 - loss);
-				let idx = 0;
+				const loss = clamp((damage - 0.06 - grain * 0.5) * 2.4);
+				const signalHere = this.coverage(i, j, tear + wx, wy) * (1 - loss);
+				let level = 0;
 				let tone: Tone | null = null;
 				// Dithered by the cell's own random, so a weak signal shows as sparse low glyphs.
-				if (fl > 0.05)
-					idx = Math.floor(Math.min(1, fl * 1.2) ** look.gamma * look.max * amp + r1 * 0.999);
-				if (idx >= 1) tone = "face";
+				if (signalHere > 0.05)
+					level = Math.floor(
+						Math.min(1, signalHere * 1.2) ** look.gamma * look.max * strength + grain * 0.999,
+					);
+				if (level >= 1) tone = "face";
 				else {
-					// Sampling right-and-up draws the teal copy down-left, as v1.
-					const tl = this.cov(i, j, sx + wx + d, wy - dy);
-					const mg = look.magenta ? this.cov(i, j, sx + wx - d, wy + dy) : 0;
-					const v = Math.max(tl, mg);
+					// Sampling right-and-up draws the teal copy down-left.
+					const teal = this.coverage(i, j, tear + wx + splitX, wy - splitY);
+					const magenta = look.magenta ? this.coverage(i, j, tear + wx - splitX, wy + splitY) : 0;
+					const copy = Math.max(teal, magenta);
 					// Chroma tops out lower on the ramp so the face always reads first.
-					if (v > 0.08) {
-						idx = Math.floor(v * look.chromaMax * amp + r1 * 0.999);
-						if (idx >= 1) tone = tl >= mg ? "teal" : "magenta";
+					if (copy > 0.08) {
+						level = Math.floor(copy * look.chromaMax * strength + grain * 0.999);
+						if (level >= 1) tone = teal >= magenta ? "teal" : "magenta";
 					}
 				}
 				// Static gathers at the tuning front and under interference, falling away from the logo.
-				if (!tone && this.floor && (q < 1 || c > 0.02)) {
-					const pf = (0.07 * 4 * q * m + c * 0.05) * logo.proxAt(x, y);
-					if (hash(n * 13 + Math.floor(t * 12 + r1 * 12)) < pf) {
-						const s = hash(n * 7 + Math.floor(t * 12 + r2 * 12));
-						idx = 1 + Math.floor(s * s * (1 + 3 * q));
+				if (!tone && this.staticFloor && (tuning < 1 || damage > 0.02)) {
+					const chance = (0.07 * 4 * tuning * mistuning + damage * 0.05) * signal.nearLogo(x, y);
+					if (hash(n * 13 + Math.floor(t * 12 + grain * 12)) < chance) {
+						const s = hash(n * 7 + Math.floor(t * 12 + fragility * 12));
+						level = 1 + Math.floor(s * s * (1 + 3 * tuning));
 						tone = s < 0.6 ? "face" : s < 0.8 ? "teal" : "magenta";
 					}
 				}
 				if (!tone) continue;
 				// Analogue flicker: each cell re-rolls about ten times a second, out of step with its
 				// neighbours, usually one notch down the ramp, occasionally one up.
-				const roll = hash(n * 17 + this.seed + Math.floor(t * 10 + (this.r3[n] ?? 0) * 10));
-				const p = NOISE * (0.07 + 0.18 * h);
-				if (roll < p) idx -= 1;
-				else if (roll > 1 - p * 0.35) idx += 1;
-				let glyph = RAMP[clamp(idx, 1, 9)] as string;
-				if (c > 0.42 + r2 * 0.5 || roll < p * 0.04) {
+				const roll = hash(n * 17 + this.seed + Math.floor(t * 10 + (this.phase[n] ?? 0) * 10));
+				const flicker = NOISE * (0.07 + 0.18 * humming);
+				if (roll < flicker) level -= 1;
+				else if (roll > 1 - flicker * 0.35) level += 1;
+				let glyph = RAMP[clamp(level, 1, 9)] as string;
+				if (damage > 0.42 + fragility * 0.5 || roll < flicker * 0.04) {
 					glyph = JUNK[
-						Math.floor(hash(n * 31 + Math.floor(t * 7 + r1 * 7)) * JUNK.length)
+						Math.floor(hash(n * 31 + Math.floor(t * 7 + grain * 7)) * JUNK.length)
 					] as string;
-					if (hash(n + Math.floor(t * 3)) < c * 0.35) tone = tone === "teal" ? "magenta" : "teal";
+					if (hash(n + Math.floor(t * 3)) < damage * 0.35)
+						tone = tone === "teal" ? "magenta" : "teal";
 				}
 				cells.push({ col: i, row: j, glyph, tone });
 			}
 		}
-		return { face: this.face, cell: this.cell, top, cols, rows, cells };
+		return { face: this.face, cell, cellWidth, top, cols, rows, cells };
 	}
 }
 
@@ -333,58 +367,68 @@ export type Mosaic = ReturnType<typeof createMosaic>;
 
 export function createMosaic({
 	seed,
-	width: W,
-	height: H,
+	width,
+	height,
 	cell,
 	glyphs,
 	reduced = false,
 	idleGlitches = true,
 }: MosaicOptions) {
-	const tw = Math.min(1000, W - 32) * 0.88;
-	const T = (100 * tw) / glyphs.measure(WORD, "word", 100);
-	const K = T * JP_RATIO;
+	const wordWidth = Math.min(1000, width - 32) * 0.88;
+	const wordSize = (100 * wordWidth) / glyphs.measure(WORDMARK, "word", 100);
+	const kanaSize = wordSize * KATAKANA_RATIO;
 	const fine = Math.max(3, Math.round(cell * 0.45 * 10) / 10);
 	// The lockup is centred in the picture: the name, then the katakana under it.
-	const yWord = H / 2 - (T + 1.3 * K) / 2 + 0.45 * T;
-	const yJp = yWord + T * 0.55 + K * 0.7;
+	const wordY = height / 2 - (wordSize + 1.3 * kanaSize) / 2 + 0.45 * wordSize;
+	const kanaY = wordY + wordSize * 0.55 + kanaSize * 0.7;
 	const base = Math.imul(seed, 7919);
 	// The wordmark's grid covers the whole picture, so the static and the tuning have no edges.
-	const word = new Layer(
-		"word",
+	const word = new Layer({
+		face: "word",
 		cell,
-		0,
-		H + cell,
-		W,
+		top: 0,
+		width,
+		height: height + cell,
 		// The face leans dense (a low gamma) so the name reads at a glance.
-		{ gamma: 0.55, max: 9, chromaMax: 6, magenta: true },
-		base,
-		1,
-		true,
+		look: { gamma: 0.55, max: 9, chromaMax: 6, magenta: true },
+		seed: base,
+		scale: 1,
+		staticFloor: true,
 		glyphs,
-		[{ text: WORD, size: T, x: W / 2, y: yWord + T * 0.06 }],
-	);
+		texts: [{ text: WORDMARK, size: wordSize, x: width / 2, y: wordY + wordSize * 0.06 }],
+	});
 	// The katakana has a finer grid of its own: on the wordmark's cells it would have three rows.
-	const jpTop = yJp - K;
-	const span = tw * 0.96;
-	const left = (W - span) / 2 + K / 2;
-	const jp = new Layer(
-		"katakana",
-		fine,
-		jpTop,
-		K * 2,
-		W,
+	const kanaTop = kanaY - kanaSize;
+	const span = wordWidth * 0.96;
+	const left = (width - span) / 2 + kanaSize / 2;
+	const kana = new Layer({
+		face: "katakana",
+		cell: fine,
+		top: kanaTop,
+		width,
+		height: kanaSize * 2,
 		// Capped at "#", so it sits under the name rather than beside it.
-		{ gamma: 0.7, max: 7, chromaMax: 5, magenta: false },
-		base + 1e6,
-		2,
-		false,
+		look: { gamma: 0.7, max: 7, chromaMax: 5, magenta: false },
+		seed: base + 1e6,
+		scale: 2,
+		staticFloor: false,
 		glyphs,
-		[...KATAKANA].map((text, k) => ({ text, size: K, x: left + (k * (span - K)) / 4, y: K })),
-	);
-	const layers = [word, jp];
-	const boxTop = yWord - T * 0.45;
-	const boxBottom = yJp + K * 0.6;
-	const box = { cx: W / 2, cy: (boxTop + boxBottom) / 2, hw: tw / 2, hh: (boxBottom - boxTop) / 2 };
+		texts: [...KATAKANA].map((text, k) => ({
+			text,
+			size: kanaSize,
+			x: left + (k * (span - kanaSize)) / 4,
+			y: kanaSize,
+		})),
+	});
+	const layers = [word, kana];
+	const boxTop = wordY - wordSize * 0.45;
+	const boxBottom = kanaY + kanaSize * 0.6;
+	const box = {
+		cx: width / 2,
+		cy: (boxTop + boxBottom) / 2,
+		hw: wordWidth / 2,
+		hh: (boxBottom - boxTop) / 2,
+	};
 	let draws = 0;
 	const random = () => hash(base + 31 * ++draws);
 	let t0: number | null = null;
@@ -392,27 +436,36 @@ export function createMosaic({
 	let prev: Point | null = null;
 	let pending: Burst[] = [];
 	let nextGlitch = TUNE_SECONDS + 2 + random() * 3;
-	const deposit = (p: Point, amt: number, t: number) => {
-		for (const l of layers) l.deposit(p, amt, t);
+	let dial = reduced ? 1 : 0;
+	const deposit = (p: Point, amount: number, t: number) => {
+		for (const l of layers) l.deposit(p, amount, t);
 	};
-
-	const mosaic = {
-		width: W,
-		height: H,
-		dial: reduced ? 1 : 0,
-		/** How tuned (0–1) the point is: the dial plus a slow drifting offset, so patches lock at different times. */
-		tunedAt(x: number, y: number, t: number) {
+	/** A line glitch across the name. */
+	const glitch = () => {
+		const y = wordY + (random() - 0.5) * wordSize * 0.9;
+		for (let x = 24; x < width; x += 54)
+			pending.push({ at: { x, y }, amount: 0.35, left: 0.18, duration: 0.18 });
+	};
+	const signal: Signal = {
+		get locked() {
+			return dial >= 1;
+		},
+		// Each point's tuning is the dial plus a slow drifting offset, so patches lock at different times.
+		tunedAt(x, y, t) {
 			const o =
 				noise(x * 0.0035 + 11, y * 0.006 + t * 0.04) * 0.65 +
 				noise(x * 0.011 + 3, y * 0.017 - t * 0.07) * 0.35;
-			return smooth(mosaic.dial * 1.65 - 0.25 + 0.7 * (o - 0.5) + 0.25 * mosaic.proxAt(x, y));
+			return smooth(dial * 1.65 - 0.25 + 0.7 * (o - 0.5) + 0.25 * signal.nearLogo(x, y));
 		},
-		/** 1 on the logo, falling to 0 about 130px from its box. */
-		proxAt(x: number, y: number) {
+		// 1 on the logo, falling to 0 about 130px from its box.
+		nearLogo(x, y) {
 			const dx = Math.max(0, Math.abs(x - box.cx) - box.hw);
 			const dy = Math.max(0, Math.abs(y - box.cy) - box.hh);
 			return Math.exp(-(dx * dx + dy * dy) / (130 * 130));
 		},
+	};
+
+	return {
 		/** Where the cursor is over the picture, or null once it has left. */
 		pointer(p: Point | null) {
 			pointer = p;
@@ -421,28 +474,23 @@ export function createMosaic({
 		/** A click: a short, strong burst of interference. */
 		press(p: Point) {
 			pointer = p;
-			pending.push({ p, amt: 0.9, left: 0.14, dur: 0.14 });
+			pending.push({ at: p, amount: 0.9, left: 0.14, duration: 0.14 });
 		},
-		/** A line glitch across the name. */
-		glitch() {
-			const y = yWord + (random() - 0.5) * T * 0.9;
-			for (let x = 24; x < W; x += 54)
-				pending.push({ p: { x, y }, amt: 0.35, left: 0.18, dur: 0.18 });
-		},
+		glitch,
 		step(t: number, dt: number) {
 			if (reduced) return;
 			// The dial moves from the first frame and eases out, so the picture never snaps into place.
 			if (t0 === null) t0 = t;
-			mosaic.dial = 1 - (1 - clamp((t - t0) / TUNE_SECONDS)) ** 2.2;
+			dial = 1 - (1 - clamp((t - t0) / TUNE_SECONDS)) ** 2.2;
 			for (const l of layers) l.step(t, dt);
 			if (pointer) {
-				const q = prev ?? pointer;
-				const dist = Math.hypot(pointer.x - q.x, pointer.y - q.y);
+				const from = prev ?? pointer;
+				const dist = Math.hypot(pointer.x - from.x, pointer.y - from.y);
 				const speed = clamp(dist / 30);
 				const steps = Math.max(1, Math.ceil(dist / 6));
 				for (let s = 1; s <= steps; s++)
 					deposit(
-						{ x: lerp(q.x, pointer.x, s / steps), y: lerp(q.y, pointer.y, s / steps) },
+						{ x: lerp(from.x, pointer.x, s / steps), y: lerp(from.y, pointer.y, s / steps) },
 						(GAIN * 0.5 * speed) / steps,
 						t,
 					);
@@ -452,20 +500,19 @@ export function createMosaic({
 			}
 			// Bursts ramp in over a few frames rather than popping.
 			for (const b of pending) {
-				const a = Math.min(b.left, dt);
-				b.left -= a;
-				deposit(b.p, (b.amt * GAIN * a) / b.dur, t);
+				const share = Math.min(b.left, dt);
+				b.left -= share;
+				deposit(b.at, (b.amount * GAIN * share) / b.duration, t);
 			}
 			pending = pending.filter((b) => b.left > 0);
-			if (idleGlitches && t > nextGlitch && mosaic.dial >= 1) {
+			if (idleGlitches && t > nextGlitch && dial >= 1) {
 				nextGlitch = t + 3.5 + random() * 6;
-				mosaic.glitch();
+				glitch();
 			}
 		},
 		frame(t: number): Frame {
-			const hum = { y: (((t * 0.09) % 1.6) - 0.3) * H, w: H * 0.14 };
-			return { width: W, height: H, layers: layers.map((l) => l.draw(t, hum, mosaic)) };
+			const hum = { y: (((t * 0.09) % 1.6) - 0.3) * height, w: height * 0.14 };
+			return { width, height, layers: layers.map((l) => l.draw(t, hum, signal)) };
 		},
 	};
-	return mosaic;
 }
