@@ -1,0 +1,15 @@
+{
+	"name": "@ultrasonics/core",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./run-events": "./src/run-events.ts"
+	},
+	"dependencies": {
+		"@ultrasonics/db": "workspace:*",
+		"@ultrasonics/plugin-sdk": "workspace:*",
+		"zod": "4.6.7"
+	}
+}
