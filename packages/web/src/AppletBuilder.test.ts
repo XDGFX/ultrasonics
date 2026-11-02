@@ -200,6 +200,17 @@ describe("the builder", () => {
 			expect((await api.applets.get("a1")).schedule).toBeNull();
 		});
 
+		test("moves a new applet to its address even when its schedule is refused", async () => {
+			const { wrapper, api, router } = await mountApp("/applets/new");
+			const refusal = { path: ["anchor"], message: "not a time" };
+			api.triggers.setSchedule = async () => ({ ok: false, issues: [refusal] });
+			await click(wrapper, '[data-column="when"] [data-add="schedule"]');
+			await save(wrapper);
+			const [created] = await api.applets.list();
+			expect(router.currentRoute.value.path).toBe(`/applets/${created?.id}`);
+			expect(wrapper.find(".panel [data-time-zone]").exists()).toBe(true);
+		});
+
 		test("can be removed", async () => {
 			const { wrapper, api } = await open({
 				applets: [

@@ -229,20 +229,31 @@ async function save() {
 	issues.value = [];
 	const isNew = appletId.value === undefined;
 	appletId.value = result.value.id;
-	if (JSON.stringify(schedule.value) !== savedSchedule.value) {
-		const scheduled = await api.triggers.setSchedule(result.value.id, schedule.value);
-		if (!scheduled.ok) {
-			scheduleProblem.value = scheduled.issues;
-			showScheduleIssues.value = true;
-			selectSchedule();
-			return;
-		}
+	const scheduled =
+		JSON.stringify(schedule.value) === savedSchedule.value
+			? undefined
+			: await api.triggers.setSchedule(result.value.id, schedule.value);
+	if (scheduled?.ok !== false) markSaved();
+	if (isNew) await moveTo(result.value.id);
+	if (scheduled?.ok === false) {
+		scheduleProblem.value = scheduled.issues;
+		showScheduleIssues.value = true;
+		selectSchedule();
 	}
-	markSaved();
-	if (isNew) await router.replace({ name: "builder", params: { id: result.value.id } });
 }
 
-const leaving = useUnsavedChanges(dirty);
+/** The applet now exists, so its address moves to it whatever is still unsaved. */
+const moving = ref(false);
+async function moveTo(id: string) {
+	moving.value = true;
+	try {
+		await router.replace({ name: "builder", params: { id } });
+	} finally {
+		moving.value = false;
+	}
+}
+
+const leaving = useUnsavedChanges(computed(() => dirty.value && !moving.value));
 const { runNow, queued } = useRunNow();
 </script>
 
