@@ -3,7 +3,12 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MatchCase, type MatchCaseInput } from "./match-case.ts";
-import { collectServiceTier, loadServiceTier, type ServiceTier } from "./service-tier.ts";
+import {
+	collectServiceTier,
+	loadServiceTier,
+	ServiceRequestError,
+	type ServiceTier,
+} from "./service-tier.ts";
 
 // Fakes written by hand in each API's shape; never copied from a real response.
 const spotifyTracks: Record<string, object> = {
@@ -150,10 +155,25 @@ describe("collectServiceTier", () => {
 		expect(tier.cases).toHaveLength(2);
 	});
 
-	test("carries a trap's label over and gives every case a valid schema", async () => {
+	test("carries a trap's label over", async () => {
 		const tier = await collectServiceTier([sameTitle], keys, fakeFetch());
 		expect(tier.cases.map((c) => [c.category, c.label])).toEqual([["same-title", "no-match"]]);
-		for (const c of tier.cases) expect(MatchCase.safeParse(c).success).toBe(true);
+	});
+
+	test("stops on a failed request rather than counting the case as missing", async () => {
+		const limited = (async () => new Response("", { status: 429 })) as unknown as typeof fetch;
+		await expect(collectServiceTier([positive], keys, limited)).rejects.toThrow(
+			ServiceRequestError,
+		);
+	});
+
+	test("fetches a new Spotify token once the last one expires", async () => {
+		const calls: string[] = [];
+		let now = 0;
+		await collectServiceTier([positive, sameTitle], keys, fakeFetch(calls), {
+			now: () => (now += 4_000_000),
+		});
+		expect(calls.filter((host) => host === "accounts.spotify.com")).toHaveLength(2);
 	});
 
 	test("reports a positive whose sides disagree on a remaster marker as a remaster", async () => {

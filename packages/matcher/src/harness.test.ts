@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import type { Song } from "@ultrasonics/plugin-sdk";
 import { measure, type PairwiseFunction, targets, wilson } from "./harness.ts";
-import { type Category, isPositive, MatchCase, type MatchCaseInput } from "./match-case.ts";
+import {
+	type Category,
+	isPositive,
+	MatchCase,
+	type MatchCaseInput,
+	positiveCategories,
+} from "./match-case.ts";
 
 function pair(category: Category, title: string): MatchCaseInput {
 	return {
@@ -32,7 +38,7 @@ const fixture = (
 
 const alwaysMatch: PairwiseFunction = () => ({ matched: true });
 const oracle: PairwiseFunction = (a) => ({
-	matched: ["plain", "remaster", "clean-explicit"].some((c) => a.title.startsWith(c)),
+	matched: positiveCategories.some((c) => a.title.startsWith(c)),
 });
 
 describe("measure", () => {
@@ -96,8 +102,16 @@ describe("measure", () => {
 		for (const song of seen) expect(song).not.toHaveProperty("isrc");
 	});
 
-	test("judges each figure against its target", () => {
-		expect(targets).toEqual({ recall: 0.95, rejection: 0.95, precision: 0.99 });
+	test("meets a target exactly at it and misses it just below", () => {
+		const n = 100;
+		const plain = Array.from({ length: n }, (_, i) => MatchCase.parse(pair("plain", `p${i}`)));
+		const matchingFirst =
+			(count: number): PairwiseFunction =>
+			(a) => ({
+				matched: Number(a.title.slice(1)) < count,
+			});
+		expect(measure(matchingFirst(targets.recall * n), plain).recall.met).toBe(true);
+		expect(measure(matchingFirst(targets.recall * n - 1), plain).recall.met).toBe(false);
 	});
 });
 

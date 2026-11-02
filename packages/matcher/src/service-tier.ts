@@ -1,20 +1,40 @@
 import { readFile } from "node:fs/promises";
 import { normaliseDate, normaliseIsrc, Song } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
-import { type Category, isPositive, MatchCase } from "./match-case.ts";
+import {
+	type Category,
+	isPositive,
+	MatchCase,
+	oneSideRemastered,
+	ServiceName,
+} from "./match-case.ts";
 
 /** The held-out tier as the collector caches it; never committed or pushed (spec #117). */
 export const ServiceTier = z.object({
 	cases: z.array(MatchCase),
 	dropped: z.number().int().nonnegative(),
-	skipped: z.array(z.string()),
+	skipped: z.array(ServiceName),
 });
 export type ServiceTier = z.output<typeof ServiceTier>;
 
+/** A request a service refused or failed, which would otherwise read as a missing track. */
+export class ServiceRequestError extends Error {
+	constructor(service: ServiceName, status: number) {
+		super(`${service} answered ${status}; stopping rather than counting cases as missing.`);
+		this.name = "ServiceRequestError";
+	}
+}
+
 type Env = Record<string, string | undefined>;
 
+export interface CollectOptions {
+	/** A pause after each case, to stay inside the services' rate limits. */
+	pauseMs?: number;
+	now?: () => number;
+}
+
 interface Service {
-	name: string;
+	name: ServiceName;
 	find(isrc: string): Promise<Song | undefined>;
 }
 
@@ -28,6 +48,8 @@ const SpotifyTrack = z.object({
 });
 
 const SpotifySearch = z.object({ tracks: z.object({ items: z.array(SpotifyTrack) }) });
+
+const SpotifyToken = z.object({ access_token: z.string(), expires_in: z.number() });
 
 const DeezerTrack = z.object({
 	title: z.string(),
@@ -45,28 +67,37 @@ function song(fields: z.input<typeof Song>): Song | undefined {
 	return Song.safeParse(fields).data;
 }
 
-async function spotify(env: Env, fetcher: typeof fetch): Promise<Service | undefined> {
+async function json(service: ServiceName, response: Response): Promise<unknown> {
+	if (!response.ok) throw new ServiceRequestError(service, response.status);
+	return response.json();
+}
+
+function spotify(env: Env, fetcher: typeof fetch, now: () => number): Service | undefined {
 	const { SPOTIFY_CLIENT_ID: id, SPOTIFY_CLIENT_SECRET: secret } = env;
 	if (!id || !secret) return undefined;
-	let token: string | undefined;
-	return {
-		name: "spotify",
-		async find(isrc) {
-			token ??= await fetcher("https://accounts.spotify.com/api/token", {
+	let token: { value: string; expiresAt: number } | undefined;
+	const bearer = async () => {
+		if (!token || now() >= token.expiresAt) {
+			const response = await fetcher("https://accounts.spotify.com/api/token", {
 				method: "POST",
 				headers: {
 					Authorization: `Basic ${btoa(`${id}:${secret}`)}`,
 					"Content-Type": "application/x-www-form-urlencoded",
 				},
 				body: "grant_type=client_credentials",
-			})
-				.then((r) => r.json())
-				.then((body) => z.object({ access_token: z.string() }).parse(body).access_token);
+			});
+			const granted = SpotifyToken.parse(await json("spotify", response));
+			token = { value: granted.access_token, expiresAt: now() + granted.expires_in * 1000 };
+		}
+		return token.value;
+	};
+	return {
+		name: "spotify",
+		async find(isrc) {
 			const url = new URL("https://api.spotify.com/v1/search");
 			url.search = new URLSearchParams({ q: `isrc:${isrc}`, type: "track", limit: "1" }).toString();
-			const body = await fetcher(url, { headers: { Authorization: `Bearer ${token}` } }).then((r) =>
-				r.json(),
-			);
+			const headers = { Authorization: `Bearer ${await bearer()}` };
+			const body = await json("spotify", await fetcher(url, { headers }));
 			const track = SpotifySearch.safeParse(body).data?.tracks.items[0];
 			return (
 				track &&
@@ -88,7 +119,8 @@ function deezer(fetcher: typeof fetch): Service {
 	return {
 		name: "deezer",
 		async find(isrc) {
-			const body = await fetcher(`https://api.deezer.com/track/isrc:${isrc}`).then((r) => r.json());
+			// Deezer answers a missing track with 200 and an error body, which fails the parse.
+			const body = await json("deezer", await fetcher(`https://api.deezer.com/track/isrc:${isrc}`));
 			const track = DeezerTrack.safeParse(body).data;
 			return (
 				track &&
@@ -106,13 +138,10 @@ function deezer(fetcher: typeof fetch): Service {
 	};
 }
 
-const remaster = /remaster/i;
-
 /** Labels carry over; a positive's category comes from what the two services actually show. */
 function categoryOf(original: Category, a: Song, b: Song): Category {
 	if (!isPositive(original)) return original;
-	if (remaster.test(`${a.title} ${a.album ?? ""}`) !== remaster.test(`${b.title} ${b.album ?? ""}`))
-		return "remaster";
+	if (oneSideRemastered(a, b)) return "remaster";
 	if (a.explicit !== undefined && b.explicit !== undefined && a.explicit !== b.explicit)
 		return "clean-explicit";
 	return "plain";
@@ -126,17 +155,18 @@ export async function collectServiceTier(
 	cases: readonly MatchCase[],
 	env: Env,
 	fetcher: typeof fetch,
-	pauseMs = 0,
+	{ pauseMs = 0, now = Date.now }: CollectOptions = {},
 ): Promise<ServiceTier> {
-	const found = await spotify(env, fetcher);
-	const services = [found, deezer(fetcher)].filter((s): s is Service => s !== undefined);
-	const skipped = found ? [] : ["spotify"];
-	const tier: ServiceTier = { cases: [], dropped: 0, skipped };
-	if (services.length < 2) return tier;
+	const keyed = spotify(env, fetcher, now);
+	// With one service left there is no cross-service pair to make.
+	if (!keyed) return { cases: [], dropped: 0, skipped: ["spotify"] };
+	const services = [keyed, deezer(fetcher)];
+	const tier: ServiceTier = { cases: [], dropped: 0, skipped: [] };
 
-	const sources = cases.flatMap((c) => (c.provenance.source === "musicbrainz" ? [c] : []));
+	const sources = cases.flatMap((c) =>
+		c.provenance.source === "musicbrainz" ? [{ ...c, provenance: c.provenance }] : [],
+	);
 	for (const [index, c] of sources.entries()) {
-		if (c.provenance.source !== "musicbrainz") continue;
 		const { a: sideA, b: sideB } = c.provenance;
 		const serviceA = services[index % services.length] as Service;
 		const serviceB = services[(index + 1) % services.length] as Service;

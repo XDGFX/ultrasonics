@@ -17,7 +17,7 @@ const cacheDir = join(import.meta.dir, "../service-tier-cache");
 const fixture = join(import.meta.dir, "../test/fixtures/match-dataset/musicbrainz.json");
 const cases = z.array(MatchCase).parse(JSON.parse(await readFile(fixture, "utf8")));
 
-const tier = await collectServiceTier(cases, process.env, fetch, 250);
+const tier = await collectServiceTier(cases, process.env, fetch, { pauseMs: 250 });
 for (const service of tier.skipped) console.warn(`Skipped ${service}: no keys in the environment.`);
 await mkdir(cacheDir, { recursive: true });
 await writeFile(join(cacheDir, "service-tier.json"), JSON.stringify(tier));

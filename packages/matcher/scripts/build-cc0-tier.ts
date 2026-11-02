@@ -4,8 +4,8 @@
  *   bun run build-cc0-tier [--seed 119] [--positives 1050] [--per-trap 125]
  *
  * It reads the MusicBrainz web service with a contact User-Agent, starting at most one request a
- * second, and caches every response in the git-ignored `musicbrainz-cache/`, so a rerun with the
- * same seed costs nothing and writes the same file. A cold run takes about an hour.
+ * second, and caches every response in the git-ignored `musicbrainz-cache/`, so an interrupted
+ * run resumes where it stopped. A cold run takes about two hours.
  *
  * - Sampling: digital releases with a Spotify URL link, stratified by the decade their release
  *   group first came out and by language, which brings in non-Latin scripts; songs with several
@@ -17,8 +17,8 @@
  *   recording of their work. Covers: that work recorded by another artist.
  * - Same-title traps: a sampled recording against one of the same title by another artist and of
  *   another work, then studio recordings of two distinct works sharing a common title.
- * - Concurrent workers can change which case fills a quota last, so two cold runs may differ
- *   slightly; a rerun from a full cache does not.
+ * - Four workers race to fill each quota, so two runs, even from a full cache, can differ in a
+ *   few cases at a quota's edge. The sample itself is fixed by the seed.
  * - Only core data is kept: title, artist credit, length, ISRC, release title and date, MBIDs.
  *   Tags, ratings and annotations are CC BY-NC-SA and are never requested.
  *
@@ -29,10 +29,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { normaliseDate, normaliseIsrc } from "@ultrasonics/plugin-sdk";
+import { z } from "zod";
 import {
 	isPositive,
 	MatchCase,
 	type MatchCaseInput,
+	oneSideRemastered,
 	type TrapCategory,
 	trapCategories,
 } from "../src/match-case.ts";
@@ -54,42 +56,71 @@ const trapQuota = Number(args["per-trap"]);
 
 // --- The web service --------------------------------------------------------------------------
 
-interface ArtistCredit {
-	name: string;
-	artist: { id: string };
-}
-interface Track {
-	title: string;
-	length?: number | null;
-	"artist-credit"?: ArtistCredit[];
-	recording?: Recording;
-}
-interface Release {
-	id: string;
-	title: string;
-	date?: string | null;
-	status?: string | null;
-	media?: { format?: string | null; track?: Track[]; tracks?: Track[] }[];
-	relations?: Relation[];
-}
-interface Relation {
-	type: string;
-	direction: "forward" | "backward";
-	attributes: string[];
-	recording?: Recording;
-	work?: { id: string; title: string };
-	url?: { resource: string };
-}
-interface Recording {
-	id: string;
-	title: string;
-	length?: number | null;
-	disambiguation?: string | null;
-	isrcs?: string[];
-	"artist-credit"?: ArtistCredit[];
-	releases?: Release[];
-	relations?: Relation[];
-}
+const ArtistCredit = z.object({ name: z.string(), artist: z.object({ id: z.string() }) });
+type ArtistCredit = z.output<typeof ArtistCredit>;
+
+const Recording = z.object({
+	id: z.string(),
+	title: z.string(),
+	length: z.number().nullish(),
+	disambiguation: z.string().nullish(),
+	isrcs: z.array(z.string()).optional(),
+	"artist-credit": z.array(ArtistCredit).optional(),
+	get releases() {
+		return z.array(Release).optional();
+	},
+	get relations() {
+		return z.array(Relation).optional();
+	},
+});
+type Recording = z.output<typeof Recording>;
+
+const Track = z.object({
+	title: z.string(),
+	length: z.number().nullish(),
+	"artist-credit": z.array(ArtistCredit).optional(),
+	get recording() {
+		return Recording.optional();
+	},
+});
+type Track = z.output<typeof Track>;
+
+const Release = z.object({
+	id: z.string(),
+	title: z.string(),
+	date: z.string().nullish(),
+	status: z.string().nullish(),
+	media: z
+		.array(
+			z.object({
+				format: z.string().nullish(),
+				track: z.array(Track).optional(),
+				tracks: z.array(Track).optional(),
+			}),
+		)
+		.optional(),
+	get relations() {
+		return z.array(Relation).optional();
+	},
+});
+type Release = z.output<typeof Release>;
+
+const Relation = z.object({
+	type: z.string(),
+	direction: z.enum(["forward", "backward"]),
+	attributes: z.array(z.string()),
+	recording: Recording.optional(),
+	work: z.object({ id: z.string(), title: z.string() }).optional(),
+	url: z.object({ resource: z.string() }).optional(),
+});
+
+const WorkLookup = z.object({ relations: z.array(Relation).optional() });
+const SearchCount = z.object({ count: z.number().optional() });
+const RecordingPage = z.object({ recordings: z.array(Recording).optional() });
+const ReleasePage = z.object({ releases: z.array(Release).optional() });
+const WorkPage = z.object({
+	works: z.array(z.object({ id: z.string(), title: z.string() })).optional(),
+});
 
 let nextStart = 0;
 
@@ -103,11 +134,12 @@ async function rateSlot(): Promise<void> {
 
 const sha1 = (text: string) => new Bun.CryptoHasher("sha1").update(text).digest("hex");
 
-async function get<T>(path: string): Promise<T> {
+/** A response parsed by `schema`, or `undefined` when MusicBrainz has nothing at that path. */
+async function get<S extends z.ZodType>(path: string, schema: S): Promise<z.output<S> | undefined> {
 	const url = `https://musicbrainz.org/ws/2/${path}${path.includes("?") ? "&" : "?"}fmt=json`;
 	const file = join(cacheDir, `${sha1(url)}.json`);
 	const cached = await readFile(file, "utf8").catch(() => undefined);
-	if (cached !== undefined) return JSON.parse(cached) as T;
+	if (cached !== undefined) return schema.parse(JSON.parse(cached));
 	for (let attempt = 0; ; attempt++) {
 		await rateSlot();
 		// A dropped connection never settles on its own, so a timeout sends it to the retry below.
@@ -117,12 +149,12 @@ async function get<T>(path: string): Promise<T> {
 		);
 		if (response && response.status >= 400 && response.status < 500 && response.status !== 429) {
 			console.warn(`Skipping ${url}: ${response.status}`);
-			return {} as T;
+			return undefined;
 		}
 		const body = response?.ok ? await response.text().catch(() => undefined) : undefined;
 		if (body !== undefined) {
 			await writeFile(file, body);
-			return JSON.parse(body) as T;
+			return schema.parse(JSON.parse(body));
 		}
 		if (attempt >= 5) throw new Error(`MusicBrainz gave ${response?.status} for ${url}`);
 		await Bun.sleep(2000 * (attempt + 1));
@@ -130,31 +162,32 @@ async function get<T>(path: string): Promise<T> {
 }
 
 const lookupRecording = (id: string) =>
-	get<Recording>(`recording/${id}?inc=artist-credits+isrcs+work-rels+recording-rels`);
-const lookupWork = (id: string) =>
-	get<{ relations?: Relation[] }>(`work/${id}?inc=recording-rels+artist-credits`);
+	get(`recording/${id}?inc=artist-credits+isrcs+work-rels+recording-rels`, Recording);
+const lookupWork = async (id: string) =>
+	(await get(`work/${id}?inc=recording-rels+artist-credits`, WorkLookup))?.relations ?? [];
 
 /** A fraction drawn from the seed and the query, so workers' order never changes the sample. */
 const draw = (query: string, round: number) =>
 	Number.parseInt(sha1(`${args.seed}|${query}|${round}`).slice(0, 8), 16) / 2 ** 32;
 
 /** A random page of the first 500 results, the most the search service will page through. */
-async function search<T>(
+async function search<S extends z.ZodType>(
 	entity: "recording" | "release",
+	schema: S,
 	query: string,
 	limit: number,
 	round: number,
 ) {
 	const encoded = encodeURIComponent(query);
-	const first = await get<{ count?: number }>(`${entity}?query=${encoded}&limit=1`);
+	const first = await get(`${entity}?query=${encoded}&limit=1`, SearchCount);
 	const offset = Math.floor(
-		draw(query, round) * Math.max(0, Math.min(first.count ?? 0, 500) - limit),
+		draw(query, round) * Math.max(0, Math.min(first?.count ?? 0, 500) - limit),
 	);
-	return get<T>(`${entity}?query=${encoded}&limit=${limit}&offset=${offset}`);
+	return get(`${entity}?query=${encoded}&limit=${limit}&offset=${offset}`, schema);
 }
 
 const searchRecordings = async (query: string, limit = 50, round = 0) =>
-	(await search<{ recordings?: Recording[] }>("recording", query, limit, round)).recordings ?? [];
+	(await search("recording", RecordingPage, query, limit, round))?.recordings ?? [];
 
 /** Fetches recordings with their releases in batches of 20, one search request a batch. */
 async function recordingsById(ids: readonly string[]): Promise<Map<string, Recording>> {
@@ -163,8 +196,8 @@ async function recordingsById(ids: readonly string[]): Promise<Map<string, Recor
 	for (let i = 0; i < unique.length; i += 20) {
 		const batch = unique.slice(i, i + 20);
 		const query = encodeURIComponent(batch.map((id) => `rid:${id}`).join(" OR "));
-		const page = await get<{ recordings?: Recording[] }>(`recording?query=${query}&limit=25`);
-		for (const recording of page.recordings ?? []) found.set(recording.id, recording);
+		const page = await get(`recording?query=${query}&limit=25`, RecordingPage);
+		for (const recording of page?.recordings ?? []) found.set(recording.id, recording);
 	}
 	return found;
 }
@@ -221,9 +254,16 @@ const trapCounts = Object.fromEntries(trapCategories.map((c) => [c, 0])) as Reco
 let positives = 0;
 const trapOpen = (category: TrapCategory) => trapCounts[category] < trapQuota;
 
-const spotCheck = await readFile(join(fixtureDir, "spot-check.json"), "utf8")
-	.then((text) => JSON.parse(text) as { a: string; b: string; verdict: "good" | "bad" }[])
-	.catch(() => []);
+const SpotCheck = z.array(
+	z.object({
+		a: z.string(),
+		b: z.string(),
+		verdict: z.enum(["good", "bad"]),
+		note: z.string().optional(),
+	}),
+);
+const spotCheckText = await readFile(join(fixtureDir, "spot-check.json"), "utf8").catch(() => "[]");
+const spotCheck = SpotCheck.parse(JSON.parse(spotCheckText));
 const dropped = new Set(spotCheck.filter((c) => c.verdict === "bad").map((c) => `${c.a}|${c.b}`));
 
 function add(candidate: MatchCaseInput): boolean {
@@ -253,10 +293,9 @@ function trap(category: TrapCategory, a: SongFields, base: Recording, variant: R
 	});
 }
 
-const remaster = /remaster/i;
 const versionWords =
 	/\b(live|remix|mix|edit|version|demo|instrumental|acoustic|karaoke|re-?record)/i;
-const describe = (r: Recording) => `${r.title} ${r.disambiguation ?? ""}`;
+const versionText = (r: Recording) => `${r.title} ${r.disambiguation ?? ""}`;
 
 interface Sampled {
 	recording: Recording;
@@ -265,8 +304,8 @@ interface Sampled {
 
 /** Takes up to five tracks with an ISRC from a Spotify-linked release, as positives. */
 async function sampleRelease(id: string): Promise<{ sampled: Sampled[]; added: number }> {
-	const release = await get<Release>(`release/${id}?inc=url-rels+recordings+isrcs+artist-credits`);
-	if (!release.relations?.some((r) => r.url?.resource.includes("open.spotify.com"))) {
+	const release = await get(`release/${id}?inc=url-rels+recordings+isrcs+artist-credits`, Release);
+	if (!release?.relations?.some((r) => r.url?.resource.includes("open.spotify.com"))) {
 		return { sampled: [], added: 0 };
 	}
 	const tracks = (release.media ?? [])
@@ -289,10 +328,8 @@ async function sampleRelease(id: string): Promise<{ sampled: Sampled[]; added: n
 			recording.releases?.find((r) => r.id !== release.id && r.date && r.date !== release.date);
 		if (!other) continue;
 		const b = songOf(recording, other);
-		const oneRemaster =
-			remaster.test(`${song.title} ${song.album}`) !== remaster.test(`${b.title} ${b.album}`);
 		const provenance = { source: "musicbrainz" as const, a: side(recording), b: side(recording) };
-		const category = oneRemaster ? "remaster" : "plain";
+		const category = oneSideRemastered(song, b) ? "remaster" : "plain";
 		if (add({ a: song, b, label: "match", category, provenance })) added++;
 	}
 	return { sampled, added };
@@ -301,7 +338,9 @@ async function sampleRelease(id: string): Promise<{ sampled: Sampled[]; added: n
 /** Pairs a sampled recording with one of the same title by another artist, of another work. */
 async function sameTitle({ recording: sampled, song }: Sampled): Promise<void> {
 	if (!trapOpen("same-title") || sampled.title.length < 3) return;
-	const base = { ...(await lookupRecording(sampled.id)), isrcs: sampled.isrcs };
+	const looked = await lookupRecording(sampled.id);
+	if (!looked) return;
+	const base = { ...looked, isrcs: sampled.isrcs };
 	const workId = base.relations?.find((r) => r.type === "performance")?.work?.id;
 	if (!workId) return;
 	const title = base.title.replaceAll('"', "");
@@ -311,7 +350,7 @@ async function sameTitle({ recording: sampled, song }: Sampled): Promise<void> {
 			!shareArtist(base["artist-credit"], r["artist-credit"]),
 	);
 	if (!other) return;
-	const work = (await lookupRecording(other.id)).relations?.find(
+	const work = (await lookupRecording(other.id))?.relations?.find(
 		(r) => r.type === "performance",
 	)?.work;
 	if (work && work.id !== workId) trap("same-title", song, base, other);
@@ -322,12 +361,10 @@ async function sameTitleWorks(rawTitle: string, pairs: number, limit: number): P
 	if (!trapOpen("same-title") || rawTitle.length < 3) return;
 	const title = rawTitle.toLowerCase();
 	const query = encodeURIComponent(`work:"${rawTitle.replaceAll('"', "")}"`);
-	const { works = [] } = await get<{ works?: { id: string; title: string }[] }>(
-		`work?query=${query}&limit=${limit}`,
-	);
+	const works = (await get(`work?query=${query}&limit=${limit}`, WorkPage))?.works ?? [];
 	const recordingIds: string[] = [];
 	for (const work of works.filter((w) => w.title.toLowerCase() === title).slice(0, 2 * pairs)) {
-		const studio = (await lookupWork(work.id)).relations?.find(
+		const studio = (await lookupWork(work.id)).find(
 			(r) => r.recording && !r.attributes.includes("live") && !r.attributes.includes("cover"),
 		)?.recording;
 		if (studio) recordingIds.push(studio.id);
@@ -392,6 +429,7 @@ async function topUp(category: TrapCategory, query: string): Promise<void> {
 		const pairs: Pair[] = [];
 		for (const variant of await searchRecordings(`${query} AND isrc:*`, 25, round)) {
 			const detail = await lookupRecording(variant.id);
+			if (!detail) continue;
 			const forward = detail.relations?.find(
 				(r) => r.direction === "forward" && r.type === category && r.recording,
 			)?.recording;
@@ -401,14 +439,14 @@ async function topUp(category: TrapCategory, query: string): Promise<void> {
 			}
 			const work = detail.relations?.find((r) => r.type === "performance")?.work;
 			if (!work) continue;
-			const siblings = (await lookupWork(work.id)).relations ?? [];
+			const siblings = await lookupWork(work.id);
 			const original = siblings.find(
 				(r) =>
 					r.recording &&
 					r.recording.id !== variant.id &&
 					!r.attributes.includes("live") &&
 					shareArtist(detail["artist-credit"], r.recording["artist-credit"]) &&
-					!versionWords.test(describe(r.recording)),
+					!versionWords.test(versionText(r.recording)),
 			)?.recording;
 			if (!original) continue;
 			pairs.push([category, variant.id, original.id]);
@@ -446,8 +484,11 @@ async function pool<T>(items: readonly T[], task: (item: T) => Promise<void>): P
 }
 
 const decades = [1960, 1970, 1980, 1990, 2000, 2010, 2020];
-const languages = ["eng", "spa", "por", "fra", "deu", "swe", "ita", "jpn", "kor", "zho", "rus"];
-languages.push("ell", "heb", "hin", "ara", "tha");
+// Language stands in for region: release search has no artist area, and it reaches non-Latin scripts.
+const languages = [
+	...["eng", "spa", "por", "fra", "deu", "swe", "ita"],
+	...["jpn", "kor", "zho", "rus", "ell", "heb", "hin", "ara", "tha"],
+];
 const strata = decades.flatMap((decade) => languages.map((lang) => ({ decade, lang })));
 const bases: Sampled[] = [];
 
@@ -461,7 +502,7 @@ for (let round = 0; round < 6 && positives < positiveQuota && active.length; rou
 	await pool(active, async (stratum) => {
 		const { decade, lang } = stratum;
 		const query = `firstreleasedate:[${decade} TO ${decade + 9}] AND lang:${lang} AND format:"Digital Media"`;
-		const { releases = [] } = await search<{ releases?: Release[] }>("release", query, 25, round);
+		const releases = (await search("release", ReleasePage, query, 25, round))?.releases ?? [];
 		let taken = 0;
 		for (const release of releases) {
 			if (taken >= share || positives >= positiveQuota) break;

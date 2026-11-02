@@ -47,6 +47,21 @@ const CaseSong = Song.refine(
 	"A song in a match case carries no id and no location",
 );
 
+/** The services the service tier is fetched from (spec #117, "The service tier"). */
+export const ServiceName = z.enum(["spotify", "deezer"]);
+export type ServiceName = z.output<typeof ServiceName>;
+
+const remasterMarker = /remaster/i;
+
+/** A positive with a remaster marker on one side only is a remaster positive (#104 §2). */
+export function oneSideRemastered(
+	a: { title: string; album?: string | null },
+	b: { title: string; album?: string | null },
+): boolean {
+	const marked = (song: typeof a) => remasterMarker.test(`${song.title} ${song.album ?? ""}`);
+	return marked(a) !== marked(b);
+}
+
 const MusicBrainzSide = z.object({
 	isrc: z.string().optional(),
 	recording: z.uuid(),
@@ -62,8 +77,8 @@ export const Provenance = z.discriminatedUnion("source", [
 	}),
 	z.object({
 		source: z.literal("service"),
-		a: z.object({ service: z.string(), isrc: z.string() }),
-		b: z.object({ service: z.string(), isrc: z.string() }),
+		a: z.object({ service: ServiceName, isrc: z.string() }),
+		b: z.object({ service: ServiceName, isrc: z.string() }),
 	}),
 ]);
 export type Provenance = z.output<typeof Provenance>;

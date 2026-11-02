@@ -23,6 +23,10 @@ if (loaded.kind === "missing") {
 const { tier } = loaded;
 for (const service of tier.skipped) console.warn(`Skipped ${service} when collecting: no keys.`);
 console.log(`${tier.cases.length} cases; ${tier.dropped} dropped as missing on a service.`);
+if (tier.cases.length === 0) {
+	console.error("The cache holds no cases. No figures: the service tier was not measured.");
+	process.exit(1);
+}
 if (!pairwise) {
 	console.error("No matcher to measure yet. No figures.");
 	process.exit(1);

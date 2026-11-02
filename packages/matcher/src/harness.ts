@@ -37,15 +37,15 @@ export interface Report {
 	allMet: boolean;
 }
 
-const z = 1.959964;
+const z95 = 1.959964;
 
 /** The 95% Wilson score interval, which stays inside [0, 1] for rates near either end. */
 export function wilson(successes: number, n: number): Interval {
 	const p = successes / n;
-	const z2 = z * z;
+	const z2 = z95 * z95;
 	const denominator = 1 + z2 / n;
 	const centre = (p + z2 / (2 * n)) / denominator;
-	const margin = (z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denominator;
+	const margin = (z95 * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denominator;
 	return { lower: Math.max(0, centre - margin), upper: Math.min(1, centre + margin) };
 }
 
