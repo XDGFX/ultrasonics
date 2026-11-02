@@ -1,8 +1,7 @@
-import { toFormSchema, withMeta } from "@ultrasonics/plugin-sdk";
+import { issuesOf, toFormSchema, withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import type { SaveResult, Schedule } from "./api-client.ts";
 import { pad } from "./clock.ts";
-import { issuesOf } from "./zod-issues.ts";
 
 const fields = z.object({
 	unit: withMeta(z.enum(["hour", "day", "week"]).default("day"), { title: "every" }),

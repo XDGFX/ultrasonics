@@ -11,7 +11,7 @@ export {
 } from "./auth.ts";
 export { fromFileUri, toFileUri } from "./file-uri.ts";
 export { normaliseDate, normaliseIsrc } from "./normalise.ts";
-export { OutputResult, PlaylistResult } from "./output-result.ts";
+export { OutputResult, outputResultIssues, PlaylistResult } from "./output-result.ts";
 export {
 	Component,
 	type DefinedPlugin,
@@ -62,4 +62,4 @@ export {
 	type SongDictValidation,
 	validateSongDict,
 } from "./song-dict-validator.ts";
-export type { IssuePath, ValidationIssue } from "./validation-issue.ts";
+export { type IssuePath, issuesOf, type ValidationIssue } from "./validation-issue.ts";

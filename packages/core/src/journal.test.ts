@@ -56,6 +56,19 @@ describe("the journal", () => {
 		expect(fromJournal(stored(events))).toEqual(events);
 	});
 
+	test("replays a run with no journal written yet as no events", () => {
+		expect(fromJournal({ log: null, stages: null, results: null })).toEqual([]);
+	});
+
+	test("replays the columns a journal holds when the others are null or absent", async () => {
+		const events = await runEvents();
+		const { stages } = stored(events);
+
+		expect(fromJournal({ log: null, stages })).toEqual(
+			events.filter((event) => event.type === "stage" || event.type === "end"),
+		);
+	});
+
 	test("over the line cap, keeps the head and the tail with an omitted-count line between", () => {
 		const total = LOG_CAP_LINES + 500;
 		const events = Array.from({ length: total }, (_, i) => line(i + 1));

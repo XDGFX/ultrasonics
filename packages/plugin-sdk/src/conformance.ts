@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { z } from "zod";
 import type { AuthSpec } from "./auth.ts";
-import { OutputResult } from "./output-result.ts";
+import { outputResultIssues } from "./output-result.ts";
 import { Component, Handshake, type Plugin, TestResult } from "./plugin.ts";
 import {
 	createRunContext,
@@ -526,49 +526,13 @@ export async function checkConformance<P extends Plugin>(
 	return failures;
 }
 
-/** Every playlist received appears exactly once, by position, with unmatched songs in range. */
+/** The runner's own check of an output's result (ADR-0020 §2). */
 function outputFailures(result: unknown, songs: SongDict | undefined): ConformanceFailure[] {
-	const path: IssuePath = ["run", "outputs"];
-	const fail = (at: IssuePath, message: string): ConformanceFailure => ({
+	return outputResultIssues(result, songs ?? { version: 1, playlists: [] }).map((issue) => ({
 		invariant: "output-completeness",
-		path: [...path, ...at],
-		message,
-	});
-	const parsed = OutputResult.safeParse(result);
-	if (!parsed.success) return failuresOf("output-completeness", parsed.error, path);
-
-	const playlists = songs?.playlists ?? [];
-	const failures: ConformanceFailure[] = [];
-	const seen = new Set<number>();
-	for (const [index, entry] of parsed.data.playlists.entries()) {
-		const playlist = playlists[entry.playlist];
-		if (playlist === undefined) {
-			failures.push(
-				fail(["playlists", index, "playlist"], `No playlist at position ${entry.playlist}`),
-			);
-			continue;
-		}
-		if (seen.has(entry.playlist)) {
-			failures.push(
-				fail(["playlists", index, "playlist"], `Playlist ${entry.playlist} appears twice`),
-			);
-		}
-		seen.add(entry.playlist);
-		if (entry.status !== "written") continue;
-		for (const [position, song] of entry.unmatched.entries()) {
-			if (song < 0 || song >= playlist.songs.length) {
-				failures.push(
-					fail(["playlists", index, "unmatched", position], `No song at position ${song}`),
-				);
-			}
-		}
-	}
-	for (const position of playlists.keys()) {
-		if (!seen.has(position)) {
-			failures.push(fail(["playlists", position], `Playlist ${position} has no entry`));
-		}
-	}
-	return failures;
+		path: ["run", "outputs", ...issue.path],
+		message: issue.message,
+	}));
 }
 
 /**
