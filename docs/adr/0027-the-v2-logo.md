@@ -1,6 +1,6 @@
 # ADR-0027 — The v2 logo
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-11-01
 **Builds on:** ADR-0025 (the v2 UI design direction)
 **Evidence:** the prototypes on branch
