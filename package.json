@@ -13,8 +13,8 @@
 		"cycle-check": "bun scripts/cycle-check.ts",
 		"lint:check": "biome check --formatter-enabled=false",
 		"format:check": "biome format",
-		"type-check": "tsc --noEmit -p tsconfig.json",
-		"test": "bun test"
+		"type-check": "tsc --noEmit -p tsconfig.json && bun run --cwd packages/web type-check",
+		"test": "bun test --path-ignore-patterns='packages/web/**' && bun run --cwd packages/web test"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",
