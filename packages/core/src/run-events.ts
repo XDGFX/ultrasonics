@@ -17,7 +17,9 @@ export {
 	type ResultPlaylist,
 	RunEvent,
 	type RunEvents,
+	StageCounts,
 	StageError,
 	StageErrorCode,
 	StageEvent,
+	StageSlot,
 } from "./run-event.ts";

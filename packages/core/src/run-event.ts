@@ -30,7 +30,22 @@ export type StageError = z.infer<typeof StageError>;
 const base = { seq: z.number().int().min(1), at: z.number() };
 
 /** One component instance: its component, position within that component, and plugin name. */
-const slot = { component: Component, index: z.number().int().min(0), plugin: z.string() };
+export const StageSlot = z.object({
+	component: Component,
+	index: z.number().int().min(0),
+	plugin: z.string(),
+});
+export type StageSlot = z.infer<typeof StageSlot>;
+
+/** What a finished stage counts. */
+export const StageCounts = z.object({
+	/** Songs and playlists out; for an output, those it received. */
+	songs: z.number().int().min(0),
+	playlists: z.number().int().min(0),
+	/** Every rejection in the stage, including those past the emitted cap. */
+	rejected: z.number().int().min(0),
+});
+export type StageCounts = z.infer<typeof StageCounts>;
 
 export const LogEvent = z.object({
 	...base,
@@ -43,17 +58,13 @@ export const LogEvent = z.object({
 export type LogEvent = z.infer<typeof LogEvent>;
 
 export const StageEvent = z.discriminatedUnion("state", [
-	z.object({ ...base, type: z.literal("stage"), ...slot, state: z.literal("started") }),
+	z.object({ ...base, type: z.literal("stage"), ...StageSlot.shape, state: z.literal("started") }),
 	z.object({
 		...base,
 		type: z.literal("stage"),
-		...slot,
+		...StageSlot.shape,
 		state: z.literal("finished"),
-		/** Songs and playlists out; for an output, those it received. */
-		songs: z.number().int().min(0),
-		playlists: z.number().int().min(0),
-		/** Every rejection in the stage, including those past the emitted cap. */
-		rejected: z.number().int().min(0),
+		...StageCounts.shape,
 		error: StageError.optional(),
 	}),
 ]);
@@ -63,7 +74,7 @@ export type StageEvent = z.infer<typeof StageEvent>;
 export const RejectionEvent = z.object({
 	...base,
 	type: z.literal("rejection"),
-	...slot,
+	...StageSlot.shape,
 	playlist: z.number().int().min(0),
 	playlistName: z.string().optional(),
 	/** Absent when the whole playlist was dropped. */
