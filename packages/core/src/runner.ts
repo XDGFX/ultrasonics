@@ -6,6 +6,7 @@ import {
 	isAuthFailure,
 	type LogLevel,
 	OutputResult,
+	outputResultIssues,
 	type Plugin,
 	type PluginRegistry,
 	type RunPayload,
@@ -101,27 +102,6 @@ function describeIssues(issues: ValidationIssue[]): string {
 
 function countSongs(songs: SongDict): number {
 	return songs.playlists.reduce((total, playlist) => total + playlist.songs.length, 0);
-}
-
-/** Why an output's result does not cover each playlist exactly once (ADR-0020 §2), if it doesn't. */
-function incompleteness(result: OutputResult, songs: SongDict): string | undefined {
-	const seen = new Set<number>();
-	for (const entry of result.playlists) {
-		const playlist = songs.playlists[entry.playlist];
-		if (!playlist) return `Playlist ${entry.playlist} is out of range`;
-		if (seen.has(entry.playlist)) return `Playlist ${entry.playlist} appears more than once`;
-		seen.add(entry.playlist);
-		if (entry.status !== "written") continue;
-		const unmatched = new Set<number>();
-		for (const position of entry.unmatched) {
-			if (!playlist.songs[position] || unmatched.has(position)) {
-				return `Playlist ${entry.playlist} has an invalid or repeated unmatched song ${position}`;
-			}
-			unmatched.add(position);
-		}
-	}
-	const missing = songs.playlists.map((_, position) => position).filter((p) => !seen.has(p));
-	return missing.length ? `Playlists ${missing.join(", ")} have no result` : undefined;
 }
 
 /**
@@ -271,15 +251,15 @@ async function runOutput(
 ): Promise<{ ok: true; playlists: ResultPlaylist[] } | { ok: false; error: StageError }> {
 	const result = await execute(run, stage, structuredClone(songs));
 	if (!result.ok) return result;
-	const parsed = OutputResult.safeParse(result.value);
-	const fault = parsed.success
-		? incompleteness(parsed.data, songs)
-		: describeIssues(prefixed("result", parsed.error));
-	if (!parsed.success || fault) {
-		return { ok: false, error: { code: "contract", message: `Invalid output result: ${fault}` } };
+	const issues = outputResultIssues(result.value, songs);
+	if (issues.length) {
+		const underResult = issues.map((issue) => ({ ...issue, path: ["result", ...issue.path] }));
+		const message = `Invalid output result: ${describeIssues(underResult)}`;
+		return { ok: false, error: { code: "contract", message } };
 	}
-	const playlists = parsed.data.playlists.map((entry): ResultPlaylist => {
-		// `incompleteness` has checked every position, so the fallbacks are never reached.
+	const parsed = OutputResult.parse(result.value);
+	const playlists = parsed.playlists.map((entry): ResultPlaylist => {
+		// `outputResultIssues` has checked every position, so the fallbacks are never reached.
 		const playlist = songs.playlists[entry.playlist];
 		const given = playlist?.songs ?? [];
 		const named = { playlistName: playlist?.name ?? "", supplied: given.length };

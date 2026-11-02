@@ -11,7 +11,7 @@ export {
 } from "./auth.ts";
 export { fromFileUri, toFileUri } from "./file-uri.ts";
 export { normaliseDate, normaliseIsrc } from "./normalise.ts";
-export { OutputResult, PlaylistResult } from "./output-result.ts";
+export { OutputResult, outputResultIssues, PlaylistResult } from "./output-result.ts";
 export {
 	Component,
 	type DefinedPlugin,

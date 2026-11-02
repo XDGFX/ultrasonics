@@ -328,6 +328,10 @@ describe("runApplet: outputs", () => {
 			"an unmatched song out of range",
 			{ playlists: [written(0), { ...written(1), unmatched: [1] }] },
 		],
+		[
+			"a repeated unmatched song",
+			{ playlists: [{ ...written(0), unmatched: [0, 0] }, written(1)] },
+		],
 		["not an output result", { playlists: [{ status: "done", playlist: 0 }] }],
 	])("an %s result is a contract error", async (_, returns) => {
 		const { status, finished, ofType } = await run({
@@ -339,6 +343,17 @@ describe("runApplet: outputs", () => {
 		expect(status).toBe("failed");
 		expect(finished.at(-1)?.error?.code).toBe("contract");
 		expect(ofType("result")[0]?.outcome).toMatchObject({ ok: false, error: { code: "contract" } });
+	});
+
+	test("a contract error names where in the result the output broke it", async () => {
+		const returns = { playlists: [{ ...written(0), unmatched: [0, 0] }, written(1)] };
+		const { finished } = await run({
+			inputs: [twoPlaylists],
+			modifiers: [],
+			outputs: [slot("liar", { returns })],
+		});
+
+		expect(finished.at(-1)?.error?.message).toContain("result.playlists.0.unmatched.1");
 	});
 
 	test("the result event names each playlist and counts the songs the output received", async () => {
