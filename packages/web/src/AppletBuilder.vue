@@ -2,7 +2,8 @@
 import { onMounted, ref } from "vue";
 import { useApi } from "./api-client.ts";
 import PendingScreen from "./PendingScreen.vue";
-import { queuedMessage, useRunNow } from "./run-now.ts";
+import QueuedNote from "./QueuedNote.vue";
+import { useRunNow } from "./run-now.ts";
 
 const props = defineProps<{ id?: string }>();
 const api = useApi();
@@ -16,7 +17,7 @@ onMounted(async () => {
 <template>
 	<PendingScreen :crumbs="[{ label: 'applets', to: { name: 'applets' } }, { label: name }]">
 		<template v-if="id" #actions>
-			<p v-if="queued" class="muted" role="status" data-queued>{{ queuedMessage }}</p>
+			<QueuedNote v-if="queued" />
 			<button type="button" class="btn run-now" @click="runNow(id)">▶ run now</button>
 		</template>
 	</PendingScreen>

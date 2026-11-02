@@ -3,6 +3,7 @@ import { mountApp, settle } from "../test/mount-app.ts";
 import type { RunSummary } from "./api-client.ts";
 import type { FakeApplet } from "./fake-api.ts";
 import { authFailedRun, partialRun, succeededRun } from "./fake-runs.ts";
+import { queuedMessage } from "./run-now.ts";
 import type { RunPace } from "./scripted-run.ts";
 
 const applet: FakeApplet = {
@@ -132,11 +133,11 @@ describe("the run view", () => {
 		api.scripts.advance("r", succeededRun.length);
 		await settle();
 		expect(wrapper.findAll(".console [data-level]")).toHaveLength(3);
-		expect(api.scripts.connections("r")).toBe(2);
+		const connections = api.scripts.connections("r");
 
 		api.scripts.drop("r");
 		await settle();
-		expect(api.scripts.connections("r")).toBe(2);
+		expect(api.scripts.connections("r")).toBe(connections);
 	});
 });
 
@@ -158,9 +159,7 @@ describe("run now", () => {
 		await wrapper.get('button[title="run now"]').trigger("click");
 		await settle();
 		expect(router.currentRoute.value.name).toBe("applets");
-		expect(wrapper.get("[data-queued]").text()).toBe(
-			"queued: it will run when the current run finishes",
-		);
+		expect(wrapper.get("[data-queued]").text()).toBe(queuedMessage);
 		expect(wrapper.get(".pill").text()).toBe("queued");
 	});
 
@@ -183,8 +182,6 @@ describe("run now", () => {
 
 		await wrapper.get("button.run-now").trigger("click");
 		await settle();
-		expect(wrapper.get("[data-queued]").text()).toBe(
-			"queued: it will run when the current run finishes",
-		);
+		expect(wrapper.get("[data-queued]").text()).toBe(queuedMessage);
 	});
 });

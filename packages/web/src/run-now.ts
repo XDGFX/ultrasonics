@@ -4,7 +4,7 @@ import { useApi } from "./api-client.ts";
 
 export const queuedMessage = "queued: it will run when the current run finishes";
 
-/** Run now, as ▶, the builder and run again share it: open the run, or say it queued (ADR-0026 §5). */
+/** Run now for ▶, the builder and run again: open the run, or say it queued (ADR-0026 §5). */
 export function useRunNow() {
 	const api = useApi();
 	const router = useRouter();

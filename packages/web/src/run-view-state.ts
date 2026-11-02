@@ -1,5 +1,4 @@
 import type {
-	FinishedRunStatus,
 	LogEvent,
 	RejectionEvent,
 	ResultEvent,
@@ -8,6 +7,7 @@ import type {
 	StageError,
 	StageSlot,
 } from "@ultrasonics/core/run-events";
+import type { RunStatus } from "./api-client.ts";
 
 export interface StageView extends StageSlot {
 	/** Absent while the stage is running. */
@@ -21,8 +21,10 @@ export interface StageView extends StageSlot {
 export interface RunViewState {
 	/** The highest `seq` folded; an event at or below it is a repeat. */
 	lastSeq: number;
-	status: "running" | FinishedRunStatus;
+	status: RunStatus;
 	endedAt: number | null;
+	/** When the latest event happened, so a live run's duration grows as events arrive. */
+	lastAt: number | null;
 	stages: StageView[];
 	results: ResultEvent[];
 	log: LogEvent[];
@@ -32,22 +34,25 @@ export const emptyRunView = (): RunViewState => ({
 	lastSeq: 0,
 	status: "running",
 	endedAt: null,
+	lastAt: null,
 	stages: [],
 	results: [],
 	log: [],
 });
 
 const componentOrder = ["inputs", "modifiers", "outputs"];
-const position = (slot: StageSlot) => componentOrder.indexOf(slot.component) * 10_000 + slot.index;
+const byPosition = (a: StageSlot, b: StageSlot) =>
+	componentOrder.indexOf(a.component) - componentOrder.indexOf(b.component) || a.index - b.index;
+
+const isSlot = (slot: Pick<StageSlot, "component" | "index">) => (stage: StageSlot) =>
+	stage.component === slot.component && stage.index === slot.index;
 
 function withStage(
 	stages: StageView[],
 	slot: StageSlot,
 	change: (stage: StageView) => StageView,
 ): StageView[] {
-	const found = stages.find(
-		(stage) => stage.component === slot.component && stage.index === slot.index,
-	);
+	const found = stages.find(isSlot(slot));
 	const base: StageView = found ?? {
 		component: slot.component,
 		index: slot.index,
@@ -57,15 +62,13 @@ function withStage(
 	};
 	const updated = change(base);
 	updated.notShown = Math.max(0, (updated.finished?.rejected ?? 0) - updated.rejections.length);
-	return [...stages.filter((stage) => stage !== found), updated].sort(
-		(a, b) => position(a) - position(b),
-	);
+	return [...stages.filter((stage) => stage !== found), updated].sort(byPosition);
 }
 
 /** Folds one run event into the view's state; a repeated `seq` leaves it unchanged. */
 export function foldRunEvent(state: RunViewState, event: RunEvent): RunViewState {
 	if (event.seq <= state.lastSeq) return state;
-	const next = { ...state, lastSeq: event.seq };
+	const next = { ...state, lastSeq: event.seq, lastAt: event.at };
 	switch (event.type) {
 		case "log":
 			return { ...next, log: [...state.log, event] };
@@ -97,9 +100,8 @@ export function foldRunEvent(state: RunViewState, event: RunEvent): RunViewState
 }
 
 /**
- * Songs written: each written playlist's supplied songs less its unmatched ones. Results carry no
- * per-playlist song count, so an output's supplied songs are its stage's when it wrote every
- * playlist it received, and unknown otherwise.
+ * Songs written, supplied less unmatched. Results carry no per-playlist count, so it is known only
+ * when each output wrote every playlist it received.
  */
 export function headline(
 	state: RunViewState,
@@ -114,9 +116,8 @@ export function headline(
 		if (!playlists.some((playlist) => playlist.status === "written")) continue;
 		const name = serviceOf(result.plugin) ?? result.plugin;
 		if (!names.includes(name)) names.push(name);
-		const supplied = state.stages.find(
-			(stage) => stage.component === "outputs" && stage.index === result.index,
-		)?.finished?.songs;
+		const supplied = state.stages.find(isSlot({ component: "outputs", index: result.index }))
+			?.finished?.songs;
 		if (supplied === undefined || playlists.some((playlist) => playlist.status !== "written")) {
 			known = false;
 			continue;

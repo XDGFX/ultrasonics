@@ -44,7 +44,7 @@ export interface FakeSeed {
 	/** Stored persistent settings by plugin name, which need not parse. */
 	settings?: Record<string, unknown>;
 	runs?: (RunSummary & RunScript)[];
-	/** What run now plays for each applet, by applet id; an applet without one runs silently. */
+	/** What run now plays for each applet, by applet id; a run without a script never ends. */
 	runScripts?: Record<string, RunScript>;
 	/** A token service whose test fails with this message after its fields validate. */
 	testFailures?: Partial<Record<Service, string>>;

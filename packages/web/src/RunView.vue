@@ -3,7 +3,8 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { type PluginInfo, type RunSummary, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import { formatClock, formatDuration, formatWhen } from "./clock.ts";
-import { queuedMessage, useRunNow } from "./run-now.ts";
+import QueuedNote from "./QueuedNote.vue";
+import { useRunNow } from "./run-now.ts";
 import { emptyRunView, foldRunEvent, headline, type StageView } from "./run-view-state.ts";
 
 const props = defineProps<{ id: string }>();
@@ -37,31 +38,35 @@ onBeforeUnmount(() => {
 const serviceOf = (plugin: string) => catalogue.value.find((info) => info.name === plugin)?.service;
 const title = computed(() => `run ${props.id} · ${headline(state.value, serviceOf)}`);
 
-const lastAt = computed(() => state.value.endedAt ?? state.value.log.at(-1)?.at);
 const took = computed(() =>
-	summary.value && lastAt.value !== undefined
-		? formatDuration(lastAt.value - summary.value.startedAt)
+	summary.value && state.value.lastAt !== null
+		? formatDuration(state.value.lastAt - summary.value.startedAt)
 		: "—",
 );
 
-const mark = (stage: StageView) => {
+const stageMark = (stage: StageView) => {
 	if (!stage.finished) return "⟳";
 	return stage.finished.error ? "✗" : "✓";
 };
-const out = (stage: StageView) =>
-	stage.finished ? `${stage.finished.songs} songs · ${stage.finished.playlists} playlists` : "…";
+/** The previous stage's songs out, unless it was an output, which emits nothing. */
+const flowInto = (index: number) => {
+	const previous = state.value.stages[index - 1];
+	if (!previous || previous.component === "outputs") return "";
+	const counts = previous.finished;
+	return counts ? `${counts.songs} songs · ${counts.playlists} playlists` : "…";
+};
 
 const rejections = computed(() => state.value.stages.flatMap((stage) => stage.rejections));
 const notShown = computed(() =>
 	state.value.stages.reduce((sum, stage) => sum + stage.notShown, 0),
 );
-const where = (playlist: number, name?: string) => name ?? `playlist ${playlist + 1}`;
+const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${playlist + 1}`;
 </script>
 
 <template>
 	<AppShell :crumbs="[{ label: 'applets', to: { name: 'applets' } }, { label: `run ${id}` }]">
 		<template #actions>
-			<p v-if="queued" class="queued muted" role="status" data-queued>{{ queuedMessage }}</p>
+			<QueuedNote v-if="queued" />
 			<button v-if="summary" type="button" class="btn run-now" @click="runNow(summary.appletId)">
 				▶ run again
 			</button>
@@ -78,10 +83,10 @@ const where = (playlist: number, name?: string) => name ?? `playlist ${playlist 
 
 			<div class="flow">
 				<template v-for="(stage, index) in state.stages" :key="`${stage.component}-${stage.index}`">
-					<span v-if="index > 0" class="wire">{{ out(state.stages[index - 1] as StageView) }}</span>
+					<span v-if="index > 0" class="wire">{{ flowInto(index) }}</span>
 					<div class="stage" :data-component="stage.component">
 						<p class="head">
-							<span class="mark" :data-failed="Boolean(stage.finished?.error)">{{ mark(stage) }}</span>
+							<span class="mark" :data-failed="Boolean(stage.finished?.error)">{{ stageMark(stage) }}</span>
 							<span class="plugin">{{ stage.plugin }}</span>
 						</p>
 						<p class="muted">{{ stage.component }}</p>
@@ -108,7 +113,7 @@ const where = (playlist: number, name?: string) => name ?? `playlist ${playlist 
 					</thead>
 					<tbody>
 						<tr v-for="playlist in result.outcome.playlists" :key="playlist.playlist">
-							<td>{{ where(playlist.playlist) }}</td>
+							<td>{{ playlistLabel(playlist.playlist) }}</td>
 							<td :data-result="playlist.status" class="result">{{ playlist.status }}</td>
 							<td class="unmatched muted">
 								<template v-if="playlist.status === 'written'">{{
@@ -129,7 +134,7 @@ const where = (playlist: number, name?: string) => name ?? `playlist ${playlist 
 					<p><span class="key">rejected:</span></p>
 					<ul>
 						<li v-for="rejection in rejections" :key="rejection.seq">
-							{{ rejection.plugin }} ({{ rejection.component }}) · {{ where(rejection.playlist, rejection.playlistName) }}<template v-if="rejection.song !== undefined">
+							{{ rejection.plugin }} ({{ rejection.component }}) · {{ playlistLabel(rejection.playlist, rejection.playlistName) }}<template v-if="rejection.song !== undefined">
 								· {{ rejection.songTitle ?? `song ${rejection.song + 1}` }}</template
 							>: {{ rejection.issues.map((issue) => issue.message).join("; ") }}
 						</li>
@@ -151,7 +156,6 @@ h2 { margin: 0 0 8px; font-size: 20px; font-weight: 500; }
 .status[data-status="succeeded"] { color: var(--accent); }
 .status[data-status="partial"], .status[data-status="running"] { color: var(--warn); }
 .status[data-status="failed"] { color: var(--bad); }
-.queued { margin: 0; }
 .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0; margin-bottom: 24px; }
 .stage { width: 176px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-1); }
 .stage p { margin: 0 0 4px; }
