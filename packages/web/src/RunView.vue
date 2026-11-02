@@ -93,7 +93,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 							<span class="plugin">{{ stage.plugin }}</span>
 						</p>
 						<p class="muted">{{ stage.component }}</p>
-						<p v-if="stage.finished?.rejected" class="warn" data-rejected>{{ stage.finished.rejected }} rejected</p>
+						<p v-if="stage.finished?.rejected" class="warn" :data-rejected="stage.finished.rejected">{{ stage.finished.rejected }} rejected</p>
 						<template v-if="stage.finished?.error">
 							<p class="error">{{ stage.finished.error.code }}: {{ stage.finished.error.message }}</p>
 							<RouterLink
@@ -145,7 +145,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 							>: {{ rejection.issues.map((issue) => issue.message).join("; ") }}
 						</li>
 					</ul>
-					<p v-for="stage in cappedStages" :key="`${stage.component}-${stage.index}`" class="muted" data-not-shown>
+					<p v-for="stage in cappedStages" :key="`${stage.component}-${stage.index}`" class="muted" :data-not-shown="stage.notShown" :data-plugin="stage.plugin">
 						{{ stage.plugin }} ({{ stage.component }}): {{ stage.notShown }} not shown
 					</p>
 				</template>

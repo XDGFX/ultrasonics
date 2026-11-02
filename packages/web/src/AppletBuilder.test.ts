@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import type { Component } from "@ultrasonics/plugin-sdk";
 import { mountApp, settle } from "../test/mount-app.ts";
 import type { FakeApplet, FakeSeed } from "./fake-api.ts";
+import { sentenceText, sentence as writeSentence } from "./sentence.ts";
 
 afterEach(() => {
 	document.body.innerHTML = "";
@@ -52,16 +53,19 @@ async function save(wrapper: Wrapper) {
 
 describe("the builder", () => {
 	test("reads the applet as its sentence over the four columns, kept current as it changes", async () => {
-		const { wrapper } = await open();
-		expect(wrapper.findAll(".col .h").map((heading) => heading.text())).toEqual([
-			"when:",
-			"inputs:",
-			"modifiers:",
-			"outputs:",
+		const { wrapper, api } = await open();
+		const plugins = await api.plugins();
+		const expected = (definition: FakeApplet["definition"]) =>
+			sentenceText(writeSentence({ ...applet, definition }, plugins));
+		expect(wrapper.findAll(".col").map((column) => column.attributes("data-column"))).toEqual([
+			"when",
+			"inputs",
+			"modifiers",
+			"outputs",
 		]);
-		expect(sentence(wrapper)).toBe("manual only: take spotify, deduplicate it, and put it in plex");
+		expect(sentence(wrapper)).toBe(expected(applet.definition));
 		await click(wrapper, '[data-column="modifiers"] [data-slot] button[title="remove"]');
-		expect(sentence(wrapper)).toBe("manual only: take spotify, and put it in plex");
+		expect(sentence(wrapper)).toBe(expected({ ...applet.definition, modifiers: [] }));
 	});
 
 	test("shows each slot's name, version and a one-line summary", async () => {
