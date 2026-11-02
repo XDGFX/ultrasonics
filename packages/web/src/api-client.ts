@@ -150,7 +150,14 @@ export interface ApiClient {
 	services: {
 		list(): Promise<ServiceStatus[]>;
 		requirements(service: Service): Promise<AuthRequirement[]>;
+		/** Open question 3 of spec #118: which server operation supplies this is undecided. */
 		redirectUri(service: Service): Promise<string>;
+		/**
+		 * The form for a `client` requirement, and saving the operator's client credentials. Open
+		 * question 2 of spec #118: `AuthRequirement` carries no schema for it yet.
+		 */
+		clientForm(service: Service): Promise<JSONSchema>;
+		registerClient(service: Service, input: unknown): Promise<SaveResult<null>>;
 		configure(service: Service, input: unknown): Promise<ConfigureResult>;
 		begin(service: Service): Promise<AuthChallenge>;
 		/** Reads back the outcome of the OAuth return, from the query the wizard's route received. */

@@ -14,6 +14,7 @@ export function devSeed(firstRun: boolean): FakeSeed {
 	return {
 		plugins: catalogue,
 		grants: { plex: { kind: "connected" } },
+		unregisteredClients: ["spotify"],
 		settings: { plex: { library: "music" } },
 		applets: firstRun
 			? []

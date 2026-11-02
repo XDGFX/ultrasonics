@@ -182,3 +182,17 @@ export function placeIssues(
 	}
 	return { byField, above };
 }
+
+/** What a fresh form submits untouched: its first variant with every default filled in. */
+export function defaultsOf(schema: JSONSchema): Record<string, unknown> {
+	const shape = shapeOf(schema);
+	const [variant] = shape.variants;
+	if (!variant) return {};
+	return emitted(shape, variant, initialRaw(shape, undefined)[variant.value] ?? {});
+}
+
+/** A form with nothing to fill in, which the caller shows as "no settings.". */
+export function isEmptyForm(schema: JSONSchema): boolean {
+	const shape = shapeOf(schema);
+	return !shape.discriminator && (shape.variants[0]?.fields.length ?? 0) === 0;
+}
