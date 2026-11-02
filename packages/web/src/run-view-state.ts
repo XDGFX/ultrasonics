@@ -100,6 +100,8 @@ export function foldRunEvent(state: RunViewState, event: RunEvent): RunViewState
 	}
 }
 
+type WrittenPlaylist = Extract<ResultPlaylist, { status: "written" }>;
+
 /** Songs written: each written playlist's supplied songs less its unmatched ones (ADR-0020). */
 export function headline(
 	state: RunViewState,
@@ -109,20 +111,20 @@ export function headline(
 	const names: string[] = [];
 	for (const result of state.results) {
 		if (!result.outcome.ok) continue;
-		for (const playlist of result.outcome.playlists) {
-			if (playlist.status !== "written") continue;
-			written += matched(playlist);
-			const name = serviceOf(result.plugin) ?? result.plugin;
-			if (!names.includes(name)) names.push(name);
-		}
+		const wrote = result.outcome.playlists.filter(
+			(playlist): playlist is WrittenPlaylist => playlist.status === "written",
+		);
+		if (wrote.length === 0) continue;
+		written += wrote.reduce((sum, playlist) => sum + matched(playlist), 0);
+		const name = serviceOf(result.plugin) ?? result.plugin;
+		if (!names.includes(name)) names.push(name);
 	}
 	if (names.length === 0) return "nothing written";
 	return `${written} ${written === 1 ? "song" : "songs"} written to ${joinNames(names)}`;
 }
 
 /** A written playlist's songs that found a counterpart on the service. */
-export const matched = (playlist: Extract<ResultPlaylist, { status: "written" }>) =>
-	playlist.supplied - playlist.unmatched.length;
+export const matched = (playlist: WrittenPlaylist) => playlist.supplied - playlist.unmatched.length;
 
 function joinNames(names: string[]): string {
 	return names.length === 1

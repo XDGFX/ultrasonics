@@ -278,20 +278,21 @@ async function runOutput(
 	if (!parsed.success || fault) {
 		return { ok: false, error: { code: "contract", message: `Invalid output result: ${fault}` } };
 	}
-	const playlists = parsed.data.playlists.map((entry) => {
-		const playlist = songs.playlists[entry.playlist];
-		const received = { playlistName: playlist?.name, supplied: playlist?.songs.length };
-		return entry.status === "written"
-			? {
-					...entry,
-					...received,
-					unmatchedSongs: entry.unmatched.map((position) =>
-						structuredClone(playlist?.songs[position]),
-					),
-				}
-			: { ...entry, ...received };
+	const playlists = parsed.data.playlists.map((entry): ResultPlaylist => {
+		// `incompleteness` has checked every position, so the fallbacks are never reached.
+		const given = songs.playlists[entry.playlist]?.songs ?? [];
+		const named = {
+			playlistName: songs.playlists[entry.playlist]?.name ?? "",
+			supplied: given.length,
+		};
+		if (entry.status !== "written") return { ...entry, ...named };
+		const unmatchedSongs = entry.unmatched.flatMap((position) => {
+			const song = given[position];
+			return song ? [structuredClone(song)] : [];
+		});
+		return { ...entry, ...named, unmatchedSongs };
 	});
-	return { ok: true, playlists: playlists as ResultPlaylist[] };
+	return { ok: true, playlists };
 }
 
 /**

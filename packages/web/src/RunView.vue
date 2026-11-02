@@ -63,9 +63,7 @@ const flowInto = (index: number) => {
 };
 
 const rejections = computed(() => state.value.stages.flatMap((stage) => stage.rejections));
-const notShown = computed(() =>
-	state.value.stages.reduce((sum, stage) => sum + stage.notShown, 0),
-);
+const cappedStages = computed(() => state.value.stages.filter((stage) => stage.notShown > 0));
 const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${playlist + 1}`;
 </script>
 
@@ -122,7 +120,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 							<td class="playlist">{{ playlist.playlistName }}</td>
 							<td :data-result="playlist.status" class="result">{{ playlist.status }}</td>
 							<td class="matched">
-								<template v-if="playlist.status === 'written'">{{ matched(playlist) }} of {{ playlist.supplied }}</template>
+								{{ playlist.status === "written" ? matched(playlist) : "—" }} of {{ playlist.supplied }}
 							</td>
 							<td class="unmatched muted">
 								<template v-if="playlist.status === 'written'">{{
@@ -138,7 +136,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 			</section>
 
 			<section class="rejections">
-				<template v-if="rejections.length === 0 && notShown === 0"><span class="key">rejected:</span> none</template>
+				<template v-if="rejections.length === 0 && cappedStages.length === 0"><span class="key">rejected:</span> none</template>
 				<template v-else>
 					<p><span class="key">rejected:</span></p>
 					<ul>
@@ -148,7 +146,9 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 							>: {{ rejection.issues.map((issue) => issue.message).join("; ") }}
 						</li>
 					</ul>
-					<p v-if="notShown > 0" class="muted" data-not-shown>{{ notShown }} not shown</p>
+					<p v-for="stage in cappedStages" :key="`${stage.component}-${stage.index}`" class="muted" data-not-shown>
+						{{ stage.plugin }} ({{ stage.component }}): {{ stage.notShown }} not shown
+					</p>
 				</template>
 			</section>
 		</div>

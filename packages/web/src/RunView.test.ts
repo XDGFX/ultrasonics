@@ -91,7 +91,7 @@ describe("the run view", () => {
 		expect(listed[0]).toContain("discover weekly");
 		expect(listed[0]).toContain("Too small");
 		expect(listed).toHaveLength(2);
-		expect(wrapper.get("[data-not-shown]").text()).toBe("1 not shown");
+		expect(wrapper.get("[data-not-shown]").text()).toBe("spotify (inputs): 1 not shown");
 
 		const clean = (await openRun(succeededRun)).wrapper;
 		expect(clean.get(".rejections").text()).toBe("rejected: none");

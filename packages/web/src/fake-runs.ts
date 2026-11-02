@@ -8,7 +8,7 @@ const spotifyIn = { component: "inputs", index: 0, plugin: "spotify" };
 const dedupe = { component: "modifiers", index: 0, plugin: "deduplicate" };
 const plexOut = { component: "outputs", index: 0, plugin: "plex" };
 
-const named = (playlist: number, playlistName: string, supplied: number) => ({
+const resultFor = (playlist: number, playlistName: string, supplied: number) => ({
 	playlist,
 	playlistName,
 	supplied,
@@ -44,18 +44,14 @@ export const succeededRun: unknown[] = numbered([
 			ok: true,
 			playlists: [
 				{
+					...resultFor(0, "discover weekly", 30),
 					status: "written",
-					playlist: 0,
-					playlistName: "discover weekly",
-					supplied: 30,
 					unmatched: [3, 9],
 					unmatchedSongs: [song("lake effect", "hania rani"), song("doppelgänger", "kiasmos")],
 				},
 				{
+					...resultFor(1, "release radar", 27),
 					status: "written",
-					playlist: 1,
-					playlistName: "release radar",
-					supplied: 27,
 					unmatched: [4],
 					unmatchedSongs: [song("hand over", "peggy gou", "someone")],
 				},
@@ -135,14 +131,19 @@ export const partialRun: unknown[] = numbered([
 			ok: true,
 			playlists: [
 				{
-					...named(0, "discover weekly", 20),
+					...resultFor(0, "discover weekly", 20),
 					status: "written",
 					unmatched: [],
 					unmatchedSongs: [],
 				},
-				{ ...named(1, "release radar", 0), status: "skipped", code: "empty", message: "no songs" },
 				{
-					...named(2, "on repeat", 20),
+					...resultFor(1, "release radar", 0),
+					status: "skipped",
+					code: "empty",
+					message: "no songs",
+				},
+				{
+					...resultFor(2, "on repeat", 20),
 					status: "failed",
 					code: "timeout",
 					message: "plex timed out",
