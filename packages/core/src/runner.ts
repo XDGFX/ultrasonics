@@ -248,6 +248,9 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 		};
 	}
 
+	/** Plugins already warned about stripped keys: one warning per plugin per run (ADR-0021 §2). */
+	const warnedStripped = new Set<string>();
+
 	/** Runs an input or modifier and validates what it returned (ADR-0021). */
 	async function runSongStage(
 		stage: PreparedStage,
@@ -268,7 +271,8 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 		for (const rejection of validation.rejections.slice(0, REJECTIONS_EMITTED_PER_STAGE)) {
 			emit({ type: "rejection", ...where(stage), ...rejection });
 		}
-		if (validation.strippedKeys.length) {
+		if (validation.strippedKeys.length && !warnedStripped.has(stage.plugin)) {
+			warnedStripped.add(stage.plugin);
 			const keys = [...new Set(validation.strippedKeys.map((path) => String(path.at(-1))))];
 			log("warn", `Stripped unknown keys from "${stage.plugin}": ${keys.join(", ")}`);
 		}

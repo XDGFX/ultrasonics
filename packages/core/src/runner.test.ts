@@ -250,6 +250,20 @@ describe("runApplet: validation", () => {
 		expect(received.writer?.[0]?.playlists[0]?.songs[0]).not.toHaveProperty("duration");
 	});
 
+	test("warns about stripped keys once per plugin, though it fills two slots", async () => {
+		const extra = { ...song("a"), duration: 1 };
+		const { ofType } = await run({
+			inputs: [
+				echo({ playlists: [{ name: "A", songs: [extra] }] }),
+				echo({ playlists: [{ name: "B", songs: [extra] }] }),
+			],
+			modifiers: [],
+			outputs: [slot("writer")],
+		});
+
+		expect(ofType("log").filter((line) => line.level === "warn")).toHaveLength(1);
+	});
+
 	test("a return that is not a song dict is a contract error", async () => {
 		const { status, finished } = await run({
 			inputs: [echo([song("a")])],
