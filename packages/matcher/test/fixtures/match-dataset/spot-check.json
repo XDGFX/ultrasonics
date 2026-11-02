@@ -1,0 +1,864 @@
+[
+	{
+		"a": "0ea34f14-2469-45f4-953d-4caa67a8ff87",
+		"b": "07f7412a-d0fc-4576-a42e-e36ee2f4e50f",
+		"verdict": "good"
+	},
+	{
+		"a": "33b141ff-1b46-4aec-b524-a3ec3c0319fa",
+		"b": "88880e27-f439-47b0-8e0c-a2de05ba7da9",
+		"verdict": "good"
+	},
+	{
+		"a": "51edbc30-9832-4b4b-9d77-be11ca1c92d7",
+		"b": "4ffb6ccb-fbc4-41bb-a926-513a1b613256",
+		"verdict": "good"
+	},
+	{
+		"a": "684ca2c2-9499-4f6c-aa7e-b67eac9bfd54",
+		"b": "0712f354-57dc-409b-ab62-1b072b60bb55",
+		"verdict": "good"
+	},
+	{
+		"a": "88f76869-b096-4aa0-92ad-abb0f56d5d53",
+		"b": "78a81124-b6fa-4fc7-a8b8-95cf0a35e62a",
+		"verdict": "good"
+	},
+	{
+		"a": "e76335da-a366-4c9e-81d8-463dca004c80",
+		"b": "17b5cfd1-e8c3-422e-b758-bb558a7a214b",
+		"verdict": "bad",
+		"note": "the other side is a medley that contains the song, not a cover of it"
+	},
+	{
+		"a": "ed029f60-2196-4f65-a2be-3e991314100c",
+		"b": "d474ba91-e3ca-494a-b00e-1c8d1d19069e",
+		"verdict": "good"
+	},
+	{
+		"a": "12fb6dd5-b6c4-45d0-a3e2-df5d4bff25e1",
+		"b": "13de3d74-a1c1-41ac-8b71-4938ad0b5eeb",
+		"verdict": "good"
+	},
+	{
+		"a": "197a94c5-ea60-46b6-916f-3ff9ac2936c2",
+		"b": "b6d2943f-66f0-4854-9288-e377b81a6347",
+		"verdict": "good"
+	},
+	{
+		"a": "324cb765-fd2c-49fc-9e1a-80d519391b0d",
+		"b": "49b1ef39-6a93-4b22-88bc-210bc8889386",
+		"verdict": "good"
+	},
+	{
+		"a": "3a01f046-d947-4ec7-95d0-31f4d4fb24c3",
+		"b": "63022a79-643f-4b60-a4be-0a6235ff3f47",
+		"verdict": "good"
+	},
+	{
+		"a": "9d2e579c-67f7-4ac0-83d5-c1347a5d109d",
+		"b": "f86b409c-60fd-4fd9-858b-d48d21e808b7",
+		"verdict": "good"
+	},
+	{
+		"a": "a4b35c1c-f0e0-44f1-8b26-deb8d1fed8a1",
+		"b": "623a8f32-e017-4b2b-a778-c5ac12175719",
+		"verdict": "good"
+	},
+	{
+		"a": "fd635cea-3510-4d4b-930d-9ed69f754685",
+		"b": "ad27fe5e-8fca-44c4-b411-32d33f411bf4",
+		"verdict": "good"
+	},
+	{
+		"a": "fe110341-3c09-4036-802c-fb6791ca5697",
+		"b": "99cd94e0-06b9-41e6-84e3-3d25d9cd5e3c",
+		"verdict": "good"
+	},
+	{
+		"a": "08546579-7d53-4381-ac37-c18abce18baf",
+		"b": "8cf86ba0-973f-4458-9c24-daac227cbcf6",
+		"verdict": "good"
+	},
+	{
+		"a": "80ef701b-6620-4f84-8536-5002b28e2e66",
+		"b": "1bd1d81f-3361-4c97-9614-fd4684e94a43",
+		"verdict": "good"
+	},
+	{
+		"a": "97dfc7ec-ca15-424f-a1e5-b90aa686c819",
+		"b": "2b30ce8a-4729-433a-ac12-b8df177a220e",
+		"verdict": "good"
+	},
+	{
+		"a": "d8323957-e696-4cae-bcac-3c9a7b374d72",
+		"b": "b1e50530-7e34-4a2b-b1a7-841af4dd6b24",
+		"verdict": "good"
+	},
+	{
+		"a": "f8bd668b-ef85-48d1-b03e-886d38e7cc57",
+		"b": "23d71707-44de-44a7-bfb0-8a2dd2635b12",
+		"verdict": "good"
+	},
+	{
+		"a": "0063b5fa-9ed0-4313-b7a9-ae599971631d",
+		"b": "0063b5fa-9ed0-4313-b7a9-ae599971631d",
+		"verdict": "good"
+	},
+	{
+		"a": "025cd2a2-2d6a-47c2-a61a-997cbd98c674",
+		"b": "025cd2a2-2d6a-47c2-a61a-997cbd98c674",
+		"verdict": "good"
+	},
+	{
+		"a": "09baa80b-2487-4aae-89e2-e95e966cd00b",
+		"b": "09baa80b-2487-4aae-89e2-e95e966cd00b",
+		"verdict": "good"
+	},
+	{
+		"a": "09bc8f80-a7a6-44ab-a469-353ca5912b54",
+		"b": "09bc8f80-a7a6-44ab-a469-353ca5912b54",
+		"verdict": "good"
+	},
+	{
+		"a": "0e6468a3-6fea-4e5a-ab3f-bebc01bf0c6c",
+		"b": "0e6468a3-6fea-4e5a-ab3f-bebc01bf0c6c",
+		"verdict": "good"
+	},
+	{
+		"a": "168d3fd6-6eda-4f6d-ab39-c5f300e8daf9",
+		"b": "168d3fd6-6eda-4f6d-ab39-c5f300e8daf9",
+		"verdict": "good"
+	},
+	{
+		"a": "179e2c96-1fdc-48fc-9c51-8c8f10a96eb3",
+		"b": "179e2c96-1fdc-48fc-9c51-8c8f10a96eb3",
+		"verdict": "good"
+	},
+	{
+		"a": "1839502e-0a0c-4c25-b29e-83bb34f6507b",
+		"b": "1839502e-0a0c-4c25-b29e-83bb34f6507b",
+		"verdict": "good"
+	},
+	{
+		"a": "1efc7478-37c4-4f98-a4de-233933d12e51",
+		"b": "1efc7478-37c4-4f98-a4de-233933d12e51",
+		"verdict": "good"
+	},
+	{
+		"a": "1f591d7a-a555-41d5-b8bd-0036c8d14198",
+		"b": "1f591d7a-a555-41d5-b8bd-0036c8d14198",
+		"verdict": "good"
+	},
+	{
+		"a": "308ea78e-baf4-43c2-8705-65ec8b0b861d",
+		"b": "308ea78e-baf4-43c2-8705-65ec8b0b861d",
+		"verdict": "good"
+	},
+	{
+		"a": "30c8dee7-2997-44f1-a184-2f3a767a11b9",
+		"b": "30c8dee7-2997-44f1-a184-2f3a767a11b9",
+		"verdict": "good"
+	},
+	{
+		"a": "40984fac-0f40-48f0-82ea-078addc9ddaf",
+		"b": "40984fac-0f40-48f0-82ea-078addc9ddaf",
+		"verdict": "good"
+	},
+	{
+		"a": "41712511-ede0-41c6-acd4-6ebeb712e772",
+		"b": "41712511-ede0-41c6-acd4-6ebeb712e772",
+		"verdict": "good"
+	},
+	{
+		"a": "44d28b67-e684-41e3-9558-3e8d7915995b",
+		"b": "44d28b67-e684-41e3-9558-3e8d7915995b",
+		"verdict": "good"
+	},
+	{
+		"a": "479b27a1-0ecb-4924-a300-b0013261057d",
+		"b": "479b27a1-0ecb-4924-a300-b0013261057d",
+		"verdict": "good"
+	},
+	{
+		"a": "57f6fd81-8c60-41fb-83ef-76b724bacc32",
+		"b": "57f6fd81-8c60-41fb-83ef-76b724bacc32",
+		"verdict": "good"
+	},
+	{
+		"a": "6295e9b0-da8c-44cf-9f9b-3bb52aeeb271",
+		"b": "6295e9b0-da8c-44cf-9f9b-3bb52aeeb271",
+		"verdict": "good"
+	},
+	{
+		"a": "687660d5-461e-4a21-aed8-27c41ce672a1",
+		"b": "687660d5-461e-4a21-aed8-27c41ce672a1",
+		"verdict": "good"
+	},
+	{
+		"a": "6d0c0e15-eea9-4d7d-bb68-63414308ed54",
+		"b": "6d0c0e15-eea9-4d7d-bb68-63414308ed54",
+		"verdict": "good"
+	},
+	{
+		"a": "6e15e6f7-5951-4693-89f2-067a504a7b30",
+		"b": "6e15e6f7-5951-4693-89f2-067a504a7b30",
+		"verdict": "bad",
+		"note": "MusicBrainz links a 385 s track to a 229 s recording; the lengths cannot both be right"
+	},
+	{
+		"a": "80607987-4ea0-4698-8bbf-aa12b79518f8",
+		"b": "80607987-4ea0-4698-8bbf-aa12b79518f8",
+		"verdict": "good"
+	},
+	{
+		"a": "85d6036a-b4b0-41e1-a1b9-b0b332f9151f",
+		"b": "85d6036a-b4b0-41e1-a1b9-b0b332f9151f",
+		"verdict": "good"
+	},
+	{
+		"a": "88ecdcf0-0c73-4812-87e3-b122b4384ae6",
+		"b": "88ecdcf0-0c73-4812-87e3-b122b4384ae6",
+		"verdict": "good"
+	},
+	{
+		"a": "8b5eaf9a-37c4-43e4-9851-44c02e5d2fc5",
+		"b": "8b5eaf9a-37c4-43e4-9851-44c02e5d2fc5",
+		"verdict": "good"
+	},
+	{
+		"a": "9a7405bc-2f00-46f4-aac7-9ca748dcb673",
+		"b": "9a7405bc-2f00-46f4-aac7-9ca748dcb673",
+		"verdict": "good"
+	},
+	{
+		"a": "9adf3191-6bea-46fb-9582-887fcbab107e",
+		"b": "9adf3191-6bea-46fb-9582-887fcbab107e",
+		"verdict": "good"
+	},
+	{
+		"a": "9c5f9384-c701-438f-8bbc-eb068cfe5bbe",
+		"b": "9c5f9384-c701-438f-8bbc-eb068cfe5bbe",
+		"verdict": "good"
+	},
+	{
+		"a": "a01a5ba7-e0b1-4815-934c-751f6ee89a80",
+		"b": "a01a5ba7-e0b1-4815-934c-751f6ee89a80",
+		"verdict": "good"
+	},
+	{
+		"a": "a207e16c-3af1-40b7-ba3e-3418d9f7017e",
+		"b": "a207e16c-3af1-40b7-ba3e-3418d9f7017e",
+		"verdict": "good"
+	},
+	{
+		"a": "a280c623-add8-4b38-925a-88f78918d3a5",
+		"b": "a280c623-add8-4b38-925a-88f78918d3a5",
+		"verdict": "good"
+	},
+	{
+		"a": "a70af45f-4c91-4d75-ab75-971c0e51a1a4",
+		"b": "a70af45f-4c91-4d75-ab75-971c0e51a1a4",
+		"verdict": "good"
+	},
+	{
+		"a": "a7b3a064-cdbf-4ad4-b067-7622a9ab0908",
+		"b": "a7b3a064-cdbf-4ad4-b067-7622a9ab0908",
+		"verdict": "good"
+	},
+	{
+		"a": "b600318f-57dd-44aa-825f-86dc7f538659",
+		"b": "b600318f-57dd-44aa-825f-86dc7f538659",
+		"verdict": "good"
+	},
+	{
+		"a": "c2e64174-3913-468e-a52b-fbd9af222ce1",
+		"b": "c2e64174-3913-468e-a52b-fbd9af222ce1",
+		"verdict": "good"
+	},
+	{
+		"a": "c3975e77-48e2-45f8-b088-d70d87ef0432",
+		"b": "c3975e77-48e2-45f8-b088-d70d87ef0432",
+		"verdict": "good"
+	},
+	{
+		"a": "c9952115-4497-45c4-bd54-c990aaaed391",
+		"b": "c9952115-4497-45c4-bd54-c990aaaed391",
+		"verdict": "good"
+	},
+	{
+		"a": "cb58311d-49c9-481f-a9ad-69b81ff0ae77",
+		"b": "cb58311d-49c9-481f-a9ad-69b81ff0ae77",
+		"verdict": "good"
+	},
+	{
+		"a": "cda4a765-8ede-4ea3-8621-bd89528e928d",
+		"b": "cda4a765-8ede-4ea3-8621-bd89528e928d",
+		"verdict": "good"
+	},
+	{
+		"a": "cf7eba52-1ce1-4dbf-b767-ffff54041f9b",
+		"b": "cf7eba52-1ce1-4dbf-b767-ffff54041f9b",
+		"verdict": "good"
+	},
+	{
+		"a": "d4246fcd-cc8c-403f-820f-f6133f9ae507",
+		"b": "d4246fcd-cc8c-403f-820f-f6133f9ae507",
+		"verdict": "good"
+	},
+	{
+		"a": "d5f841f4-f242-4b5a-9492-af903a493871",
+		"b": "d5f841f4-f242-4b5a-9492-af903a493871",
+		"verdict": "good"
+	},
+	{
+		"a": "d75cbe47-540f-42fd-95df-2445d1139b7d",
+		"b": "d75cbe47-540f-42fd-95df-2445d1139b7d",
+		"verdict": "bad",
+		"note": "the two tracks differ by 13 s, too far apart for one recording"
+	},
+	{
+		"a": "dea064c5-a169-437d-8fb1-c9cad3ddd5aa",
+		"b": "dea064c5-a169-437d-8fb1-c9cad3ddd5aa",
+		"verdict": "good"
+	},
+	{
+		"a": "f24ed31e-84a6-4e72-aa69-2b36d226c41c",
+		"b": "f24ed31e-84a6-4e72-aa69-2b36d226c41c",
+		"verdict": "good"
+	},
+	{
+		"a": "f2e593f4-301a-44cd-8380-ddbd2df7b9a6",
+		"b": "f2e593f4-301a-44cd-8380-ddbd2df7b9a6",
+		"verdict": "good"
+	},
+	{
+		"a": "fdd908cf-135c-4101-ab37-216cbcc05545",
+		"b": "fdd908cf-135c-4101-ab37-216cbcc05545",
+		"verdict": "good"
+	},
+	{
+		"a": "fe3f8833-33d6-45b8-bae5-54bdbf3a1612",
+		"b": "fe3f8833-33d6-45b8-bae5-54bdbf3a1612",
+		"verdict": "good"
+	},
+	{
+		"a": "1e4f39ab-c02a-4032-ba65-54fb3bcf05d3",
+		"b": "3249351a-de01-4a54-be71-f06336fe5b7c",
+		"verdict": "good"
+	},
+	{
+		"a": "30f0c638-5801-4811-b714-c43eb6576fb5",
+		"b": "8327e46c-7455-4c63-b621-fa1c45d0ec38",
+		"verdict": "good"
+	},
+	{
+		"a": "597237b7-d85e-4e67-b8da-8ff6d15eca9d",
+		"b": "0842b0be-b399-4c83-9b53-d65fb6f3d209",
+		"verdict": "good"
+	},
+	{
+		"a": "80df066f-ca57-433f-afc3-5de76085eb0a",
+		"b": "8ba7ca3e-3a21-4281-97c4-95ef7b18cf64",
+		"verdict": "good"
+	},
+	{
+		"a": "9bfa1cef-1df6-429e-b655-57462e2da7d4",
+		"b": "f29315cf-0c3e-4b3c-9f28-37b98b1d7d64",
+		"verdict": "good"
+	},
+	{
+		"a": "e3f15138-eecc-4da4-8937-b9446976314c",
+		"b": "6a1a07c8-6ca5-43e8-9f02-4fe044f6fc7c",
+		"verdict": "good"
+	},
+	{
+		"a": "79c4a92f-d572-4bc3-82f3-ef3487c2ba16",
+		"b": "79c4a92f-d572-4bc3-82f3-ef3487c2ba16",
+		"verdict": "good"
+	},
+	{
+		"a": "0e277cb3-29c9-4b7b-a919-a64b70becae4",
+		"b": "a2a97fd0-0f05-4051-b6a4-2ecd915715c9",
+		"verdict": "good"
+	},
+	{
+		"a": "483985a0-7d13-49f4-bee6-4165df21703a",
+		"b": "83fe7503-3fb6-40dd-9c6b-379d596867b6",
+		"verdict": "good"
+	},
+	{
+		"a": "b95bd0ef-4713-405a-9c11-d64b411fc785",
+		"b": "ba4470db-b294-4ff4-aae9-6ed3992e07d2",
+		"verdict": "good"
+	},
+	{
+		"a": "c431cb7d-2cca-4056-a78c-f76e9682369c",
+		"b": "757dc61c-642b-4803-b4a2-2833473839c7",
+		"verdict": "good"
+	},
+	{
+		"a": "c70662f4-b585-4525-a968-62a3e861e1c1",
+		"b": "9b5145ae-03d5-42ad-9d3d-1cf8854dd2a3",
+		"verdict": "good"
+	},
+	{
+		"a": "dbc137d6-ac33-4503-a9d9-df63e7f841e3",
+		"b": "d8f4d43d-902e-4391-a17a-dc3d61b42893",
+		"verdict": "good"
+	},
+	{
+		"a": "e5c9aedf-d9ad-46bd-9332-a50139aa124f",
+		"b": "d3fb67af-df0f-4d73-bfa4-64b7a406618b",
+		"verdict": "good"
+	},
+	{
+		"a": "f624792b-62e8-464d-8307-0d477052ed16",
+		"b": "ee9a4c88-26af-4892-8d94-86bda08cffd1",
+		"verdict": "good"
+	},
+	{
+		"a": "46e07649-76ae-416e-bb76-19a324b37c59",
+		"b": "e6e63ee0-7dbd-42b8-95ee-1ee9a708af1f",
+		"verdict": "good"
+	},
+	{
+		"a": "dc2e0550-d41a-48dc-b184-8a2b709334f1",
+		"b": "f85a7f42-b51c-4862-9817-c4d7a8328250",
+		"verdict": "good"
+	},
+	{
+		"a": "362c3003-8836-47df-89c8-fa24d75ec382",
+		"b": "5670be69-4e02-499f-9090-63d5c86a517e",
+		"verdict": "good"
+	},
+	{
+		"a": "63fb323b-8cfb-430a-8234-c7306ec7cf2c",
+		"b": "02443c2a-baec-4917-8bd1-864f4be616b4",
+		"verdict": "good"
+	},
+	{
+		"a": "80ef701b-6620-4f84-8536-5002b28e2e66",
+		"b": "e2473179-6ca9-4536-91c1-b64971c588e9",
+		"verdict": "good"
+	},
+	{
+		"a": "92a70a47-98c4-43fd-8b1f-972657f627c3",
+		"b": "a25cf76c-3224-4209-bd79-a24416e8885b",
+		"verdict": "good"
+	},
+	{
+		"a": "f3e892f1-ba64-42ac-acec-6c1f523490fb",
+		"b": "99b7e978-e259-4aa5-8f4b-00b043da4d54",
+		"verdict": "good"
+	},
+	{
+		"a": "f624792b-62e8-464d-8307-0d477052ed16",
+		"b": "5dd442b3-4efd-463f-92fc-449a2f2dde15",
+		"verdict": "good"
+	},
+	{
+		"a": "220500f1-0d5d-47ea-a8ab-8a3239549891",
+		"b": "e4a23bf1-bbac-4d62-87c8-3d69a2f2740f",
+		"verdict": "good"
+	},
+	{
+		"a": "29b6859a-c462-4875-a427-c5f91e21c6ba",
+		"b": "d0428f1f-9c14-4c4e-86e9-ea52246269fb",
+		"verdict": "good"
+	},
+	{
+		"a": "2a32e617-b591-44f6-b5b3-1bb4a627c885",
+		"b": "e56987fd-1cea-4d00-9a8d-65379f510a0f",
+		"verdict": "good"
+	},
+	{
+		"a": "4073197a-22fc-4e8e-8109-6f4014fcd42a",
+		"b": "973f431a-eae8-435c-ada6-ce477868fdc4",
+		"verdict": "good"
+	},
+	{
+		"a": "4a6654d5-b340-4350-8624-1285dc8ec097",
+		"b": "da255f6f-c2ff-4b77-b8f5-abe9615f6a47",
+		"verdict": "bad",
+		"note": "both tracks are 187 s on the same single; the radio edit and the original look like one recording entered twice"
+	},
+	{
+		"a": "b4df390f-9848-4a15-b150-2c53716813df",
+		"b": "5964a52f-f5a8-4a97-9ee7-3a2b8dba47bf",
+		"verdict": "good"
+	},
+	{
+		"a": "c25e01cc-9368-46af-aa7e-07227acb77d7",
+		"b": "13615a43-5f24-4665-a5a7-87978118a181",
+		"verdict": "good"
+	},
+	{
+		"a": "1baff79d-0879-4b08-bc16-5d346ad9f1b8",
+		"b": "df44fd7a-9b75-45e8-8b84-6519a86eb68d",
+		"verdict": "good"
+	},
+	{
+		"a": "21c83c90-b612-4616-be9c-814b75ec113d",
+		"b": "069dd47c-1d86-4052-a73a-2888253764cb",
+		"verdict": "good"
+	},
+	{
+		"a": "257a049b-607b-4b0d-9659-4a8d3775d0ae",
+		"b": "188d458f-7ad1-492c-a285-30c6c7009fb8",
+		"verdict": "good"
+	},
+	{
+		"a": "b38a924e-ec39-45c0-95e7-7f11c9d36d69",
+		"b": "9dbc40e0-381e-4f21-999d-35839f3f128c",
+		"verdict": "good"
+	},
+	{
+		"a": "bad38f02-f179-4cb5-af07-c0319d082d9d",
+		"b": "f86dceb6-8545-45ad-87ff-8b888148a096",
+		"verdict": "good"
+	},
+	{
+		"a": "bd392d1a-ac6e-49e7-b5c7-d5cd0a972f89",
+		"b": "f188521e-f9a5-439b-8d6f-1d64e3ad000b",
+		"verdict": "good"
+	},
+	{
+		"a": "0136e88e-22d3-45cd-81bb-f7fb88a0ca5b",
+		"b": "0136e88e-22d3-45cd-81bb-f7fb88a0ca5b",
+		"verdict": "good"
+	},
+	{
+		"a": "049da576-7cd3-43e9-a62a-966a098ad825",
+		"b": "049da576-7cd3-43e9-a62a-966a098ad825",
+		"verdict": "good"
+	},
+	{
+		"a": "05dc49eb-fc68-4137-aa64-ffe9d7ba8ac1",
+		"b": "05dc49eb-fc68-4137-aa64-ffe9d7ba8ac1",
+		"verdict": "good"
+	},
+	{
+		"a": "07e65daf-0577-4f34-84ef-046a9f0f22c3",
+		"b": "07e65daf-0577-4f34-84ef-046a9f0f22c3",
+		"verdict": "good"
+	},
+	{
+		"a": "0f2c6971-6336-402f-b915-055ea10eddab",
+		"b": "0f2c6971-6336-402f-b915-055ea10eddab",
+		"verdict": "good"
+	},
+	{
+		"a": "0f30d578-938d-4032-a829-6b0ddc7dd423",
+		"b": "0f30d578-938d-4032-a829-6b0ddc7dd423",
+		"verdict": "good"
+	},
+	{
+		"a": "13eb3900-ac41-4711-854f-25a9297d8d1e",
+		"b": "13eb3900-ac41-4711-854f-25a9297d8d1e",
+		"verdict": "good"
+	},
+	{
+		"a": "1b870fca-59cc-4931-9bb7-17381a021379",
+		"b": "1b870fca-59cc-4931-9bb7-17381a021379",
+		"verdict": "good"
+	},
+	{
+		"a": "1e2e38a5-d5cd-49b3-abf4-a4b26be98171",
+		"b": "1e2e38a5-d5cd-49b3-abf4-a4b26be98171",
+		"verdict": "good"
+	},
+	{
+		"a": "2868b93b-ab8d-4c64-94a2-e1be7d511b5a",
+		"b": "2868b93b-ab8d-4c64-94a2-e1be7d511b5a",
+		"verdict": "good"
+	},
+	{
+		"a": "28c0a315-c0ce-43b6-b6c1-894b3617d909",
+		"b": "28c0a315-c0ce-43b6-b6c1-894b3617d909",
+		"verdict": "good"
+	},
+	{
+		"a": "39d2af95-821b-40bb-b113-79d94785e1f9",
+		"b": "39d2af95-821b-40bb-b113-79d94785e1f9",
+		"verdict": "good"
+	},
+	{
+		"a": "3afcd54e-d284-4eae-8f00-7ebe88285471",
+		"b": "3afcd54e-d284-4eae-8f00-7ebe88285471",
+		"verdict": "good"
+	},
+	{
+		"a": "3b6006b8-98b5-421e-ace5-0ef8c7666a24",
+		"b": "3b6006b8-98b5-421e-ace5-0ef8c7666a24",
+		"verdict": "good"
+	},
+	{
+		"a": "49110b5b-9ce4-45c5-8635-3dae42ab9c08",
+		"b": "49110b5b-9ce4-45c5-8635-3dae42ab9c08",
+		"verdict": "good"
+	},
+	{
+		"a": "4a7e32aa-5e9c-4ba5-b7ee-8b8f414c48c6",
+		"b": "4a7e32aa-5e9c-4ba5-b7ee-8b8f414c48c6",
+		"verdict": "good"
+	},
+	{
+		"a": "525ed727-1897-480a-967c-90fc52852583",
+		"b": "525ed727-1897-480a-967c-90fc52852583",
+		"verdict": "good"
+	},
+	{
+		"a": "64e79ba4-caf6-4467-95ed-e05be19c715e",
+		"b": "64e79ba4-caf6-4467-95ed-e05be19c715e",
+		"verdict": "good"
+	},
+	{
+		"a": "6c2fa94d-df59-48ec-a431-c3ff7b904253",
+		"b": "6c2fa94d-df59-48ec-a431-c3ff7b904253",
+		"verdict": "good"
+	},
+	{
+		"a": "7101057d-01f2-4492-acfc-619eb4bdf98c",
+		"b": "7101057d-01f2-4492-acfc-619eb4bdf98c",
+		"verdict": "good"
+	},
+	{
+		"a": "793b3cff-cc89-49d1-a2f7-8cdaeb67929e",
+		"b": "793b3cff-cc89-49d1-a2f7-8cdaeb67929e",
+		"verdict": "good"
+	},
+	{
+		"a": "7baae028-07ff-4a8c-8147-a702a81ee493",
+		"b": "7baae028-07ff-4a8c-8147-a702a81ee493",
+		"verdict": "good"
+	},
+	{
+		"a": "90793b90-f535-4de3-81d7-449627caff2e",
+		"b": "90793b90-f535-4de3-81d7-449627caff2e",
+		"verdict": "good"
+	},
+	{
+		"a": "965e75a4-f1fc-4e57-895e-167d57e38c92",
+		"b": "965e75a4-f1fc-4e57-895e-167d57e38c92",
+		"verdict": "good"
+	},
+	{
+		"a": "9a89fca0-5cea-4f0e-afbf-2c56b643d444",
+		"b": "9a89fca0-5cea-4f0e-afbf-2c56b643d444",
+		"verdict": "good"
+	},
+	{
+		"a": "a742662f-cde1-4803-9a88-4063a8b781e9",
+		"b": "a742662f-cde1-4803-9a88-4063a8b781e9",
+		"verdict": "good"
+	},
+	{
+		"a": "a75d9212-de7d-4d6a-93e3-3c83e579534f",
+		"b": "a75d9212-de7d-4d6a-93e3-3c83e579534f",
+		"verdict": "good"
+	},
+	{
+		"a": "a9b7e18e-39c0-46dd-9094-7f5cef3251f5",
+		"b": "a9b7e18e-39c0-46dd-9094-7f5cef3251f5",
+		"verdict": "good"
+	},
+	{
+		"a": "ab8c0f8d-c4f7-473d-95d6-e54d49798418",
+		"b": "ab8c0f8d-c4f7-473d-95d6-e54d49798418",
+		"verdict": "good"
+	},
+	{
+		"a": "aecd9700-6396-41c2-83b4-81d36f934e92",
+		"b": "aecd9700-6396-41c2-83b4-81d36f934e92",
+		"verdict": "good"
+	},
+	{
+		"a": "b0864266-68c0-4b5b-b76d-092a6ee04b5c",
+		"b": "b0864266-68c0-4b5b-b76d-092a6ee04b5c",
+		"verdict": "good"
+	},
+	{
+		"a": "b5b29ac0-2533-409f-993b-400596565c36",
+		"b": "b5b29ac0-2533-409f-993b-400596565c36",
+		"verdict": "good"
+	},
+	{
+		"a": "b8765b2a-b535-43c5-8110-fdeb8979d39c",
+		"b": "b8765b2a-b535-43c5-8110-fdeb8979d39c",
+		"verdict": "bad",
+		"note": "MusicBrainz puts one recording on a live album and on a demo, which cannot both be right"
+	},
+	{
+		"a": "c78e6af9-8c2b-4320-a27e-66850e7d9822",
+		"b": "c78e6af9-8c2b-4320-a27e-66850e7d9822",
+		"verdict": "good"
+	},
+	{
+		"a": "d372bc15-c449-452f-95fc-b4b2cbff3411",
+		"b": "d372bc15-c449-452f-95fc-b4b2cbff3411",
+		"verdict": "good"
+	},
+	{
+		"a": "d5192c03-c4c3-49a5-a747-d97f59f92be9",
+		"b": "d5192c03-c4c3-49a5-a747-d97f59f92be9",
+		"verdict": "bad",
+		"note": "MusicBrainz puts one recording on a soundtrack and a live album, which cannot both be right"
+	},
+	{
+		"a": "d9859f7d-d14d-4013-984f-c964b40f0682",
+		"b": "d9859f7d-d14d-4013-984f-c964b40f0682",
+		"verdict": "good"
+	},
+	{
+		"a": "da8f660a-1e84-4cd3-9db1-31ad9e5da692",
+		"b": "da8f660a-1e84-4cd3-9db1-31ad9e5da692",
+		"verdict": "good"
+	},
+	{
+		"a": "dc76f7f8-1161-4adc-8cd3-ceeb608dc629",
+		"b": "dc76f7f8-1161-4adc-8cd3-ceeb608dc629",
+		"verdict": "bad",
+		"note": "the two tracks differ by 10 s, too far apart for one recording"
+	},
+	{
+		"a": "df095d4a-a856-48e0-8205-f2f1f072bd12",
+		"b": "df095d4a-a856-48e0-8205-f2f1f072bd12",
+		"verdict": "good"
+	},
+	{
+		"a": "e58e292f-89e4-4243-b900-f1f0148f1167",
+		"b": "e58e292f-89e4-4243-b900-f1f0148f1167",
+		"verdict": "good"
+	},
+	{
+		"a": "e7048b52-bdc0-4347-a0e3-22c68d31b31b",
+		"b": "e7048b52-bdc0-4347-a0e3-22c68d31b31b",
+		"verdict": "good"
+	},
+	{
+		"a": "e9973f77-aa3d-470e-b3c1-a4ea140aeb19",
+		"b": "e9973f77-aa3d-470e-b3c1-a4ea140aeb19",
+		"verdict": "good"
+	},
+	{
+		"a": "f08e4ac0-97aa-4ee9-beed-b1f9d986152f",
+		"b": "f08e4ac0-97aa-4ee9-beed-b1f9d986152f",
+		"verdict": "good"
+	},
+	{
+		"a": "37fa4916-90e9-4e75-a732-9996a726d6be",
+		"b": "ccea3b4b-3c20-4d09-86a6-f30d61d1eeff",
+		"verdict": "good"
+	},
+	{
+		"a": "3afab611-173b-402b-9f3e-5283dbf66d50",
+		"b": "07478501-773e-42ab-adb9-e96d4bcc2726",
+		"verdict": "good"
+	},
+	{
+		"a": "3e1cd3e0-4a40-4256-b667-e0026e618ca2",
+		"b": "04e51dea-c3bf-4d19-a7ee-bee672ef7576",
+		"verdict": "good"
+	},
+	{
+		"a": "92a70a47-98c4-43fd-8b1f-972657f627c3",
+		"b": "7d6d8a1f-31b9-4ffd-a680-70c3312510cf",
+		"verdict": "good"
+	},
+	{
+		"a": "98d4ce3b-2682-4d5e-966a-7daaf34778c4",
+		"b": "12ab6a6c-a9f9-4951-a718-030a8a8fa193",
+		"verdict": "good"
+	},
+	{
+		"a": "c1603293-167e-4583-8f5c-9d4d7ee8bf26",
+		"b": "4b606243-83e5-4f17-acab-4f93f6b876d0",
+		"verdict": "good"
+	},
+	{
+		"a": "d132963d-5ca2-4bdc-b939-85d070803d5c",
+		"b": "b40a665b-a4d3-49f7-9cf1-426b80299d80",
+		"verdict": "good"
+	},
+	{
+		"a": "35b58bc2-e90d-43c9-8be4-1a245c58098c",
+		"b": "35b58bc2-e90d-43c9-8be4-1a245c58098c",
+		"verdict": "good"
+	},
+	{
+		"a": "d05892b8-c69e-40d2-a49c-eba345063f10",
+		"b": "d05892b8-c69e-40d2-a49c-eba345063f10",
+		"verdict": "good"
+	},
+	{
+		"a": "0ec353cd-d434-4009-bb2b-96b73b60f298",
+		"b": "9e1fcfca-ce8c-4fac-9c01-10afa9788ec3",
+		"verdict": "good"
+	},
+	{
+		"a": "4db87040-844d-41ed-8a0f-5eb7c5f2bcde",
+		"b": "15ca9bea-a5d6-4aa6-9f38-80d21b288f79",
+		"verdict": "good"
+	},
+	{
+		"a": "8caacfd5-543f-45df-9d67-8e199ac2492f",
+		"b": "63bfb161-0afb-4234-95e5-31e2464f5662",
+		"verdict": "good"
+	},
+	{
+		"a": "db7925a8-21a6-44bd-9cd8-94beb6961d8d",
+		"b": "b3904318-aded-4b7f-b533-906a3d713406",
+		"verdict": "good"
+	},
+	{
+		"a": "080dbaee-e4d9-43b3-a5c6-f0828af9ecee",
+		"b": "eccf31bf-de03-42ae-9218-6291090a8551",
+		"verdict": "good"
+	},
+	{
+		"a": "455533b2-668c-42fc-9682-a1ddbbd2f16a",
+		"b": "bd71f35a-b698-4a0a-b772-821040eab1b6",
+		"verdict": "good"
+	},
+	{
+		"a": "7f349440-5133-4dd0-87a7-b493dbc11d05",
+		"b": "d98b539a-2099-4e9a-a574-565b5d9b71a8",
+		"verdict": "good"
+	},
+	{
+		"a": "87112381-4bf4-43a6-b2d1-a75b123c8e3c",
+		"b": "db0c4817-1c38-458b-b493-baf744b0b75f",
+		"verdict": "good"
+	},
+	{
+		"a": "88ecdcf0-0c73-4812-87e3-b122b4384ae6",
+		"b": "0efc1ddf-f255-4629-9bd2-1a340383c4d3",
+		"verdict": "good"
+	},
+	{
+		"a": "a9ae8f6d-83f1-4c78-a981-9580a5abe2d8",
+		"b": "5d7615f6-8b40-46d7-98f8-1830f8234eb8",
+		"verdict": "good"
+	},
+	{
+		"a": "b6417b74-7245-48a5-8538-4aa120edcf92",
+		"b": "af7247d1-f3d2-442d-afa2-00635bf4270d",
+		"verdict": "good"
+	},
+	{
+		"a": "d3de7e94-1e0e-4a4a-8819-7be6cd8b9778",
+		"b": "fe6a8d9a-292a-4e6a-add1-6fa24374dfc4",
+		"verdict": "good"
+	},
+	{
+		"a": "e655beb5-8dba-4931-b5d0-95633464d67a",
+		"b": "eeb0852f-4c78-4fe2-8d7e-9ab1f0a7c263",
+		"verdict": "good"
+	},
+	{
+		"a": "f566ab9d-a82f-42a9-9691-55b7f2dfc9f2",
+		"b": "05225b36-d626-4777-8017-61d74693838c",
+		"verdict": "good"
+	}
+]

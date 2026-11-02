@@ -32,6 +32,14 @@
         "drizzle-kit": "0.31.11",
       },
     },
+    "packages/matcher": {
+      "name": "@ultrasonics/matcher",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/plugin-sdk": {
       "name": "@ultrasonics/plugin-sdk",
       "version": "0.0.0",
@@ -263,6 +271,8 @@
     "@ultrasonics/core": ["@ultrasonics/core@workspace:packages/core"],
 
     "@ultrasonics/db": ["@ultrasonics/db@workspace:packages/db"],
+
+    "@ultrasonics/matcher": ["@ultrasonics/matcher@workspace:packages/matcher"],
 
     "@ultrasonics/plugin-sdk": ["@ultrasonics/plugin-sdk@workspace:packages/plugin-sdk"],
 

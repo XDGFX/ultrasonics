@@ -1,0 +1,198 @@
+[
+	{
+		"a": { "title": "Mr. Brightside", "artists": ["The Killers"], "durationMs": 222000 },
+		"b": { "title": "MR. BRIGHTSIDE", "artists": ["THE KILLERS"], "durationMs": 222000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "letter case differs", "covers": ["case"] }
+	},
+	{
+		"a": { "title": "Café del Mar", "artists": ["Energy 52"], "durationMs": 435000 },
+		"b": { "title": "Cafe Del Mar", "artists": ["Energy 52"], "durationMs": 435000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "an accent in the title", "covers": ["accents", "case"] }
+	},
+	{
+		"a": { "title": "Halo", "artists": ["Beyoncé"], "album": "I Am... Sasha Fierce", "durationMs": 261000 },
+		"b": { "title": "Halo", "artists": ["Beyonce"], "album": "I AM...SASHA FIERCE", "durationMs": 261000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "an accent in the artist", "covers": ["accents"] }
+	},
+	{
+		"a": { "title": "Stay (feat. Justin Bieber)", "artists": ["The Kid LAROI"], "durationMs": 141000 },
+		"b": { "title": "Stay", "artists": ["The Kid LAROI", "Justin Bieber"], "durationMs": 141000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "feat. in the title against a second artist", "covers": ["feat-credit"] }
+	},
+	{
+		"a": { "title": "Get Lucky (ft. Pharrell Williams & Nile Rodgers)", "artists": ["Daft Punk"], "durationMs": 369000 },
+		"b": { "title": "Get Lucky", "artists": ["Daft Punk"], "durationMs": 369000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "ft. with two guests on one side only", "covers": ["feat-credit"] }
+	},
+	{
+		"a": { "title": "Old Town Road (prod. YoungKio)", "artists": ["Lil Nas X"], "durationMs": 113000 },
+		"b": { "title": "Old Town Road", "artists": ["Lil Nas X"], "durationMs": 113000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "a prod. credit in the title", "covers": ["prod-credit"] }
+	},
+	{
+		"a": { "title": "Midnight City (Album Version)", "artists": ["M83"], "durationMs": 244000 },
+		"b": { "title": "Midnight City", "artists": ["M83"], "durationMs": 244000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "an album-version label in brackets", "covers": ["bracketed-noise"] }
+	},
+	{
+		"a": { "title": "Blinding Lights [Official Audio]", "artists": ["The Weeknd"], "durationMs": 200000 },
+		"b": { "title": "Blinding Lights", "artists": ["The Weeknd"], "durationMs": 200000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "an upload label in square brackets", "covers": ["bracketed-noise"] }
+	},
+	{
+		"a": { "title": "Never Be Like You", "artists": ["Flume & Kai"], "durationMs": 234000 },
+		"b": { "title": "Never Be Like You", "artists": ["Flume", "Kai"], "durationMs": 234000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "two artists joined by an ampersand against a list", "covers": ["artist-join"] }
+	},
+	{
+		"a": { "title": "One Kiss", "artists": ["Calvin Harris, Dua Lipa"], "durationMs": 214000 },
+		"b": { "title": "One Kiss", "artists": ["Calvin Harris", "Dua Lipa"], "durationMs": 214000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "two artists joined by a comma against a list", "covers": ["artist-join"] }
+	},
+	{
+		"a": { "title": "Heathens", "artists": ["twenty one pilots"], "date": "2016", "durationMs": 195000 },
+		"b": { "title": "Heathens", "artists": ["twenty one pilots"], "date": "2016-06-16", "durationMs": 195000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "a year against a full date", "covers": ["partial-date"] }
+	},
+	{
+		"a": { "title": "Wish You Were Here - Remastered 2011", "artists": ["Pink Floyd"], "durationMs": 334000 },
+		"b": { "title": "Wish You Were Here", "artists": ["Pink Floyd"], "durationMs": 334000 },
+		"label": "match",
+		"category": "remaster",
+		"provenance": { "source": "hand-written", "name": "a dash remaster suffix", "covers": ["remaster-marker"] }
+	},
+	{
+		"a": { "title": "Come Together (2009 Remaster)", "artists": ["The Beatles"], "album": "Abbey Road (Remastered)", "durationMs": 259000 },
+		"b": { "title": "Come Together", "artists": ["The Beatles"], "album": "Abbey Road", "durationMs": 259000 },
+		"label": "match",
+		"category": "remaster",
+		"provenance": { "source": "hand-written", "name": "a bracketed remaster in the title and album", "covers": ["remaster-marker", "bracketed-noise"] }
+	},
+	{
+		"a": { "title": "HUMBLE.", "artists": ["Kendrick Lamar"], "durationMs": 177000, "explicit": true },
+		"b": { "title": "HUMBLE.", "artists": ["Kendrick Lamar"], "durationMs": 177000, "explicit": false },
+		"label": "match",
+		"category": "clean-explicit",
+		"provenance": { "source": "hand-written", "name": "explicit against clean", "covers": ["explicit-flag"] }
+	},
+	{
+		"a": { "title": "Gold Digger", "artists": ["Kanye West", "Jamie Foxx"], "durationMs": 208000, "explicit": false },
+		"b": { "title": "Gold Digger", "artists": ["Kanye West", "Jamie Foxx"], "durationMs": 208000 },
+		"label": "match",
+		"category": "clean-explicit",
+		"provenance": { "source": "hand-written", "name": "clean against an unknown explicit flag", "covers": ["explicit-flag"] }
+	},
+	{
+		"a": { "title": "Creep", "artists": ["Radiohead"] },
+		"b": { "title": "Creep - Live", "artists": ["Radiohead"] },
+		"label": "no-match",
+		"category": "live",
+		"provenance": { "source": "hand-written", "name": "a dash live suffix on one side", "covers": ["live-marker"] }
+	},
+	{
+		"a": { "title": "Creep", "artists": ["Radiohead"] },
+		"b": { "title": "Creep (Live at Glastonbury 1997)", "artists": ["Radiohead"] },
+		"label": "no-match",
+		"category": "live",
+		"provenance": { "source": "hand-written", "name": "a live marker inside brackets", "covers": ["live-marker", "bracketed-noise"] }
+	},
+	{
+		"a": { "title": "Levels", "artists": ["Avicii"] },
+		"b": { "title": "Levels (Skrillex Remix)", "artists": ["Avicii"] },
+		"label": "no-match",
+		"category": "remix",
+		"provenance": { "source": "hand-written", "name": "a named remix", "covers": ["remix-marker"] }
+	},
+	{
+		"a": { "title": "Lose Yourself", "artists": ["Eminem"] },
+		"b": { "title": "Lose Yourself (Instrumental)", "artists": ["Eminem"] },
+		"label": "no-match",
+		"category": "remix",
+		"provenance": { "source": "hand-written", "name": "an instrumental", "covers": ["instrumental-marker"] }
+	},
+	{
+		"a": { "title": "Bohemian Rhapsody", "artists": ["Queen"] },
+		"b": { "title": "Bohemian Rhapsody - Radio Edit", "artists": ["Queen"] },
+		"label": "no-match",
+		"category": "edit",
+		"provenance": { "source": "hand-written", "name": "a radio edit", "covers": ["edit-marker"] }
+	},
+	{
+		"a": { "title": "Strobe", "artists": ["deadmau5"], "durationMs": 637000 },
+		"b": { "title": "Strobe", "artists": ["deadmau5"], "durationMs": 200000 },
+		"label": "no-match",
+		"category": "edit",
+		"provenance": { "source": "hand-written", "name": "the same title and artist far apart in length", "covers": ["duration-gap"] }
+	},
+	{
+		"a": { "title": "Wonderwall", "artists": ["Oasis"] },
+		"b": { "title": "Wonderwall - Acoustic", "artists": ["Oasis"] },
+		"label": "no-match",
+		"category": "re-recording",
+		"provenance": { "source": "hand-written", "name": "an acoustic version", "covers": ["acoustic-marker"] }
+	},
+	{
+		"a": { "title": "Never Gonna Give You Up", "artists": ["Rick Astley"] },
+		"b": { "title": "Never Gonna Give You Up (Re-Recorded)", "artists": ["Rick Astley"] },
+		"label": "no-match",
+		"category": "re-recording",
+		"provenance": { "source": "hand-written", "name": "a re-recorded marker", "covers": ["re-recorded-marker"] }
+	},
+	{
+		"a": { "title": "Love Story", "artists": ["Taylor Swift"] },
+		"b": { "title": "Love Story (Taylor’s Version)", "artists": ["Taylor Swift"] },
+		"label": "no-match",
+		"category": "re-recording",
+		"provenance": { "source": "hand-written", "name": "an artist's own re-recording label", "covers": ["re-recorded-marker"] }
+	},
+	{
+		"a": { "title": "Toxic", "artists": ["Britney Spears"] },
+		"b": { "title": "Toxic (Cover)", "artists": ["Britney Spears"] },
+		"label": "no-match",
+		"category": "cover",
+		"provenance": { "source": "hand-written", "name": "a cover marker under the original artist's name", "covers": ["cover-marker"] }
+	},
+	{
+		"a": { "title": "Hurt", "artists": ["Nine Inch Nails"], "durationMs": 373000 },
+		"b": { "title": "Hurt", "artists": ["Johnny Cash"], "durationMs": 218000 },
+		"label": "no-match",
+		"category": "cover",
+		"provenance": { "source": "hand-written", "name": "an unmarked cover by another artist", "covers": ["threshold"] }
+	},
+	{
+		"a": { "title": "Home", "artists": ["Michael Bublé"], "durationMs": 225000 },
+		"b": { "title": "Home", "artists": ["Daughtry"], "durationMs": 254000 },
+		"label": "no-match",
+		"category": "same-title",
+		"provenance": { "source": "hand-written", "name": "a common title by an unrelated artist", "covers": ["threshold"] }
+	},
+	{
+		"a": { "title": "Hello", "artists": ["Adele"], "durationMs": 295000 },
+		"b": { "title": "Hello", "artists": ["Lionel Richie"], "durationMs": 247000 },
+		"label": "no-match",
+		"category": "same-title",
+		"provenance": { "source": "hand-written", "name": "a one-word title by an unrelated artist", "covers": ["threshold"] }
+	}
+]

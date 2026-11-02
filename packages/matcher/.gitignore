@@ -1,0 +1,4 @@
+# Held-out service data: never committed or pushed (spec #117, "The service tier").
+/service-tier-cache/
+# The CC0 builder's MusicBrainz response cache, so a rerun needn't refetch.
+/musicbrainz-cache/

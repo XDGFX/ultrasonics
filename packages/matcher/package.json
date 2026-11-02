@@ -1,0 +1,16 @@
+{
+	"name": "@ultrasonics/matcher",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {},
+	"scripts": {
+		"build-cc0-tier": "bun scripts/build-cc0-tier.ts",
+		"collect-service-tier": "bun scripts/collect-service-tier.ts",
+		"measure-service-tier": "bun scripts/measure-service-tier.ts"
+	},
+	"dependencies": {
+		"@ultrasonics/plugin-sdk": "workspace:*",
+		"zod": "4.6.7"
+	}
+}
