@@ -1,6 +1,8 @@
 import "@fontsource/roboto-mono/400.css";
 import "@fontsource/roboto-mono/500.css";
+import "@fontsource/roboto-mono/700.css";
 import "@fontsource/montserrat-alternates/700.css";
+import "./logo-fonts.css";
 import "./theme.css";
 import { createApp } from "vue";
 import App from "./App.vue";

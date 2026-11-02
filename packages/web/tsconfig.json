@@ -5,6 +5,6 @@
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"types": ["bun", "vite/client"]
 	},
-	"include": ["src/**/*.ts", "src/**/*.vue", "test/**/*.ts", "vite.config.ts"],
+	"include": ["src/**/*.ts", "src/**/*.vue", "scripts/**/*.ts", "test/**/*.ts", "vite.config.ts"],
 	"exclude": ["node_modules", "test/fixtures"]
 }

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { type RouteLocationRaw, useRoute } from "vue-router";
 import { useApi } from "./api-client.ts";
+import { MARK } from "./logo-assets.ts";
 
 export interface Crumb {
 	label: string;
@@ -24,7 +25,7 @@ const section = computed(() => route.meta.section);
 	<div class="shell">
 		<nav class="rail" aria-label="main">
 			<RouterLink to="/" class="brand" aria-label="ultrasonics">
-				<span class="wordmark">ultrasonics</span>
+				<img :src="`/${MARK}`" alt="" width="32" height="32" />
 			</RouterLink>
 			<RouterLink to="/" class="r" :class="{ on: section === 'applets' }" :data-active="section === 'applets'" title="applets">
 				<span aria-hidden="true">▦</span><small>applets</small>
@@ -61,8 +62,8 @@ const section = computed(() => route.meta.section);
 <style scoped>
 .shell { display: grid; grid-template-columns: 56px 1fr; min-height: 100vh; }
 .rail { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; border-right: 1px solid var(--line); background: rgb(17 17 17 / 0.9); }
-.brand { margin-bottom: 14px; text-decoration: none; }
-.brand .wordmark { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 17px; }
+.brand { margin-bottom: 14px; }
+.brand img { display: block; image-rendering: pixelated; }
 .r { width: 48px; padding: 6px 0; border-radius: var(--radius); display: grid; place-items: center; gap: 2px; color: var(--muted); text-decoration: none; }
 .r small { font-size: 9px; }
 .r:hover, .r.on { background: var(--surface-2); color: var(--fg); }
