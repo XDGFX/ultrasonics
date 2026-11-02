@@ -71,8 +71,18 @@ export function toJournal(events: RunEvent[]): JournalColumns {
 	return { ...columns, log: capLog(columns.log) };
 }
 
+/** A column stays null until the run's first checkpoint writes it, so null reads as no events. */
+const storedColumn = <T>(column: z.ZodType<T[]>) =>
+	column.nullish().transform((events) => events ?? []);
+
+const StoredJournal = z.object({
+	log: storedColumn(JournalColumns.shape.log),
+	stages: storedColumn(JournalColumns.shape.stages),
+	results: storedColumn(JournalColumns.shape.results),
+});
+
 /** A stored run's events, in order, so a finished run replays through the live code path. */
 export function fromJournal(journal: unknown): RunEvent[] {
-	const { log, stages, results } = JournalColumns.parse(journal);
+	const { log, stages, results } = StoredJournal.parse(journal);
 	return [...log, ...stages, ...results].sort((a, b) => a.seq - b.seq);
 }
