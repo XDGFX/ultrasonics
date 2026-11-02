@@ -341,6 +341,34 @@ describe("runApplet: outputs", () => {
 		expect(ofType("result")[0]?.outcome).toMatchObject({ ok: false, error: { code: "contract" } });
 	});
 
+	test("the result event names each playlist and counts the songs the output received", async () => {
+		const { ofType } = await run({
+			inputs: [twoPlaylists],
+			modifiers: [],
+			outputs: [slot("refused")],
+		});
+
+		const [result] = ofType("result");
+		expect(result?.outcome.ok && result.outcome.playlists).toEqual([
+			{
+				status: "failed",
+				playlist: 0,
+				playlistName: "A",
+				supplied: 2,
+				code: "http-500",
+				message: "Server error",
+			},
+			{
+				status: "failed",
+				playlist: 1,
+				playlistName: "B",
+				supplied: 1,
+				code: "http-500",
+				message: "Server error",
+			},
+		]);
+	});
+
 	test("the result event carries copies of the unmatched songs beside their positions", async () => {
 		const { ofType } = await run({
 			inputs: [twoPlaylists],
@@ -358,12 +386,16 @@ describe("runApplet: outputs", () => {
 						{
 							status: "written",
 							playlist: 0,
+							playlistName: "A",
+							supplied: 2,
 							unmatched: [0],
 							unmatchedSongs: [{ ...song("a"), id: {} }],
 						},
 						{
 							status: "written",
 							playlist: 1,
+							playlistName: "B",
+							supplied: 1,
 							unmatched: [0],
 							unmatchedSongs: [{ ...song("c"), id: {} }],
 						},

@@ -60,7 +60,9 @@ media queries. The README logo is therefore generated from the same renderer as 
 - dark and light versions, chosen by `prefers-color-scheme`;
 - a still frame under `prefers-reduced-motion`.
 
-There is no cursor interaction.
+There is no cursor interaction. The mosaic is baked and shown at full size, never smaller: the
+wordmark is about 880px across on a 10px grid, as on a full-size first-run screen. The README embeds
+it at its natural width and lets only a narrow viewport shrink it.
 
 ## Considered options
 

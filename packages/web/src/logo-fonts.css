@@ -1,0 +1,12 @@
+/* Only the Noto Sans JP subset that holds ソニックス: the whole family is 125 files. */
+@font-face {
+	font-family: "Noto Sans JP";
+	font-style: normal;
+	font-display: swap;
+	font-weight: 700;
+	src:
+		url("@fontsource/noto-sans-jp/files/noto-sans-jp-119-700-normal.woff2") format("woff2"),
+		url("@fontsource/noto-sans-jp/files/noto-sans-jp-119-700-normal.woff") format("woff");
+	unicode-range:
+		U+20, U+2027, U+3001-3002, U+3041-307f, U+3081-308f, U+3091-3093, U+3099-309a, U+309d-309e, U+30a1-30e1, U+30e3-30ed, U+30ef-30f0, U+30f2-30f4, U+30fb-30fe, U+ff0c, U+ff0e;
+}

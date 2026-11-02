@@ -116,6 +116,23 @@
 					}
 				}
 			}
+		},
+		{
+			"includes": ["packages/web/**"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"@ultrasonics/core": "The UI reaches core only through @ultrasonics/core/run-events, which holds no runner code."
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	]
 }

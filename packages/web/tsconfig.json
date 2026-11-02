@@ -1,0 +1,10 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"types": ["bun", "vite/client"]
+	},
+	"include": ["src/**/*.ts", "src/**/*.vue", "scripts/**/*.ts", "test/**/*.ts", "vite.config.ts"],
+	"exclude": ["node_modules", "test/fixtures"]
+}
