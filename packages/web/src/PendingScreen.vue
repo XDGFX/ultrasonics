@@ -6,6 +6,7 @@ defineProps<{ crumbs: Crumb[] }>();
 
 <template>
 	<AppShell :crumbs="crumbs">
+		<template v-if="$slots.actions" #actions><slot name="actions" /></template>
 		<p class="muted">not built yet.</p>
 	</AppShell>
 </template>

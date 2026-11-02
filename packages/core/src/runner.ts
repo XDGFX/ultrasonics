@@ -278,17 +278,21 @@ async function runOutput(
 	if (!parsed.success || fault) {
 		return { ok: false, error: { code: "contract", message: `Invalid output result: ${fault}` } };
 	}
-	const playlists = parsed.data.playlists.map((entry) =>
-		entry.status === "written"
-			? {
-					...entry,
-					unmatchedSongs: entry.unmatched.map((position) =>
-						structuredClone(songs.playlists[entry.playlist]?.songs[position]),
-					),
-				}
-			: entry,
-	);
-	return { ok: true, playlists: playlists as ResultPlaylist[] };
+	const playlists = parsed.data.playlists.map((entry): ResultPlaylist => {
+		// `incompleteness` has checked every position, so the fallbacks are never reached.
+		const given = songs.playlists[entry.playlist]?.songs ?? [];
+		const named = {
+			playlistName: songs.playlists[entry.playlist]?.name ?? "",
+			supplied: given.length,
+		};
+		if (entry.status !== "written") return { ...entry, ...named };
+		const unmatchedSongs = entry.unmatched.flatMap((position) => {
+			const song = given[position];
+			return song ? [structuredClone(song)] : [];
+		});
+		return { ...entry, ...named, unmatchedSongs };
+	});
+	return { ok: true, playlists };
 }
 
 /**

@@ -86,11 +86,14 @@ export const RejectionEvent = z.object({
 });
 export type RejectionEvent = z.infer<typeof RejectionEvent>;
 
-/** A written playlist's result, with copies of its unmatched songs beside their positions. */
+/** The playlist's name, and how many of its songs the output was supplied. */
+const playlistFields = { playlistName: z.string(), supplied: z.number().int().min(0) };
+
+/** A playlist's result, with copies of a written one's unmatched songs beside their positions. */
 const ResultPlaylist = z.discriminatedUnion("status", [
-	PlaylistResult.options[0].extend({ unmatchedSongs: z.array(Song) }),
-	PlaylistResult.options[1],
-	PlaylistResult.options[2],
+	PlaylistResult.options[0].extend({ ...playlistFields, unmatchedSongs: z.array(Song) }),
+	PlaylistResult.options[1].extend(playlistFields),
+	PlaylistResult.options[2].extend(playlistFields),
 ]);
 export type ResultPlaylist = z.infer<typeof ResultPlaylist>;
 

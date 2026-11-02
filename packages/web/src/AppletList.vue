@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import { type AppletListing, type PluginInfo, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import { formatWhen } from "./clock.ts";
+import QueuedNote from "./QueuedNote.vue";
+import { useRunNow } from "./run-now.ts";
 import { sentence } from "./sentence.ts";
 
 type Status = AppletListing["state"] | NonNullable<AppletListing["lastRun"]>["status"] | "never-run";
@@ -47,6 +49,12 @@ function nextRun(applet: AppletListing): string {
 	return kind === "webhook" ? "on webhook" : "manual";
 }
 
+const { runNow, queued } = useRunNow();
+async function runFromRow(applet: AppletListing) {
+	await runNow(applet.id);
+	if (queued.value) await load();
+}
+
 async function remove(applet: AppletListing) {
 	confirming.value = null;
 	await api.applets.delete(applet.id);
@@ -58,6 +66,7 @@ async function remove(applet: AppletListing) {
 <template>
 	<AppShell :crumbs="[{ label: 'applets' }]">
 		<template #actions>
+			<QueuedNote v-if="queued" />
 			<RouterLink :to="{ name: 'new-applet' }" class="btn primary">new applet</RouterLink>
 		</template>
 
@@ -89,6 +98,7 @@ async function remove(applet: AppletListing) {
 				</template>
 			</span>
 			<span class="acts">
+				<button type="button" title="run now" @click="runFromRow(applet)">▶</button>
 				<RouterLink :to="{ name: 'builder', params: { id: applet.id } }" title="edit">✎</RouterLink>
 				<button type="button" class="del" title="delete" @click="confirming = applet">×</button>
 			</span>

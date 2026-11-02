@@ -12,6 +12,8 @@ import {
 import AppShell from "./AppShell.vue";
 import CopyValue from "./CopyValue.vue";
 import { defaultsOf, isEmptyForm } from "./form-model.ts";
+import QueuedNote from "./QueuedNote.vue";
+import { useRunNow } from "./run-now.ts";
 import { summarise } from "./slot-summary.ts";
 import { scheduleForm, scheduleFormValue, scheduleOf, browserTimeZone, newSchedule } from "./schedule-form.ts";
 import { describeSchedule, sentence } from "./sentence.ts";
@@ -241,6 +243,7 @@ async function save() {
 }
 
 const leaving = useUnsavedChanges(dirty);
+const { runNow, queued } = useRunNow();
 </script>
 
 <template>
@@ -260,6 +263,17 @@ const leaving = useUnsavedChanges(dirty);
 				/>
 				<span>enabled</span>
 			</label>
+			<QueuedNote v-if="queued" />
+			<button
+				v-if="appletId"
+				type="button"
+				class="btn run-now"
+				:disabled="dirty"
+				:title="dirty ? 'save first: a run uses the saved applet' : undefined"
+				@click="runNow(appletId)"
+			>
+				▶ run now
+			</button>
 			<button type="button" class="btn primary" :disabled="!loaded" @click="save">save</button>
 		</template>
 
