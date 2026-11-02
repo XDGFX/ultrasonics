@@ -50,6 +50,36 @@
 			"plugins": ["./lint/no-unkillable-block.grit"]
 		},
 		{
+			"includes": [
+				"packages/core/src/run-events.ts",
+				"packages/core/src/run-event.ts",
+				"packages/core/src/journal.ts"
+			],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"patterns": [
+									{
+										"group": [
+											"**",
+											"!zod",
+											"!@ultrasonics/plugin-sdk",
+											"!./run-event.ts",
+											"!./journal.ts"
+										],
+										"message": "The run-events subpath is imported by the UI: it may reach only Zod, the SDK and its own files, never the runner."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
 			"includes": ["packages/db/**", "packages/server/src/boot.ts"],
 			"linter": { "rules": { "style": { "noRestrictedImports": "off" } } }
 		},

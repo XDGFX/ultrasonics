@@ -1,4 +1,5 @@
-// The `@ultrasonics/core/run-events` subpath, which the UI imports: it reaches nothing in the runner.
+// The `@ultrasonics/core/run-events` subpath, which the UI imports: it reaches nothing in the runner
+// (enforced by a `noRestrictedImports` override in biome.json).
 
 export {
 	fromJournal,
