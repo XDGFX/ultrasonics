@@ -278,16 +278,19 @@ async function runOutput(
 	if (!parsed.success || fault) {
 		return { ok: false, error: { code: "contract", message: `Invalid output result: ${fault}` } };
 	}
-	const playlists = parsed.data.playlists.map((entry) =>
-		entry.status === "written"
+	const playlists = parsed.data.playlists.map((entry) => {
+		const playlist = songs.playlists[entry.playlist];
+		const received = { playlistName: playlist?.name, supplied: playlist?.songs.length };
+		return entry.status === "written"
 			? {
 					...entry,
+					...received,
 					unmatchedSongs: entry.unmatched.map((position) =>
-						structuredClone(songs.playlists[entry.playlist]?.songs[position]),
+						structuredClone(playlist?.songs[position]),
 					),
 				}
-			: entry,
-	);
+			: { ...entry, ...received };
+	});
 	return { ok: true, playlists: playlists as ResultPlaylist[] };
 }
 

@@ -38,8 +38,8 @@ describe("the run view's reducer", () => {
 		expect(headline(fold(succeededRun), services)).toBe("54 songs written to plex");
 	});
 
-	test("leaves the count out when an output skipped or failed a playlist", () => {
-		expect(headline(fold(partialRun), services)).toBe("songs written to plex");
+	test("counts only written playlists when an output skipped or failed some", () => {
+		expect(headline(fold(partialRun), services)).toBe("20 songs written to plex");
 	});
 
 	test("names nothing written when no output wrote", () => {

@@ -5,7 +5,13 @@ import AppShell from "./AppShell.vue";
 import { formatClock, formatDuration, formatWhen } from "./clock.ts";
 import QueuedNote from "./QueuedNote.vue";
 import { useRunNow } from "./run-now.ts";
-import { emptyRunView, foldRunEvent, headline, type StageView } from "./run-view-state.ts";
+import {
+	emptyRunView,
+	foldRunEvent,
+	headline,
+	matched,
+	type StageView,
+} from "./run-view-state.ts";
 
 const props = defineProps<{ id: string }>();
 const api = useApi();
@@ -109,12 +115,15 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 				<p v-if="!result.outcome.ok" class="error">{{ result.outcome.error.code }}: {{ result.outcome.error.message }}</p>
 				<table v-else>
 					<thead>
-						<tr><th>playlist</th><th>result</th><th>unmatched</th><th>reason</th></tr>
+						<tr><th>playlist</th><th>result</th><th>matched</th><th>unmatched</th><th>reason</th></tr>
 					</thead>
 					<tbody>
 						<tr v-for="playlist in result.outcome.playlists" :key="playlist.playlist">
-							<td>{{ playlistLabel(playlist.playlist) }}</td>
+							<td class="playlist">{{ playlist.playlistName }}</td>
 							<td :data-result="playlist.status" class="result">{{ playlist.status }}</td>
+							<td class="matched">
+								<template v-if="playlist.status === 'written'">{{ matched(playlist) }} of {{ playlist.supplied }}</template>
+							</td>
 							<td class="unmatched muted">
 								<template v-if="playlist.status === 'written'">{{
 									playlist.unmatchedSongs.map((song) => `${song.title} — ${song.artists.join(", ")}`).join(" · ")

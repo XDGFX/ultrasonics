@@ -2,6 +2,7 @@ import type {
 	LogEvent,
 	RejectionEvent,
 	ResultEvent,
+	ResultPlaylist,
 	RunEvent,
 	StageCounts,
 	StageError,
@@ -44,7 +45,7 @@ const componentOrder = ["inputs", "modifiers", "outputs"];
 const byPosition = (a: StageSlot, b: StageSlot) =>
 	componentOrder.indexOf(a.component) - componentOrder.indexOf(b.component) || a.index - b.index;
 
-const isSlot = (slot: Pick<StageSlot, "component" | "index">) => (stage: StageSlot) =>
+const isSlot = (slot: StageSlot) => (stage: StageSlot) =>
 	stage.component === slot.component && stage.index === slot.index;
 
 function withStage(
@@ -99,39 +100,29 @@ export function foldRunEvent(state: RunViewState, event: RunEvent): RunViewState
 	}
 }
 
-/**
- * Songs written, supplied less unmatched. Results carry no per-playlist count, so it is known only
- * when each output wrote every playlist it received.
- */
+/** Songs written: each written playlist's supplied songs less its unmatched ones (ADR-0020). */
 export function headline(
 	state: RunViewState,
 	serviceOf: (plugin: string) => string | undefined,
 ): string {
 	let written = 0;
-	let known = true;
 	const names: string[] = [];
 	for (const result of state.results) {
 		if (!result.outcome.ok) continue;
-		const playlists = result.outcome.playlists;
-		if (!playlists.some((playlist) => playlist.status === "written")) continue;
-		const name = serviceOf(result.plugin) ?? result.plugin;
-		if (!names.includes(name)) names.push(name);
-		const supplied = state.stages.find(isSlot({ component: "outputs", index: result.index }))
-			?.finished?.songs;
-		if (supplied === undefined || playlists.some((playlist) => playlist.status !== "written")) {
-			known = false;
-			continue;
+		for (const playlist of result.outcome.playlists) {
+			if (playlist.status !== "written") continue;
+			written += matched(playlist);
+			const name = serviceOf(result.plugin) ?? result.plugin;
+			if (!names.includes(name)) names.push(name);
 		}
-		const unmatched = playlists.reduce(
-			(sum, playlist) => sum + (playlist.status === "written" ? playlist.unmatched.length : 0),
-			0,
-		);
-		written += supplied - unmatched;
 	}
 	if (names.length === 0) return "nothing written";
-	const to = `written to ${joinNames(names)}`;
-	return known ? `${written} ${written === 1 ? "song" : "songs"} ${to}` : `songs ${to}`;
+	return `${written} ${written === 1 ? "song" : "songs"} written to ${joinNames(names)}`;
 }
+
+/** A written playlist's songs that found a counterpart on the service. */
+export const matched = (playlist: Extract<ResultPlaylist, { status: "written" }>) =>
+	playlist.supplied - playlist.unmatched.length;
 
 function joinNames(names: string[]): string {
 	return names.length === 1

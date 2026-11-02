@@ -62,6 +62,10 @@ describe("the run view", () => {
 	test("tables each output's playlists with their unmatched songs, skips and failures", async () => {
 		const { wrapper } = await openRun(succeededRun);
 		const rows = wrapper.findAll("[data-output] tbody tr");
+		expect(rows.map((row) => [row.get(".playlist").text(), row.get(".matched").text()])).toEqual([
+			["discover weekly", "28 of 30"],
+			["release radar", "26 of 27"],
+		]);
 		expect(rows[0]?.get("[data-result]").text()).toBe("written");
 		expect(rows[0]?.get(".unmatched").text()).toBe(
 			"lake effect — hania rani · doppelgänger — kiasmos",
@@ -74,8 +78,8 @@ describe("the run view", () => {
 			.map((row) => [row.get("[data-result]").text(), row.get(".reason").text()]);
 		expect(reasons).toEqual([
 			["written", ""],
-			["skipped", "empty: no songs to write"],
-			["failed", "timeout: plex took too long"],
+			["skipped", "empty: no songs"],
+			["failed", "timeout: plex timed out"],
 		]);
 	});
 
