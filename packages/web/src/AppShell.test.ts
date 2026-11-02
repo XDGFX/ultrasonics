@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mountApp } from "../test/mount-app.ts";
 import type { Applet } from "./api-client.ts";
+import { MARK } from "./logo-assets.ts";
 
 const applet: Applet = {
 	id: "a1",
@@ -20,11 +21,10 @@ afterEach(() => {
 });
 
 describe("the shell", () => {
-	test("shows the wordmark in text and links to applets and settings from the rail", async () => {
+	test("shows the chroma-pixel mark and links to applets and settings from the rail", async () => {
 		const { wrapper } = await mountApp("/", { applets: [applet] });
 		const rail = wrapper.get("nav.rail");
-		expect(rail.get(".wordmark").text()).toBe("ultrasonics");
-		expect(rail.find("img").exists()).toBe(false);
+		expect(rail.get('[aria-label="ultrasonics"] img').attributes("src")).toBe(`/${MARK}`);
 		expect(rail.findAll("a").map((link) => link.attributes("href"))).toEqual(
 			expect.arrayContaining(["/", "/settings"]),
 		);

@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from "vue";
 import { type ServiceStatus, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
+import LogoLockup from "./LogoLockup.vue";
+import LogoMosaic from "./LogoMosaic.vue";
 
 const api = useApi();
 const services = ref<ServiceStatus[]>([]);
@@ -35,8 +37,9 @@ const steps = computed(() => {
 
 <template>
 	<AppShell :crumbs="[{ label: 'welcome' }]">
+		<LogoMosaic class="hero-mosaic" />
 		<div class="first-run">
-			<p class="wordmark hero">ultrasonics</p>
+			<div class="hero-lockup"><LogoLockup /></div>
 			<p class="muted tagline">do more with your music.</p>
 			<p class="welcome">welcome. this ultrasonics is yours — nothing to log in to.</p>
 			<ol class="steps">
@@ -60,7 +63,13 @@ const steps = computed(() => {
 
 <style scoped>
 .first-run { max-width: 640px; margin: 0 auto; padding-top: 24px; }
-.hero { font-size: 56px; text-align: center; margin: 0 0 8px; }
+/* The mosaic is for full size only (ADR-0027 §2); below it the static lockup stands in. */
+.hero-mosaic { height: clamp(260px, 40vh, 420px); margin: -40px -28px 8px; }
+.hero-lockup { display: none; font-size: 48px; text-align: center; margin: 0 0 8px; }
+@media (max-width: 760px) {
+	.hero-mosaic { display: none; }
+	.hero-lockup { display: block; }
+}
 .tagline { text-align: center; margin: 0; }
 .welcome { text-align: center; margin: 28px 0; }
 .steps { list-style: none; margin: 0; padding: 0; }

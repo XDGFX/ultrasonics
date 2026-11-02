@@ -26,6 +26,12 @@ describe("first run", () => {
 		expect(router.currentRoute.value.name).toBe("first-run");
 	});
 
+	test("opens on the mosaic, with the static lockup standing in below full size", async () => {
+		const { wrapper } = await mountApp("/welcome");
+		const logos = wrapper.findAll('[role="img"][aria-label="ultrasonics"]');
+		expect(logos.map((logo) => logo.attributes("data-logo"))).toEqual(["mosaic", "lockup"]);
+	});
+
 	test("has one step per service the catalogue uses, then making an applet", async () => {
 		const { wrapper } = await mountApp("/welcome", { plugins: [spotify, deduplicate, plex] });
 		expect(steps(wrapper).map((step) => step.attributes("data-step"))).toEqual([
