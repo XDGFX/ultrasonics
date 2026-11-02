@@ -54,6 +54,8 @@ export interface MosaicOptions {
 	reduced?: boolean;
 	/** Off when the caller times line glitches itself, as the README loop does. */
 	idleGlitches?: boolean;
+	/** Where the centre of the lockup sits; the middle of the grid unless given. */
+	anchor?: Point | undefined;
 }
 
 export const WORDMARK = "ultrasonics";
@@ -77,7 +79,7 @@ interface Look {
 	chromaMax: number;
 	magenta: boolean;
 }
-interface Point {
+export interface Point {
 	x: number;
 	y: number;
 }
@@ -373,13 +375,14 @@ export function createMosaic({
 	glyphs,
 	reduced = false,
 	idleGlitches = true,
+	anchor = { x: width / 2, y: height / 2 },
 }: MosaicOptions) {
 	const wordWidth = Math.min(1000, width - 32) * 0.88;
 	const wordSize = (100 * wordWidth) / glyphs.measure(WORDMARK, "word", 100);
 	const kanaSize = wordSize * KATAKANA_RATIO;
 	const fine = Math.max(3, Math.round(cell * 0.45 * 10) / 10);
-	// The lockup is centred in the picture: the name, then the katakana under it.
-	const wordY = height / 2 - (wordSize + 1.3 * kanaSize) / 2 + 0.45 * wordSize;
+	// The lockup is centred on the anchor: the name, then the katakana under it.
+	const wordY = anchor.y - (wordSize + 1.3 * kanaSize) / 2 + 0.45 * wordSize;
 	const kanaY = wordY + wordSize * 0.55 + kanaSize * 0.7;
 	const base = Math.imul(seed, 7919);
 	// The wordmark's grid covers the whole picture, so the static and the tuning have no edges.
@@ -395,12 +398,12 @@ export function createMosaic({
 		scale: 1,
 		staticFloor: true,
 		glyphs,
-		texts: [{ text: WORDMARK, size: wordSize, x: width / 2, y: wordY + wordSize * 0.06 }],
+		texts: [{ text: WORDMARK, size: wordSize, x: anchor.x, y: wordY + wordSize * 0.06 }],
 	});
 	// The katakana has a finer grid of its own: on the wordmark's cells it would have three rows.
 	const kanaTop = kanaY - kanaSize;
 	const span = wordWidth * 0.96;
-	const left = (width - span) / 2 + kanaSize / 2;
+	const left = anchor.x - span / 2 + kanaSize / 2;
 	const kana = new Layer({
 		face: "katakana",
 		cell: fine,
@@ -424,7 +427,7 @@ export function createMosaic({
 	const boxTop = wordY - wordSize * 0.45;
 	const boxBottom = kanaY + kanaSize * 0.6;
 	const box = {
-		cx: width / 2,
+		cx: anchor.x,
 		cy: (boxTop + boxBottom) / 2,
 		hw: wordWidth / 2,
 		hh: (boxBottom - boxTop) / 2,

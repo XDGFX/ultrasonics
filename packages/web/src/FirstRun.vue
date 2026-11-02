@@ -67,7 +67,7 @@ const steps = computed(() => {
 .first-run { max-width: 640px; margin: 0 auto; padding-top: 24px; }
 /* The mosaic is for full size only (ADR-0027 §2), judged by the room it gets; below it the lockup stands in. */
 .welcome-page { container-type: inline-size; }
-.hero-mosaic { height: clamp(260px, 40vh, 420px); margin: -40px -28px 8px; }
+.hero-mosaic { height: clamp(220px, 36vh, 380px); margin-top: -24px; }
 .hero-lockup { display: none; font-size: 48px; text-align: center; margin: 0 0 8px; }
 @container (max-width: 760px) {
 	.hero-mosaic { display: none; }

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createMosaic, type Frame, type Glyphs, RAMP, TUNE_SECONDS } from "./mosaic.ts";
+import { type Cell, createMosaic, type Frame, type Glyphs, RAMP, TUNE_SECONDS } from "./mosaic.ts";
 
 // Every text run fills a solid box, so the expected coverage is easy to reason about.
 const boxGlyphs: Glyphs = {
@@ -70,6 +70,22 @@ describe("the mosaic", () => {
 	test("shows fully tuned from the first frame under reduced motion", () => {
 		const still = createMosaic({ seed: 1, ...size, glyphs: boxGlyphs, reduced: true }).frame(0);
 		expect(count(still, "face")).toBeGreaterThan(100);
+	});
+
+	test("centres the logo on the anchor it is given, anywhere in the grid", () => {
+		const middle = (frame: Frame) => {
+			const word = (frame.layers[0] as Frame["layers"][number]).cells.filter(
+				(c) => c.tone === "face",
+			);
+			const mean = (f: (c: Cell) => number) => word.reduce((s, c) => s + f(c), 0) / word.length;
+			return { col: mean((c) => c.col), row: mean((c) => c.row) };
+		};
+		const still = (anchor?: { x: number; y: number }) =>
+			createMosaic({ seed: 1, ...size, glyphs: boxGlyphs, reduced: true, anchor }).frame(0);
+		const centred = middle(still());
+		const moved = middle(still({ x: size.width / 2 + 30, y: size.height / 2 - 30 }));
+		expect(moved.col).toBeCloseTo(centred.col + 30 / 6, 0);
+		expect(moved.row).toBeCloseTo(centred.row - 30 / 10, 0);
 	});
 
 	test("draws a different picture for another seed", () => {
