@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { RunEvent } from "@ultrasonics/core/run-events";
 import { toFormSchema } from "@ultrasonics/plugin-sdk";
 import type { AppletDraft } from "./api-client.ts";
 import { createFakeApi } from "./fake-api.ts";
 import { catalogue, deduplicate, plex, spotify } from "./fake-catalogue.ts";
+import { authFailedRun, partialRun, succeededRun } from "./fake-runs.ts";
 
 const draft: AppletDraft = {
 	name: "weekly",
@@ -119,5 +121,82 @@ describe("the fake ApiClient", () => {
 		expect(outcome).toEqual({ kind: "connected" });
 		const [spotifyStatus] = await api.services.list();
 		expect(spotifyStatus?.status).toEqual({ kind: "connected" });
+	});
+});
+
+const summary = {
+	appletId: "a",
+	trigger: "manual",
+	status: "running",
+	startedAt: Date.UTC(2026, 10, 2, 7),
+	finishedAt: null,
+} as const;
+
+async function collect(events: AsyncIterable<RunEvent>): Promise<number[]> {
+	const seen: number[] = [];
+	for await (const event of events) seen.push(event.seq);
+	return seen;
+}
+
+describe("the fake's scripted runs", () => {
+	test("parses every scripted run with the run-event schema", () => {
+		for (const script of [succeededRun, authFailedRun, partialRun]) {
+			expect(() => script.map((event) => RunEvent.parse(event))).not.toThrow();
+		}
+		const broken = [{ seq: 1, at: 0, type: "end", status: "fine" }];
+		expect(() =>
+			createFakeApi({ plugins: catalogue, runs: [{ ...summary, id: "r", events: broken }] }),
+		).toThrow();
+	});
+
+	test("replays a run at once, ending after `end`", async () => {
+		const api = createFakeApi({
+			plugins: catalogue,
+			runs: [{ ...summary, id: "r", events: succeededRun }],
+		});
+		expect(await collect(api.runs.events("r"))).toEqual(succeededRun.map((_, index) => index + 1));
+	});
+
+	test("releases a stepped run's events as the test advances it", async () => {
+		const api = createFakeApi({
+			plugins: catalogue,
+			runs: [{ ...summary, id: "r", events: authFailedRun, pace: "stepped" }],
+		});
+		const seen = collect(api.runs.events("r"));
+		api.scripts.advance("r", 2);
+		api.scripts.advance("r", 2);
+		expect(await seen).toEqual([1, 2, 3, 4]);
+		expect((await api.runs.get("r")).status).toBe("failed");
+	});
+
+	test("resumes after a dropped connection from the last seq, repeating nothing", async () => {
+		const api = createFakeApi({
+			plugins: catalogue,
+			runs: [{ ...summary, id: "r", events: succeededRun, pace: "stepped" }],
+		});
+		const seen = collect(api.runs.events("r"));
+		api.scripts.advance("r", 3);
+		await Bun.sleep(0);
+		api.scripts.drop("r");
+		api.scripts.advance("r", succeededRun.length);
+		expect(await seen).toEqual(succeededRun.map((_, index) => index + 1));
+		expect(api.scripts.connections("r")).toBe(2);
+	});
+
+	test("plays an applet's script when it is run now, and queues a second run", async () => {
+		const api = createFakeApi({
+			plugins: catalogue,
+			applets: [{ id: "a", ...draft, schedule: null, hasWebhook: false }],
+			runScripts: { a: { events: succeededRun, pace: "stepped" } },
+		});
+		const started = await api.applets.runNow("a");
+		if (started.kind !== "started") throw new Error("the run did not start");
+		expect(await api.applets.runNow("a")).toEqual({ kind: "queued" });
+
+		api.scripts.advance(started.runId, succeededRun.length);
+		await collect(api.runs.events(started.runId));
+		const [listing] = await api.applets.list();
+		expect(listing?.state).toBe("running");
+		expect(listing?.lastRun?.id).not.toBe(started.runId);
 	});
 });

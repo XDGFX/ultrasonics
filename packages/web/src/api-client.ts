@@ -1,3 +1,4 @@
+import type { FinishedRunStatus, RunEvent } from "@ultrasonics/core/run-events";
 import type {
 	AuthChallenge,
 	AuthFailure,
@@ -63,7 +64,6 @@ export interface Applet extends AppletDraft {
 	hasWebhook: boolean;
 }
 
-export type FinishedRunStatus = "succeeded" | "partial" | "failed" | "interrupted";
 export type RunStatus = "running" | FinishedRunStatus;
 export type RunTrigger = "schedule" | "webhook" | "manual";
 
@@ -85,13 +85,6 @@ export interface RunSummary {
 	status: RunStatus;
 	startedAt: number;
 	finishedAt: number | null;
-}
-
-/** A run event as the wire carries it; the run view narrows it with core's run-event schema. */
-export interface RunEventView {
-	seq: number;
-	at: number;
-	type: string;
 }
 
 export interface StoredSettings {
@@ -141,7 +134,7 @@ export interface ApiClient {
 	runs: {
 		get(id: string): Promise<RunSummary>;
 		/** Replays from the first event, follows live, resumes after a drop, and ends after `end`. */
-		events(id: string): AsyncIterable<RunEventView>;
+		events(id: string): AsyncIterable<RunEvent>;
 	};
 	settings: {
 		get(plugin: string): Promise<StoredSettings>;
@@ -150,7 +143,14 @@ export interface ApiClient {
 	services: {
 		list(): Promise<ServiceStatus[]>;
 		requirements(service: Service): Promise<AuthRequirement[]>;
+		/** Open question 3 of spec #118: which server operation supplies this is undecided. */
 		redirectUri(service: Service): Promise<string>;
+		/**
+		 * The form for a `client` requirement, and saving the operator's client credentials. Open
+		 * question 2 of spec #118: `AuthRequirement` carries no schema for it yet.
+		 */
+		clientForm(service: Service): Promise<JSONSchema>;
+		registerClient(service: Service, input: unknown): Promise<SaveResult<null>>;
 		configure(service: Service, input: unknown): Promise<ConfigureResult>;
 		begin(service: Service): Promise<AuthChallenge>;
 		/** Reads back the outcome of the OAuth return, from the query the wizard's route received. */

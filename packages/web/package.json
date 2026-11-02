@@ -15,6 +15,7 @@
 		"@fontsource/montserrat-alternates": "5.3.0",
 		"@fontsource/noto-sans-jp": "5.3.1",
 		"@fontsource/roboto-mono": "5.3.0",
+		"@ultrasonics/core": "workspace:*",
 		"@ultrasonics/plugin-sdk": "workspace:*",
 		"vue": "3.5.44",
 		"vue-router": "5.4.0",

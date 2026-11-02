@@ -2,25 +2,27 @@ import {
 	type AuthRequirement,
 	type AuthSpec,
 	type Component,
-	type IssuePath,
 	type Mode,
 	type Service,
 	type SettingsSchema,
 	toFormSchema,
 	type ValidationIssue,
+	withMeta,
 } from "@ultrasonics/plugin-sdk";
-import type { z } from "zod";
+import { z } from "zod";
 import type {
 	ApiClient,
 	Applet,
 	AppletDraft,
 	AppletListing,
 	PluginInfo,
-	RunEventView,
+	RunNowResult,
 	RunSummary,
 	SaveResult,
 	ServiceStatus,
 } from "./api-client.ts";
+import { type RunScript, type ScriptedRun, scriptedRun } from "./scripted-run.ts";
+import { issuesOf } from "./zod-issues.ts";
 
 /** A plugin as the fake holds it: Zod schemas, which the fake serves through `toFormSchema`. */
 export interface FakePlugin {
@@ -42,12 +44,22 @@ export interface FakeSeed {
 	grants?: Partial<Record<Service, ServiceStatus["status"]>>;
 	/** Stored persistent settings by plugin name, which need not parse. */
 	settings?: Record<string, unknown>;
-	runs?: (RunSummary & { events: RunEventView[] })[];
+	runs?: (RunSummary & RunScript)[];
+	/** What run now plays for each applet, by applet id; a run without a script never ends. */
+	runScripts?: Record<string, RunScript>;
 	/** A token service whose test fails with this message after its fields validate. */
 	testFailures?: Partial<Record<Service, string>>;
 	/** `oauth2*` services whose operator has not registered an app. */
 	unregisteredClients?: Service[];
 }
+
+/** A guess at the `client` step's form until open question 2 of spec #118 is settled. */
+const clientCredentials = z.object({
+	clientId: withMeta(z.string().min(1), {
+		title: "client id",
+		description: "from your app's page on the service's developer dashboard",
+	}),
+});
 
 function formSchema(schema: z.ZodType, options: { auth?: boolean } = {}) {
 	const result = toFormSchema(schema, options);
@@ -55,13 +67,6 @@ function formSchema(schema: z.ZodType, options: { auth?: boolean } = {}) {
 		throw new Error(`A fake plugin's schema is not renderable: ${JSON.stringify(result.issues)}`);
 	}
 	return result.jsonSchema;
-}
-
-function issuesOf(error: z.ZodError, prefix: IssuePath = []): ValidationIssue[] {
-	return error.issues.map((issue) => ({
-		path: [...prefix, ...issue.path.map((key) => (typeof key === "symbol" ? String(key) : key))],
-		message: issue.message,
-	}));
 }
 
 function pluginInfo(plugin: FakePlugin): PluginInfo {
@@ -85,8 +90,15 @@ function pluginInfo(plugin: FakePlugin): PluginInfo {
 
 const neverRun = { state: "idle", lastRun: null, nextRunAt: null } as const;
 
+/** Drives the fake's scripted runs from a test. */
+export interface ScriptControl {
+	advance(runId: string, count?: number): void;
+	drop(runId: string): void;
+	connections(runId: string): number;
+}
+
 /** An in-memory `ApiClient` for tests and the fake-backed dev server. */
-export function createFakeApi(seed: FakeSeed): ApiClient {
+export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptControl } {
 	const plugins = new Map(seed.plugins.map((plugin) => [plugin.name, plugin]));
 	const catalogue = seed.plugins.map(pluginInfo);
 	const applets = new Map<string, AppletListing>(
@@ -97,8 +109,62 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 		Service,
 		ServiceStatus["status"]
 	>;
-	const runs = new Map((seed.runs ?? []).map((run) => [run.id, run]));
+	const runs = new Map<string, RunSummary>();
+	const scripts = new Map<string, ScriptedRun>();
+	const unregistered = new Set(seed.unregisteredClients);
 	let nextId = 1;
+
+	const startRun = (summary: RunSummary, script: RunScript, startedNow: boolean) => {
+		runs.set(summary.id, summary);
+		const run = scriptedRun(
+			script,
+			(end) => {
+				summary.status = end.status;
+				summary.finishedAt = end.at;
+				const applet = applets.get(summary.appletId);
+				if (!applet || applet.lastRun?.id !== summary.id) return;
+				applet.lastRun.status = end.status;
+				const queued = applet.state === "queued";
+				applet.state = "idle";
+				// Queue depth one: the absorbed firings run once the current run ends.
+				if (queued) runNow(applet);
+			},
+			startedNow ? summary.startedAt : undefined,
+		);
+		scripts.set(summary.id, run);
+		run.start();
+	};
+
+	const runNow = (applet: AppletListing): RunNowResult => {
+		if (applet.state !== "idle") {
+			applet.state = "queued";
+			return { kind: "queued" };
+		}
+		const runId = `run-${nextId++}`;
+		const startedAt = Date.now();
+		applet.state = "running";
+		applet.lastRun = { id: runId, status: "running", at: startedAt };
+		const summary: RunSummary = {
+			id: runId,
+			appletId: applet.id,
+			trigger: "manual",
+			status: "running",
+			startedAt,
+			finishedAt: null,
+		};
+		startRun(summary, seed.runScripts?.[applet.id] ?? { events: [] }, true);
+		return { kind: "started", runId };
+	};
+
+	for (const { events, pace, ...summary } of seed.runs ?? []) {
+		startRun({ ...summary }, { events, ...(pace ? { pace } : {}) }, false);
+	}
+
+	const script = (runId: string): ScriptedRun => {
+		const run = scripts.get(runId);
+		if (!run) throw new Error(`No run ${runId}`);
+		return run;
+	};
 
 	const authSpec = (service: Service): AuthSpec => {
 		const spec = seed.plugins.find((plugin) => plugin.auth?.service === service)?.auth;
@@ -158,27 +224,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 				applets.delete(id);
 				for (const run of runs.values()) if (run.appletId === id) runs.delete(run.id);
 			},
-			runNow: async (id) => {
-				const applet = existing(id);
-				if (applet.state !== "idle") {
-					applet.state = "queued";
-					return { kind: "queued" };
-				}
-				const runId = `run-${nextId++}`;
-				const startedAt = Date.now();
-				runs.set(runId, {
-					id: runId,
-					appletId: id,
-					trigger: "manual",
-					status: "running",
-					startedAt,
-					finishedAt: null,
-					events: [],
-				});
-				applet.state = "running";
-				applet.lastRun = { id: runId, status: "running", at: startedAt };
-				return { kind: "started", runId };
-			},
+			runNow: async (id) => runNow(existing(id)),
 		},
 		triggers: {
 			setSchedule: async (appletId, schedule) => {
@@ -188,7 +234,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 			},
 			generateWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = true;
-				return { url: `/hooks/${appletId}/${crypto.randomUUID()}` };
+				return { url: `http://localhost:5173/hooks/${appletId}/${crypto.randomUUID()}` };
 			},
 			removeWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = false;
@@ -198,14 +244,14 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 			get: async (id) => {
 				const run = runs.get(id);
 				if (!run) throw new Error(`No run ${id}`);
-				const { events: _events, ...summary } = run;
-				return structuredClone(summary);
+				return structuredClone(run);
 			},
-			events: (id) => ({
-				async *[Symbol.asyncIterator]() {
-					yield* structuredClone(runs.get(id)?.events ?? []);
-				},
-			}),
+			events: (id) => script(id).follow(),
+		},
+		scripts: {
+			advance: (runId, count) => script(runId).advance(count),
+			drop: (runId) => script(runId).drop(),
+			connections: (runId) => script(runId).connections,
 		},
 		settings: {
 			get: async (plugin) => {
@@ -252,11 +298,18 @@ export function createFakeApi(seed: FakeSeed): ApiClient {
 						: [{ kind: "fields", schema: fields }];
 				}
 				if (spec.flow === "none") return [];
-				return seed.unregisteredClients?.includes(service)
+				return unregistered.has(service)
 					? [{ kind: "client", service }, { kind: "connect" }]
 					: [{ kind: "connect" }];
 			},
 			redirectUri: async (service) => `http://localhost:5173/services/${service}`,
+			clientForm: async () => formSchema(clientCredentials, { auth: true }),
+			registerClient: async (service, input) => {
+				const parsed = clientCredentials.safeParse(input);
+				if (!parsed.success) return { ok: false, issues: issuesOf(parsed.error) };
+				unregistered.delete(service);
+				return { ok: true, value: null };
+			},
 			configure: async (service, input) => {
 				const parsed = authSpec(service).fields.safeParse(input);
 				if (!parsed.success) return { kind: "invalid", issues: issuesOf(parsed.error) };
