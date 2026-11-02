@@ -58,7 +58,7 @@ export const plex: FakePlugin = {
 			z.object({
 				update: withMeta(z.enum(["replace", "append"]).default("replace"), {
 					title: "update mode",
-					warning: "replace removes existing tracks from the playlist",
+					warning: "replace removes existing songs from the playlist",
 				}),
 			}),
 			{ description: "how plex playlists are written" },

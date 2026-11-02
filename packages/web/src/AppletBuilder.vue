@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Component, JSONSchema, ValidationIssue } from "@ultrasonics/plugin-sdk";
+import { Component, type JSONSchema, type ValidationIssue } from "@ultrasonics/plugin-sdk";
 import { computed, onMounted, reactive, ref, shallowRef, toRaw } from "vue";
 import { useRouter } from "vue-router";
 import {
@@ -33,7 +33,7 @@ type Selection =
 	| { kind: "schedule" }
 	| { kind: "webhook" };
 
-const columns: Component[] = ["inputs", "modifiers", "outputs"];
+const columns = Component.options;
 const singular: Record<Component, string> = { inputs: "input", modifiers: "modifier", outputs: "output" };
 
 const props = defineProps<{ id?: string }>();
@@ -184,7 +184,7 @@ function selectSchedule() {
 
 function editSchedule(value: Record<string, unknown>) {
 	const result = scheduleOf(value);
-	if (result.ok) schedule.value = result.schedule;
+	if (result.ok) schedule.value = result.value;
 	scheduleProblem.value = result.ok ? null : result.issues;
 }
 

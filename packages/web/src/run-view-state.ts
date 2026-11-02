@@ -8,6 +8,7 @@ import type {
 	StageError,
 	StageSlot,
 } from "@ultrasonics/core/run-events";
+import { Component } from "@ultrasonics/plugin-sdk";
 import type { RunStatus } from "./api-client.ts";
 
 export interface StageView extends StageSlot {
@@ -41,9 +42,9 @@ export const emptyRunView = (): RunViewState => ({
 	log: [],
 });
 
-const componentOrder = ["inputs", "modifiers", "outputs"];
 const byPosition = (a: StageSlot, b: StageSlot) =>
-	componentOrder.indexOf(a.component) - componentOrder.indexOf(b.component) || a.index - b.index;
+	Component.options.indexOf(a.component) - Component.options.indexOf(b.component) ||
+	a.index - b.index;
 
 const isSlot = (slot: StageSlot) => (stage: StageSlot) =>
 	stage.component === slot.component && stage.index === slot.index;

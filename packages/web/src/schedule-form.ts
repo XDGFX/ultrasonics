@@ -1,6 +1,7 @@
-import { toFormSchema, type ValidationIssue, withMeta } from "@ultrasonics/plugin-sdk";
+import { toFormSchema, withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
-import type { Schedule } from "./api-client.ts";
+import type { SaveResult, Schedule } from "./api-client.ts";
+import { pad } from "./clock.ts";
 import { issuesOf } from "./zod-issues.ts";
 
 const fields = z.object({
@@ -22,8 +23,6 @@ export const scheduleForm = converted.jsonSchema;
 
 export const browserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-const pad = (value: number) => String(value).padStart(2, "0");
-
 /** A new schedule: every day at 07:00 from today. */
 export function newSchedule(now = new Date()): Schedule {
 	const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -42,9 +41,7 @@ export function scheduleFormValue({ unit, count, anchor }: Schedule) {
 }
 
 /** The schedule a form value describes, in the browser's zone (ADR-0018 §1), or why it can't be one. */
-export function scheduleOf(
-	value: unknown,
-): { ok: true; schedule: Schedule } | { ok: false; issues: ValidationIssue[] } {
+export function scheduleOf(value: unknown): SaveResult<Schedule> {
 	const parsed = fields.safeParse(value);
 	if (!parsed.success) {
 		return { ok: false, issues: issuesOf(parsed.error) };
@@ -52,7 +49,7 @@ export function scheduleOf(
 	const { unit, count, date, time } = parsed.data;
 	return {
 		ok: true,
-		schedule: {
+		value: {
 			kind: "interval",
 			unit,
 			count,

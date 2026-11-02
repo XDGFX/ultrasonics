@@ -1,7 +1,7 @@
 import {
 	type AuthRequirement,
 	type AuthSpec,
-	type Component,
+	Component,
 	type Mode,
 	type Service,
 	type SettingsSchema,
@@ -176,7 +176,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 	const checkDraft = (draft: AppletDraft): ValidationIssue[] => {
 		const issues: ValidationIssue[] =
 			draft.name.trim() === "" ? [{ path: ["name"], message: "An applet needs a name" }] : [];
-		for (const component of ["inputs", "modifiers", "outputs"] as const) {
+		for (const component of Component.options) {
 			for (const [index, slot] of draft.definition[component].entries()) {
 				const path = [component, index];
 				const schema = plugins.get(slot.plugin)?.instanceSettings[component];
