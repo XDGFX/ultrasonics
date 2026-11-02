@@ -11,6 +11,15 @@
         "zod": "4.6.7",
       },
     },
+    "packages/core": {
+      "name": "@ultrasonics/core",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/db": "workspace:*",
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/db": {
       "name": "@ultrasonics/db",
       "version": "0.0.0",
@@ -28,6 +37,13 @@
       "version": "0.0.0",
       "dependencies": {
         "zod": "4.6.7",
+      },
+    },
+    "packages/registry": {
+      "name": "@ultrasonics/registry",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
       },
     },
   },
@@ -152,9 +168,13 @@
 
     "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.0.2", "", { "os": "win32", "cpu": "x64" }, "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g=="],
 
+    "@ultrasonics/core": ["@ultrasonics/core@workspace:packages/core"],
+
     "@ultrasonics/db": ["@ultrasonics/db@workspace:packages/db"],
 
     "@ultrasonics/plugin-sdk": ["@ultrasonics/plugin-sdk@workspace:packages/plugin-sdk"],
+
+    "@ultrasonics/registry": ["@ultrasonics/registry@workspace:packages/registry"],
 
     "buffer-from": ["buffer-from@1.1.2", "", {}, "sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ=="],
 
