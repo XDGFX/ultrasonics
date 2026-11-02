@@ -3,7 +3,9 @@
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
-	"exports": {},
+	"exports": {
+		".": "./src/index.ts"
+	},
 	"scripts": {
 		"build-cc0-tier": "bun scripts/build-cc0-tier.ts",
 		"collect-service-tier": "bun scripts/collect-service-tier.ts",

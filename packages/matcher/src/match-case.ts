@@ -1,5 +1,7 @@
 import { Song } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
+import { normalise } from "./normalise.ts";
+import { remasterMarker } from "./version-marker.ts";
 
 export const positiveCategories = ["plain", "remaster", "clean-explicit"] as const;
 export const trapCategories = [
@@ -51,14 +53,13 @@ const CaseSong = Song.refine(
 export const ServiceName = z.enum(["spotify", "deezer"]);
 export type ServiceName = z.output<typeof ServiceName>;
 
-const remasterMarker = /remaster/i;
-
 /** A positive with a remaster marker on one side only is a remaster positive (#104 §2). */
 export function oneSideRemastered(
 	a: { title: string; album?: string | null },
 	b: { title: string; album?: string | null },
 ): boolean {
-	const marked = (song: typeof a) => remasterMarker.test(`${song.title} ${song.album ?? ""}`);
+	const marked = (song: typeof a) =>
+		remasterMarker.test(normalise(`${song.title} ${song.album ?? ""}`));
 	return marked(a) !== marked(b);
 }
 
