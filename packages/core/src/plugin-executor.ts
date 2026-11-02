@@ -16,7 +16,7 @@ export interface PluginExecutor {
 	run(plugin: Plugin, payload: RunPayload, host: HostPort): Promise<ExecutionResult>;
 }
 
-function describeError(error: unknown): string {
+export function describeError(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 

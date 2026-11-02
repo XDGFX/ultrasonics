@@ -199,12 +199,19 @@ export function fixturePlugins() {
 		}),
 	};
 
-	const registry: PluginRegistry = Object.fromEntries(
-		Object.values(plugins).map((plugin) => [
-			plugin.name,
-			{ path: `fixtures/${plugin.name}`, load: async () => ({ default: plugin }) },
-		]),
-	);
+	const registry: PluginRegistry = {
+		...Object.fromEntries(
+			Object.values(plugins).map((plugin) => [
+				plugin.name,
+				{ path: `fixtures/${plugin.name}`, load: async () => ({ default: plugin }) },
+			]),
+		),
+		/** Registered, but its module throws as it loads. */
+		unloadable: {
+			path: "fixtures/unloadable",
+			load: () => Promise.reject(new Error("Cannot find module 'left-pad'")),
+		},
+	};
 
 	return { registry, calls, received };
 }

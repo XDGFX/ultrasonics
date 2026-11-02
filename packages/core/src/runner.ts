@@ -14,7 +14,7 @@ import {
 	validateSongDict,
 } from "@ultrasonics/plugin-sdk";
 import type { z } from "zod";
-import { InProcessExecutor, type PluginExecutor } from "./plugin-executor.ts";
+import { describeError, InProcessExecutor, type PluginExecutor } from "./plugin-executor.ts";
 import type {
 	FinishedRunStatus,
 	ResultPlaylist,
@@ -147,14 +147,19 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 		component: Component,
 		slot: Slot,
 		index: number,
-	): Promise<PreparedStage | StageError> {
+	): Promise<PreparedStage | StageError | undefined> {
 		const entry = Object.hasOwn(registry, slot.plugin) ? registry[slot.plugin] : undefined;
+		if (!entry) {
+			return { code: "unknown-plugin", message: `No plugin is registered as "${slot.plugin}"` };
+		}
 		let loaded: Plugin | undefined;
 		try {
-			loaded = (await entry?.load())?.default;
-		} catch {}
+			loaded = (await entry.load()).default;
+		} catch (error) {
+			return { code: "threw", message: `"${slot.plugin}" failed to load: ${describeError(error)}` };
+		}
 		if (!loaded) {
-			return { code: "unknown-plugin", message: `No plugin is registered as "${slot.plugin}"` };
+			return { code: "contract", message: `"${slot.plugin}" has no default export` };
 		}
 		const schema = loaded.instanceSettings[component];
 		if (!loaded.run[component] || !schema) {
@@ -163,7 +168,14 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 				message: `"${slot.plugin}" does not implement ${component}`,
 			};
 		}
-		const raw = await capabilities.persistentSettings(slot.plugin);
+		let raw: unknown;
+		try {
+			raw = await capabilities.persistentSettings(slot.plugin);
+		} catch (error) {
+			// The host failed, not the plugin, so no stage error code fits; the log carries it.
+			log("error", `Could not read the settings of "${slot.plugin}": ${describeError(error)}`);
+			return undefined;
+		}
 		const persistent = loaded.persistentSettings?.safeParse(raw ?? {}) ?? {
 			success: true as const,
 			data: {},
@@ -191,7 +203,8 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 	for (const component of components) {
 		for (const [index, slot] of applet.definition[component].entries()) {
 			const stage = await prepare(component, slot, index);
-			if ("code" in stage) {
+			if (!stage) preparedAll = false;
+			else if ("code" in stage) {
 				preparedAll = false;
 				finishStage(
 					{ component, index, plugin: slot.plugin },

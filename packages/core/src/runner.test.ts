@@ -170,6 +170,46 @@ describe("runApplet: preparation", () => {
 		]);
 	});
 
+	test("a registered plugin that fails to load reports the load error, not an unknown plugin", async () => {
+		const { status, calls, finished } = await run({
+			inputs: [slot("unloadable")],
+			modifiers: [],
+			outputs: [slot("writer")],
+		});
+
+		expect(status).toBe("failed");
+		expect(calls).toEqual([]);
+		expect(finished).toEqual([
+			expect.objectContaining({
+				error: expect.objectContaining({
+					code: "threw",
+					message: expect.stringContaining("Cannot find module 'left-pad'"),
+				}),
+			}),
+		]);
+	});
+
+	test("a persistent-settings lookup that throws fails the run with an error log", async () => {
+		const { status, calls, ofType } = await run(
+			{ inputs: [echo(dict(["A", ["a"]]))], modifiers: [], outputs: [slot("writer")] },
+			{
+				capabilities: {
+					persistentSettings: () => Promise.reject(new Error("database is locked")),
+				},
+			},
+		);
+
+		expect(status).toBe("failed");
+		expect(calls).toEqual([]);
+		expect(ofType("log")).toContainEqual(
+			expect.objectContaining({
+				level: "error",
+				text: expect.stringContaining("database is locked"),
+			}),
+		);
+		expect(ofType("end")).toEqual([expect.objectContaining({ status: "failed" })]);
+	});
+
 	test("invalid settings name the fields, persistent and instance", async () => {
 		const { finished } = await run({
 			inputs: [slot("configured", { limit: "ten" })],
