@@ -2,3 +2,5 @@
 /service-tier-cache/
 # The CC0 builder's MusicBrainz response cache, so a rerun needn't refetch.
 /musicbrainz-cache/
+# The experiment's MusicBrainz facts, rebuilt by experiment/fetch-recordings.ts (#132).
+/experiment/recordings.json

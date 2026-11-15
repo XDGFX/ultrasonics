@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@ultrasonics/plugin-sdk": "workspace:*",
+		"any-ascii": "0.3.3",
 		"zod": "4.6.7"
 	}
 }
