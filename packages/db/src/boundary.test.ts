@@ -34,6 +34,7 @@ describe("the narrow subpaths", () => {
 		["the runner", "packages/core/src/applet-runner.ts", 2],
 		["boot", "packages/server/src/boot.ts", 0],
 		["the session middleware", "packages/server/src/session-middleware.ts", 1],
+		["the operator settings", "packages/server/src/operator-settings.ts", 1],
 		["the scheduler", "packages/server/src/scheduler.ts", 1],
 		["the webhook route", "packages/server/src/webhook-route.ts", 1],
 	])("importing both from %s (%s) gives %i lint errors", (_, path, errors) => {

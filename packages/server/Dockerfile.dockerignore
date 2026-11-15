@@ -1,0 +1,11 @@
+# Read by BuildKit for `-f packages/server/Dockerfile`, in place of v1's root .dockerignore.
+**
+!package.json
+!bun.lock
+!tsconfig.base.json
+!tsconfig.json
+!packages
+**/node_modules
+**/dist
+**/*.test.ts
+packages/matcher/test
