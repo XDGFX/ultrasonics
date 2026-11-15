@@ -1,0 +1,480 @@
+{
+	"MediaContainer": {
+		"size": 10,
+		"allowSync": true,
+		"art": "/:/resources/artist-fanart.jpg",
+		"identifier": "com.plexapp.plugins.library",
+		"librarySectionID": 1,
+		"librarySectionTitle": "Music",
+		"librarySectionUUID": "6c1e5a0e-1f7b-4d55-9c3a-0f6f0a1b2c3d",
+		"mediaTagPrefix": "/system/bundle/media/flags/",
+		"mediaTagVersion": 1763251200,
+		"nocache": true,
+		"thumb": "/:/resources/artist.png",
+		"title1": "Music",
+		"title2": "All Tracks",
+		"viewGroup": "track",
+		"Metadata": [
+			{
+				"ratingKey": "1001",
+				"key": "/library/metadata/1001",
+				"parentRatingKey": "1101",
+				"grandparentRatingKey": "1201",
+				"guid": "plex://track/5d07cdc8403c640291001",
+				"parentGuid": "plex://album/5d07c18e403c640291101",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291201",
+				"type": "track",
+				"title": "Strobe",
+				"grandparentKey": "/library/metadata/1201",
+				"parentKey": "/library/metadata/1101",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "deadmau5",
+				"parentTitle": "For Lack of a Better Name",
+				"summary": "",
+				"index": 10,
+				"parentIndex": 1,
+				"parentYear": 2009,
+				"thumb": "/library/metadata/1101/thumb/1763251200",
+				"duration": 637000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5001,
+						"duration": 637000,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"Part": [
+							{
+								"id": 6001,
+								"key": "/library/parts/6001/1763251200/file.mp3",
+								"duration": 637000,
+								"file": "/music/deadmau5/For Lack of a Better Name/10 Strobe.mp3",
+								"size": 25480000,
+								"container": "mp3"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1002",
+				"key": "/library/metadata/1002",
+				"parentRatingKey": "1102",
+				"grandparentRatingKey": "1202",
+				"guid": "plex://track/5d07cdc8403c640291002",
+				"parentGuid": "plex://album/5d07c18e403c640291102",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291202",
+				"type": "track",
+				"title": "Ghosts 'n' Stuff",
+				"grandparentKey": "/library/metadata/1202",
+				"parentKey": "/library/metadata/1102",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "deadmau5",
+				"parentTitle": "For Lack of a Better Name",
+				"originalTitle": "deadmau5 feat. Rob Swire",
+				"summary": "",
+				"index": 4,
+				"parentIndex": 1,
+				"parentYear": 2009,
+				"thumb": "/library/metadata/1102/thumb/1763251200",
+				"duration": 328000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5002,
+						"duration": 328000,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"Part": [
+							{
+								"id": 6002,
+								"key": "/library/parts/6002/1763251200/file.mp3",
+								"duration": 328000,
+								"file": "/music/deadmau5/For Lack of a Better Name/04 Ghosts 'n' Stuff.mp3",
+								"size": 13120000,
+								"container": "mp3"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1003",
+				"key": "/library/metadata/1003",
+				"parentRatingKey": "1103",
+				"grandparentRatingKey": "1203",
+				"guid": "plex://track/5d07cdc8403c640291003",
+				"parentGuid": "plex://album/5d07c18e403c640291103",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291203",
+				"type": "track",
+				"title": "Midnight City",
+				"grandparentKey": "/library/metadata/1203",
+				"parentKey": "/library/metadata/1103",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "M83",
+				"parentTitle": "Hurry Up, We're Dreaming",
+				"summary": "",
+				"index": 2,
+				"parentIndex": 1,
+				"parentYear": 2011,
+				"thumb": "/library/metadata/1103/thumb/1763251200",
+				"duration": 243000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5003,
+						"duration": 243000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6003,
+								"key": "/library/parts/6003/1763251200/file.flac",
+								"duration": 243000,
+								"file": "/music/M83/Hurry Up, We're Dreaming/02 Midnight City.flac",
+								"size": 30618000,
+								"container": "flac"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1004",
+				"key": "/library/metadata/1004",
+				"parentRatingKey": "1104",
+				"grandparentRatingKey": "1204",
+				"guid": "plex://track/5d07cdc8403c640291004",
+				"parentGuid": "plex://album/5d07c18e403c640291104",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291204",
+				"type": "track",
+				"title": "untagged",
+				"grandparentKey": "/library/metadata/1204",
+				"parentKey": "/library/metadata/1104",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "[Unknown Artist]",
+				"parentTitle": "[Unknown Album]",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"thumb": "/library/metadata/1104/thumb/1763251200",
+				"duration": 201000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5004,
+						"duration": 201000,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"Part": [
+							{
+								"id": 6004,
+								"key": "/library/parts/6004/1763251200/file.mp3",
+								"duration": 201000,
+								"file": "/music/untagged.mp3",
+								"size": 8040000,
+								"container": "mp3"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1005",
+				"key": "/library/metadata/1005",
+				"parentRatingKey": "1105",
+				"grandparentRatingKey": "1205",
+				"guid": "plex://track/5d07cdc8403c640291005",
+				"parentGuid": "plex://album/5d07c18e403c640291105",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291205",
+				"type": "track",
+				"title": "“Heroes”",
+				"grandparentKey": "/library/metadata/1205",
+				"parentKey": "/library/metadata/1105",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "David Bowie",
+				"parentTitle": "“Heroes”",
+				"summary": "",
+				"index": 3,
+				"parentIndex": 1,
+				"parentYear": 1977,
+				"thumb": "/library/metadata/1105/thumb/1763251200",
+				"duration": 371000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5005,
+						"duration": 371000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6005,
+								"key": "/library/parts/6005/1763251200/file.flac",
+								"duration": 371000,
+								"file": "/music/David Bowie/“Heroes”/03 “Heroes”.flac",
+								"size": 46746000,
+								"container": "flac"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1006",
+				"key": "/library/metadata/1006",
+				"parentRatingKey": "1106",
+				"grandparentRatingKey": "1206",
+				"guid": "plex://track/5d07cdc8403c640291006",
+				"parentGuid": "plex://album/5d07c18e403c640291106",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291206",
+				"type": "track",
+				"title": "Let’s Dance",
+				"grandparentKey": "/library/metadata/1206",
+				"parentKey": "/library/metadata/1106",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "David Bowie",
+				"parentTitle": "Let’s Dance",
+				"summary": "",
+				"index": 3,
+				"parentIndex": 1,
+				"parentYear": 1983,
+				"thumb": "/library/metadata/1106/thumb/1763251200",
+				"duration": 458000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5006,
+						"duration": 458000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6006,
+								"key": "/library/parts/6006/1763251200/file.flac",
+								"duration": 458000,
+								"file": "/music/David Bowie/Let’s Dance/03 Let’s Dance.flac",
+								"size": 57708000,
+								"container": "flac"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1007",
+				"key": "/library/metadata/1007",
+				"parentRatingKey": "1107",
+				"grandparentRatingKey": "1207",
+				"guid": "plex://track/5d07cdc8403c640291007",
+				"parentGuid": "plex://album/5d07c18e403c640291107",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291207",
+				"type": "track",
+				"title": "Requiem: Lacrimosa",
+				"grandparentKey": "/library/metadata/1207",
+				"parentKey": "/library/metadata/1107",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Wolfgang Amadeus Mozart",
+				"parentTitle": "Requiem in D Minor",
+				"summary": "",
+				"index": 8,
+				"parentIndex": 1,
+				"parentYear": 1991,
+				"thumb": "/library/metadata/1107/thumb/1763251200",
+				"duration": 189000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5007,
+						"duration": 189000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6007,
+								"key": "/library/parts/6007/1763251200/file.flac",
+								"duration": 189000,
+								"file": "/music/Mozart/Requiem/08 Requiem: Lacrimosa.flac",
+								"size": 23814000,
+								"container": "flac"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1008",
+				"key": "/library/metadata/1008",
+				"parentRatingKey": "1108",
+				"grandparentRatingKey": "1208",
+				"guid": "plex://track/5d07cdc8403c640291008",
+				"parentGuid": "plex://album/5d07c18e403c640291108",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291208",
+				"type": "track",
+				"title": "Strobe (Club Edit)",
+				"grandparentKey": "/library/metadata/1208",
+				"parentKey": "/library/metadata/1108",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "deadmau5",
+				"parentTitle": "Strobe",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"parentYear": 2009,
+				"thumb": "/library/metadata/1108/thumb/1763251200",
+				"duration": 612000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5008,
+						"duration": 612000,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"Part": [
+							{
+								"id": 6008,
+								"key": "/library/parts/6008/1763251200/file.mp3",
+								"duration": 612000,
+								"file": "/music/deadmau5/Strobe/01 Strobe (Club Edit).mp3",
+								"size": 24480000,
+								"container": "mp3"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1009",
+				"key": "/library/metadata/1009",
+				"parentRatingKey": "1109",
+				"grandparentRatingKey": "1209",
+				"guid": "plex://track/5d07cdc8403c640291009",
+				"parentGuid": "plex://album/5d07c18e403c640291109",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291209",
+				"type": "track",
+				"title": "Windowlicker",
+				"grandparentKey": "/library/metadata/1209",
+				"parentKey": "/library/metadata/1109",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Aphex Twin",
+				"parentTitle": "Windowlicker",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"parentYear": 1999,
+				"thumb": "/library/metadata/1109/thumb/1763251200",
+				"duration": 366000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5009,
+						"duration": 366000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6009,
+								"key": "/library/parts/6009/1763251200/file.flac",
+								"duration": 366000,
+								"file": "/music/Aphex Twin/Windowlicker/01 Windowlicker.flac",
+								"size": 46116000,
+								"container": "flac"
+							}
+						]
+					}
+				]
+			},
+			{
+				"ratingKey": "1010",
+				"key": "/library/metadata/1010",
+				"parentRatingKey": "1110",
+				"grandparentRatingKey": "1210",
+				"guid": "plex://track/5d07cdc8403c640291010",
+				"parentGuid": "plex://album/5d07c18e403c640291110",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291210",
+				"type": "track",
+				"title": "Teardrop",
+				"grandparentKey": "/library/metadata/1210",
+				"parentKey": "/library/metadata/1110",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Massive Attack",
+				"parentTitle": "Mezzanine",
+				"summary": "",
+				"index": 3,
+				"parentIndex": 1,
+				"parentYear": 1998,
+				"thumb": "/library/metadata/1110/thumb/1763251200",
+				"duration": 330000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5010,
+						"duration": 330000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6010,
+								"key": "/library/parts/6010/1763251200/file.flac",
+								"duration": 330000,
+								"file": "/music/Massive Attack/Mezzanine/03 Teardrop.flac",
+								"size": 41580000,
+								"container": "flac"
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+}
