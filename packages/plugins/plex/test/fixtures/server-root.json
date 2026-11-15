@@ -1,0 +1,28 @@
+{
+	"MediaContainer": {
+		"size": 0,
+		"allowCameraUpload": false,
+		"allowChannelAccess": true,
+		"allowSharing": true,
+		"allowSync": false,
+		"backgroundProcessing": true,
+		"certificate": false,
+		"companionProxy": true,
+		"countryCode": "aus",
+		"diagnostics": "logs,databases,streaminglogs",
+		"eventStream": true,
+		"friendlyName": "Fake Plex",
+		"livetv": 0,
+		"machineIdentifier": "3f1a2b4c5d6e7f8091a2b3c4d5e6f708192a3b4c",
+		"musicAnalysis": 2,
+		"myPlex": false,
+		"offlineTranscode": 1,
+		"platform": "Linux",
+		"platformVersion": "6.1.0",
+		"transcoderActiveVideoSessions": 0,
+		"transcoderAudio": true,
+		"updatedAt": 1763251200,
+		"version": "1.41.3.9314-a0bfb8370",
+		"voiceSearch": true
+	}
+}

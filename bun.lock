@@ -47,10 +47,20 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/plex": {
+      "name": "@ultrasonics/plugin-plex",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/matcher": "workspace:*",
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/registry": {
       "name": "@ultrasonics/registry",
       "version": "0.0.0",
       "dependencies": {
+        "@ultrasonics/plugin-plex": "workspace:*",
         "@ultrasonics/plugin-sdk": "workspace:*",
       },
     },
@@ -291,6 +301,8 @@
     "@ultrasonics/db": ["@ultrasonics/db@workspace:packages/db"],
 
     "@ultrasonics/matcher": ["@ultrasonics/matcher@workspace:packages/matcher"],
+
+    "@ultrasonics/plugin-plex": ["@ultrasonics/plugin-plex@workspace:packages/plugins/plex"],
 
     "@ultrasonics/plugin-sdk": ["@ultrasonics/plugin-sdk@workspace:packages/plugin-sdk"],
 

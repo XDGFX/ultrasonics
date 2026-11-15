@@ -1,0 +1,55 @@
+{
+	"MediaContainer": {
+		"size": 2,
+		"allowSync": false,
+		"title1": "Plex Library",
+		"Directory": [
+			{
+				"allowSync": true,
+				"art": "/:/resources/artist-fanart.jpg",
+				"composite": "/library/sections/1/composite/1763251200",
+				"filters": true,
+				"refreshing": false,
+				"thumb": "/:/resources/artist.png",
+				"key": "1",
+				"type": "artist",
+				"title": "Music",
+				"agent": "tv.plex.agents.music",
+				"scanner": "Plex Music",
+				"language": "en-US",
+				"uuid": "6c1e5a0e-1f7b-4d55-9c3a-0f6f0a1b2c3d",
+				"updatedAt": 1763251200,
+				"createdAt": 1700000000,
+				"scannedAt": 1763251200,
+				"content": true,
+				"directory": true,
+				"contentChangedAt": 4521,
+				"hidden": 0,
+				"Location": [{ "id": 1, "path": "/music" }]
+			},
+			{
+				"allowSync": true,
+				"art": "/:/resources/movie-fanart.jpg",
+				"composite": "/library/sections/2/composite/1763251200",
+				"filters": true,
+				"refreshing": false,
+				"thumb": "/:/resources/movie.png",
+				"key": "2",
+				"type": "movie",
+				"title": "Films",
+				"agent": "tv.plex.agents.movie",
+				"scanner": "Plex Movie",
+				"language": "en-US",
+				"uuid": "0b9d8c7e-2a3b-4c5d-8e9f-1a2b3c4d5e6f",
+				"updatedAt": 1763251200,
+				"createdAt": 1700000000,
+				"scannedAt": 1763251200,
+				"content": true,
+				"directory": true,
+				"contentChangedAt": 812,
+				"hidden": 0,
+				"Location": [{ "id": 2, "path": "/films" }]
+			}
+		]
+	}
+}

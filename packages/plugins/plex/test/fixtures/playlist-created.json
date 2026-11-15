@@ -1,0 +1,23 @@
+{
+	"MediaContainer": {
+		"size": 1,
+		"Metadata": [
+			{
+				"ratingKey": "7100",
+				"key": "/playlists/7100/items",
+				"guid": "com.plexapp.agents.none://f6b1a3c2-0d4e-4f5a-9b8c-7d6e5f4a3b2c",
+				"type": "playlist",
+				"title": "Created",
+				"summary": "",
+				"smart": false,
+				"playlistType": "audio",
+				"composite": "/playlists/7100/composite/1763251200",
+				"viewCount": 0,
+				"leafCount": 2,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"duration": 1003000
+			}
+		]
+	}
+}

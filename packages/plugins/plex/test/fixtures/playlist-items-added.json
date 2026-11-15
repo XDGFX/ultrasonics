@@ -1,0 +1,25 @@
+{
+	"MediaContainer": {
+		"leafCountAdded": 2,
+		"leafCountRequested": 2,
+		"size": 1,
+		"Metadata": [
+			{
+				"ratingKey": "7001",
+				"key": "/playlists/7001/items",
+				"guid": "com.plexapp.agents.none://0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+				"type": "playlist",
+				"title": "Focus",
+				"summary": "",
+				"smart": false,
+				"playlistType": "audio",
+				"composite": "/playlists/7001/composite/1763251200",
+				"viewCount": 0,
+				"leafCount": 4,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"duration": 1003000
+			}
+		]
+	}
+}

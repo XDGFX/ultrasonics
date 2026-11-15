@@ -1,0 +1,108 @@
+{
+	"MediaContainer": {
+		"size": 2,
+		"composite": "/playlists/7001/composite/1763251200",
+		"duration": 1003,
+		"leafCount": 2,
+		"playlistType": "audio",
+		"ratingKey": "7001",
+		"smart": false,
+		"title": "Focus",
+		"Metadata": [
+			{
+				"ratingKey": "1001",
+				"key": "/library/metadata/1001",
+				"parentRatingKey": "1101",
+				"grandparentRatingKey": "1201",
+				"guid": "plex://track/5d07cdc8403c640291001",
+				"parentGuid": "plex://album/5d07c18e403c640291101",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291201",
+				"type": "track",
+				"title": "Strobe",
+				"grandparentKey": "/library/metadata/1201",
+				"parentKey": "/library/metadata/1101",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "deadmau5",
+				"parentTitle": "For Lack of a Better Name",
+				"summary": "",
+				"index": 10,
+				"parentIndex": 1,
+				"parentYear": 2009,
+				"thumb": "/library/metadata/1101/thumb/1763251200",
+				"duration": 637000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5001,
+						"duration": 637000,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"Part": [
+							{
+								"id": 6001,
+								"key": "/library/parts/6001/1763251200/file.mp3",
+								"duration": 637000,
+								"file": "/music/deadmau5/For Lack of a Better Name/10 Strobe.mp3",
+								"size": 25480000,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"playlistItemID": 9001
+			},
+			{
+				"ratingKey": "1009",
+				"key": "/library/metadata/1009",
+				"parentRatingKey": "1109",
+				"grandparentRatingKey": "1209",
+				"guid": "plex://track/5d07cdc8403c640291009",
+				"parentGuid": "plex://album/5d07c18e403c640291109",
+				"grandparentGuid": "plex://artist/5d07bbfc403c640291209",
+				"type": "track",
+				"title": "Windowlicker",
+				"grandparentKey": "/library/metadata/1209",
+				"parentKey": "/library/metadata/1109",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Aphex Twin",
+				"parentTitle": "Windowlicker",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"parentYear": 1999,
+				"thumb": "/library/metadata/1109/thumb/1763251200",
+				"duration": 366000,
+				"addedAt": 1763251200,
+				"updatedAt": 1763251200,
+				"Media": [
+					{
+						"id": 5009,
+						"duration": 366000,
+						"bitrate": 1011,
+						"audioChannels": 2,
+						"audioCodec": "flac",
+						"container": "flac",
+						"Part": [
+							{
+								"id": 6009,
+								"key": "/library/parts/6009/1763251200/file.flac",
+								"duration": 366000,
+								"file": "/music/Aphex Twin/Windowlicker/01 Windowlicker.flac",
+								"size": 46116000,
+								"container": "flac"
+							}
+						]
+					}
+				],
+				"playlistItemID": 9002
+			}
+		]
+	}
+}
