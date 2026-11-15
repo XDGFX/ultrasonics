@@ -1,6 +1,6 @@
 # Spec: the Spotify input plugin and the PKCE provider
 
-Part of [Phase 1 specs](https://github.com/XDGFX/ultrasonics/issues/100), spec 5 of 8. Builds on [Spec: the plugin SDK and AuthProvider types](https://github.com/XDGFX/ultrasonics/issues/108), [Spec: the runner, run queue and run events](https://github.com/XDGFX/ultrasonics/issues/110) and [Spec: the server, its HTTP API, the run stream, the scheduler and the webhook](SERVER_SPEC_URL), whose `LocalAuthProvider` this spec extends with the `oauth2-pkce` flow. Settles open question 2 of [Spec: the Vue UI and the settings-form renderer](https://github.com/XDGFX/ultrasonics/issues/118).
+Part of [Phase 1 specs](https://github.com/XDGFX/ultrasonics/issues/100), spec 5 of 8. Builds on [Spec: the plugin SDK and AuthProvider types](https://github.com/XDGFX/ultrasonics/issues/108), [Spec: the runner, run queue and run events](https://github.com/XDGFX/ultrasonics/issues/110) and [Spec: the server, its HTTP API, the run stream, the scheduler and the webhook](https://github.com/XDGFX/ultrasonics/issues/134), whose `LocalAuthProvider` this spec extends with the `oauth2-pkce` flow. Settles open question 2 of [Spec: the Vue UI and the settings-form renderer](https://github.com/XDGFX/ultrasonics/issues/118).
 
 Cal grilled this spec on 16 November 2026 and accepted every recommendation. The answers are under "Decisions from the grilling" in Implementation Decisions. Points marked **⚑ checkpoint** touch the auth layer, the plugin SDK contract, the database schema or multi-tenancy (AGENTS.md); each was settled in that grilling.
 
@@ -256,7 +256,7 @@ The draft carried each of these as an open question with a recommendation. Cal a
   - Requests omit `market`, relying on the user's token.
 - **No change to the plugin SDK contract.** Decisions 1, 2 and 5 need none. If the build finds it needs one, it stops and asks (AGENTS.md).
 - **Beyond this spec:**
-  - **The hosted tier's Spotify plan rests on extended quota** (ADR-0002, and the roadmap's early track). Extended quota is now for organisations with at least 250,000 monthly users only. Self-host is unaffected, because every self-hoster runs their own app. Filed for triage as HOSTED_ISSUE.
+  - **The hosted tier's Spotify plan rests on extended quota** (ADR-0002, and the roadmap's early track). Extended quota is now for organisations with at least 250,000 monthly users only. Self-host is unaffected, because every self-hoster runs their own app. Filed for triage as [Revisit ADR-0002's Spotify plan for the hosted tier](https://github.com/XDGFX/ultrasonics/issues/135).
   - **ADR-0025 §3's example sentence** ("take discover weekly from spotify") names a playlist v2 cannot read. Change the example, not the decision.
   - **Development mode's five-user cap** means one Spotify app serves at most five people. That suits self-host (one account per install, ADR-0015 §5).
   - **For Phase 2's output:** in development mode, search's `limit` is now at most 10, and batch endpoints such as `GET /tracks?ids=` and `GET /users/{id}/playlists` are gone.
