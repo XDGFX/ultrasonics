@@ -111,9 +111,13 @@ half that earns its keep.
   `:check` variants, `bun run cycle-check`, `bun install`;
   `git status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; `gh issue view`,
   `gh issue list`, `gh pr view`, `gh pr list`.
-- **Deny** — `gh pr comment|merge`, `git push --force`, and any push to `master`. Option-prefixed
+- **Deny** — `gh pr comment`, `git push --force`, and any push to `master`. Option-prefixed
   pushes are caught only as `git -C * push`, because a bare `git * push` also matched commit
   messages containing "push".
+
+`gh pr merge` is no longer denied. An agent merges its own PR into `revival` once `/implement`'s
+steps and `/code-review` pass and CI is green; Cal does not review code (Cal, 2026-11-16). Merging
+into `master` stays forbidden by `AGENTS.md`.
 
 `gh issue` writes are neither allowed nor denied, a change to ADR-0014 §9. Agents claim and
 close their own tickets, so the old denials had to go. Outside bypass mode each write still asks
