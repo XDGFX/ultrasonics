@@ -46,7 +46,10 @@ export interface AppDeps {
 	webRoot?: string;
 	/** The server's one PKCE flow; the real services' when absent, a fake's in tests. */
 	pkce?: PkceFlow;
-	/** Epoch milliseconds, for the schedule and the scheduler; `Date.now` when absent. */
+	/**
+	 * Epoch milliseconds, for the schedule, the scheduler and the run hub's checkpoints and end
+	 * events; `Date.now` when absent.
+	 */
 	now?: () => number;
 }
 
@@ -59,7 +62,7 @@ export async function createApp(deps: AppDeps) {
 	const { configuration, db, registry, catalogue, queue, logger } = deps;
 	const pkce = deps.pkce ?? new PkceFlow();
 	const now = deps.now ?? Date.now;
-	const hub = createRunHub({ logger });
+	const hub = createRunHub({ logger, now });
 	const runs = createRunStarter({
 		db,
 		registry,

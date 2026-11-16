@@ -6,10 +6,10 @@ import { type AccountStore, openDatabase, resolveEncryptionKey } from "@ultrason
 import { defineAuth, definePlugin } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import { fixtureRegistry, holds, plex, registryOf, source } from "../test/fixture-plugins.ts";
-import type { Applet, AppletListing, RunNowResult } from "./api.ts";
+import { type Applet, type AppletListing, type RunNowResult, RunSummary } from "./api.ts";
 import { type BootResult, boot } from "./boot.ts";
 import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL } from "./configuration.ts";
-import { eventually, installAccountOf, recordingLogger } from "./test-support.ts";
+import { eventually, installAccountOf, recordingLogger, runStreamOf } from "./test-support.ts";
 
 const KEY = "ab".repeat(32);
 let dataDir: string;
@@ -143,6 +143,47 @@ describe("boot", () => {
 		const response = await fetch(new URL(`/api/runs/${runId}`, booted.server.url));
 		expect(((await response.json()) as { status: string }).status).toBe("interrupted");
 		expect(logger.lines.some((line) => line.includes("1 run"))).toBe(true);
+	});
+
+	test("a run interrupted at boot keeps one end time, however often it is read", async () => {
+		env({});
+		const runId = await withStore(async (store) => {
+			const applet = await store.applets.create({
+				name: "left running",
+				definition: {
+					inputs: [{ plugin: "source", settings: { playlist: "a" } }],
+					modifiers: [],
+					outputs: [{ plugin: "plex", settings: {} }],
+				},
+			});
+			return store.runs.start(applet.id, "manual");
+		});
+		const beforeBoot = Date.now();
+		booted = await boot({
+			env: { DATA_DIR: dataDir, PORT: "0", ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" },
+			registry: fixtureRegistry,
+			logger: recordingLogger(),
+		});
+		if (!booted.ok) throw new Error(JSON.stringify(booted.problems));
+		const { url } = booted.server;
+
+		const reads: { finishedAt: number | null; endAt: number | undefined }[] = [];
+		for (let read = 0; read < 2; read++) {
+			const summary = RunSummary.parse(
+				await (await fetch(new URL(`/api/runs/${runId}`, url))).json(),
+			);
+			const events = await runStreamOf(
+				await fetch(new URL(`/api/runs/${runId}/events`, url)),
+			).rest();
+			reads.push({ finishedAt: summary.finishedAt, endAt: events.at(-1)?.at });
+			await Bun.sleep(5);
+		}
+		const finishedAt = reads[0]?.finishedAt ?? null;
+		expect(finishedAt).toBeGreaterThanOrEqual(beforeBoot);
+		expect(reads).toEqual([
+			{ finishedAt, endAt: finishedAt ?? undefined },
+			{ finishedAt, endAt: finishedAt ?? undefined },
+		]);
 	});
 
 	test("a slot missed while the server was down runs once, on the first tick at boot", async () => {

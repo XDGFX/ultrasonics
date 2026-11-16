@@ -166,6 +166,18 @@ export const sink = definePlugin({
 	},
 });
 
+/** A `sink` that waits on {@link holds} before writing. */
+export const heldSink = definePlugin({
+	...sink,
+	name: "held-sink",
+	run: {
+		async outputs(ctx) {
+			await holds.hold(ctx.configDir);
+			return sink.run.outputs(ctx);
+		},
+	},
+});
+
 /** A registry entry for each plugin, by name. */
 export function registryOf(...plugins: Plugin[]): PluginRegistry {
 	return Object.fromEntries(
@@ -176,4 +188,4 @@ export function registryOf(...plugins: Plugin[]): PluginRegistry {
 	);
 }
 
-export const fixtureRegistry = registryOf(source, plex, plexMixer, spotify, held, sink);
+export const fixtureRegistry = registryOf(source, plex, plexMixer, spotify, held, sink, heldSink);

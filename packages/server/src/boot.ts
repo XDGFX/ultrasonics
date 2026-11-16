@@ -55,7 +55,7 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 		encryptionKey: configuration.encryptionKey,
 	});
 	try {
-		const interrupted = await systemModule(db).interruptRunning();
+		const interrupted = await systemModule(db).interruptRunning(Date.now());
 		logger.info(
 			`Marked ${interrupted} run${interrupted === 1 ? "" : "s"} left running by the last process as interrupted`,
 		);

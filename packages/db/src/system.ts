@@ -37,12 +37,15 @@ export function systemModule(handle: OpenDatabase) {
 				.get();
 		},
 
-		/** Boot marks every `running` run `interrupted` (ADR-0018 §4); returns how many. */
-		async interruptRunning(): Promise<number> {
+		/**
+		 * Boot marks every `running` run `interrupted` (ADR-0018 §4), finished at `finishedAt`, so its
+		 * end time stays put; returns how many.
+		 */
+		async interruptRunning(finishedAt: number): Promise<number> {
 			return affectedRows(
 				db
 					.update(runs)
-					.set({ status: "interrupted" })
+					.set({ status: "interrupted", finishedAt })
 					.where(eq(runs.status, "running"))
 					.returning({ id: runs.id }),
 			);
