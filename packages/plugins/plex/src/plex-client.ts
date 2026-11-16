@@ -31,7 +31,8 @@ export type PlexGrant = z.output<typeof grantFields>;
 
 /**
  * Why a Plex request failed. `invalid-credentials`: Plex refused the token (401). `unreachable`: no
- * answer at all. `service-error`: any other refusal. `misconfigured`: the settings name nothing.
+ * answer at all. `service-error`: any other refusal. `misconfigured`: the settings name nothing,
+ * or the server URL redirects.
  */
 export type PlexErrorCode =
 	| "invalid-credentials"
@@ -229,6 +230,8 @@ export class PlexClient {
 					"X-Plex-Client-Identifier": clientIdentifier,
 					"X-Plex-Product": "ultrasonics",
 				},
+				// Bun keeps a custom header across origins, so following would hand the token on.
+				redirect: "manual",
 				signal: AbortSignal.timeout(timeoutMs),
 				tls: { rejectUnauthorized: this.#grant.verifyTls },
 			});
@@ -246,6 +249,13 @@ export class PlexClient {
 				401,
 			);
 		}
+		if (response.status >= 300 && response.status < 400) {
+			throw new PlexError(
+				"misconfigured",
+				this.#redirectMessage(where, url, response),
+				response.status,
+			);
+		}
 		if (!response.ok) {
 			throw new PlexError(
 				"service-error",
@@ -260,6 +270,20 @@ export class PlexClient {
 		} catch {
 			throw new PlexError("service-error", `Plex answered ${where} with something other than JSON`);
 		}
+	}
+
+	/** Names where a redirect pointed by origin alone, so no query the target carried is repeated. */
+	#redirectMessage(where: string, url: URL, response: Response): string {
+		const from = `The Plex server at ${this.#base.origin} redirected ${where}`;
+		const advice = "enter the address Plex answers on";
+		const location = response.headers.get("Location");
+		let target: string | undefined;
+		try {
+			target = location === null ? undefined : new URL(location, url).origin;
+		} catch {
+			target = undefined;
+		}
+		return target === undefined ? `${from}; ${advice}` : `${from} to ${target}; ${advice}`;
 	}
 
 	/** A message from the runtime may quote what it was given; the token is never repeated. */
