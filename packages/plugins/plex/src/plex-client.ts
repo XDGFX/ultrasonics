@@ -184,6 +184,13 @@ export class PlexClient {
 		await this.#request(z.unknown(), "DELETE", path);
 	}
 
+	/** Moves one playlist item to just after another, or to the top when `afterItemId` is absent. */
+	async moveInPlaylist(playlistKey: string, playlistItemId: string, afterItemId?: string) {
+		const path = `/playlists/${playlistKey}/items/${playlistItemId}/move`;
+		const query: Record<string, string> = afterItemId === undefined ? {} : { after: afterItemId };
+		await this.#request(z.unknown(), "PUT", path, query);
+	}
+
 	/** Plex addresses library items to a playlist as one URI naming every rating key. */
 	#itemsUri(ratingKeys: string[]): string {
 		const root = `server://${this.#machineIdentifier}/com.plexapp.plugins.library`;

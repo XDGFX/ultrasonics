@@ -206,16 +206,39 @@ async function append(client: PlexClient, playlistKey: string, ratingKeys: strin
 }
 
 /**
- * Adds every track, then removes what was there before, so a failure partway never leaves the
- * playlist empty. The cost is a moment where it holds both sets.
+ * Adds the tracks the playlist lacks, removes the ones the source doesn't hold, then moves the rest
+ * into source order. Adding first means a failure partway never leaves the playlist empty. Plex
+ * won't add a track a playlist already holds, so shared tracks are kept, never re-added.
  */
 async function update(client: PlexClient, playlistKey: string, ratingKeys: string[]) {
-	const before = (await client.playlistItems(playlistKey)).map((item) => {
+	const wanted = [...new Set(ratingKeys)];
+	await append(client, playlistKey, wanted);
+
+	const kept = new Map<string, string>();
+	const extra: string[] = [];
+	for (const item of await client.playlistItems(playlistKey)) {
 		if (item.playlistItemID === undefined) {
 			throw new PlexError("service-error", "Plex listed a playlist item with no playlistItemID");
 		}
-		return item.playlistItemID;
-	});
-	for (const batch of batches(ratingKeys)) await client.addToPlaylist(playlistKey, batch);
-	for (const item of before) await client.removeFromPlaylist(playlistKey, item);
+		if (wanted.includes(item.ratingKey) && !kept.has(item.ratingKey)) {
+			kept.set(item.ratingKey, item.playlistItemID);
+		} else {
+			extra.push(item.playlistItemID);
+		}
+	}
+	const missing = wanted.filter((ratingKey) => !kept.has(ratingKey));
+	if (missing.length > 0) {
+		throw new PlexError("service-error", `Plex did not add the tracks ${missing.join(", ")}`);
+	}
+	for (const itemId of extra) await client.removeFromPlaylist(playlistKey, itemId);
+
+	const order = [...kept.keys()];
+	for (const [position, ratingKey] of wanted.entries()) {
+		const itemId = kept.get(ratingKey);
+		if (order[position] === ratingKey || itemId === undefined) continue;
+		const previous = wanted[position - 1];
+		await client.moveInPlaylist(playlistKey, itemId, previous && kept.get(previous));
+		order.splice(order.indexOf(ratingKey), 1);
+		order.splice(position, 0, ratingKey);
+	}
 }

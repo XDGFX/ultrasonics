@@ -1,107 +1,183 @@
 {
 	"MediaContainer": {
-		"size": 2,
-		"composite": "/playlists/7001/composite/1763251200",
-		"duration": 1003,
-		"leafCount": 2,
+		"size": 3,
+		"composite": "/playlists/44/composite/1794791163",
+		"duration": 541,
+		"leafCount": 3,
 		"playlistType": "audio",
-		"ratingKey": "7001",
+		"ratingKey": "44",
 		"smart": false,
-		"title": "Focus",
+		"title": "ultrasonics Plex test",
 		"Metadata": [
 			{
-				"ratingKey": "1001",
-				"key": "/library/metadata/1001",
-				"parentRatingKey": "1101",
-				"grandparentRatingKey": "1201",
-				"guid": "plex://track/5d07cdc8403c640291001",
-				"parentGuid": "plex://album/5d07c18e403c640291101",
-				"grandparentGuid": "plex://artist/5d07bbfc403c640291201",
+				"ratingKey": "23",
+				"key": "/library/metadata/23",
+				"parentRatingKey": "22",
+				"grandparentRatingKey": "1",
+				"guid": "plex://track/5d07fbc5403c64029098e1e9",
+				"parentGuid": "plex://album/5d07cae2403c640290d7f7a0",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"parentStudio": "incompetech",
 				"type": "track",
-				"title": "Strobe",
-				"grandparentKey": "/library/metadata/1201",
-				"parentKey": "/library/metadata/1101",
+				"title": "Carefree",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/22",
 				"librarySectionTitle": "Music",
 				"librarySectionID": 1,
 				"librarySectionKey": "/library/sections/1",
-				"grandparentTitle": "deadmau5",
-				"parentTitle": "For Lack of a Better Name",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Calming",
 				"summary": "",
-				"index": 10,
+				"index": 4,
 				"parentIndex": 1,
-				"parentYear": 2009,
-				"thumb": "/library/metadata/1101/thumb/1763251200",
-				"duration": 637000,
-				"addedAt": 1763251200,
-				"updatedAt": 1763251200,
+				"ratingCount": 38522,
+				"parentYear": 2014,
+				"thumb": "/library/metadata/22/thumb/1794790870",
+				"parentThumb": "/library/metadata/22/thumb/1794790870",
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"playlistItemID": 1,
+				"duration": 205140,
+				"addedAt": 1794790635,
+				"updatedAt": 1794791770,
 				"Media": [
 					{
-						"id": 5001,
-						"duration": 637000,
-						"bitrate": 320,
+						"id": 12,
+						"duration": 205140,
+						"bitrate": 256,
 						"audioChannels": 2,
 						"audioCodec": "mp3",
 						"container": "mp3",
+						"hasVoiceActivity": false,
 						"Part": [
 							{
-								"id": 6001,
-								"key": "/library/parts/6001/1763251200/file.mp3",
-								"duration": 637000,
-								"file": "/music/deadmau5/For Lack of a Better Name/10 Strobe.mp3",
-								"size": 25480000,
+								"id": 12,
+								"key": "/library/parts/12/1794790635/file.mp3",
+								"duration": 205140,
+								"file": "/music/main/Kevin MacLeod/Calming/01 - Carefree.mp3",
+								"size": 6565526,
 								"container": "mp3"
 							}
 						]
 					}
 				],
-				"playlistItemID": 9001
+				"Image": [
+					{
+						"alt": "Carefree",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
 			},
 			{
-				"ratingKey": "1009",
-				"key": "/library/metadata/1009",
-				"parentRatingKey": "1109",
-				"grandparentRatingKey": "1209",
-				"guid": "plex://track/5d07cdc8403c640291009",
-				"parentGuid": "plex://album/5d07c18e403c640291109",
-				"grandparentGuid": "plex://artist/5d07bbfc403c640291209",
+				"ratingKey": "9",
+				"key": "/library/metadata/9",
+				"parentRatingKey": "8",
+				"grandparentRatingKey": "1",
+				"guid": "plex://track/5d07fbc5403c64029098ddc5",
+				"parentGuid": "plex://album/5d07cae2403c640290d7f7a8",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
 				"type": "track",
-				"title": "Windowlicker",
-				"grandparentKey": "/library/metadata/1209",
-				"parentKey": "/library/metadata/1109",
+				"title": "Hitman",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/8",
 				"librarySectionTitle": "Music",
 				"librarySectionID": 1,
 				"librarySectionKey": "/library/sections/1",
-				"grandparentTitle": "Aphex Twin",
-				"parentTitle": "Windowlicker",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Action Cuts",
 				"summary": "",
-				"index": 1,
+				"index": 13,
 				"parentIndex": 1,
-				"parentYear": 1999,
-				"thumb": "/library/metadata/1109/thumb/1763251200",
-				"duration": 366000,
-				"addedAt": 1763251200,
-				"updatedAt": 1763251200,
+				"ratingCount": 7582,
+				"parentYear": 2014,
+				"thumb": "/library/metadata/8/thumb/1794790853",
+				"parentThumb": "/library/metadata/8/thumb/1794790853",
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"playlistItemID": 2,
+				"duration": 200829,
+				"addedAt": 1794790636,
+				"updatedAt": 1794791769,
 				"Media": [
 					{
-						"id": 5009,
-						"duration": 366000,
-						"bitrate": 1011,
+						"id": 4,
+						"duration": 200829,
+						"bitrate": 320,
 						"audioChannels": 2,
-						"audioCodec": "flac",
-						"container": "flac",
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
 						"Part": [
 							{
-								"id": 6009,
-								"key": "/library/parts/6009/1763251200/file.flac",
-								"duration": 366000,
-								"file": "/music/Aphex Twin/Windowlicker/01 Windowlicker.flac",
-								"size": 46116000,
-								"container": "flac"
+								"id": 4,
+								"key": "/library/parts/4/1794790636/file.mp3",
+								"duration": 200829,
+								"file": "/music/main/Kevin MacLeod/Action Cuts/01 - Hitman.mp3",
+								"size": 8034445,
+								"container": "mp3"
 							}
 						]
 					}
 				],
-				"playlistItemID": 9002
+				"Image": [
+					{
+						"alt": "Hitman",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			},
+			{
+				"ratingKey": "25",
+				"key": "/library/metadata/25",
+				"parentRatingKey": "24",
+				"grandparentRatingKey": "1",
+				"guid": "local://25",
+				"parentGuid": "local://24",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"type": "track",
+				"title": "Sneaky Snitch",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/24",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Sneaky Snitch",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"playlistItemID": 3,
+				"duration": 136620,
+				"addedAt": 1794790634,
+				"Media": [
+					{
+						"id": 13,
+						"duration": 136620,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 13,
+								"key": "/library/parts/13/1794790634/file.mp3",
+								"duration": 136620,
+								"file": "/music/main/Kevin MacLeod/Sneaky Snitch/01 - Sneaky Snitch.mp3",
+								"size": 5466095,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Sneaky Snitch",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
 			}
 		]
 	}

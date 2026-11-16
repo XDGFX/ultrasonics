@@ -10,6 +10,7 @@ import {
 	type SongInput,
 } from "@ultrasonics/plugin-sdk";
 import {
+	existingPlaylistKey,
 	type FakePlex,
 	fakeToken,
 	fixture,
@@ -80,8 +81,14 @@ function playlist(name: string, songs: SongInput[]): SongDictInput {
 	return { playlists: [{ name, songs }] };
 }
 
-const strobe = { title: "Strobe", artists: ["deadmau5"], durationMs: 637000 };
-const midnightCity = { title: "Midnight City", artists: ["M83"] };
+// Tracks in the recorded library, with their rating keys there.
+const sneakySnitch = { title: "Sneaky Snitch", artists: ["Kevin MacLeod"], durationMs: 136620 };
+const fluffingADuck = { title: "Fluffing a Duck", artists: ["Kevin MacLeod"] };
+const sneakySnitchKey = "25";
+const fluffingADuckKey = "27";
+
+/** The ordinary playlist the recorded server holds, and its title. */
+const existing = { key: existingPlaylistKey, title: "ultrasonics Plex test" };
 
 /** The rating keys a write request names, from its `server://…/library/metadata/<keys>` URI. */
 function keysOf(uri: string | null): string[] {
@@ -97,7 +104,7 @@ function writes(server: FakePlex) {
 describe("writing playlists", () => {
 	test("creates a missing playlist holding the matched tracks in source order", async () => {
 		const server = serve();
-		const { result } = await runOutput(server, playlist("New Mix", [midnightCity, strobe]));
+		const { result } = await runOutput(server, playlist("New Mix", [fluffingADuck, sneakySnitch]));
 
 		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [] }] });
 		const [create, ...rest] = writes(server);
@@ -107,62 +114,78 @@ describe("writing playlists", () => {
 		expect(create?.query.get("title")).toBe("New Mix");
 		expect(create?.query.get("type")).toBe("audio");
 		expect(create?.query.get("smart")).toBe("0");
-		expect(keysOf(create?.query.get("uri") ?? null)).toEqual(["1003", "1001"]);
+		expect(keysOf(create?.query.get("uri") ?? null)).toEqual([fluffingADuckKey, sneakySnitchKey]);
 	});
 
 	test("append adds only the matched tracks the playlist doesn't hold, at the end", async () => {
 		const server = serve();
-		// `Focus` (7001) already holds Strobe (1001) and Windowlicker (1009).
-		const { result } = await runOutput(server, playlist("Focus", [strobe, midnightCity]));
+		// The existing playlist already holds Sneaky Snitch.
+		const before = server.existingPlaylist();
+		const { result } = await runOutput(
+			server,
+			playlist(existing.title, [sneakySnitch, fluffingADuck]),
+		);
 
 		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [] }] });
 		const [add, ...rest] = writes(server);
 		expect(rest).toEqual([]);
 		expect(add?.method).toBe("PUT");
-		expect(add?.path).toBe("/playlists/7001/items");
-		expect(keysOf(add?.query.get("uri") ?? null)).toEqual(["1003"]);
+		expect(add?.path).toBe(`/playlists/${existing.key}/items`);
+		expect(keysOf(add?.query.get("uri") ?? null)).toEqual([fluffingADuckKey]);
+		expect(server.existingPlaylist()).toEqual([...before, fluffingADuckKey]);
 	});
 
 	test("append sends nothing when the playlist already holds every match", async () => {
 		const server = serve();
-		const { result } = await runOutput(server, playlist("Focus", [strobe]));
+		const { result } = await runOutput(server, playlist(existing.title, [sneakySnitch]));
 
 		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [] }] });
 		expect(writes(server)).toEqual([]);
 	});
 
-	test("update adds every match in source order, then removes the previous items", async () => {
+	test("update leaves the playlist holding exactly the matches, in source order", async () => {
 		const server = serve();
-		const { result } = await runOutput(server, playlist("Focus", [midnightCity, strobe]), {
-			existing: "update",
-		});
+		// It holds Sneaky Snitch already, and Plex won't add a track a playlist holds.
+		expect(server.existingPlaylist()).toContain(sneakySnitchKey);
+		const { result } = await runOutput(
+			server,
+			playlist(existing.title, [fluffingADuck, sneakySnitch]),
+			{ existing: "update" },
+		);
 
 		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [] }] });
-		const sent = writes(server);
-		expect(sent.map((request) => `${request.method} ${request.path}`)).toEqual([
-			"PUT /playlists/7001/items",
-			"DELETE /playlists/7001/items/9001",
-			"DELETE /playlists/7001/items/9002",
-		]);
-		expect(keysOf(sent[0]?.query.get("uri") ?? null)).toEqual(["1003", "1001"]);
+		expect(server.existingPlaylist()).toEqual([fluffingADuckKey, sneakySnitchKey]);
 	});
 
 	test("update that fails to add removes nothing, so the old playlist survives", async () => {
 		const server = serve(
-			on("PUT", "/playlists/7001/items", () => new Response(null, { status: 500 })),
+			on("PUT", `/playlists/${existing.key}/items`, () => new Response(null, { status: 500 })),
 		);
-		const { result } = await runOutput(server, playlist("Focus", [midnightCity]), {
+		const before = server.existingPlaylist();
+		const { result } = await runOutput(server, playlist(existing.title, [fluffingADuck]), {
 			existing: "update",
 		});
 
 		expect(result.playlists[0]).toMatchObject({ status: "failed", code: "service-error" });
-		expect(writes(server).filter((request) => request.method === "DELETE")).toEqual([]);
+		expect(server.existingPlaylist()).toEqual(before);
+	});
+
+	test("update that Plex answers without adding removes nothing", async () => {
+		const added = await fixture("playlist-items-added.json");
+		const server = serve(on("PUT", `/playlists/${existing.key}/items`, () => Response.json(added)));
+		const before = server.existingPlaylist();
+		const { result } = await runOutput(server, playlist(existing.title, [fluffingADuck]), {
+			existing: "update",
+		});
+
+		expect(result.playlists[0]).toMatchObject({ status: "failed", code: "service-error" });
+		expect(server.existingPlaylist()).toEqual(before);
 	});
 
 	test("ignores smart and video playlists that share the title", async () => {
 		const server = serve();
-		// `Running` exists only as a smart audio playlist and a video playlist.
-		const { result } = await runOutput(server, playlist("Running", [strobe]));
+		// `Smart only` exists only as a smart audio playlist and a video playlist.
+		const { result } = await runOutput(server, playlist("Smart only", [sneakySnitch]));
 
 		expect(result.playlists[0]?.status).toBe("written");
 		expect(writes(server).map((request) => `${request.method} ${request.path}`)).toEqual([
@@ -172,7 +195,7 @@ describe("writing playlists", () => {
 
 	test("skips a title two ordinary audio playlists share", async () => {
 		const server = serve();
-		const { result, logs } = await runOutput(server, playlist("Twice", [strobe]));
+		const { result, logs } = await runOutput(server, playlist("Twice", [sneakySnitch]));
 
 		expect(result.playlists[0]).toMatchObject({ status: "skipped", code: "ambiguous-playlist" });
 		expect(writes(server)).toEqual([]);
@@ -181,16 +204,17 @@ describe("writing playlists", () => {
 
 	test("writes a playlist longer than one batch in several requests, in order", async () => {
 		const keys = Array.from({ length: batchSize + 3 }, (_, index) => String(2000 + index));
-		const strobeTrack = await trackFixture("1001");
+		const track = { ...(await trackFixture(sneakySnitchKey)), librarySectionID: 1 };
 		const server = serve((request) => {
 			const key = /^\/library\/metadata\/(2\d{3})$/.exec(request.path)?.[1];
 			return key === undefined
 				? undefined
-				: Response.json({
-						MediaContainer: { size: 1, Metadata: [{ ...strobeTrack, ratingKey: key }] },
-					});
+				: Response.json({ MediaContainer: { size: 1, Metadata: [{ ...track, ratingKey: key }] } });
 		});
-		const songs = keys.map((key) => ({ ...strobe, id: { [`plex:${machineIdentifier}`]: key } }));
+		const songs = keys.map((key) => ({
+			...sneakySnitch,
+			id: { [`plex:${machineIdentifier}`]: key },
+		}));
 		const { result } = await runOutput(server, playlist("Long", songs));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
@@ -229,8 +253,8 @@ describe("results", () => {
 		);
 		const songs = {
 			playlists: [
-				{ name: "First", songs: [strobe] },
-				{ name: "Second", songs: [strobe] },
+				{ name: "First", songs: [sneakySnitch] },
+				{ name: "Second", songs: [sneakySnitch] },
 			],
 		};
 		const { result } = await runOutput(server, songs);
@@ -249,7 +273,7 @@ describe("results", () => {
 	test("lists unmatched songs by position", async () => {
 		const server = serve();
 		const nobody = { title: "Not In This Library", artists: ["Nobody"] };
-		const { result } = await runOutput(server, playlist("Mixed", [nobody, strobe, nobody]));
+		const { result } = await runOutput(server, playlist("Mixed", [nobody, sneakySnitch, nobody]));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [0, 2] });
 	});
@@ -264,14 +288,14 @@ describe("matching", () => {
 
 	test("a song whose search Plex rejects is unmatched, and the rest are written", async () => {
 		const server = serve((request) =>
-			request.query.get("title") === "Midnight City"
+			request.query.get("title") === fluffingADuck.title
 				? new Response("Bad Request", { status: 400 })
 				: undefined,
 		);
-		const { result } = await runOutput(server, playlist("Mix", [midnightCity, strobe]));
+		const { result } = await runOutput(server, playlist("Mix", [fluffingADuck, sneakySnitch]));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [0] });
-		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["1001"]);
+		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([sneakySnitchKey]);
 	});
 
 	test("a song in this server's ID space is written straight to its track", async () => {
@@ -279,16 +303,16 @@ describe("matching", () => {
 		const song = {
 			title: "Renamed Elsewhere",
 			artists: [],
-			id: { [`plex:${machineIdentifier}`]: "1003" },
+			id: { [`plex:${machineIdentifier}`]: fluffingADuckKey },
 		};
 		const { result } = await runOutput(server, playlist("Mix", [song]));
 
 		expect(result.playlists[0]?.status).toBe("written");
 		expect(searchedTitles(server)).toEqual([]);
-		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["1003"]);
+		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([fluffingADuckKey]);
 	});
 
-	const album = { ratingKey: "1101", type: "album", title: "Strobe", librarySectionID: 1 };
+	const album = { ratingKey: "1101", type: "album", title: "Sneaky Snitch", librarySectionID: 1 };
 	const ownIdCases: [string, string, Route[]][] = [
 		["names nothing on the server", "999999", []],
 		[
@@ -302,59 +326,62 @@ describe("matching", () => {
 		],
 		[
 			"can't be looked up",
-			"1001",
-			[on("GET", "/library/metadata/1001", () => new Response(null, { status: 500 }))],
+			sneakySnitchKey,
+			[
+				on(
+					"GET",
+					`/library/metadata/${sneakySnitchKey}`,
+					() => new Response(null, { status: 500 }),
+				),
+			],
 		],
 	];
 	for (const [name, ratingKey, routes] of ownIdCases) {
 		test(`a song whose own ID ${name} falls through to search`, async () => {
 			const server = serve(...routes);
-			const song = { ...strobe, id: { [`plex:${machineIdentifier}`]: ratingKey } };
+			const song = { ...sneakySnitch, id: { [`plex:${machineIdentifier}`]: ratingKey } };
 			const { result } = await runOutput(server, playlist("Mix", [song]));
 
 			expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
-			expect(searchedTitles(server)).toEqual(["Strobe"]);
-			expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["1001"]);
+			expect(searchedTitles(server)).toEqual([sneakySnitch.title]);
+			expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([sneakySnitchKey]);
 		});
 	}
 
 	test("a bracketed title is searched again cut before the bracket", async () => {
 		const server = serve();
-		const song = { ...strobe, title: "Strobe (2009 Remaster)" };
+		const song = { ...sneakySnitch, title: "Sneaky Snitch (2009 Remaster)" };
 		const { result } = await runOutput(server, playlist("Mix", [song]));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
-		expect(searchedTitles(server)).toEqual(["Strobe (2009 Remaster)", "Strobe"]);
-		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["1001"]);
+		expect(searchedTitles(server)).toEqual([song.title, sneakySnitch.title]);
+		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([sneakySnitchKey]);
 	});
 
 	test("a song with only a title and a file location can match (#49)", async () => {
 		const server = serve();
 		const song = {
-			title: "Teardrop",
+			title: "Wallpaper",
 			artists: [],
-			location: "file:///music/Massive%20Attack/Mezzanine/03%20Teardrop.flac",
+			location: "file:///music/main/Kevin%20MacLeod/Light%20Electronic/02%20-%20Wallpaper.mp3",
 		};
 		const { result } = await runOutput(server, playlist("From m3u", [song]));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
-		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["1010"]);
+		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["17"]);
 	});
 
 	test("curly quotes, colons and non-ASCII names reach Plex intact", async () => {
 		const server = serve();
-		const songs = [
-			{ title: "“Heroes”", artists: ["David Bowie"] },
-			{ title: "Let’s Dance", artists: ["David Bowie"] },
-			{ title: "Requiem: Lacrimosa", artists: ["Wolfgang Amadeus Mozart"] },
-		];
-		const { result } = await runOutput(server, playlist("Bowie & Mozart — ünïcödé", songs));
+		const titles = ["Miri’s Magic Dance", "Pixel Peeker Polka: Faster", "Bossa Antígua"];
+		const songs = titles.map((title) => ({ title, artists: ["Kevin MacLeod"] }));
+		const { result } = await runOutput(server, playlist("Polka & Bossa — ünïcödé", songs));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
-		expect(searchedTitles(server)).toEqual(["“Heroes”", "Let’s Dance", "Requiem: Lacrimosa"]);
+		expect(searchedTitles(server)).toEqual(titles);
 		const [create] = writes(server);
-		expect(create?.query.get("title")).toBe("Bowie & Mozart — ünïcödé");
-		expect(keysOf(create?.query.get("uri") ?? null)).toEqual(["1005", "1006", "1007"]);
+		expect(create?.query.get("title")).toBe("Polka & Bossa — ünïcödé");
+		expect(keysOf(create?.query.get("uri") ?? null)).toEqual(["12", "3", "7"]);
 	});
 });
 
@@ -371,39 +398,39 @@ describe("libraries", () => {
 
 	test("blank uses the only music library, ignoring the rest", async () => {
 		const server = serve();
-		await runOutput(server, playlist("Mix", [strobe]));
+		await runOutput(server, playlist("Mix", [sneakySnitch]));
 
 		expect(searchedSections(server)).toEqual(["/library/sections/1/all"]);
 	});
 
 	test("a title matches without regard to case", async () => {
 		const server = serve(sections(twoMusic));
-		await runOutput(server, playlist("Mix", [strobe]), { library: "audioBOOKS" });
+		await runOutput(server, playlist("Mix", [sneakySnitch]), { library: "MUSIC 2" });
 
-		expect(searchedSections(server)).toEqual(["/library/sections/3/all"]);
+		expect(searchedSections(server)).toEqual(["/library/sections/2/all"]);
 	});
 
 	test("a bare section id names its library", async () => {
 		const server = serve(sections(twoMusic));
-		await runOutput(server, playlist("Mix", [strobe]), { library: "3" });
+		await runOutput(server, playlist("Mix", [sneakySnitch]), { library: "2" });
 
-		expect(searchedSections(server)).toEqual(["/library/sections/3/all"]);
+		expect(searchedSections(server)).toEqual(["/library/sections/2/all"]);
 	});
 
 	const unresolvable: [string, unknown, string | undefined][] = [
 		["blank with several music libraries", twoMusic, undefined],
 		["an unknown title", twoMusic, "Podcasts"],
 		["a library that isn't music", twoMusic, "Films"],
-		["the section id of a library that isn't music", twoMusic, "2"],
+		["the section id of a library that isn't music", twoMusic, "3"],
 	];
 	for (const [name, body, library] of unresolvable) {
 		test(`${name} throws misconfigured, listing the music libraries`, async () => {
 			const server = serve(sections(body));
-			const run = runOutput(server, playlist("Mix", [strobe]), { library });
+			const run = runOutput(server, playlist("Mix", [sneakySnitch]), { library });
 
 			const error = await run.catch((thrown: unknown) => thrown);
 			expect(error).toMatchObject({ code: "misconfigured" });
-			expect(String((error as Error).message)).toContain('"Music", "Audiobooks"');
+			expect(String((error as Error).message)).toContain('"Music", "Music 2"');
 			expect(searchedSections(server)).toEqual([]);
 			expect(writes(server)).toEqual([]);
 		});
@@ -414,13 +441,13 @@ describe("libraries", () => {
 			MediaContainer: { Directory: { title: string }[] };
 		};
 		for (const directory of duplicated.MediaContainer.Directory) {
-			if (directory.title === "Audiobooks") directory.title = "Music";
+			if (directory.title === "Music 2") directory.title = "Music";
 		}
 		const server = serve(sections(duplicated));
 
-		const error = await runOutput(server, playlist("Mix", [strobe]), { library: "music" }).catch(
-			(thrown: unknown) => thrown,
-		);
+		const error = await runOutput(server, playlist("Mix", [sneakySnitch]), {
+			library: "music",
+		}).catch((thrown: unknown) => thrown);
 		expect(error).toMatchObject({ code: "misconfigured" });
 		expect(searchedSections(server)).toEqual([]);
 	});
@@ -432,7 +459,7 @@ describe("failures", () => {
 		const server = serve();
 		const error = await runOutput(
 			server,
-			playlist("Mix", [strobe]),
+			playlist("Mix", [sneakySnitch]),
 			{},
 			{
 				serverUrl: url,
@@ -447,7 +474,7 @@ describe("failures", () => {
 		const server = serve();
 		const error = await runOutput(
 			server,
-			playlist("Mix", [strobe]),
+			playlist("Mix", [sneakySnitch]),
 			{},
 			{
 				serverUrl: server.url,
@@ -461,7 +488,7 @@ describe("failures", () => {
 
 	test("a token refused partway throws rather than failing one playlist", async () => {
 		const server = serve(on("POST", "/playlists", () => new Response(null, { status: 401 })));
-		const error = await runOutput(server, playlist("Mix", [strobe])).catch(
+		const error = await runOutput(server, playlist("Mix", [sneakySnitch])).catch(
 			(thrown: unknown) => thrown,
 		);
 
@@ -480,13 +507,13 @@ describe("failures", () => {
 		const serverUrl = `${server.url}?X-Plex-Token=${fakeToken}`;
 		const { result, logs } = await runOutput(
 			server,
-			playlist("Mix", [strobe, midnightCity]),
+			playlist("Mix", [sneakySnitch, fluffingADuck]),
 			{},
 			{ serverUrl, token: fakeToken },
 		);
 		const refused = await runOutput(
 			server,
-			playlist("Mix", [strobe]),
+			playlist("Mix", [sneakySnitch]),
 			{},
 			{
 				serverUrl,
@@ -495,7 +522,7 @@ describe("failures", () => {
 		).catch((thrown: unknown) => thrown);
 		const unreachable = await runOutput(
 			server,
-			playlist("Mix", [strobe]),
+			playlist("Mix", [sneakySnitch]),
 			{},
 			{
 				serverUrl: `${await unreachableUrl()}?X-Plex-Token=${fakeToken}`,
