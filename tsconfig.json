@@ -2,5 +2,7 @@
 	"$schema": "https://json.schemastore.org/tsconfig",
 	"extends": "./tsconfig.base.json",
 	"include": ["scripts/**/*.ts", "lint/**/*.ts", "packages/**/*.ts"],
+	// The UI's contract test boots the server, whose `Temporal` the UI's TypeScript 5 can't type.
+	"files": ["packages/web/src/http-api.test.ts", "packages/web/test/contract-server.ts"],
 	"exclude": ["node_modules", "**/node_modules", "**/test/fixtures", "packages/web"]
 }

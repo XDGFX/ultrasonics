@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { defineAuth } from "@ultrasonics/plugin-sdk";
 import { mountApp, settle } from "../test/mount-app.ts";
-import type { FakePlugin } from "./fake-api.ts";
+import { EXAMPLE_CLIENT_ID, type FakePlugin } from "./fake-api.ts";
 import { plex, spotify } from "./fake-catalogue.ts";
 
 afterEach(() => {
@@ -90,7 +90,7 @@ describe("the service-auth wizard", () => {
 			await settle();
 			expect(wrapper.get('[data-requirement="client"] .issue').text()).toBeTruthy();
 
-			await type(wrapper, "clientId", "0123abcd");
+			await type(wrapper, "clientId", EXAMPLE_CLIENT_ID);
 			await wrapper.get('[data-requirement="client"] form').trigger("submit");
 			await settle();
 			expect(wrapper.find('[data-requirement="client"]').exists()).toBe(false);
@@ -112,6 +112,53 @@ describe("the service-auth wizard", () => {
 			expect(wrapper.get("[data-outcome]").attributes("data-outcome")).toBe("failed");
 			expect(wrapper.get("[data-outcome]").text()).toContain("access_denied");
 			expect(await statusOf(api, "spotify")).toBe("not-connected");
+		});
+
+		describe("whose redirect URI is a loopback address the wizard isn't open on", () => {
+			const landed = "http://127.0.0.1:5000/services/spotify";
+			const mountPaste = () => mountApp("/services/spotify", { redirectUris: { spotify: landed } });
+
+			async function paste(wrapper: Wrapper, address: string) {
+				await wrapper.get('[data-paste] input[name="landed"]').setValue(address);
+				await wrapper.get("[data-paste]").trigger("submit");
+				await settle();
+			}
+
+			test("asks for the address the service sent the user to", async () => {
+				const { wrapper } = await mountPaste();
+				const step = wrapper.get('[data-requirement="connect"]');
+				expect(step.find('[data-paste] input[name="landed"]').exists()).toBe(true);
+				expect(step.text()).toContain(landed);
+			});
+
+			test("posts the pasted address's query to complete, and connects", async () => {
+				const { wrapper, api } = await mountPaste();
+				await paste(wrapper, `${landed}?code=fake-spotify&state=abc`);
+				expect(wrapper.get("[data-outcome]").attributes("data-outcome")).toBe("connected");
+				expect(await statusOf(api, "spotify")).toBe("connected");
+			});
+
+			test("shows the service's error carried by the pasted address", async () => {
+				const { wrapper, api } = await mountPaste();
+				await paste(wrapper, `${landed}?error=access_denied&state=abc`);
+				expect(wrapper.get("[data-outcome]").text()).toContain("access_denied");
+				expect(await statusOf(api, "spotify")).toBe("not-connected");
+			});
+
+			test("refuses an address that carries no outcome, without calling complete", async () => {
+				const { wrapper, api } = await mountPaste();
+				await paste(wrapper, "not an address");
+				expect(wrapper.find("[data-paste] .issue").exists()).toBe(true);
+				expect(wrapper.find("[data-outcome]").exists()).toBe(false);
+				await paste(wrapper, landed);
+				expect(wrapper.find("[data-paste] .issue").exists()).toBe(true);
+				expect(await statusOf(api, "spotify")).toBe("not-connected");
+			});
+		});
+
+		test("shows no paste box when the service returns to the wizard itself", async () => {
+			const { wrapper } = await mountApp("/services/spotify");
+			expect(wrapper.find("[data-paste]").exists()).toBe(false);
 		});
 	});
 
