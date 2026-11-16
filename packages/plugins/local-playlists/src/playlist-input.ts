@@ -1,5 +1,5 @@
 import type { Dirent } from "node:fs";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import {
 	fromFileUri,
@@ -8,6 +8,7 @@ import {
 	type PlaylistInput,
 	type SongDictInput,
 } from "@ultrasonics/plugin-sdk";
+import { isFile } from "./files.ts";
 import type { InputSettings } from "./input-settings.ts";
 import { isAbsolutePath, type PathMapping, toLocalPath } from "./path-mapping.ts";
 import { readSong, stemOf } from "./tags.ts";
@@ -56,14 +57,6 @@ async function listPlaylists(dir: string, recursive: boolean, log: Log): Promise
 	}
 	await visit(dir, top);
 	return found.sort().map((path) => join(dir, path));
-}
-
-async function isFile(path: string): Promise<boolean> {
-	try {
-		return (await stat(path)).isFile();
-	} catch {
-		return false;
-	}
 }
 
 function errorText(error: unknown): string {

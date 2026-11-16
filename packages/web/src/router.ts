@@ -15,6 +15,7 @@ import FirstRun from "./FirstRun.vue";
 import RunView from "./RunView.vue";
 import ServiceWizard from "./ServiceWizard.vue";
 import SettingsScreen from "./SettingsScreen.vue";
+import V1ImportReportScreen from "./V1ImportReportScreen.vue";
 
 const applets = { section: "applets" } as const;
 const settings = { section: "settings" } as const;
@@ -48,6 +49,7 @@ export function createAppRouter(api: ApiClient, history: RouterHistory = createW
 				meta: applets,
 			},
 			{ path: "/runs/:id", name: "run", component: RunView, props: true, meta: applets },
+			{ path: "/v1-import", name: "v1-import", component: V1ImportReportScreen, meta: applets },
 			{ path: "/settings", name: "settings", component: SettingsScreen, meta: settings },
 			// The OAuth return lands here too, with the outcome in the query.
 			{

@@ -17,6 +17,7 @@ import {
 	RunSummary,
 	ServiceStatus,
 	StoredSettings,
+	V1ImportReport,
 	WebhookUrl,
 } from "@ultrasonics/server/api";
 import { z } from "zod";
@@ -189,6 +190,10 @@ export function createHttpApi(options: HttpApiOptions): ApiClient {
 	return {
 		instance: () => read(InstanceInfo, "GET", "/instance"),
 		dismissExposure: () => act("DELETE", "/instance/exposure"),
+		v1Import: {
+			get: () => read(V1ImportReport.nullable(), "GET", "/instance/v1-import"),
+			dismiss: () => act("POST", "/instance/v1-import/dismiss"),
+		},
 		plugins: () => read(z.array(PluginInfo), "GET", "/plugins"),
 		applets: {
 			list: () => read(z.array(AppletListing), "GET", "/applets"),

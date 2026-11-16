@@ -48,8 +48,24 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/custom-file": {
+      "name": "@ultrasonics/plugin-custom-file",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/plugins/deezer": {
       "name": "@ultrasonics/plugin-deezer",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
+    "packages/plugins/lastfm": {
+      "name": "@ultrasonics/plugin-lastfm",
       "version": "0.0.0",
       "dependencies": {
         "@ultrasonics/plugin-sdk": "workspace:*",
@@ -62,6 +78,14 @@
       "dependencies": {
         "@ultrasonics/plugin-sdk": "workspace:*",
         "music-metadata": "12.3.2",
+        "zod": "4.6.7",
+      },
+    },
+    "packages/plugins/log-tracks": {
+      "name": "@ultrasonics/plugin-log-tracks",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
         "zod": "4.6.7",
       },
     },
@@ -86,8 +110,11 @@
       "name": "@ultrasonics/registry",
       "version": "0.0.0",
       "dependencies": {
+        "@ultrasonics/plugin-custom-file": "workspace:*",
         "@ultrasonics/plugin-deezer": "workspace:*",
+        "@ultrasonics/plugin-lastfm": "workspace:*",
         "@ultrasonics/plugin-local-playlists": "workspace:*",
+        "@ultrasonics/plugin-log-tracks": "workspace:*",
         "@ultrasonics/plugin-plex": "workspace:*",
         "@ultrasonics/plugin-sdk": "workspace:*",
         "@ultrasonics/plugin-spotify": "workspace:*",
@@ -350,9 +377,15 @@
 
     "@ultrasonics/matcher": ["@ultrasonics/matcher@workspace:packages/matcher"],
 
+    "@ultrasonics/plugin-custom-file": ["@ultrasonics/plugin-custom-file@workspace:packages/plugins/custom-file"],
+
     "@ultrasonics/plugin-deezer": ["@ultrasonics/plugin-deezer@workspace:packages/plugins/deezer"],
 
+    "@ultrasonics/plugin-lastfm": ["@ultrasonics/plugin-lastfm@workspace:packages/plugins/lastfm"],
+
     "@ultrasonics/plugin-local-playlists": ["@ultrasonics/plugin-local-playlists@workspace:packages/plugins/local-playlists"],
+
+    "@ultrasonics/plugin-log-tracks": ["@ultrasonics/plugin-log-tracks@workspace:packages/plugins/log-tracks"],
 
     "@ultrasonics/plugin-plex": ["@ultrasonics/plugin-plex@workspace:packages/plugins/plex"],
 
