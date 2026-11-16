@@ -6,16 +6,17 @@ import { openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
 import { defineAuth, definePlugin } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import { fixtureRegistry, plex, registryOf, source } from "../test/fixture-plugins.ts";
+import type { AppletListing } from "./api.ts";
 import { type BootResult, boot } from "./boot.ts";
 import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL } from "./configuration.ts";
-import { installAccountOf, recordingLogger } from "./test-support.ts";
+import { eventually, installAccountOf, recordingLogger } from "./test-support.ts";
 
 const KEY = "ab".repeat(32);
 let dataDir: string;
 let booted: BootResult | undefined;
 
-afterEach(() => {
-	if (booted?.ok) booted.stop();
+afterEach(async () => {
+	if (booted?.ok) await booted.stop();
 	booted = undefined;
 	if (dataDir) rmSync(dataDir, { recursive: true, force: true });
 });
@@ -105,6 +106,57 @@ describe("boot", () => {
 		const response = await fetch(new URL(`/api/runs/${runId}`, booted.server.url));
 		expect(((await response.json()) as { status: string }).status).toBe("interrupted");
 		expect(logger.lines.some((line) => line.includes("1 run"))).toBe(true);
+	});
+
+	test("a slot missed while the server was down runs once, on the first tick at boot", async () => {
+		const path = join(env({}).DATA_DIR, DATABASE_FILE);
+		const key = await resolveEncryptionKey(KEY, path);
+		if (!key.ok) throw key.error;
+		const db = await openDatabase({ path, encryptionKey: key.key });
+		const store = db.storeFor(installAccountOf(path));
+		await store.pluginSettings.put("source", { region: "au" });
+		const applet = await store.applets.create({
+			name: "missed while down",
+			definition: {
+				inputs: [{ plugin: "source", settings: { playlist: "a" } }],
+				modifiers: [],
+				outputs: [{ plugin: "plex", settings: {} }],
+			},
+		});
+		const hourly = {
+			kind: "interval",
+			unit: "hour",
+			count: 1,
+			anchor: "2026-01-01T00:00",
+			timeZone: "UTC",
+		} as const;
+		// Three hourly slots ago, so three were missed.
+		await store.applets.setSchedule(applet.id, {
+			schedule: hourly,
+			nextRunAt: Date.now() - 3 * 3_600_000,
+		});
+		db.close();
+
+		booted = await boot({
+			env: { DATA_DIR: dataDir, PORT: "0", ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" },
+			registry: fixtureRegistry,
+			logger: recordingLogger(),
+		});
+		if (!booted.ok) throw new Error(JSON.stringify(booted.problems));
+		const { url } = booted.server;
+		await eventually(async () => {
+			const response = await fetch(new URL("/api/applets", url));
+			const [listing] = (await response.json()) as AppletListing[];
+			expect(listing?.state).toBe("idle");
+			expect(listing?.lastRun).not.toBeNull();
+		});
+		const reopened = await openDatabase({ path, encryptionKey: key.key });
+		try {
+			const runs = await reopened.storeFor(installAccountOf(path)).runs.listForApplet(applet.id);
+			expect(runs.map((run) => run.trigger)).toEqual(["schedule"]);
+		} finally {
+			reopened.close();
+		}
 	});
 
 	test("a settings schema outside the renderable subset aborts boot with its path", async () => {

@@ -19,9 +19,12 @@ import { requestSourceMiddleware } from "./request-source.ts";
 import { createRunHub } from "./run-hub.ts";
 import { runRoutes } from "./run-routes.ts";
 import { createRunStarter } from "./run-starter.ts";
+import { createScheduler } from "./scheduler.ts";
 import { serviceRoutes } from "./service-routes.ts";
 import { sessionMiddleware } from "./session-middleware.ts";
 import { settingsRoutes } from "./settings-routes.ts";
+import { triggerRoutes } from "./trigger-routes.ts";
+import { webhookRoute } from "./webhook-route.ts";
 
 /** Where `packages/web` builds the UI, relative to this file in the repo and in the image. */
 export const DEFAULT_WEB_ROOT = fileURLToPath(new URL("../../web/dist", import.meta.url));
@@ -43,15 +46,18 @@ export interface AppDeps {
 	webRoot?: string;
 	/** The server's one PKCE flow; the real services' when absent, a fake's in tests. */
 	pkce?: PkceFlow;
+	/** Epoch milliseconds, for the schedule and the scheduler; `Date.now` when absent. */
+	now?: () => number;
 }
 
 /**
  * The whole HTTP surface as one Hono app, built from its dependencies so tests drive it in-process
- * with `app.request()` (ADR-0024).
+ * with `app.request()` (ADR-0024), and the scheduler, unstarted, that fires runs beside it.
  */
 export async function createApp(deps: AppDeps) {
 	const { configuration, db, registry, catalogue, queue, logger } = deps;
 	const pkce = deps.pkce ?? new PkceFlow();
+	const now = deps.now ?? Date.now;
 	const hub = createRunHub({ logger });
 	const runs = createRunStarter({
 		db,
@@ -75,7 +81,8 @@ export async function createApp(deps: AppDeps) {
 		.use(session)
 		.get("/instance", (c) => c.json({ exposed: c.var.exposed } satisfies InstanceInfo))
 		.get("/plugins", (c) => c.json(catalogue.info))
-		.route("/applets", appletRoutes({ db, catalogue, queue, runs }))
+		.route("/applets", appletRoutes({ db, catalogue, queue, runs, now }))
+		.route("/applets", triggerRoutes({ db, now }))
 		.route("/runs", runRoutes({ db, hub }))
 		.route("/settings", settingsRoutes({ db, catalogue }))
 		.route(
@@ -85,6 +92,9 @@ export async function createApp(deps: AppDeps) {
 
 	const app = new Hono<AppEnv>()
 		.use(requestSourceMiddleware(deps.clientAddress, configuration.trustedProxies))
+		// Before `/api`, so a webhook answers before the session and JSON middleware can run: its
+		// token is its only credential, and it takes any content type (ADR-0018 §5).
+		.route("/api/hooks", webhookRoute({ db, runs }))
 		.route("/api", api)
 		.all("/api/*", () => notFound("That API route"));
 	app.onError(errorResponse(logger));
@@ -99,7 +109,9 @@ export async function createApp(deps: AppDeps) {
 			`No built UI at ${webRoot}; serving the API only. Run \`bun run build\` in packages/web.`,
 		);
 	}
-	return app;
+	// Built here because it submits through the same run starter as run now and the webhook.
+	const scheduler = createScheduler({ db, runs, now, logger });
+	return { app, scheduler };
 }
 
-export type App = Awaited<ReturnType<typeof createApp>>;
+export type App = Awaited<ReturnType<typeof createApp>>["app"];

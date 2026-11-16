@@ -7,13 +7,14 @@ import { type Applet, AppletDraft, type AppletListing } from "./api.ts";
 import type { AppEnv } from "./app-env.ts";
 import type { Catalogue } from "./catalogue.ts";
 import { notFound } from "./error-response.ts";
+import { nextSlot } from "./next-slot.ts";
 import type { RunStarter } from "./run-starter.ts";
 import { jsonBody, pathParams } from "./validation.ts";
 
 const IdParams = z.object({ id: z.string() });
 
 /** The API's view of a row: the webhook hash becomes a flag, and no db-only column leaves. */
-function appletOf(row: StoredApplet): Applet {
+export function appletOf(row: StoredApplet): Applet {
 	return {
 		id: row.id,
 		name: row.name,
@@ -65,8 +66,9 @@ export function appletRoutes(deps: {
 	catalogue: Catalogue;
 	queue: RunQueue;
 	runs: RunStarter;
+	now: () => number;
 }) {
-	const { db, catalogue, queue, runs } = deps;
+	const { db, catalogue, queue, runs, now } = deps;
 	const storeOf = (accountId: string) => db.storeFor(accountId);
 
 	return new Hono<AppEnv>()
@@ -100,12 +102,17 @@ export function appletRoutes(deps: {
 		.put("/:id", pathParams(IdParams), jsonBody(AppletDraft), async (c) => {
 			const store = storeOf(c.var.session.accountId);
 			const { id } = c.req.valid("param");
-			if (!(await store.applets.get(id))) notFound("The applet");
+			const before = (await store.applets.get(id)) ?? notFound("The applet");
 			const draft = c.req.valid("json");
 			const issues = checkDraft(catalogue, draft);
 			if (issues.length > 0) return c.json({ issues }, 422);
-			const row = await store.applets.update(id, draft);
-			return c.json(appletOf(row ?? notFound("The applet")));
+			if (!before.enabled && draft.enabled && before.schedule) {
+				// Disabling was deliberate, so re-enabling skips the missed slots (ADR-0018 §4). Moved
+				// while still disabled, so no tick sees the applet enabled with its old slot.
+				await store.applets.setNextRunAt(id, nextSlot(before.schedule, now()));
+			}
+			const row = (await store.applets.update(id, draft)) ?? notFound("The applet");
+			return c.json(appletOf(row));
 		})
 		.post("/:id/run", pathParams(IdParams), async (c) => {
 			// Disabled only stops the triggers; run now still runs it (spec #134, decision 10).
