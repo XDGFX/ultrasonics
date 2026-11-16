@@ -47,6 +47,28 @@ export type {
 /** A save's answer as the screens take it: the saved value, or the server's `422` issues. */
 export type SaveResult<T> = { ok: true; value: T } | { ok: false; issues: ValidationIssue[] };
 
+/** A response the UI didn't expect: the server's `{ message }`, or what was wrong with the reply. */
+export class ApiError extends Error {
+	constructor(
+		readonly status: number,
+		message: string,
+	) {
+		super(message);
+		this.name = "ApiError";
+	}
+}
+
+/** A run's event stream that stopped before the run's `end`, or sent something that isn't an event. */
+export class RunStreamError extends Error {
+	constructor(
+		readonly reason: "closed" | "malformed",
+		message: string,
+	) {
+		super(message);
+		this.name = "RunStreamError";
+	}
+}
+
 /** Every server call the screens make. Screens never call `fetch` or `EventSource` themselves. */
 export interface ApiClient {
 	instance(): Promise<InstanceInfo>;

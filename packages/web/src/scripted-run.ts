@@ -1,4 +1,5 @@
 import { type EndEvent, RunEvent } from "@ultrasonics/core/run-events";
+import { RunStreamError } from "./api-client.ts";
 
 /** At once, as a finished run replays; stepped, released by the test; or one event per interval. */
 export type RunPace = "at-once" | "stepped" | { intervalMs: number };
@@ -7,6 +8,8 @@ export interface RunScript {
 	/** Parsed with core's `RunEvent`, so a script can't drift from what the runner emits. */
 	events: unknown[];
 	pace?: RunPace;
+	/** Once this many events are out, the follows under way fail, as when the browser gives up. */
+	failAfter?: number;
 }
 
 export interface ScriptedRun {
@@ -37,6 +40,7 @@ export function scriptedRun(
 	let connections = 0;
 	let open = 0;
 	let epoch = 0;
+	let failures = 0;
 	const waiting = new Set<() => void>();
 
 	const wake = () => {
@@ -49,6 +53,15 @@ export function scriptedRun(
 		released = Math.min(events.length, released + count);
 		const end = events.slice(before, released).find((event) => event.type === "end");
 		if (end?.type === "end") onEnd(end);
+		// A later follow connects afresh, as a retry does.
+		if (
+			script.failAfter !== undefined &&
+			before < script.failAfter &&
+			released >= script.failAfter
+		) {
+			failures++;
+			epoch++;
+		}
 		wake();
 	};
 
@@ -94,12 +107,16 @@ export function scriptedRun(
 		follow: (signal) => ({
 			async *[Symbol.asyncIterator]() {
 				signal?.addEventListener("abort", wake, { once: true });
+				const failuresBefore = failures;
 				let after = 0;
 				while (!signal?.aborted) {
 					for await (const event of connect(after, signal)) {
 						after = event.seq;
 						yield event;
 						if (event.type === "end") return;
+					}
+					if (failures !== failuresBefore) {
+						throw new RunStreamError("closed", "The run's event stream closed before its end");
 					}
 				}
 			},

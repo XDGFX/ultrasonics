@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { type PluginInfo, type RunSummary, useApi } from "./api-client.ts";
+import { ApiError, type PluginInfo, type RunSummary, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import { formatClock, formatDuration, formatWhen } from "./clock.ts";
 import QueuedNote from "./QueuedNote.vue";
@@ -20,6 +20,8 @@ const { runNow, queued } = useRunNow();
 const summary = ref<RunSummary | null>(null);
 const catalogue = ref<PluginInfo[]>([]);
 const state = ref(emptyRunView());
+/** Why the view stopped following: the run doesn't exist, or its progress couldn't be loaded. */
+const unavailable = ref<"not-found" | "stream-failed" | null>(null);
 
 // Aborting a superseded or unmounted follow closes its stream, so it folds nothing more.
 let following = new AbortController();
@@ -27,14 +29,21 @@ async function follow(id: string) {
 	following.abort();
 	const { signal } = (following = new AbortController());
 	state.value = emptyRunView();
+	summary.value = null;
+	unavailable.value = null;
 	queued.value = false;
-	const [run, plugins] = await Promise.all([api.runs.get(id), api.plugins()]);
-	if (signal.aborted) return;
-	summary.value = run;
-	catalogue.value = plugins;
-	for await (const event of api.runs.events(id, signal)) {
+	try {
+		const [run, plugins] = await Promise.all([api.runs.get(id), api.plugins()]);
 		if (signal.aborted) return;
-		state.value = foldRunEvent(state.value, event);
+		summary.value = run;
+		catalogue.value = plugins;
+		for await (const event of api.runs.events(id, signal)) {
+			if (signal.aborted) return;
+			state.value = foldRunEvent(state.value, event);
+		}
+	} catch (error) {
+		if (signal.aborted) return;
+		unavailable.value = error instanceof ApiError && error.status === 404 ? "not-found" : "stream-failed";
 	}
 }
 watch(() => props.id, follow, { immediate: true });
@@ -75,8 +84,20 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 			</button>
 		</template>
 
-		<div class="run">
+		<div v-if="unavailable === 'not-found'" class="run">
+			<h2>run {{ id }}</h2>
+			<p class="unavailable" role="alert" data-unavailable="not-found">
+				there's no run {{ id }}. it may have been deleted with its applet.
+			</p>
+			<RouterLink class="btn" :to="{ name: 'applets' }">back to applets</RouterLink>
+		</div>
+
+		<div v-else class="run">
 			<h2>{{ title }}</h2>
+			<div v-if="unavailable === 'stream-failed'" class="unavailable" role="alert" data-unavailable="stream-failed">
+				<p>couldn't load this run's progress, so what's shown may be out of date.</p>
+				<button type="button" class="btn retry" @click="follow(id)">retry</button>
+			</div>
 			<p class="kv">
 				<span><span class="key">status:</span> <span class="status" :data-status="state.status">{{ state.status }}</span></span>
 				<span data-trigger><span class="key">by:</span> {{ summary?.trigger ?? "…" }}</span>
@@ -152,7 +173,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 			</section>
 		</div>
 
-		<div class="console" role="log" aria-label="run log">
+		<div v-if="unavailable !== 'not-found'" class="console" role="log" aria-label="run log">
 			<div v-for="line in state.log" :key="line.seq" :data-level="line.level" class="line"><span class="ts">{{ formatClock(line.at) }}</span> {{ line.level }} {{ line.source }} {{ line.text }}</div>
 		</div>
 	</AppShell>
@@ -173,6 +194,9 @@ h2 { margin: 0 0 8px; font-size: 20px; font-weight: 500; }
 .wire { padding: 0 10px; color: var(--accent); font-size: 11px; border-bottom: 2px solid var(--line); }
 .warn { color: var(--warn); }
 .error { color: var(--bad); }
+.unavailable { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 20px; padding: 10px 12px; border: 1px solid var(--bad); border-radius: var(--radius); color: var(--bad); }
+.unavailable p { margin: 0; flex: 1; }
+.unavailable .retry { border-color: var(--bad); color: var(--bad); }
 .reconnect { margin-top: 6px; border-color: var(--p2); color: var(--p2); text-decoration: none; }
 .output h3 { font-size: 13px; font-weight: 400; }
 table { width: 100%; border-collapse: collapse; }
