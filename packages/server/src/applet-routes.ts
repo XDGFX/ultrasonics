@@ -7,7 +7,7 @@ import { type Applet, AppletDraft, type AppletListing } from "./api.ts";
 import type { AppEnv } from "./app-env.ts";
 import type { Catalogue } from "./catalogue.ts";
 import { notFound } from "./error-response.ts";
-import { nextSlot } from "./next-slot.ts";
+import { nextSlotIfAny } from "./next-slot.ts";
 import type { RunStarter } from "./run-starter.ts";
 import { jsonBody, pathParams } from "./validation.ts";
 
@@ -109,7 +109,9 @@ export function appletRoutes(deps: {
 			if (!before.enabled && draft.enabled && before.schedule) {
 				// Disabling was deliberate, so re-enabling skips the missed slots (ADR-0018 §4). Moved
 				// while still disabled, so no tick sees the applet enabled with its old slot.
-				await store.applets.setNextRunAt(id, nextSlot(before.schedule, now()));
+				const next = nextSlotIfAny(before.schedule, now());
+				if (next === undefined) await store.applets.setSchedule(id, null);
+				else await store.applets.setNextRunAt(id, next);
 			}
 			const row = (await store.applets.update(id, draft)) ?? notFound("The applet");
 			return c.json(appletOf(row));

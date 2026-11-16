@@ -1,7 +1,7 @@
 import { type OpenDatabase, Schedule } from "@ultrasonics/db";
 import { Hono } from "hono";
 import { z } from "zod";
-import type { WebhookUrl } from "./api.ts";
+import { checkScheduleCount, type WebhookUrl } from "./api.ts";
 import type { AppEnv } from "./app-env.ts";
 import { appletOf } from "./applet-routes.ts";
 import { notFound } from "./error-response.ts";
@@ -11,13 +11,14 @@ import { jsonBody, pathParams } from "./validation.ts";
 import { newWebhookToken, webhookTokenHash } from "./webhook-token.ts";
 
 const IdParams = z.object({ id: z.string() });
+const ScheduleBody = Schedule.superRefine(checkScheduleCount).nullable();
 
 /** An applet's triggers, mounted under `/applets` beside its other routes (ADR-0018). */
 export function triggerRoutes(deps: { db: OpenDatabase; now: () => number }) {
 	const { db, now } = deps;
 
 	return new Hono<AppEnv>()
-		.put("/:id/schedule", pathParams(IdParams), jsonBody(Schedule.nullable()), async (c) => {
+		.put("/:id/schedule", pathParams(IdParams), jsonBody(ScheduleBody), async (c) => {
 			const store = db.storeFor(c.var.session.accountId);
 			const { id } = c.req.valid("param");
 			const schedule = c.req.valid("json");

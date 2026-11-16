@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { holds } from "../test/fixture-plugins.ts";
-import { Applet, AppletListing, ErrorBody, IssuesBody, WebhookFired, WebhookUrl } from "./api.ts";
+import {
+	Applet,
+	AppletListing,
+	ErrorBody,
+	IssuesBody,
+	MAX_SCHEDULE_COUNT,
+	WebhookFired,
+	WebhookUrl,
+} from "./api.ts";
 import { UNEXPECTED_ERROR_MESSAGE } from "./error-response.ts";
 import {
 	bodyOf,
@@ -74,6 +82,51 @@ describe("the schedule route", () => {
 		const fields = new Set(issues.map((issue) => issue.path.join(".")));
 		expect([...fields].sort()).toEqual(["anchor", "count", "timeZone"]);
 		expect((await listingOf(call, id))?.schedule).toBeNull();
+	});
+
+	test("a count beyond a year of its unit is refused with an issue at count, with a past or future anchor", async () => {
+		const { call, clock } = await testApp();
+		clock.now = at("2026-02-10T12:00Z");
+		const id = await createApplet(call);
+		for (const unit of ["hour", "day", "week"] as const) {
+			const most = { ...daily, unit, count: MAX_SCHEDULE_COUNT[unit] };
+			expect((await call("PUT", `/api/applets/${id}/schedule`, most)).status).toBe(200);
+			for (const anchor of [daily.anchor, "2026-12-01T03:00"]) {
+				const response = await call("PUT", `/api/applets/${id}/schedule`, {
+					...most,
+					count: MAX_SCHEDULE_COUNT[unit] + 1,
+					anchor,
+				});
+				expect(response.status).toBe(422);
+				const { issues } = await bodyOf(response, IssuesBody);
+				expect(issues.map((issue) => issue.path.join("."))).toEqual(["count"]);
+			}
+		}
+		expect((await listingOf(call, id))?.schedule).toEqual({
+			...daily,
+			unit: "week",
+			count: MAX_SCHEDULE_COUNT.week,
+		});
+	});
+
+	test("turning enabled on with a stored schedule that has no next slot removes the schedule", async () => {
+		const { call, clock, raw } = await testApp();
+		clock.now = at("2026-02-10T12:00Z");
+		const id = await createApplet(call, false);
+		const oversized = { ...daily, count: 1_000_000_000 };
+		raw((sqlite) =>
+			sqlite
+				.query("UPDATE applets SET schedule = ? WHERE id = ?")
+				.run(JSON.stringify(oversized), id),
+		);
+
+		const response = await call("PUT", `/api/applets/${id}`, draft(true));
+		expect(response.status).toBe(200);
+		expect(await listingOf(call, id)).toMatchObject({
+			enabled: true,
+			schedule: null,
+			nextRunAt: null,
+		});
 	});
 
 	test("turning enabled on moves the next run to the next future slot; turning it off leaves it", async () => {
@@ -185,6 +238,36 @@ describe("the scheduler", () => {
 		expect(t.logger.lines.some((line) => line.startsWith("error:") && line.includes(broken))).toBe(
 			true,
 		);
+	});
+
+	test("a stored schedule with no next slot is removed with one error, and the others still run", async () => {
+		const t = await testApp();
+		const oversized = await scheduledApplet(t);
+		const unreadable = await scheduledApplet(t);
+		const id = await scheduledApplet(t);
+		// Rows the route would refuse, as an older server or a hand edit might leave them.
+		const store = (applet: string, schedule: unknown) =>
+			t.raw((sqlite) =>
+				sqlite
+					.query("UPDATE applets SET schedule = ? WHERE id = ?")
+					.run(JSON.stringify(schedule), applet),
+			);
+		store(oversized, { ...daily, count: 1_000_000_000 });
+		store(unreadable, { ...daily, kind: "cron" });
+
+		for (const minute of ["03:00:20", "03:01:20"]) {
+			t.clock.now = at(`2026-02-11T${minute}Z`);
+			await t.scheduler.tick();
+		}
+		expect((await settledRuns(t, id)).map((run) => run.status)).toEqual(["succeeded"]);
+		for (const applet of [oversized, unreadable]) {
+			const errors = t.logger.lines.filter(
+				(line) => line.startsWith("error:") && line.includes(applet),
+			);
+			expect(errors).toHaveLength(1);
+			expect(await t.db.storeFor(t.mine).runs.listForApplet(applet)).toEqual([]);
+			expect(await listingOf(t.call, applet)).toMatchObject({ schedule: null, nextRunAt: null });
+		}
 	});
 
 	test("each tick sweeps expired sessions", async () => {

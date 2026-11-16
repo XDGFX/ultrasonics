@@ -1,11 +1,16 @@
 import type { OpenDatabase } from "@ultrasonics/db";
 import { systemModule } from "@ultrasonics/db/system";
+import { z } from "zod";
 import type { Logger } from "./logger.ts";
-import { nextSlot } from "./next-slot.ts";
+import { nextSlotIfAny } from "./next-slot.ts";
 import type { RunStarter } from "./run-starter.ts";
 
 /** ADR-0018 §3: one loop, a 60-second tick. */
 export const TICK_INTERVAL_MS = 60_000;
+
+/** Whether reading an applet failed on its stored schedule, rather than on anything else. */
+const isUnreadableSchedule = (error: unknown) =>
+	error instanceof z.ZodError && error.issues.some((issue) => issue.path[0] === "schedule");
 
 export interface Scheduler {
 	/** Fires every due applet once and sweeps expired sessions. Logs a failure; never rejects. */
@@ -27,10 +32,23 @@ export function createScheduler(deps: {
 
 	async function fire(accountId: string, appletId: string, at: number): Promise<void> {
 		const store = db.storeFor(accountId);
-		const applet = await store.applets.get(appletId);
+		// A stored schedule the scheduler can't step would fail every tick, so it is removed, once.
+		const unschedule = async (why: string, error?: unknown) => {
+			await store.applets.setSchedule(appletId, null);
+			logger.error(`Removed the schedule of applet ${appletId}: ${why}`, error);
+		};
+		let applet: Awaited<ReturnType<typeof store.applets.get>>;
+		try {
+			applet = await store.applets.get(appletId);
+		} catch (error) {
+			if (!isUnreadableSchedule(error)) throw error;
+			return unschedule("it could not be read", error);
+		}
 		if (!applet?.schedule) return;
 		// Advancing from now, not the missed slot, collapses a backlog into one run (ADR-0018 §4).
-		await store.applets.setNextRunAt(appletId, nextSlot(applet.schedule, at));
+		const next = nextSlotIfAny(applet.schedule, at);
+		if (next === undefined) return unschedule("it has no next slot");
+		await store.applets.setNextRunAt(appletId, next);
 		await runs.submit(accountId, appletId, "schedule");
 	}
 

@@ -1,4 +1,5 @@
 import { issuesOf, toFormSchema, withMeta } from "@ultrasonics/plugin-sdk";
+import { checkScheduleCount } from "@ultrasonics/server/api";
 import { z } from "zod";
 import type { SaveResult, Schedule } from "./api-client.ts";
 import { pad } from "./clock.ts";
@@ -15,6 +16,9 @@ const fields = z.object({
 	}),
 	time: withMeta(z.string().regex(/^\d{2}:\d{2}$/), { title: "at", placeholder: "07:00" }),
 });
+
+/** What `scheduleOf` accepts: the fields, holding the bound the schedule route holds. */
+const checked = fields.superRefine(checkScheduleCount);
 
 const converted = toFormSchema(fields);
 if (!converted.ok) throw new Error("The schedule form is not renderable");
@@ -41,7 +45,7 @@ export function scheduleFormValue({ unit, count, anchor }: Schedule) {
 
 /** The schedule a form value describes, in the browser's zone (ADR-0018 §1), or why it can't be one. */
 export function scheduleOf(value: unknown): SaveResult<Schedule> {
-	const parsed = fields.safeParse(value);
+	const parsed = checked.safeParse(value);
 	if (!parsed.success) {
 		return { ok: false, issues: issuesOf(parsed.error) };
 	}
