@@ -48,6 +48,14 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/deezer": {
+      "name": "@ultrasonics/plugin-deezer",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/plugins/plex": {
       "name": "@ultrasonics/plugin-plex",
       "version": "0.0.0",
@@ -69,6 +77,7 @@
       "name": "@ultrasonics/registry",
       "version": "0.0.0",
       "dependencies": {
+        "@ultrasonics/plugin-deezer": "workspace:*",
         "@ultrasonics/plugin-plex": "workspace:*",
         "@ultrasonics/plugin-sdk": "workspace:*",
         "@ultrasonics/plugin-spotify": "workspace:*",
@@ -313,6 +322,8 @@
     "@ultrasonics/db": ["@ultrasonics/db@workspace:packages/db"],
 
     "@ultrasonics/matcher": ["@ultrasonics/matcher@workspace:packages/matcher"],
+
+    "@ultrasonics/plugin-deezer": ["@ultrasonics/plugin-deezer@workspace:packages/plugins/deezer"],
 
     "@ultrasonics/plugin-plex": ["@ultrasonics/plugin-plex@workspace:packages/plugins/plex"],
 
