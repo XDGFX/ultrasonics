@@ -50,7 +50,7 @@ const atDeadline: DeadlineTimer = (deadlineMs, signal) =>
 export interface WorkerExecutorOptions {
 	/** The most workers running at once. A call beyond it waits for a slot, in arrival order. */
 	cap?: number;
-	/** When a call's deadline arrives. The soak replaces it to stop each call at a moment it picks. */
+	/** When a call's deadline arrives; replaceable, to stop a call at a moment the caller picks. */
 	deadline?: DeadlineTimer;
 }
 
@@ -87,9 +87,8 @@ export class WorkerExecutor implements PluginExecutor {
 			let settled = false;
 
 			/**
-			 * Settles the call once, by result, crash or deadline. Removing the listeners drops anything
-			 * the worker sends after this (ADR-0031, mitigation 1). The worker is told to stop but never
-			 * awaited (ADR-0010), and its slot is free at once.
+			 * Settles the call once; the worker's later messages are dropped (ADR-0031, mitigation 1) and
+			 * its stop is never awaited (ADR-0010).
 			 */
 			const settle = (result: ExecutionResult) => {
 				if (settled) return;

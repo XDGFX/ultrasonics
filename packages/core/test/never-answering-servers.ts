@@ -28,7 +28,7 @@ const stream = Bun.listen({
 		open(socket) {
 			streamOpen++;
 			socket.write(
-				"HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nTransfer-Encoding: chunked\r\n\r\n",
+				`HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nTransfer-Encoding: chunked\r\n\r\n${chunk}`,
 			);
 			timers.set(
 				socket,

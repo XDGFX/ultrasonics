@@ -87,6 +87,8 @@ interface Run {
 	finishStage(stage: Stage, counts: StageCounts, error?: StageError): void;
 	/** Plugins already warned about stripped keys: one warning per plugin per run (ADR-0021 §2). */
 	warnedStripped: Set<string>;
+	/** Set once a stage times out, which already reports the deadline. */
+	timedOut: boolean;
 }
 
 const components = ["inputs", "modifiers", "outputs"] as const satisfies Component[];
@@ -210,6 +212,7 @@ async function execute(
 	});
 	if (result.ok) return result;
 	if (result.timedOut) {
+		run.timedOut = true;
 		const message = `Stopped at the run's ${RUN_DEADLINE_MS / 60_000}-minute deadline`;
 		return { ok: false, error: { code: "timed-out", message } };
 	}
@@ -315,9 +318,11 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 				...(error ? { error } : {}),
 			}),
 		warnedStripped: new Set(),
+		timedOut: false,
 	};
 	const end = (status: RunOutcome): RunOutcome => {
-		if (now() > deadlineMs)
+		// After the fact, for an executor that does not enforce the deadline.
+		if (!run.timedOut && now() > deadlineMs)
 			log("warn", `The run went past its ${RUN_DEADLINE_MS / 60_000}-minute deadline`);
 		emit({ type: "end", status });
 		return status;

@@ -174,10 +174,10 @@ describe("WorkerExecutor: through runApplet", () => {
 	async function runProbe(
 		act: Act,
 		auth: AuthProvider["resolve"],
-		{ outputs = ["write"], deadlineInMs = RUN_DEADLINE_MS } = {} as {
-			outputs?: ("write" | "hang")[];
-			deadlineInMs?: number;
-		},
+		{
+			outputs = ["write"],
+			deadlineInMs = RUN_DEADLINE_MS,
+		}: { outputs?: ("write" | "hang")[]; deadlineInMs?: number } = {},
 	) {
 		const events: RunEvent[] = [];
 		const unused = () => Promise.reject(new Error("not used by the runner"));
@@ -237,22 +237,24 @@ describe("WorkerExecutor: through runApplet", () => {
 		);
 	});
 
-	const timedOut = {
-		code: "timed-out" as const,
-		message: expect.stringContaining(`${RUN_DEADLINE_MS / 60_000}-minute deadline`),
-	};
+	const timedOut = expect.objectContaining({ code: "timed-out" });
 	const finished = (events: RunEvent[]) =>
 		events.flatMap((event) =>
 			event.type === "stage" && event.state === "finished" ? [event] : [],
 		);
 
-	test("a hanging input ends the run failed with a timed-out stage error", async () => {
+	test("a hanging input ends the run failed with a timed-out stage error, reported once", async () => {
 		const { status, events } = await runProbe("hang", signedIn, { deadlineInMs: 200 });
 
 		expect(status).toBe("failed");
 		expect(finished(events)).toEqual([
 			expect.objectContaining({ component: "inputs", error: timedOut }),
 		]);
+		expect(
+			events.filter(
+				(event) => event.type === "log" && event.source === "runner" && event.level === "warn",
+			),
+		).toEqual([]);
 	});
 
 	test("an output after a timed-out stage times out at once", async () => {

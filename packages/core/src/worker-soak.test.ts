@@ -7,6 +7,7 @@ import type { HostPort, RunPayload } from "@ultrasonics/plugin-sdk";
 import { IN_FETCH } from "../test/worker-plugins/fetch-forever.ts";
 import { songs } from "../test/worker-plugins/probe.ts";
 import type { ExecutionResult, RegistryEntry } from "./plugin-executor.ts";
+import { RUN_DEADLINE_MS } from "./runner.ts";
 import { type DeadlineTimer, WorkerExecutor } from "./worker-executor.ts";
 
 const SEQUENTIAL = 300;
@@ -16,6 +17,8 @@ const BURST_SIZE = 16;
 const MAX_STOP_DELAY_MS = 20;
 /** The acceptance bound on CI's runner. */
 const SOAK_BUDGET_MS = 15_000;
+/** Long past any spawn, so a call that has not reached its fetch by then never will. */
+const STALLED_MS = 2_000;
 
 const entry = (name: string): RegistryEntry => {
 	const path = new URL(`../test/worker-plugins/${name}.ts`, import.meta.url).href;
@@ -84,34 +87,52 @@ test(
 			});
 		const executor = new WorkerExecutor({ cap: BURST_SIZE, deadline });
 		const fetchForever = entry("fetch-forever");
-		const far = Date.now() + 60 * 60 * 1000;
+		const far = Date.now() + RUN_DEADLINE_MS;
 		let calls = 0;
+		let neverInFetch = 0;
 
-		const call = (mode: Mode): Promise<ExecutionResult> => {
+		const call = async (mode: Mode): Promise<ExecutionResult> => {
 			const deadlineMs = far + calls++;
-			return executor.run(
+			// A call that never reaches its fetch is stopped anyway, and counted, so it fails the soak
+			// with a reason instead of stalling it.
+			const fallback = setTimeout(() => {
+				neverInFetch++;
+				stops.get(deadlineMs)?.();
+			}, STALLED_MS);
+			const result = await executor.run(
 				fetchForever,
 				{ ...base, deadlineMs, instance: { url: servers[mode], mode } },
 				{
 					...ignored,
 					log: ({ message }) => {
 						if (message !== IN_FETCH) return;
+						clearTimeout(fallback);
 						setTimeout(() => stops.get(deadlineMs)?.(), Math.random() * MAX_STOP_DELAY_MS);
 					},
 				},
 			);
+			clearTimeout(fallback);
+			return result;
 		};
 
 		await openSockets(); // Its keep-alive connection is part of the baseline.
 		const baseline = descriptors();
+		const started = performance.now();
 		const results: ExecutionResult[] = [];
 		for (let i = 0; i < SEQUENTIAL; i++) results.push(await call(i % 2 ? "hang" : "stream"));
+		const sequentialMs = performance.now() - started;
 		for (let burst = 0; burst < BURSTS; burst++) {
 			const modes = Array.from({ length: BURST_SIZE }, (_, i): Mode => (i % 2 ? "hang" : "stream"));
 			results.push(...(await Promise.all(modes.map(call))));
 		}
+		const burstsMs = performance.now() - started - sequentialMs;
+		console.log(
+			`Soak: ${SEQUENTIAL} sequential calls in ${Math.round(sequentialMs)} ms, ` +
+				`${BURSTS} bursts of ${BURST_SIZE} in ${Math.round(burstsMs)} ms`,
+		);
 
 		expect(results).toHaveLength(SEQUENTIAL + BURSTS * BURST_SIZE);
+		expect(neverInFetch).toBe(0);
 		expect(results.filter((result) => result.ok || !result.timedOut)).toEqual([]);
 		expect(await settlesTo(openSockets, 0)).toBe(0);
 		expect(await settlesTo(descriptors, baseline)).toBe(baseline);
@@ -121,6 +142,8 @@ test(
 			{ ...ignored, log: () => {} },
 		);
 		expect(fresh).toEqual({ ok: true, value: songs(1) });
+		expect(performance.now() - started).toBeLessThan(SOAK_BUDGET_MS);
 	},
-	SOAK_BUDGET_MS,
+	// Past the budget, so a slow soak fails on the assertion above with its timings logged.
+	SOAK_BUDGET_MS * 4,
 );
