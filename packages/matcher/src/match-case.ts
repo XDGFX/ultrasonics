@@ -44,7 +44,7 @@ export const Rule = z.enum([
 export type Rule = z.output<typeof Rule>;
 
 /** A shared `id` or `location` would short-circuit to a hard match the dataset isn't measuring. */
-const CaseSong = Song.refine(
+export const CaseSong = Song.refine(
 	(song) => Object.keys(song.id).length === 0 && song.location === undefined,
 	"A song in a match case carries no id and no location",
 );

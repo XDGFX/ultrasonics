@@ -7,6 +7,10 @@ and track titles, artist credits, lengths, ISRCs, release titles and dates, and 
 No tags, ratings or annotations, which are CC BY-NC-SA, are included.
 `scripts/build-cc0-tier.ts` regenerates it.
 
+`candidate-sets.json` is built from `musicbrainz.json` and the same MusicBrainz core data (release
+titles, dates, track titles and lengths), so it is CC0 too. `scripts/build-candidate-sets.ts`
+regenerates it.
+
 `hand-written.json` was written by the project's contributors, with no data copied from any
 service, and is under the repository's licence.
 
