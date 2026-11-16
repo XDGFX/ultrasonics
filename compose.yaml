@@ -13,6 +13,10 @@ services:
       # The database (ultrasonics-v2.db), its key file and plugin data. Back this directory up.
       # Upgrading from v1 keeps v1's directory here: v2 reads v1's ultrasonics.db and never changes it.
       - ./config:/config
+      # The local playlists and local music database plugins see only what is mounted here. Mount
+      # your music and playlist folders, then use these container paths in the plugins' settings.
+      # - /path/to/music:/music
+      # - /path/to/playlists:/playlists
     environment:
       # Encrypts your service credentials at rest. `auto` keeps a generated key in
       # ./config/ultrasonics.key, so a backup of ./config carries it. To keep the key apart from

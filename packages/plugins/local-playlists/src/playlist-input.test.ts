@@ -2,16 +2,9 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { cpSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-	createRunContext,
-	type LogEntry,
-	type Plugin,
-	RunPayload,
-	type SongDictInput,
-	toFileUri,
-} from "@ultrasonics/plugin-sdk";
-import localPlaylists from "./index.ts";
+import { type SongDictInput, toFileUri } from "@ultrasonics/plugin-sdk";
 import { mappingHint } from "./playlist-input.ts";
+import { lines, readInputs } from "./test-support.ts";
 
 const fixtures = join(import.meta.dir, "../test/fixtures");
 
@@ -32,43 +25,6 @@ function seed(): { music: string; playlists: string } {
 	cpSync(join(music, "untagged.mp3"), join(music, "Fête.mp3"));
 	return { music, playlists };
 }
-
-interface Read {
-	songs: SongDictInput;
-	logs: LogEntry[];
-}
-
-/** Runs the `inputs` handler through the SDK harness, settings parsed as the runner parses them. */
-async function readInputs(
-	instance: Record<string, unknown>,
-	persistent: Record<string, unknown> = {},
-): Promise<Read> {
-	const plugin: Plugin = localPlaylists;
-	const logs: LogEntry[] = [];
-	const payload = RunPayload.parse({
-		component: "inputs",
-		appletId: "applet",
-		runId: "run",
-		deadlineMs: Date.now() + 60_000,
-		configDir: "/nonexistent",
-		persistent: plugin.persistentSettings?.parse(persistent),
-		instance: plugin.instanceSettings.inputs?.parse(instance),
-	});
-	const context = createRunContext(
-		payload,
-		{
-			credentials: () => Promise.reject(new Error("local-playlists has no auth")),
-			log: (entry) => logs.push(entry),
-		},
-		{ declaresAuth: false },
-	);
-	const songs = await plugin.run.inputs?.(context);
-	if (songs === undefined) throw new Error("local-playlists has no inputs handler");
-	return { songs, logs };
-}
-
-const lines = (logs: LogEntry[], level: LogEntry["level"]) =>
-	logs.filter((entry) => entry.level === level).map((entry) => entry.message);
 
 const playlistNamed = (songs: SongDictInput, name: string) =>
 	songs.playlists.find((playlist) => playlist.name === name);

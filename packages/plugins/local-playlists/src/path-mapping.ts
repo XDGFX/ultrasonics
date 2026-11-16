@@ -48,6 +48,11 @@ export function toLocalPath(path: string, { playlistRoot, localRoot }: PathMappi
 	return playlistRoot && localRoot ? mapPath(path, playlistRoot, localRoot) : path;
 }
 
+/** A path ultrasonics opens, as the player's playlists name it. */
+export function toPlayerPath(path: string, { playlistRoot, localRoot }: PathMapping): string {
+	return playlistRoot && localRoot ? mapPath(path, localRoot, playlistRoot) : path;
+}
+
 function trimSeparators(path: string, windows: boolean): string {
 	return path.replace(windows ? /[\\/]+$/ : /\/+$/, "");
 }
