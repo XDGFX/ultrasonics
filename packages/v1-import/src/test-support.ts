@@ -112,7 +112,10 @@ export interface ImportHarness {
 	v2Path: string;
 	db: OpenDatabase;
 	logger: ReturnType<typeof recordingLogger>;
-	run(overrides?: Partial<V1ImportOptions>): ReturnType<typeof importWith>;
+	run(
+		overrides?: Partial<V1ImportOptions>,
+		mappings?: readonly Mapping<string>[],
+	): ReturnType<typeof importWith>;
 }
 
 /** A fresh data directory with an open v2 database, removed after each test. */
@@ -139,7 +142,7 @@ export function useImport(): () => Promise<ImportHarness> {
 			v2Path,
 			db,
 			logger,
-			run: (overrides = {}) =>
+			run: (overrides = {}, mappings = fixtureMappings) =>
 				importWith(
 					{
 						db,
@@ -151,7 +154,7 @@ export function useImport(): () => Promise<ImportHarness> {
 						now: () => Date.UTC(2026, 10, 16, 2, 48, 52),
 						...overrides,
 					},
-					fixtureMappings,
+					mappings,
 				),
 		};
 	};

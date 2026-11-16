@@ -270,7 +270,7 @@ export function planImport(v1: V1Database, context: PlanContext, report: Report)
 			if (Bun.deepEquals(settings, winner.settings)) continue;
 			const users = usedBy.get(key(row.plugin, row.version)) ?? [];
 			report.pluginSettings.push(
-				`${row.plugin} ${row.version} had different settings from ${from}, whose settings were imported.${users.length > 0 ? ` Applets that used ${row.version}: ${users.join(", ")}.` : ""}`,
+				`${row.plugin} ${row.version} had different settings from ${from}, whose settings were imported.${users.length > 0 ? ` These applets used ${row.version} and now use ${from}'s settings: ${users.join(", ")}.` : ""}`,
 			);
 		}
 	}
