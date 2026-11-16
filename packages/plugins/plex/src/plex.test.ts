@@ -546,6 +546,60 @@ describe("failures", () => {
 		expect(error).toMatchObject({ code: "invalid-credentials" });
 	});
 
+	describe("a redirect is refused, so the token never reaches the host it points at", () => {
+		let elsewhere: FakePlex | undefined;
+		afterEach(async () => {
+			await elsewhere?.stop();
+			elsewhere = undefined;
+		});
+
+		/** A second server, and a redirect to it carrying a query that must not be repeated. */
+		function redirectElsewhere(status: number) {
+			elsewhere = startFakePlex();
+			const location = `${elsewhere.url}login?rd=secret-query`;
+			return () => new Response(null, { status, headers: { Location: location } });
+		}
+
+		test("on connect, the run throws misconfigured, naming both origins and no secret", async () => {
+			const server = serve(on("GET", "/", redirectElsewhere(302)));
+			const error = await runOutput(server, playlist("Mix", [sneakySnitch])).catch(
+				(thrown: unknown) => thrown,
+			);
+
+			expect(elsewhere?.requests).toEqual([]);
+			expect(error).toMatchObject({ code: "misconfigured" });
+			const { message } = error as Error;
+			expect(message).toContain(new URL(server.url).origin);
+			expect(message).toContain(new URL(elsewhere?.url ?? "http://unset").origin);
+			expect(message).not.toContain("secret-query");
+			expect(message).not.toContain(fakeToken);
+		});
+
+		test("on a write, that playlist fails and nothing is replayed", async () => {
+			const server = serve(on("POST", "/playlists", redirectElsewhere(307)));
+			const { result } = await runOutput(server, playlist("Mix", [sneakySnitch]));
+
+			expect(elsewhere?.requests).toEqual([]);
+			expect(result.playlists[0]).toMatchObject({ status: "failed", code: "service-error" });
+		});
+
+		test("test() reports misconfigured", async () => {
+			const server = serve(on("GET", "/", redirectElsewhere(308)));
+			const context = createTestContext(
+				{ persistent: {}, configDir: "/nonexistent" },
+				{
+					credentials: async () => grant({ serverUrl: server.url, token: fakeToken }),
+					log: () => {},
+				},
+				{ declaresAuth: true },
+			);
+			const result = await plugin.test?.(context);
+
+			expect(elsewhere?.requests).toEqual([]);
+			expect(result).toMatchObject({ ok: false, code: "misconfigured" });
+		});
+	});
+
 	test("the token travels only in its header, never in a URL, log line or message", async () => {
 		const server = serve(
 			on("POST", "/playlists", () => new Response(null, { status: 500 })),
