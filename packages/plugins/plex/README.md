@@ -3,6 +3,20 @@
 The `plex` plugin writes playlists to a Plex Media Server. Its contract is spec #114. This file
 records the rules a user of the output can see that the settings don't explain.
 
+## The server URL
+
+The server URL may be any `http` or `https` address, including private, loopback and LAN ones,
+since a self-hosted Plex usually lives on the LAN (#168). Since it can point at anything, the
+client treats what answers as untrusted:
+
+- It reads at most 64 MiB of any response body (`maxResponseBytes`), then fails the request.
+- Its error messages give the server URL's origin, the request and the HTTP status, and nothing
+  else from the response: an answer that isn't a Plex response gets one message whatever it held,
+  and a redirect is refused without naming where it pointed.
+
+The hosted tier must block internal addresses for user-supplied service URLs before it ships
+(#135).
+
 ## Which Plex playlist a source playlist is written to
 
 The output links each source playlist to the Plex playlist it writes it to, so two source

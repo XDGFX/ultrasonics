@@ -26,6 +26,7 @@ import {
 } from "../test/fake-plex.ts";
 import plex from "./index.ts";
 import { batchSize } from "./playlist-output.ts";
+import { maxResponseBytes, PlexError } from "./plex-client.ts";
 
 /** The plugin as the runner holds it, so its handlers take the contexts the harness builds. */
 const plugin: Plugin = plex;
@@ -763,7 +764,7 @@ describe("failures", () => {
 			return () => new Response(null, { status, headers: { Location: location } });
 		}
 
-		test("on connect, the run throws misconfigured, naming both origins and no secret", async () => {
+		test("on connect, the run throws misconfigured, naming the server and nothing the redirect said", async () => {
 			const server = serve(on("GET", "/", redirectElsewhere(302)));
 			const error = await runOutput(server, playlist("Mix", [sneakySnitch])).catch(
 				(thrown: unknown) => thrown,
@@ -773,7 +774,8 @@ describe("failures", () => {
 			expect(error).toMatchObject({ code: "misconfigured" });
 			const { message } = error as Error;
 			expect(message).toContain(new URL(server.url).origin);
-			expect(message).toContain(new URL(elsewhere?.url ?? "http://unset").origin);
+			// The target comes from the answer's `Location`, which is response content.
+			expect(message).not.toContain(new URL(elsewhere?.url ?? "http://unset").origin);
 			expect(message).not.toContain("secret-query");
 			expect(message).not.toContain(fakeToken);
 		});
@@ -800,6 +802,83 @@ describe("failures", () => {
 
 			expect(elsewhere?.requests).toEqual([]);
 			expect(result).toMatchObject({ ok: false, code: "misconfigured" });
+		});
+	});
+
+	describe("whatever answers at the server URL, a response can't fill memory or be read back", () => {
+		/** A body that never ends: a server that streams until the request gives up. */
+		function endless(): Response {
+			const chunk = new Uint8Array(1024 * 1024).fill(0x20);
+			return new Response(
+				new ReadableStream({
+					pull(controller) {
+						controller.enqueue(chunk);
+					},
+				}),
+				{ headers: { "Content-Type": "application/json" } },
+			);
+		}
+
+		test("a body longer than the cap fails the request, without reading the rest", async () => {
+			const server = serve(on("GET", "/", endless));
+			const error = await runOutput(server, playlist("Mix", [sneakySnitch])).catch(
+				(thrown: unknown) => thrown,
+			);
+
+			expect(error).toMatchObject({ code: "service-error" });
+			expect((error as Error).message).toContain(`${maxResponseBytes / 1024 / 1024} MiB`);
+		});
+
+		test("a body cut off partway fails as unreachable, like a request that got no answer", async () => {
+			// A raw socket, since `Bun.serve` ends a failed stream cleanly: it promises a body it never sends.
+			const dropping = Bun.listen({
+				hostname: "127.0.0.1",
+				port: 0,
+				socket: {
+					data(socket) {
+						socket.write('HTTP/1.1 200 OK\r\nContent-Length: 1000\r\n\r\n{"MediaContainer":');
+						socket.end();
+					},
+				},
+			});
+			try {
+				const error = await runOutput(
+					serve(),
+					playlist("Mix", [sneakySnitch]),
+					{},
+					{
+						serverUrl: `http://127.0.0.1:${dropping.port}/`,
+						token: fakeToken,
+					},
+				).catch((thrown: unknown) => thrown);
+
+				expect(error).toBeInstanceOf(PlexError);
+				expect(error).toMatchObject({ code: "unreachable" });
+			} finally {
+				dropping.stop(true);
+			}
+		});
+
+		test("an answer that isn't Plex's reads the same whatever it held, and echoes none of it", async () => {
+			const marker = "internal-service-banner";
+			const answers = [
+				() => new Response(`<html>${marker}</html>`, { headers: { "Content-Type": "text/html" } }),
+				() => Response.json({ [marker]: marker }),
+			];
+			const messages: string[] = [];
+			for (const answer of answers) {
+				const server = serve(on("GET", "/", answer));
+				const error = await runOutput(server, playlist("Mix", [sneakySnitch])).catch(
+					(thrown: unknown) => thrown,
+				);
+				await server.stop();
+				expect(error).toMatchObject({ code: "service-error" });
+				messages.push((error as Error).message);
+			}
+
+			const [html, json] = messages;
+			expect(html).toBe(json ?? "");
+			expect(html).not.toContain(marker);
 		});
 	});
 
