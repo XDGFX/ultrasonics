@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { v1ImportStore } from "@ultrasonics/db/v1-import";
 import type { Plugin } from "@ultrasonics/plugin-sdk";
 import { officialPlugins } from "@ultrasonics/registry";
+import { importWith } from "../import-v1.ts";
 import type { Mapping } from "../mapping.ts";
 import { REPORT_FILE } from "../report.ts";
 import {
@@ -33,7 +34,7 @@ describe("the Plex mapping", () => {
 		buildV1Database(h.v1Path, fixture);
 		const plex = (await officialPlugins.plex.load()).default;
 		const plugins = new Map<string, Plugin>([...fixturePlugins, ["plex", plex]]);
-		const outcome = await h.run({ plugins }, mappings);
+		const outcome = await importWith(h.options({ plugins }), mappings);
 		const [accountId] = await v1ImportStore(h.db).accountIds();
 		if (!accountId) throw new Error("no account");
 		const store = h.db.storeFor(accountId);

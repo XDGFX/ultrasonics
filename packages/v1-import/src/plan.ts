@@ -2,6 +2,7 @@ import { JsonObject, type Schedule, type Slot } from "@ultrasonics/db";
 import type { V1ImportWrite } from "@ultrasonics/db/v1-import";
 import { Component, issuesOf, type Plugin } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
+import { DROPPED_PLUGINS } from "./dropped.ts";
 import type { Mapping } from "./mapping.ts";
 import type { Report } from "./report.ts";
 import { parseRepr, ReprError } from "./repr.ts";
@@ -107,13 +108,27 @@ export function planImport(v1: V1Database, context: PlanContext, report: Report)
 	const plan: ImportPlan = { applets: [], pluginSettings: [], grants: [] };
 	const persistent = readPersistent(v1, report);
 	const mappingFor = (name: string, version: string) =>
-		mappings.find((mapping) => mapping.accepts(name, version) && plugins.has(mapping.plugin));
+		DROPPED_PLUGINS.has(name)
+			? undefined
+			: mappings.find((mapping) => mapping.accepts(name, version) && plugins.has(mapping.plugin));
 
 	/** Which applets used each v1 plugin version, for the report's note on older settings. */
 	const usedBy = new Map<string, string[]>();
 	const setups = new Set<Mapping<string>>();
 
 	const planApplet = (applet: V1Applet, name: string) => {
+		// Before anything else, so the reason is given wherever in the applet the plugin sits.
+		const dropped = new Set(
+			Component.options.flatMap((component) => applet[component].map(({ plugin }) => plugin)),
+		)
+			.values()
+			.flatMap((plugin) => {
+				const reason = DROPPED_PLUGINS.get(plugin);
+				return reason ? [`It uses ${plugin}, which v2 dropped. ${reason}`] : [];
+			})
+			.toArray();
+		if (dropped.length > 0) throw new Skip(dropped.join(" "));
+
 		const notes: string[] = [];
 		const used = new Set<Mapping<string>>();
 		const slots = (component: Component): Slot[] =>
