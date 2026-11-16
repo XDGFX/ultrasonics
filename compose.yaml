@@ -7,6 +7,10 @@ services:
       context: .
       dockerfile: packages/server/Dockerfile
     restart: unless-stopped
+    # Each plugin runs in its own worker, but Bun can't cap a worker's heap, so this limit is what
+    # stops one plugin taking the host's memory. At it, the container restarts and the cut-short run
+    # shows as interrupted.
+    mem_limit: 1g
     ports:
       - "5000:5000"
     volumes:

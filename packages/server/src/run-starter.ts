@@ -1,4 +1,4 @@
-import { type RunQueue, runApplet } from "@ultrasonics/core";
+import { type PluginExecutor, type RunQueue, runApplet } from "@ultrasonics/core";
 import type { OpenDatabase, RunTrigger } from "@ultrasonics/db";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import type { RunNowResult } from "./api.ts";
@@ -20,6 +20,7 @@ export interface RunStarterDeps {
 	pkce: PkceFlow;
 	dataDir: string;
 	logger: Logger;
+	executor: PluginExecutor;
 }
 
 export interface RunStarter {
@@ -41,7 +42,7 @@ export interface RunStarter {
 }
 
 export function createRunStarter(deps: RunStarterDeps): RunStarter {
-	const { db, registry, catalogue, queue, hub, pkce, dataDir, logger } = deps;
+	const { db, registry, catalogue, queue, hub, pkce, dataDir, logger, executor } = deps;
 	const operator = operatorSettings(db);
 	const active = new Set<Promise<void>>();
 	/** Applets whose queued run absorbed a run now, which records only the first trigger. */
@@ -85,6 +86,7 @@ export function createRunStarter(deps: RunStarterDeps): RunStarter {
 				applet: { id: applet.id, name: applet.name, definition: applet.definition },
 				trigger,
 				registry,
+				executor,
 				capabilities: {
 					auth: await createLocalAuthProvider({
 						accountId,

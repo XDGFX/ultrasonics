@@ -5,6 +5,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
+// biome-ignore lint/style/noRestrictedImports: the contract test boots the real server; no screen imports it, so it never reaches the bundle.
+import { InProcessExecutor } from "@ultrasonics/core";
 import {
 	defineAuth,
 	definePlugin,
@@ -141,6 +143,8 @@ export function useContractServer(): () => Promise<{
 				PORT: "0",
 			},
 			registry: registryOf(source, sink, plex, spotify),
+			// The fixtures' paths are made up, so they run in-process rather than in workers.
+			executor: new InProcessExecutor(),
 			logger: silent,
 			webRoot: join(dir, "no-web-root"),
 		});

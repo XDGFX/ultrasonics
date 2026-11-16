@@ -3,10 +3,19 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { InProcessExecutor } from "@ultrasonics/core";
 import { type AccountStore, openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
 import { defineAuth, definePlugin } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
-import { fixtureRegistry, holds, plex, registryOf, source } from "../test/fixture-plugins.ts";
+import {
+	exitsEntry,
+	fixtureRegistry,
+	holds,
+	plex,
+	registryOf,
+	source,
+} from "../test/fixture-plugins.ts";
+import { EXIT_CODE } from "../test/worker-plugins/exits.ts";
 import { type Applet, type AppletListing, type RunNowResult, RunSummary } from "./api.ts";
 import { type BootResult, boot, LISTENING } from "./boot.ts";
 import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL, V1_DATABASE_FILE } from "./configuration.ts";
@@ -218,6 +227,7 @@ describe("boot", () => {
 			env: { DATA_DIR: dataDir, PORT: "0", ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" },
 			registry: fixtureRegistry,
 			logger: recordingLogger(),
+			executor: new InProcessExecutor(),
 		});
 		if (!booted.ok) throw new Error(JSON.stringify(booted.problems));
 		const { url } = booted.server;
@@ -229,6 +239,47 @@ describe("boot", () => {
 		});
 		const runs = await withStore((store) => store.runs.listForApplet(appletId));
 		expect(runs.map((run) => run.trigger)).toEqual(["schedule"]);
+	});
+
+	test("a plugin that exits its process fails its own run, and the server carries on", async () => {
+		const result = await bootWith(
+			{ ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" },
+			{ ...fixtureRegistry, exits: exitsEntry },
+		);
+		if (!result.ok) throw new Error(JSON.stringify(result.problems));
+		const { url } = result.server;
+		const { id: appletId } = await post<Applet>(url, "/api/applets", {
+			name: "exits",
+			enabled: true,
+			definition: {
+				inputs: [{ plugin: "exits", settings: {} }],
+				modifiers: [],
+				outputs: [{ plugin: "sink", settings: {} }],
+			},
+		});
+		const started = await post<RunNowResult>(url, `/api/applets/${appletId}/run`);
+		if (started.kind !== "started") throw new Error(`run now answered ${started.kind}`);
+
+		await eventually(async () => {
+			const response = await fetch(new URL(`/api/runs/${started.runId}`, url));
+			expect(RunSummary.parse(await response.json()).status).toBe("failed");
+		});
+		expect((await fetch(new URL("/api/applets", url))).status).toBe(200);
+
+		await result.stop();
+		booted = undefined;
+		const run = await storedRun(started.runId);
+		expect(run?.stages).toContainEqual(
+			expect.objectContaining({
+				type: "stage",
+				plugin: "exits",
+				state: "finished",
+				error: {
+					code: "threw",
+					message: expect.stringContaining(String(EXIT_CODE)),
+				},
+			}),
+		);
 	});
 
 	test("a settings schema outside the renderable subset aborts boot with its path", async () => {
@@ -277,6 +328,8 @@ describe("boot", () => {
 			env: env({ ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" }),
 			registry: fixtureRegistry,
 			logger: recordingLogger(),
+			// The held input waits on this thread's `holds`, which a worker cannot reach.
+			executor: new InProcessExecutor(),
 			shutdownGraceMs: 0,
 		});
 		if (!booted.ok) throw new Error(JSON.stringify(booted.problems));
