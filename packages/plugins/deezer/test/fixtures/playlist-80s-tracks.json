@@ -1,0 +1,1704 @@
+{
+  "data": [
+    {
+      "id": 664107,
+      "readable": true,
+      "title": "Take on Me",
+      "isrc": "USWB19901214",
+      "duration": 227,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3106,
+        "name": "a-ha"
+      },
+      "album": {
+        "id": 80521,
+        "title": "Hunting High and Low"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4209638,
+      "readable": false,
+      "title": "Into the Groove",
+      "isrc": "USWB10903605",
+      "duration": 285,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 290,
+        "name": "Madonna"
+      },
+      "album": {
+        "id": 392083,
+        "title": "Celebration (double disc version)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 14638333,
+      "readable": false,
+      "title": "A Little Respect (2009 Remaster)",
+      "isrc": "USRHD0900082",
+      "duration": 212,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2456,
+        "name": "Erasure"
+      },
+      "album": {
+        "id": 1347563,
+        "title": "Pop Deluxe Box"
+      },
+      "type": "track"
+    },
+    {
+      "id": 119121832,
+      "readable": true,
+      "title": "You Can't Hurry Love (2016 Remaster)",
+      "isrc": "USRH11509315",
+      "duration": 175,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 186,
+        "name": "Phil Collins"
+      },
+      "album": {
+        "id": 12399656,
+        "title": "Hello, I Must Be Going! (Deluxe Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 781592622,
+      "readable": false,
+      "title": "Never Gonna Give You Up",
+      "isrc": "GBARL9300135",
+      "duration": 213,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 6160,
+        "name": "Rick Astley"
+      },
+      "album": {
+        "id": 115888392,
+        "title": "The Best of Me"
+      },
+      "type": "track"
+    },
+    {
+      "id": 428850812,
+      "readable": true,
+      "title": "She Drives Me Crazy",
+      "isrc": "USRH10901907",
+      "duration": 215,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1637,
+        "name": "Fine Young Cannibals"
+      },
+      "album": {
+        "id": 51653032,
+        "title": "The Raw & The Cooked"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3142379,
+      "readable": true,
+      "title": "The Best",
+      "isrc": "USCA28900109",
+      "duration": 333,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1454,
+        "name": "Tina Turner"
+      },
+      "album": {
+        "id": 302597,
+        "title": "Tina!"
+      },
+      "type": "track"
+    },
+    {
+      "id": 664178,
+      "readable": true,
+      "title": "Kiss",
+      "isrc": "USWB19903319",
+      "duration": 226,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1878,
+        "name": "Prince"
+      },
+      "album": {
+        "id": 80527,
+        "title": "Parade - Music from the Motion Picture Under the Cherry Moon"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3129542,
+      "readable": true,
+      "title": "It's My Life",
+      "isrc": "GBAYE8400109",
+      "duration": 232,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 8215,
+        "name": "Talk Talk"
+      },
+      "album": {
+        "id": 301761,
+        "title": "The Very Best Of"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3100222,
+      "readable": false,
+      "title": "The Look",
+      "isrc": "SEAME8878010",
+      "duration": 237,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1755,
+        "name": "Roxette"
+      },
+      "album": {
+        "id": 299917,
+        "title": "Look Sharp!"
+      },
+      "type": "track"
+    },
+    {
+      "id": 1224846622,
+      "readable": false,
+      "title": "Always On My Mind",
+      "isrc": "GBAYE8700080",
+      "duration": 234,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 986,
+        "name": "Pet Shop Boys"
+      },
+      "album": {
+        "id": 203451262,
+        "title": "100 Greatest Feel Good"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4127469,
+      "readable": true,
+      "title": "Save a Prayer (2009 Remaster)",
+      "isrc": "GBAYE0901094",
+      "duration": 333,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 596,
+        "name": "Duran Duran"
+      },
+      "album": {
+        "id": 384432,
+        "title": "Rio (Collector's Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3166637,
+      "readable": true,
+      "title": "True",
+      "isrc": "GBAYK8300039",
+      "duration": 365,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3334,
+        "name": "Spandau Ballet"
+      },
+      "album": {
+        "id": 304134,
+        "title": "The Twelve Inch Mixes"
+      },
+      "type": "track"
+    },
+    {
+      "id": 776220,
+      "readable": true,
+      "title": "Ain't Nobody",
+      "isrc": "USWB19600662",
+      "duration": 280,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3536,
+        "name": "Chaka Khan"
+      },
+      "album": {
+        "id": 91045,
+        "title": "Epiphany: The Best of Chaka Khan, Vol. 1"
+      },
+      "type": "track"
+    },
+    {
+      "id": 973431102,
+      "readable": false,
+      "title": "Blue Monday '88",
+      "isrc": "GBAAP1500077",
+      "duration": 252,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2016,
+        "name": "New Order"
+      },
+      "album": {
+        "id": 151108992,
+        "title": "Music You Can Dance To"
+      },
+      "type": "track"
+    },
+    {
+      "id": 130426148,
+      "readable": false,
+      "title": "Our House",
+      "isrc": "USGF18200301",
+      "duration": 199,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1825,
+        "name": "Madness"
+      },
+      "album": {
+        "id": 13834966,
+        "title": "Madness"
+      },
+      "type": "track"
+    },
+    {
+      "id": 701763002,
+      "readable": true,
+      "title": "Love Shack (Edit; 2019 Remaster)",
+      "isrc": "USRH11901970",
+      "duration": 262,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1743,
+        "name": "The B-52's"
+      },
+      "album": {
+        "id": 101414472,
+        "title": "Cosmic Thing (30th Anniversary Expanded Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 341017531,
+      "readable": true,
+      "title": "Everywhere (2017 Remaster)",
+      "isrc": "USRH11602189",
+      "duration": 226,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 169,
+        "name": "Fleetwood Mac"
+      },
+      "album": {
+        "id": 38690691,
+        "title": "Tango in the Night (2017 Remaster)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2627636,
+      "readable": true,
+      "title": "Glory of Love",
+      "isrc": "USWB10000619",
+      "duration": 258,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 4661,
+        "name": "Peter Cetera"
+      },
+      "album": {
+        "id": 255615,
+        "title": "Solitude / Solitaire"
+      },
+      "type": "track"
+    },
+    {
+      "id": 647871572,
+      "readable": true,
+      "title": "Forever Young (2019 Remaster)",
+      "isrc": "DEA621800676",
+      "duration": 226,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2580,
+        "name": "Alphaville"
+      },
+      "album": {
+        "id": 90195792,
+        "title": "Forever Young (Super Deluxe Edition; 2019 Remaster)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 474178182,
+      "readable": true,
+      "title": "Drive (2017 Remaster)",
+      "isrc": "USEE11700317",
+      "duration": 234,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 570,
+        "name": "The Cars"
+      },
+      "album": {
+        "id": 59184922,
+        "title": "Heartbeat City (Expanded Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 740198,
+      "readable": true,
+      "title": "Don't Get Me Wrong (2007 Remaster)",
+      "isrc": "GBAHT0700200",
+      "duration": 227,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 315929,
+        "name": "Pretenders"
+      },
+      "album": {
+        "id": 87855,
+        "title": "Get Close (Expanded & Remastered)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 14619296,
+      "readable": false,
+      "title": "Only You",
+      "isrc": "GBAJH0100180",
+      "duration": 195,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 163905557,
+        "name": "Yaz"
+      },
+      "album": {
+        "id": 1345745,
+        "title": "Upstairs At Eric's"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2173954687,
+      "readable": true,
+      "title": "Running Up That Hill (A Deal With God)",
+      "isrc": "GBCNR8500002",
+      "duration": 298,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1049,
+        "name": "Kate Bush"
+      },
+      "album": {
+        "id": 413452427,
+        "title": "Hounds Of Love"
+      },
+      "type": "track"
+    },
+    {
+      "id": 701738982,
+      "readable": false,
+      "title": "Hand on Your Heart",
+      "isrc": "GBBTK0900061",
+      "duration": 231,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 479,
+        "name": "Kylie Minogue"
+      },
+      "album": {
+        "id": 101411792,
+        "title": "Step Back in Time: The Definitive Collection"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4209658,
+      "readable": false,
+      "title": "Material Girl",
+      "isrc": "USWB10903617",
+      "duration": 240,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 290,
+        "name": "Madonna"
+      },
+      "album": {
+        "id": 392083,
+        "title": "Celebration (double disc version)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4127462,
+      "readable": true,
+      "title": "Rio (2009 Remaster)",
+      "isrc": "GBAYE0901087",
+      "duration": 337,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 596,
+        "name": "Duran Duran"
+      },
+      "album": {
+        "id": 384432,
+        "title": "Rio (Collector's Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 1882123117,
+      "readable": false,
+      "title": "Somewhere in My Heart",
+      "isrc": "GBDL58300056",
+      "duration": 242,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 12940,
+        "name": "Aztec Camera"
+      },
+      "album": {
+        "id": 349904677,
+        "title": "Love"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2173385647,
+      "readable": true,
+      "title": "Let's Dance (Single Version, 2014 Remaster)",
+      "isrc": "USJT11400016",
+      "duration": 248,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 997,
+        "name": "David Bowie"
+      },
+      "album": {
+        "id": 413320307,
+        "title": "Legacy (The Very Best Of David Bowie, Deluxe)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 13785959,
+      "readable": true,
+      "title": "This Charming Man (2011 Remaster)",
+      "isrc": "GBCRL1100240",
+      "duration": 162,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1297,
+        "name": "The Smiths"
+      },
+      "album": {
+        "id": 1261473,
+        "title": "The Smiths"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2477046,
+      "readable": true,
+      "title": "If You Don't Know Me by Now (2008 Remaster)",
+      "isrc": "GBCRL0800110",
+      "duration": 206,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1516,
+        "name": "Simply Red"
+      },
+      "album": {
+        "id": 243415,
+        "title": "A New Flame (Expanded Version)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2550648,
+      "readable": false,
+      "title": "Young Turks (2008 Remaster)",
+      "isrc": "USWB10806971",
+      "duration": 302,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1440,
+        "name": "Rod Stewart"
+      },
+      "album": {
+        "id": 249805,
+        "title": "The Definitive Rod Stewart"
+      },
+      "type": "track"
+    },
+    {
+      "id": 15707236,
+      "readable": false,
+      "title": "West End Girls (2001 Remaster)",
+      "isrc": "GBAYE0100001",
+      "duration": 245,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 986,
+        "name": "Pet Shop Boys"
+      },
+      "album": {
+        "id": 1451185,
+        "title": "PopArt: The Hits"
+      },
+      "type": "track"
+    },
+    {
+      "id": 72194071,
+      "readable": true,
+      "title": "Girls Just Want to Have Fun",
+      "isrc": "USSM18300548",
+      "duration": 235,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2025,
+        "name": "Cyndi Lauper"
+      },
+      "album": {
+        "id": 7094224,
+        "title": "She's So Unusual"
+      },
+      "type": "track"
+    },
+    {
+      "id": 5093672,
+      "readable": true,
+      "title": "Once in a Lifetime (2005 Remaster)",
+      "isrc": "USWB10502869",
+      "duration": 259,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 181,
+        "name": "Talking Heads"
+      },
+      "album": {
+        "id": 467270,
+        "title": "Remain in Light (Deluxe Version)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3155281,
+      "readable": true,
+      "title": "Golden Brown",
+      "isrc": "GBAYE8100053",
+      "duration": 206,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1729,
+        "name": "The Stranglers"
+      },
+      "album": {
+        "id": 303402,
+        "title": "La Folie"
+      },
+      "type": "track"
+    },
+    {
+      "id": 561836,
+      "readable": true,
+      "title": "Sweet Dreams (Are Made of This) (2005 Remaster)",
+      "isrc": "GBARL0300589",
+      "duration": 216,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 175,
+        "name": "Eurythmics"
+      },
+      "album": {
+        "id": 73280,
+        "title": "Sweet Dreams (Are Made Of This)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4127465,
+      "readable": true,
+      "title": "Hungry Like the Wolf (2009 Remaster)",
+      "isrc": "GBAYE0901090",
+      "duration": 220,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 596,
+        "name": "Duran Duran"
+      },
+      "album": {
+        "id": 384432,
+        "title": "Rio (Collector's Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 420141712,
+      "readable": true,
+      "title": "Cruel Summer",
+      "isrc": "GBAAP9500222",
+      "duration": 215,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 13658,
+        "name": "Bananarama"
+      },
+      "album": {
+        "id": 50282462,
+        "title": "Bananarama (Collector's Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3357587,
+      "readable": true,
+      "title": "Too Shy",
+      "isrc": "GBAYE8300270",
+      "duration": 221,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 5821,
+        "name": "Kajagoogoo"
+      },
+      "album": {
+        "id": 319670,
+        "title": "White Feathers"
+      },
+      "type": "track"
+    },
+    {
+      "id": 15194531,
+      "readable": true,
+      "title": "Wake Me Up Before You Go-Go",
+      "isrc": "GBBBN0009712",
+      "duration": 230,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 216,
+        "name": "Wham!"
+      },
+      "album": {
+        "id": 1399876,
+        "title": "Make It Big"
+      },
+      "type": "track"
+    },
+    {
+      "id": 664115,
+      "readable": true,
+      "title": "The Sun Always Shines on T.V.",
+      "isrc": "USWB19901219",
+      "duration": 302,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3106,
+        "name": "a-ha"
+      },
+      "album": {
+        "id": 80521,
+        "title": "Hunting High and Low"
+      },
+      "type": "track"
+    },
+    {
+      "id": 341017571,
+      "readable": true,
+      "title": "Little Lies (2017 Remaster)",
+      "isrc": "USRH11602193",
+      "duration": 221,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 169,
+        "name": "Fleetwood Mac"
+      },
+      "album": {
+        "id": 38690691,
+        "title": "Tango in the Night (2017 Remaster)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 602137972,
+      "readable": true,
+      "title": "We Built This City",
+      "isrc": "USRC18503424",
+      "duration": 296,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 7358,
+        "name": "Starship"
+      },
+      "album": {
+        "id": 81398042,
+        "title": "Knee Deep In The Hoopla"
+      },
+      "type": "track"
+    },
+    {
+      "id": 1761443627,
+      "readable": false,
+      "title": "Don't You (Forget About Me)",
+      "isrc": "GBZ8N1600270",
+      "duration": 315,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2454,
+        "name": "Simple Minds"
+      },
+      "album": {
+        "id": 320931167,
+        "title": "Acoustic"
+      },
+      "type": "track"
+    },
+    {
+      "id": 102271948,
+      "readable": true,
+      "title": "What's Love Got to Do with It (2015 Remaster)",
+      "isrc": "GBAYE1401507",
+      "duration": 230,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1454,
+        "name": "Tina Turner"
+      },
+      "album": {
+        "id": 10621878,
+        "title": "Private Dancer (30th Anniversary Issue)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3358233,
+      "readable": true,
+      "title": "Geno (2000 Remaster)",
+      "isrc": "GBAYE0000114",
+      "duration": 207,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2209,
+        "name": "Dexys Midnight Runners"
+      },
+      "album": {
+        "id": 319691,
+        "title": "Searching For The Young Soul Rebels"
+      },
+      "type": "track"
+    },
+    {
+      "id": 10392072,
+      "readable": true,
+      "title": "Careless Whisper",
+      "isrc": "GBBBM8402006",
+      "duration": 300,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3098,
+        "name": "George Michael"
+      },
+      "album": {
+        "id": 950341,
+        "title": "Ladies & Gentlemen"
+      },
+      "type": "track"
+    },
+    {
+      "id": 134036230,
+      "readable": true,
+      "title": "Against All Odds (Take a Look at Me Now) (2016 Remaster)",
+      "isrc": "USRH11603367",
+      "duration": 206,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 186,
+        "name": "Phil Collins"
+      },
+      "album": {
+        "id": 14285090,
+        "title": "The Singles (Expanded)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 14636389,
+      "readable": false,
+      "title": "Brass in Pocket (2006 Remaster)",
+      "isrc": "GBAHT0600747",
+      "duration": 185,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 315929,
+        "name": "Pretenders"
+      },
+      "album": {
+        "id": 1347381,
+        "title": "Pretenders"
+      },
+      "type": "track"
+    },
+    {
+      "id": 496357772,
+      "readable": true,
+      "title": "Working My Way Back to You",
+      "isrc": "USAT20100914",
+      "duration": 242,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 7858,
+        "name": "The Spinners"
+      },
+      "album": {
+        "id": 62964362,
+        "title": "The Rubberband Man"
+      },
+      "type": "track"
+    },
+    {
+      "id": 88845725,
+      "readable": true,
+      "title": "Everybody Wants To Rule The World",
+      "isrc": "GBF088590110",
+      "duration": 249,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1192,
+        "name": "Tears For Fears"
+      },
+      "album": {
+        "id": 8980355,
+        "title": "Songs From The Big Chair"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2476999,
+      "readable": true,
+      "title": "Money's Too Tight (To Mention) (2008 Remaster)",
+      "isrc": "GBCRL0800118",
+      "duration": 252,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1516,
+        "name": "Simply Red"
+      },
+      "album": {
+        "id": 243409,
+        "title": "Picture Book (Expanded Version)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 675818,
+      "readable": true,
+      "title": "I Want to Know What Love Is (1999 Remaster)",
+      "isrc": "USAT29900662",
+      "duration": 304,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2310,
+        "name": "Foreigner"
+      },
+      "album": {
+        "id": 81722,
+        "title": "Agent Provocateur"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2173385657,
+      "readable": true,
+      "title": "China Girl (Single Version; 2014 Remaster)",
+      "isrc": "USJT11400017",
+      "duration": 255,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 997,
+        "name": "David Bowie"
+      },
+      "album": {
+        "id": 413320307,
+        "title": "Legacy (The Very Best Of David Bowie, Deluxe)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 610867992,
+      "readable": true,
+      "title": "Addicted To Love (Edit)",
+      "isrc": "USUMG9900746",
+      "duration": 233,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2551,
+        "name": "Robert Palmer"
+      },
+      "album": {
+        "id": 83066192,
+        "title": "The Very Best Of The Island Years"
+      },
+      "type": "track"
+    },
+    {
+      "id": 374283241,
+      "readable": true,
+      "title": "Purple Rain (7\" Single Edit; 2017 Remaster)",
+      "isrc": "USWB11700637",
+      "duration": 245,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1878,
+        "name": "Prince"
+      },
+      "album": {
+        "id": 43280511,
+        "title": "Purple Rain (Deluxe Expanded Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3601478,
+      "readable": true,
+      "title": "Just the Two of Us (feat. Bill Withers)",
+      "isrc": "USEE19901162",
+      "duration": 438,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 4123,
+        "name": "Grover Washington, Jr."
+      },
+      "album": {
+        "id": 339854,
+        "title": "Anthology"
+      },
+      "type": "track"
+    },
+    {
+      "id": 678372,
+      "readable": true,
+      "title": "La Isla Bonita",
+      "isrc": "USWB19903355",
+      "duration": 242,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 290,
+        "name": "Madonna"
+      },
+      "album": {
+        "id": 81934,
+        "title": "True Blue"
+      },
+      "type": "track"
+    },
+    {
+      "id": 24968371,
+      "readable": false,
+      "title": "Heaven Is A Place On Earth",
+      "isrc": "USMC18723313",
+      "duration": 244,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 6328,
+        "name": "Belinda Carlisle"
+      },
+      "album": {
+        "id": 2377101,
+        "title": "Heaven On Earth"
+      },
+      "type": "track"
+    },
+    {
+      "id": 88310709,
+      "readable": true,
+      "title": "Each Time You Break My Heart",
+      "isrc": "GBAHT1400319",
+      "duration": 273,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 11073,
+        "name": "Nick Kamen"
+      },
+      "album": {
+        "id": 8923107,
+        "title": "Nick Kamen"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3613215,
+      "readable": true,
+      "title": "Owner of a Lonely Heart",
+      "isrc": "USAT20702539",
+      "duration": 268,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2711,
+        "name": "Yes"
+      },
+      "album": {
+        "id": 340834,
+        "title": "90125 (Deluxe Version)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4288159,
+      "readable": true,
+      "title": "Self Control",
+      "isrc": "USAT20903047",
+      "duration": 246,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 611,
+        "name": "Laura Branigan"
+      },
+      "album": {
+        "id": 398844,
+        "title": "Self Control"
+      },
+      "type": "track"
+    },
+    {
+      "id": 1581974,
+      "readable": true,
+      "title": "The Look Of Love, Pt.1",
+      "isrc": "GBF088200008",
+      "duration": 207,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 213,
+        "name": "ABC"
+      },
+      "album": {
+        "id": 162147,
+        "title": "The Lexicon Of Love"
+      },
+      "type": "track"
+    },
+    {
+      "id": 97098410,
+      "readable": true,
+      "title": "Jump (2015 Remaster)",
+      "isrc": "USWB11403680",
+      "duration": 241,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1168,
+        "name": "Van Halen"
+      },
+      "album": {
+        "id": 9884672,
+        "title": "1984 (Remastered)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 1021196842,
+      "readable": true,
+      "title": "Love Will Tear Us Apart (2020 Remaster)",
+      "isrc": "GBAHT2000137",
+      "duration": 208,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1249,
+        "name": "Joy Division"
+      },
+      "album": {
+        "id": 160648172,
+        "title": "Love Will Tear Us Apart (2020 Digital Remaster)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 143062020,
+      "readable": false,
+      "title": "It Must Be Love",
+      "isrc": "GB7GZ0900018",
+      "duration": 206,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1825,
+        "name": "Madness"
+      },
+      "album": {
+        "id": 15485550,
+        "title": "7"
+      },
+      "type": "track"
+    },
+    {
+      "id": 5533500,
+      "readable": true,
+      "title": "Girls on Film (2010 Remaster)",
+      "isrc": "GBAYE1000023",
+      "duration": 212,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 596,
+        "name": "Duran Duran"
+      },
+      "album": {
+        "id": 506270,
+        "title": "Duran Duran (Deluxe Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2202860,
+      "readable": true,
+      "title": "Tainted Love (Remastered 2008)",
+      "isrc": "GBF088100017",
+      "duration": 160,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1668,
+        "name": "Soft Cell"
+      },
+      "album": {
+        "id": 215688,
+        "title": "Non Stop Erotic Cabaret (Deluxe Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 428850822,
+      "readable": true,
+      "title": "Good Thing",
+      "isrc": "USRH10901908",
+      "duration": 201,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1637,
+        "name": "Fine Young Cannibals"
+      },
+      "album": {
+        "id": 51653032,
+        "title": "The Raw & The Cooked"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3167306,
+      "readable": true,
+      "title": "We Don't Need Another Hero (Thunderdome)",
+      "isrc": "USCA29100186",
+      "duration": 255,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1454,
+        "name": "Tina Turner"
+      },
+      "album": {
+        "id": 304170,
+        "title": "Simply the Best"
+      },
+      "type": "track"
+    },
+    {
+      "id": 4290178,
+      "readable": true,
+      "title": "A Groovy Kind of Love",
+      "isrc": "USWI19600266",
+      "duration": 210,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 186,
+        "name": "Phil Collins"
+      },
+      "album": {
+        "id": 399061,
+        "title": "Love Songs (A Compilation Old and New)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 701739082,
+      "readable": false,
+      "title": "Especially for You",
+      "isrc": "GBBTK0900093",
+      "duration": 240,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 8899,
+        "name": "Jason Donovan"
+      },
+      "album": {
+        "id": 101411792,
+        "title": "Step Back in Time: The Definitive Collection"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3111030,
+      "readable": true,
+      "title": "I'm Gonna Be (500 Miles)",
+      "isrc": "GBAYK8800055",
+      "duration": 219,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2887,
+        "name": "The Proclaimers"
+      },
+      "album": {
+        "id": 300603,
+        "title": "Sunshine on Leith"
+      },
+      "type": "track"
+    },
+    {
+      "id": 85319280,
+      "readable": false,
+      "title": "Road to Nowhere",
+      "isrc": "USWB19900876",
+      "duration": 259,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 181,
+        "name": "Talking Heads"
+      },
+      "album": {
+        "id": 8603038,
+        "title": "Little Creatures"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2271563,
+      "readable": true,
+      "title": "Fast Car",
+      "isrc": "USEE10180719",
+      "duration": 296,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 971,
+        "name": "Tracy Chapman"
+      },
+      "album": {
+        "id": 226762,
+        "title": "Tracy Chapman"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3130428,
+      "readable": true,
+      "title": "The Reflex",
+      "isrc": "GBAYE8300145",
+      "duration": 266,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 596,
+        "name": "Duran Duran"
+      },
+      "album": {
+        "id": 301791,
+        "title": "Greatest"
+      },
+      "type": "track"
+    },
+    {
+      "id": 12254149,
+      "readable": true,
+      "title": "True Faith (2011 Total Version)",
+      "isrc": "GBCRL1100220",
+      "duration": 252,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2016,
+        "name": "New Order"
+      },
+      "album": {
+        "id": 1126062,
+        "title": "TOTAL"
+      },
+      "type": "track"
+    },
+    {
+      "id": 701739102,
+      "readable": false,
+      "title": "I Should Be So Lucky",
+      "isrc": "GBBTK0900051",
+      "duration": 204,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 479,
+        "name": "Kylie Minogue"
+      },
+      "album": {
+        "id": 101411792,
+        "title": "Step Back in Time: The Definitive Collection"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3147082,
+      "readable": true,
+      "title": "Love Changes (Everything)",
+      "isrc": "GBAYE8700120",
+      "duration": 268,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 9254,
+        "name": "Climie Fisher"
+      },
+      "album": {
+        "id": 302877,
+        "title": "Everything"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3100234,
+      "readable": false,
+      "title": "Listen To Your Heart",
+      "isrc": "SEAME8878130",
+      "duration": 328,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1755,
+        "name": "Roxette"
+      },
+      "album": {
+        "id": 299917,
+        "title": "Look Sharp!"
+      },
+      "type": "track"
+    },
+    {
+      "id": 664509,
+      "readable": true,
+      "title": "Express Yourself",
+      "isrc": "USWB10002776",
+      "duration": 279,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 290,
+        "name": "Madonna"
+      },
+      "album": {
+        "id": 80554,
+        "title": "Like a Prayer"
+      },
+      "type": "track"
+    },
+    {
+      "id": 7617269,
+      "readable": true,
+      "title": "Gold (2003 Remaster)",
+      "isrc": "GBAYK0200004",
+      "duration": 290,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3334,
+        "name": "Spandau Ballet"
+      },
+      "album": {
+        "id": 702480,
+        "title": "True (Special Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 125493154,
+      "readable": true,
+      "title": "Another Day in Paradise (2016 Remaster)",
+      "isrc": "USRH11602150",
+      "duration": 322,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 186,
+        "name": "Phil Collins"
+      },
+      "album": {
+        "id": 13197682,
+        "title": "...But Seriously (Deluxe Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 717534,
+      "readable": true,
+      "title": "Sweet Love",
+      "isrc": "USAT20104367",
+      "duration": 266,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 4370,
+        "name": "Anita Baker"
+      },
+      "album": {
+        "id": 85772,
+        "title": "Rapture"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2550620702,
+      "readable": false,
+      "title": "I Feel for You",
+      "isrc": "USWB18400025",
+      "duration": 218,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 3536,
+        "name": "Chaka Khan"
+      },
+      "album": {
+        "id": 514776772,
+        "title": "The 80s"
+      },
+      "type": "track"
+    },
+    {
+      "id": 135376666,
+      "readable": true,
+      "title": "Edge of Seventeen (2016 Remaster)",
+      "isrc": "USRH11604198",
+      "duration": 329,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 209,
+        "name": "Stevie Nicks"
+      },
+      "album": {
+        "id": 14459672,
+        "title": "Bella Donna (Deluxe Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 674282,
+      "readable": true,
+      "title": "You're the Inspiration (2006 Remaster)",
+      "isrc": "USWB10603152",
+      "duration": 229,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2592,
+        "name": "Chicago"
+      },
+      "album": {
+        "id": 81586,
+        "title": "Chicago 17 (Expanded & Remastered)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 675713,
+      "readable": true,
+      "title": "Life in a Northern Town",
+      "isrc": "USWB10107349",
+      "duration": 259,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 64505,
+        "name": "The Dream Academy"
+      },
+      "album": {
+        "id": 81713,
+        "title": "The Dream Academy"
+      },
+      "type": "track"
+    },
+    {
+      "id": 15707217,
+      "readable": false,
+      "title": "What Have I Done to Deserve This? (with Dusty Springfield) (2001 Remaster)",
+      "isrc": "GBAYE0100052",
+      "duration": 260,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 986,
+        "name": "Pet Shop Boys"
+      },
+      "album": {
+        "id": 1451185,
+        "title": "PopArt: The Hits"
+      },
+      "type": "track"
+    },
+    {
+      "id": 420143322,
+      "readable": true,
+      "title": "Venus",
+      "isrc": "GBAAP9600095",
+      "duration": 229,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 13658,
+        "name": "Bananarama"
+      },
+      "album": {
+        "id": 50282662,
+        "title": "True Confessions (Collector's Edition)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 674958,
+      "readable": true,
+      "title": "Black Velvet",
+      "isrc": "USAT20103053",
+      "duration": 287,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 7950,
+        "name": "Alannah Myles"
+      },
+      "album": {
+        "id": 81637,
+        "title": "Alannah Myles"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2658627,
+      "readable": true,
+      "title": "One Day I'll Fly Away",
+      "isrc": "USWB10000728",
+      "duration": 302,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 7552,
+        "name": "Randy Crawford"
+      },
+      "album": {
+        "id": 257865,
+        "title": "Now We May Begin"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2033807777,
+      "readable": false,
+      "title": "Sailing",
+      "isrc": "USWB19901344",
+      "duration": 257,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 5661,
+        "name": "Christopher Cross"
+      },
+      "album": {
+        "id": 379700327,
+        "title": "Christopher Cross"
+      },
+      "type": "track"
+    },
+    {
+      "id": 2173385667,
+      "readable": true,
+      "title": "Modern Love (Single Version; 2014 Remaster)",
+      "isrc": "USJT11400018",
+      "duration": 237,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 997,
+        "name": "David Bowie"
+      },
+      "album": {
+        "id": 413320307,
+        "title": "Legacy (The Very Best Of David Bowie, Deluxe)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 3819736,
+      "readable": true,
+      "title": "La Bamba",
+      "isrc": "USRH10802794",
+      "duration": 174,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2793,
+        "name": "Los Lobos"
+      },
+      "album": {
+        "id": 356110,
+        "title": "La Bamba / Charlena"
+      },
+      "type": "track"
+    },
+    {
+      "id": 122014992,
+      "readable": true,
+      "title": "Sussudio (2016 Remaster)",
+      "isrc": "USRH11600243",
+      "duration": 263,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 186,
+        "name": "Phil Collins"
+      },
+      "album": {
+        "id": 12761698,
+        "title": "No Jacket Required (2016 Remaster)"
+      },
+      "type": "track"
+    },
+    {
+      "id": 1079668,
+      "readable": true,
+      "title": "Africa",
+      "isrc": "USSM19801941",
+      "duration": 296,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 215,
+        "name": "Toto"
+      },
+      "album": {
+        "id": 116670,
+        "title": "Toto IV"
+      },
+      "type": "track"
+    },
+    {
+      "id": 10769937,
+      "readable": true,
+      "title": "Orinoco Flow",
+      "isrc": "NLG620412585",
+      "duration": 235,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 1240127,
+        "name": "Róisín"
+      },
+      "album": {
+        "id": 983950,
+        "title": "The Magic of Enya"
+      },
+      "type": "track"
+    },
+    {
+      "id": 143031512,
+      "readable": false,
+      "title": "Sometimes (12'' Mix)",
+      "isrc": "GBAJH9900101",
+      "duration": 316,
+      "explicit_lyrics": false,
+      "artist": {
+        "id": 2456,
+        "name": "Erasure"
+      },
+      "album": {
+        "id": 15483432,
+        "title": "Sometimes - 2015"
+      },
+      "type": "track"
+    }
+  ]
+}
