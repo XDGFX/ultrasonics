@@ -3,6 +3,7 @@ import { createRunQueue } from "@ultrasonics/core";
 import { type OpenDatabase, openDatabase, V1DatabaseError } from "@ultrasonics/db";
 import { systemModule } from "@ultrasonics/db/system";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
+import { importV1 } from "@ultrasonics/v1-import";
 import { createApp } from "./app.ts";
 import { PkceFlow, type PkceFlowOptions } from "./auth/pkce-flow.ts";
 import { loadCatalogue } from "./catalogue.ts";
@@ -48,7 +49,7 @@ export type BootResult =
 
 /**
  * Boots in ADR-0015 §3's order: configuration, the database (backup, migrate, the account),
- * interrupt leftover runs, the plugin catalogue, the scheduler, then listen. A database failure
+ * interrupt leftover runs, the plugin catalogue, the v1 import, the scheduler, then listen. A database failure
  * throws, for the caller to exit loudly.
  */
 export async function boot(options: BootOptions): Promise<BootResult> {
@@ -86,6 +87,15 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 				problems: catalogue.problems.map((message) => ({ setting: "plugins", message })),
 			};
 		}
+
+		await importV1({
+			db,
+			plugins: catalogue.catalogue.plugins,
+			dataDir: configuration.dataDir,
+			env: options.env,
+			authSource: configuration.authSource,
+			logger,
+		});
 
 		const { app, scheduler, runs } = await createApp({
 			configuration,

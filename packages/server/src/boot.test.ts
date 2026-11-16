@@ -8,7 +8,7 @@ import { defineAuth, definePlugin } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import { fixtureRegistry, holds, plex, registryOf, source } from "../test/fixture-plugins.ts";
 import { type Applet, type AppletListing, type RunNowResult, RunSummary } from "./api.ts";
-import { type BootResult, boot } from "./boot.ts";
+import { type BootResult, boot, LISTENING } from "./boot.ts";
 import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL, V1_DATABASE_FILE } from "./configuration.ts";
 import { eventually, installAccountOf, recordingLogger, runStreamOf } from "./test-support.ts";
 
@@ -316,6 +316,20 @@ describe("boot", () => {
 			expect(booted.ok).toBe(true);
 			expect(readFileSync(path)).toEqual(before);
 			expect(existsSync(join(dataDir, DATABASE_FILE))).toBe(true);
+		});
+
+		test("boot imports v1's database before it listens, and reports where", async () => {
+			const { overrides } = withV1Database(V1_DATABASE_FILE);
+			const logger = recordingLogger();
+			booted = await boot({ env: overrides, registry: fixtureRegistry, logger });
+
+			expect(booted.ok).toBe(true);
+			const report = join(dataDir, "v1-import-report.md");
+			expect(existsSync(report)).toBe(true);
+			const imported = logger.lines.findIndex((line) => line.includes(report));
+			const listening = logger.lines.findIndex((line) => line.includes(LISTENING));
+			expect(imported).toBeGreaterThan(-1);
+			expect(imported).toBeLessThan(listening);
 		});
 
 		test("a v1 database where v2's belongs refuses boot, naming the file", async () => {
