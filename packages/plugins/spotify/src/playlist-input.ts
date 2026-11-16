@@ -77,7 +77,7 @@ async function readChosen(
 
 async function readAll(client: SpotifyClient, exclude: string, log: Log): Promise<PlaylistInput[]> {
 	const me = await client.get(Me, "/me");
-	const excluded = nameFilter(exclude);
+	const isExcluded = nameFilter(exclude);
 	const listed = (await client.all("/me/playlists", { limit: pageSize })).flatMap((raw) => {
 		const parsed = ListedPlaylist.safeParse(raw);
 		return parsed.success ? [parsed.data] : [];
@@ -91,7 +91,7 @@ async function readAll(client: SpotifyClient, exclude: string, log: Log): Promis
 	);
 	const playlists: PlaylistInput[] = [];
 	for (const details of readable) {
-		if (excluded(details.name.trim())) continue;
+		if (isExcluded(details.name.trim())) continue;
 		const playlist = await readPlaylist(client, details, log);
 		if (playlist) playlists.push(playlist);
 	}

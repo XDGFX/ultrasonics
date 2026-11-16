@@ -20,7 +20,7 @@ function characters(value: string): string[] {
 	return Array.from(value.normalize("NFC").toLowerCase());
 }
 
-/** Linear-time wildcard matching: on a mismatch, the last `*` takes one more character. */
+/** Wildcard matching without a regex: on a mismatch, the last `*` takes one more character. */
 function wildcardMatch(pattern: readonly string[], name: readonly string[]): boolean {
 	let p = 0;
 	let n = 0;
