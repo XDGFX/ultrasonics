@@ -6,13 +6,11 @@
  *   bun run measure-service-tier
  */
 import { join } from "node:path";
-import { formatReport, measure, type PairwiseFunction } from "../src/harness.ts";
+import { formatReport, measure } from "../src/harness.ts";
+import { match } from "../src/match.ts";
 import { loadServiceTier } from "../src/service-tier.ts";
 
 const cachePath = join(import.meta.dir, "../service-tier-cache/service-tier.json");
-
-// The matcher ticket (#120) replaces this with `match`; until then there is nothing to measure.
-const pairwise: PairwiseFunction | undefined = undefined;
 
 const loaded = await loadServiceTier(cachePath);
 if (loaded.kind === "missing") {
@@ -27,8 +25,4 @@ if (tier.cases.length === 0) {
 	console.error("The cache holds no cases. No figures: the service tier was not measured.");
 	process.exit(1);
 }
-if (!pairwise) {
-	console.error("No matcher to measure yet. No figures.");
-	process.exit(1);
-}
-console.log(formatReport(measure(pairwise, tier.cases)));
+console.log(formatReport(measure(match, tier.cases)));
