@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { holds } from "../test/fixture-plugins.ts";
 import { Applet, AppletListing, ErrorBody, IssuesBody, WebhookFired, WebhookUrl } from "./api.ts";
+import { UNEXPECTED_ERROR_MESSAGE } from "./error-response.ts";
 import {
 	bodyOf,
 	CLIENT_ADDRESS_HEADER,
@@ -8,6 +9,7 @@ import {
 	type TestApp,
 	useTestApp,
 } from "./test-support.ts";
+import { WEBHOOK_PATH } from "./webhook-route.ts";
 
 const testApp = useTestApp();
 
@@ -315,10 +317,14 @@ describe("the webhook", () => {
 		const unknown = await hook(t, `/api/hooks/${"A".repeat(43)}`, { method: "POST" });
 		const revoked = await hook(t, old.pathname, { method: "POST" });
 		const missingBearer = await hook(t, "/api/hooks", { method: "POST" });
-		expect([unknown.status, revoked.status, missingBearer.status]).toEqual([404, 404, 404]);
-		const notFoundBody = await unknown.text();
-		expect(await revoked.text()).toBe(notFoundBody);
-		expect(await missingBearer.text()).toBe(notFoundBody);
+		// Never handed on to `/api`, whose proxy session logs the path, which is the token.
+		const otherMethod = await hook(t, current.pathname, { method: "PUT" });
+		const longerPath = await hook(t, `${current.pathname}/more`, { method: "GET" });
+		const misses = [unknown, revoked, missingBearer, otherMethod, longerPath];
+		expect(misses.map((response) => response.status)).toEqual([404, 404, 404, 404, 404]);
+		const bodies = await Promise.all(misses.map((response) => response.text()));
+		const notFoundBody = await bodyOf(new Response(bodies[0]), ErrorBody);
+		expect(bodies.map((body) => JSON.parse(body))).toEqual(Array(bodies.length).fill(notFoundBody));
 
 		expect(await fired(await hook(t, current.pathname, { method: "POST" }))).toBe("started");
 
@@ -326,7 +332,28 @@ describe("the webhook", () => {
 		expect((await listingOf(t.call, id))?.hasWebhook).toBe(false);
 		const removed = await hook(t, current.pathname, { method: "POST" });
 		expect(removed.status).toBe(404);
-		expect(await removed.text()).toBe(notFoundBody);
+		expect(await removed.json()).toEqual(notFoundBody);
+	});
+
+	test("a database failure answers a generic 500 and keeps the token out of the log", async () => {
+		const t = await testApp();
+		const id = await createApplet(t.call);
+		const { pathname } = await generate(t, id);
+		const token = pathname.split("/").at(-1) ?? "";
+		expect(token).not.toBe("");
+		t.raw((sqlite) =>
+			sqlite.run(
+				"CREATE TRIGGER refuse_runs BEFORE INSERT ON runs BEGIN SELECT RAISE(FAIL, 'disk full'); END",
+			),
+		);
+
+		for (const method of ["GET", "POST"]) {
+			const response = await hook(t, pathname, { method });
+			expect(response.status).toBe(500);
+			expect((await bodyOf(response, ErrorBody)).message).toBe(UNEXPECTED_ERROR_MESSAGE);
+		}
+		expect(t.logger.lines.filter((line) => line.includes(WEBHOOK_PATH))).toHaveLength(2);
+		expect(t.logger.lines.filter((line) => line.includes(token))).toEqual([]);
 	});
 
 	test("a disabled applet answers 409 and queues nothing", async () => {

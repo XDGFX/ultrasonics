@@ -24,7 +24,7 @@ import { serviceRoutes } from "./service-routes.ts";
 import { sessionMiddleware } from "./session-middleware.ts";
 import { settingsRoutes } from "./settings-routes.ts";
 import { triggerRoutes } from "./trigger-routes.ts";
-import { webhookRoute } from "./webhook-route.ts";
+import { WEBHOOK_PATH, webhookRoute } from "./webhook-route.ts";
 
 /** Where `packages/web` builds the UI, relative to this file in the repo and in the image. */
 export const DEFAULT_WEB_ROOT = fileURLToPath(new URL("../../web/dist", import.meta.url));
@@ -95,7 +95,7 @@ export async function createApp(deps: AppDeps) {
 		.use(requestSourceMiddleware(deps.clientAddress, configuration.trustedProxies))
 		// Before `/api`, so a webhook answers before the session and JSON middleware can run: its
 		// token is its only credential, and it takes any content type (ADR-0018 §5).
-		.route("/api/hooks", webhookRoute({ db, runs }))
+		.route(WEBHOOK_PATH, webhookRoute({ db, runs, logger }))
 		.route("/api", api)
 		.all("/api/*", () => notFound("That API route"));
 	app.onError(errorResponse(logger));
