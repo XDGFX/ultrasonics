@@ -13,6 +13,7 @@ import {
 	existingPlaylistKey,
 	type FakePlex,
 	fakeToken,
+	firstCreatedKey,
 	fixture,
 	machineIdentifier,
 	on,
@@ -104,6 +105,10 @@ function keysOf(uri: string | null): string[] {
 	return (uri ?? "").slice(prefix.length).split(",");
 }
 
+function warnings(logs: LogEntry[]): string[] {
+	return logs.filter((entry) => entry.level === "warn").map((entry) => entry.message);
+}
+
 function writes(server: FakePlex) {
 	return server.requests.filter((request) => request.method !== "GET");
 }
@@ -140,6 +145,31 @@ describe("writing playlists", () => {
 		expect(add?.path).toBe(`/playlists/${existing.key}/items`);
 		expect(keysOf(add?.query.get("uri") ?? null)).toEqual([fluffingADuckKey]);
 		expect(server.existingPlaylist()).toEqual([...before, fluffingADuckKey]);
+	});
+
+	test("create reports a repeated song, which Plex can't hold twice, as not written", async () => {
+		const server = serve();
+		const { result, logs } = await runOutput(
+			server,
+			playlist("New Mix", [sneakySnitch, fluffingADuck, sneakySnitch]),
+		);
+
+		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [2] }] });
+		expect(server.playlist(firstCreatedKey)).toEqual([sneakySnitchKey, fluffingADuckKey]);
+		expect(warnings(logs)).toEqual([expect.stringContaining('"New Mix"')]);
+	});
+
+	test("append reports a match Plex refused to add as not written", async () => {
+		const added = await fixture("playlist-items-added.json");
+		const server = serve(on("PUT", `/playlists/${existing.key}/items`, () => Response.json(added)));
+		// The playlist holds Sneaky Snitch already; Plex answers the add of Fluffing a Duck but drops it.
+		const { result, logs } = await runOutput(
+			server,
+			playlist(existing.title, [sneakySnitch, fluffingADuck]),
+		);
+
+		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [1] }] });
+		expect(warnings(logs)).toEqual([expect.stringContaining(`"${existing.title}"`)]);
 	});
 
 	test("append sends nothing when the playlist already holds every match", async () => {

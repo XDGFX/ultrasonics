@@ -97,14 +97,15 @@ async function writeOne(
 		return { status: "skipped", code: "empty", message: `"${playlist.name}" has no songs` };
 	}
 	try {
-		const ratingKeys: string[] = [];
+		const matches: { position: number; ratingKey: string }[] = [];
 		const unmatched: number[] = [];
 		for (const [position, song] of playlist.songs.entries()) {
 			const ratingKey = await findTrack(target, song);
 			if (ratingKey === undefined) unmatched.push(position);
-			else ratingKeys.push(ratingKey);
+			else matches.push({ position, ratingKey });
 		}
-		const tally = `${ratingKeys.length} of ${playlist.songs.length} songs matched`;
+		// Plex holds a track once per playlist, so only a track's first match can be written.
+		const ratingKeys = [...new Set(matches.map((match) => match.ratingKey))];
 		if (ratingKeys.length === 0) {
 			const message = `Nothing in "${playlist.name}" matched a track in Plex, so it was not written`;
 			log.warn(message);
@@ -116,23 +117,51 @@ async function writeOne(
 			log.warn(message);
 			return { status: "skipped", code: "ambiguous-playlist", message };
 		}
+		let held: Set<string>;
+		let verb: string;
 		if (current === undefined) {
-			await create(target.client, playlist.name, ratingKeys);
-			log.info(`Created the Plex playlist "${playlist.name}": ${tally}`);
+			held = await create(target.client, playlist.name, ratingKeys);
+			verb = "Created";
 		} else if (existing === "append") {
-			await append(target.client, current.ratingKey, ratingKeys);
-			log.info(`Appended to the Plex playlist "${playlist.name}": ${tally}`);
+			held = await append(target.client, current.ratingKey, ratingKeys);
+			verb = "Appended to";
 		} else {
-			await update(target.client, current.ratingKey, ratingKeys);
-			log.info(`Updated the Plex playlist "${playlist.name}": ${tally}`);
+			held = await update(target.client, current.ratingKey, ratingKeys);
+			verb = "Updated";
 		}
-		return { status: "written", unmatched };
+
+		const seen = new Set<string>();
+		const repeated: number[] = [];
+		const refused: number[] = [];
+		for (const { position, ratingKey } of matches) {
+			if (seen.has(ratingKey)) repeated.push(position);
+			else if (!held.has(ratingKey)) refused.push(position);
+			seen.add(ratingKey);
+		}
+		const written = matches.length - repeated.length - refused.length;
+		log.info(
+			`${verb} the Plex playlist "${playlist.name}": ${matches.length} of ${playlist.songs.length} songs matched, ${written} written`,
+		);
+		if (repeated.length > 0) {
+			log.warn(
+				`"${playlist.name}" repeats ${count(repeated.length, "song")}, and a Plex playlist holds each track once, so the repeats were not written`,
+			);
+		}
+		if (refused.length > 0) {
+			log.warn(`Plex did not add ${count(refused.length, "matched song")} to "${playlist.name}"`);
+		}
+		const notWritten = [...unmatched, ...repeated, ...refused].sort((a, b) => a - b);
+		return { status: "written", unmatched: notWritten };
 	} catch (error) {
 		if (error instanceof PlexError && error.code === "invalid-credentials") throw error;
 		const reason = error instanceof Error ? error.message : String(error);
 		log.error(`Could not write "${playlist.name}" to Plex: ${reason}`);
 		return { status: "failed", code: "service-error", message: reason };
 	}
+}
+
+function count(n: number, noun: string): string {
+	return `${n} ${noun}${n === 1 ? "" : "s"}`;
 }
 
 /** The rating key of the track `song` is, or `undefined` when there is none in the library. */
@@ -204,27 +233,53 @@ function batches(ratingKeys: string[]): string[][] {
 	return result;
 }
 
-async function create(client: PlexClient, title: string, ratingKeys: string[]): Promise<void> {
+/** The rating keys a playlist holds. Plex answers a refused add with a 200, so each write re-reads. */
+async function heldBy(client: PlexClient, playlistKey: string): Promise<Set<string>> {
+	return new Set((await client.playlistItems(playlistKey)).map((item) => item.ratingKey));
+}
+
+/** Creates the playlist from `ratingKeys`, distinct, and answers what it holds. */
+async function create(
+	client: PlexClient,
+	title: string,
+	ratingKeys: string[],
+): Promise<Set<string>> {
 	const [first = [], ...rest] = batches(ratingKeys);
 	const playlistKey = await client.createPlaylist(title, first);
 	for (const batch of rest) await client.addToPlaylist(playlistKey, batch);
+	return heldBy(client, playlistKey);
 }
 
-/** Adds the tracks the playlist doesn't already hold, so a repeated sync adds nothing. */
-async function append(client: PlexClient, playlistKey: string, ratingKeys: string[]) {
-	const held = new Set((await client.playlistItems(playlistKey)).map((item) => item.ratingKey));
-	const missing = ratingKeys.filter((ratingKey) => !held.has(ratingKey));
+/**
+ * Adds the tracks of `ratingKeys`, distinct, that the playlist doesn't already hold, so a repeated
+ * sync adds nothing, and answers what it holds.
+ */
+async function append(
+	client: PlexClient,
+	playlistKey: string,
+	ratingKeys: string[],
+): Promise<Set<string>> {
+	const before = await heldBy(client, playlistKey);
+	const missing = ratingKeys.filter((ratingKey) => !before.has(ratingKey));
+	if (missing.length === 0) return before;
 	for (const batch of batches(missing)) await client.addToPlaylist(playlistKey, batch);
+	return heldBy(client, playlistKey);
 }
 
 /**
  * Adds what's missing, removes the rest, then moves items into source order: adding first means a
- * failure never leaves the playlist empty, and Plex won't add a track it already holds.
+ * failure never leaves the playlist empty, and Plex won't add a track it already holds. `wanted`
+ * must be distinct; the playlist ends up holding exactly it, or this throws.
  */
-async function update(client: PlexClient, playlistKey: string, ratingKeys: string[]) {
-	const wantedSet = new Set(ratingKeys);
-	const wanted = [...wantedSet];
-	await append(client, playlistKey, wanted);
+async function update(
+	client: PlexClient,
+	playlistKey: string,
+	wanted: string[],
+): Promise<Set<string>> {
+	const wantedSet = new Set(wanted);
+	const before = await heldBy(client, playlistKey);
+	const missingBefore = wanted.filter((ratingKey) => !before.has(ratingKey));
+	for (const batch of batches(missingBefore)) await client.addToPlaylist(playlistKey, batch);
 
 	const kept = new Map<string, string>();
 	const extra: string[] = [];
@@ -253,4 +308,5 @@ async function update(client: PlexClient, playlistKey: string, ratingKeys: strin
 		order.splice(order.indexOf(ratingKey), 1);
 		order.splice(position, 0, ratingKey);
 	}
+	return wantedSet;
 }
