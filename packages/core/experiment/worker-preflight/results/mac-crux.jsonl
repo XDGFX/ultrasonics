@@ -1,0 +1,5 @@
+{"case":"spin","returned":"undefined","returnMs":0.08562500000000028,"hostTimer10msFiredAfter":12.028416999999997,"processExitedAfterMs":71,"exitCode":0,"killedByTimeout":false}
+{"case":"sleepSync","returned":"undefined","returnMs":0.09054100000000176,"hostTimer10msFiredAfter":12.030791999999991,"processExitedAfterMs":8018,"exitCode":0,"killedByTimeout":false}
+{"case":"atomicsWait","returned":"undefined","returnMs":0.09162500000000051,"hostTimer10msFiredAfter":10.926124999999999,"processExitedAfterMs":70,"exitCode":0,"killedByTimeout":false}
+{"case":"nodeTerminateSpin","terminatePromise":"resolved","processExitedAfterMs":2016,"exitCode":0,"killedByTimeout":false}
+{"case":"nodeTerminateSleepSync","terminatePromise":"pending after 2s","processExitedAfterMs":8026,"exitCode":0,"killedByTimeout":false}
