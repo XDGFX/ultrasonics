@@ -56,14 +56,14 @@ model + initial account-scoped schema decided (ADR'd) · trigger model settled �
 + its tests merged · docs skeleton and ADRs in place · **the Phase 0 contracts map is closed**.
 
 ## Phase 1 — Vertical slice (prove the whole pipe)
-**Status:** planning — map [Phase 1 specs](https://github.com/XDGFX/ultrasonics/issues/100) · **Owner mix:** agents build; Cal reviews the slice end-to-end
+**Status:** built 2026-11-16 — all eight specs on the [Phase 1 specs](https://github.com/XDGFX/ultrasonics/issues/100) map are delivered. The exit gate is pending two checks: the Spotify half of the end-to-end `/verify` ([#126](https://github.com/XDGFX/ultrasonics/issues/126): connect, a real Spotify → Plex sync, and a revoked grant; the first-run and Plex criteria have passed), and the matcher's service-tier figure ([#121](https://github.com/XDGFX/ultrasonics/issues/121)). Both wait on Spotify lifting a rate limit on the development app, expected 2026-11-17 · **Owner mix:** agents build; Cal reviews the slice end-to-end
 
 The make-or-break phase. Build the **matcher**, designed fresh and measured against a labelled
 **match dataset** (ADR-0022),
 the applet runner, one input (**Spotify**, BYO + PKCE), one output (**Plex**, via the PlexAPI-style
 approach — the most-requested pairing in the issues), and the Vue screens to build and run *one*
 applet, in the v2 design rather than v1's. First, write the plugin SDK and `AuthProvider` types
-that Phase 0 froze as decisions (ADR-0012, ADR-0013): nothing there is built yet. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
+that Phase 0 froze as decisions (ADR-0012, ADR-0013); Phase 0 built none of them. Implement the schema and account model decided in Phase 0 — account-isolation seams from day one
 (ADR-0003), self-host still login-free. Build the **scheduler and the inbound webhook route** here:
 ADR-0011 makes triggers server capabilities rather than plugins, so this phase owns them outright
 (OR semantics, queue-depth-of-one on a same-applet collision) and Phase 2 has no trigger cells to
@@ -74,11 +74,14 @@ plugin's mapping anyway.
 **Note on this phase's exit gate.** That it targets Spotify → **Plex**, which Cal has no setup to
 test personally, was raised and deliberately reaffirmed on 2026-08-04: it is the most-requested
 pairing and the work has to happen regardless, so the plan is not rearranged around testability.
-Not a live question — do not re-raise it.
+Not a live question — do not re-raise it. Since 2026-11-16 there is a Plex test server
+([#116](https://github.com/XDGFX/ultrasonics/issues/116)), and the Plex plugin's fixtures are
+recorded from it.
 
 **Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · the matcher holds
 its accepted baseline on the match dataset's CC0 tier
-([#132](https://github.com/XDGFX/ultrasonics/issues/132)) · self-host first run reaches a
+([#132](https://github.com/XDGFX/ultrasonics/issues/132)) · the matcher's service-tier figure is
+reported ([#121](https://github.com/XDGFX/ultrasonics/issues/121)) · self-host first run reaches a
 working applet without a login prompt.
 
 **Note on the matcher's gate.** The staged-rules matcher missed #117's targets (recall ≥ 95%,
@@ -89,7 +92,14 @@ rebuilt the matcher, and the held-out figures it reached are now the accepted ba
 held in `packages/matcher/src/floor.ts` as a floor that CI won't let a change regress.
 
 ## Phase 2 — Plugin parity (fan out)
-**Status:** not started · **Owner mix:** heavily parallel — one worktree + agent per plugin
+**Status:** opened by Cal on 2026-11-16, alongside Phase 1's last check. Specs are drafting on
+branches `drafts/phase-2-specs-local` and `drafts/phase-2-specs-services` · **Owner mix:** heavily
+parallel — one worktree + agent per plugin
+
+**Overlap with Phase 1.** Phases normally open only once the previous gate is green. Cal waived
+that order for this one overlap: Phase 1 is built and its remaining checks wait only on Spotify's
+rate limit, so Phase 2's specs are drafted meanwhile. The waiver covers this overlap only, not
+later phase boundaries.
 
 Port the rest against the proven SDK: deezer, lastfm, local-music-database, local-playlists,
 playlist-merger, spotify-mixer, custom-file, log-tracks. Each plugin is an
