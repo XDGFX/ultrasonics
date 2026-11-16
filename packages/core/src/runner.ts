@@ -158,6 +158,11 @@ async function prepare(
 	};
 }
 
+/** The failure's own words: the thrown value is a plain object, which `String()` cannot read. */
+function describeAuthFailure({ service, message }: AuthFailure): string {
+	return message || `Reconnect ${service}`;
+}
+
 /** Calls one handler, keeping any `AuthFailure` host-side so a wrapped throw still carries it. */
 async function execute(
 	run: Run,
@@ -196,7 +201,7 @@ async function execute(
 	return {
 		ok: false,
 		error: authFailure
-			? { code: authFailure.code, message: result.message, auth: authFailure }
+			? { code: authFailure.code, message: describeAuthFailure(authFailure), auth: authFailure }
 			: { code: "threw", message: result.message },
 	};
 }

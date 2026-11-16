@@ -434,6 +434,24 @@ describe("runApplet: service auth", () => {
 		expect(finished[0]?.error).toMatchObject({ code: "reconnect", auth: failure });
 	});
 
+	test("an AuthFailure's stage error message is the failure's own message", async () => {
+		const { finished } = await run(
+			{ inputs: [slot("authed")], modifiers: [], outputs: [slot("writer")] },
+			{ capabilities: { auth: fakeAuth({ failure }) } },
+		);
+
+		expect(finished[0]?.error?.message).toBe(failure.message);
+	});
+
+	test("an AuthFailure with no message of its own names the service", async () => {
+		const { finished } = await run(
+			{ inputs: [slot("authed")], modifiers: [], outputs: [slot("writer")] },
+			{ capabilities: { auth: fakeAuth({ failure: { ...failure, message: "" } }) } },
+		);
+
+		expect(finished[0]?.error?.message).toContain(failure.service);
+	});
+
 	test("resolved credentials reach the plugin", async () => {
 		const { received } = await run({
 			inputs: [slot("authed")],
