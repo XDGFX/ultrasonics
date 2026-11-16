@@ -62,8 +62,9 @@ dedupe, filter, substitute). Optional in an applet.
 nothing back into the pipeline.
 
 **Output result** — What an output returns: for each playlist it received, whether it was
-**written**, **skipped** or **failed**, and which of its songs were **unmatched** (no counterpart
-found on the service). A failure of one playlist belongs here; only a failure of the whole output is
+**written**, **skipped** or **failed**, and which of its songs were **unmatched** (not written to
+the playlist: no counterpart was found on the service, or the service refused it, as Plex refuses a
+repeated track; a warning says which). A failure of one playlist belongs here; only a failure of the whole output is
 an error (ADR-0020).
 _Avoid_: "not found" for unmatched songs.
 
