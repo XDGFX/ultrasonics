@@ -1,6 +1,16 @@
 import { describe, expect, test } from "bun:test";
 import type { Song } from "@ultrasonics/plugin-sdk";
-import { measure, type PairwiseFunction, targets, wilson } from "./harness.ts";
+import { CandidateSet } from "./candidate-set.ts";
+import {
+	holds,
+	measure,
+	measureRanking,
+	type NamedFigure,
+	namedFigures,
+	type PairwiseFunction,
+	type PickFunction,
+	wilson,
+} from "./harness.ts";
 import {
 	type Category,
 	isPositive,
@@ -48,19 +58,25 @@ describe("measure", () => {
 		for (const figure of Object.values(report.rejection)) expect(figure.rate).toBe(0);
 	});
 
-	test("a perfect oracle meets every target", () => {
+	test("a perfect oracle scores 100% on every figure", () => {
 		const report = measure(oracle, fixture);
-		expect(report.recall.met).toBe(true);
-		expect(report.precision.met).toBe(true);
-		for (const figure of Object.values(report.rejection)) expect(figure.met).toBe(true);
-		expect(report.allMet).toBe(true);
+		expect(report.recall.rate).toBe(1);
+		expect(report.precision.rate).toBe(1);
+		for (const figure of Object.values(report.rejection)) expect(figure.rate).toBe(1);
 	});
 
-	test("always-match misses the rejection and precision targets", () => {
-		const report = measure(alwaysMatch, fixture);
-		expect(report.rejection.cover.met).toBe(false);
-		expect(report.precision.met).toBe(false);
-		expect(report.allMet).toBe(false);
+	test("counts recall by script", () => {
+		const scripted = (title: string, other: string) =>
+			MatchCase.parse({ ...pair("plain", title), b: { title: other, artists: ["Artist"] } });
+		const report = measure(alwaysMatch, [
+			scripted("Strobe", "Strobe"),
+			scripted("Что за песни", "Что за песни"),
+			scripted("Что за песни", "Chto za pesni"),
+			scripted("폭포의 아래", "Under the waterfall"),
+		]);
+		expect(report.byScript.latin.n).toBe(1);
+		expect(report.byScript["same-non-latin"].n).toBe(1);
+		expect(report.byScript["cross-script"].n).toBe(2);
 	});
 
 	test("recall counts remaster and clean/explicit pairs as positives", () => {
@@ -84,12 +100,12 @@ describe("measure", () => {
 		expect(report.rejection.edit.n).toBe(1);
 	});
 
-	test("marks a figure with no cases not met, and gives it no rate", () => {
+	test("gives a figure with no cases no rate", () => {
 		const report = measure(
 			oracle,
 			fixture.filter((c) => c.category !== "remix"),
 		);
-		expect(report.rejection.remix).toMatchObject({ n: 0, rate: undefined, met: false });
+		expect(report.rejection.remix).toMatchObject({ n: 0, rate: undefined });
 	});
 
 	test("hides the ISRC from the function under test", () => {
@@ -101,17 +117,83 @@ describe("measure", () => {
 		expect(seen).toHaveLength(fixture.length * 2);
 		for (const song of seen) expect(song).not.toHaveProperty("isrc");
 	});
+});
 
-	test("meets a target exactly at it and misses it just below", () => {
-		const n = 100;
-		const plain = Array.from({ length: n }, (_, i) => MatchCase.parse(pair("plain", `p${i}`)));
-		const matchingFirst =
-			(count: number): PairwiseFunction =>
-			(a) => ({
-				matched: Number(a.title.slice(1)) < count,
-			});
-		expect(measure(matchingFirst(targets.recall * n), plain).recall.met).toBe(true);
-		expect(measure(matchingFirst(targets.recall * n - 1), plain).recall.met).toBe(false);
+describe("holds", () => {
+	const n = 100;
+	const plain = Array.from({ length: n }, (_, i) => MatchCase.parse(pair("plain", `p${i}`)));
+	const matchingFirst =
+		(count: number): PairwiseFunction =>
+		(a) => ({ matched: Number(a.title.slice(1)) < count });
+	const recallOf = (fn: PairwiseFunction) =>
+		namedFigures(measure(fn, plain)).find((f) => f.name === "recall") as NamedFigure;
+	const floor = { recall: 95 / n };
+
+	test("holds a floor exactly at it and falls short just below", () => {
+		expect(holds(recallOf(matchingFirst(95)), floor)).toBe(true);
+		expect(holds(recallOf(matchingFirst(94)), floor)).toBe(false);
+	});
+
+	test("never holds for a figure with no floor set", () => {
+		expect(holds(recallOf(matchingFirst(n)), {})).toBe(false);
+	});
+
+	test("never holds for a figure with no cases", () => {
+		const remix = namedFigures(measure(oracle, plain)).find(
+			(f) => f.name === "rejection: remix",
+		) as NamedFigure;
+		expect(holds(remix, { "rejection: remix": 0 })).toBe(false);
+	});
+
+	test("holds the lookalike figure as a ceiling", () => {
+		const lookalike = namedFigures(measure(oracle, plain), {
+			picksOriginal: { successes: 0, n: 1, rate: 0, interval: undefined },
+			picksLookalike: { successes: 1, n: 10, rate: 0.1, interval: undefined },
+			lookalikeOnlyPicksNothing: { successes: 0, n: 1, rate: 0, interval: undefined },
+		}).find((f) => f.name === "bestMatch: picks the lookalike") as NamedFigure;
+		expect(holds(lookalike, { [lookalike.name]: 0.1 })).toBe(true);
+		expect(holds(lookalike, { [lookalike.name]: 0.09 })).toBe(false);
+	});
+});
+
+describe("measureRanking", () => {
+	const source = { title: "Strobe", artists: ["deadmau5"], isrc: "GBAAA0000001" };
+	const remix = { ...source, title: "Strobe (Remix)" };
+	const sets = ([0, 1, 1] as const).map((original) =>
+		CandidateSet.parse({
+			category: "remix",
+			source,
+			candidates: original === 0 ? [source, remix] : [remix, source],
+			original,
+			trap: { a: crypto.randomUUID(), b: crypto.randomUUID() },
+		}),
+	);
+	const first: PickFunction = (_, candidates) => (candidates.length > 0 ? { index: 0 } : undefined);
+
+	test("counts picks of the original and of the lookalike over every set", () => {
+		const report = measureRanking(first, sets);
+		expect(report.picksOriginal).toMatchObject({ successes: 1, n: 3 });
+		expect(report.picksLookalike).toMatchObject({ successes: 2, n: 3 });
+	});
+
+	test("offers the lookalike alone, where the right answer is nothing", () => {
+		const offered: Song[][] = [];
+		const report = measureRanking((_, candidates) => {
+			offered.push([...candidates]);
+			return undefined;
+		}, sets);
+		expect(report.lookalikeOnlyPicksNothing).toMatchObject({ successes: 3, n: 3 });
+		const alone = offered.filter((candidates) => candidates.length === 1).flat();
+		expect(alone.map((song) => song.title)).toEqual(Array(3).fill("Strobe (Remix)"));
+	});
+
+	test("hides the ISRC from the function under test", () => {
+		const seen: Song[] = [];
+		measureRanking((song, candidates) => {
+			seen.push(song, ...candidates);
+			return undefined;
+		}, sets);
+		for (const song of seen) expect(song).not.toHaveProperty("isrc");
 	});
 });
 

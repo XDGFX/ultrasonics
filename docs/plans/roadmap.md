@@ -78,14 +78,15 @@ Not a live question — do not re-raise it.
 
 **Exit gate:** a real Spotify playlist syncs to Plex through the UI (`/verify`) · the matcher holds
 its accepted baseline on the match dataset's CC0 tier
-([#120](https://github.com/XDGFX/ultrasonics/issues/120)) · self-host first run reaches a
+([#132](https://github.com/XDGFX/ultrasonics/issues/132)) · self-host first run reaches a
 working applet without a login prompt.
 
 **Note on the matcher's gate.** The staged-rules matcher missed #117's targets (recall ≥ 95%,
 precision ≥ 99%, rejection ≥ 95% per trap), and Cal accepted its figures as a baseline on
-2026-11-03. Reaching those targets or better is the job of
-[Spec: the matcher, rebuilt on record-linkage practice](https://github.com/XDGFX/ultrasonics/issues/132),
-which is not part of this gate.
+2026-11-03. On 2026-11-16 Cal dropped those targets for best effort:
+[Spec: the matcher, rebuilt on record-linkage practice](https://github.com/XDGFX/ultrasonics/issues/132)
+rebuilt the matcher, and the held-out figures it reached are now the accepted baseline. They are
+held in `packages/matcher/src/floor.ts` as a floor that CI won't let a change regress.
 
 ## Phase 2 — Plugin parity (fan out)
 **Status:** not started · **Owner mix:** heavily parallel — one worktree + agent per plugin

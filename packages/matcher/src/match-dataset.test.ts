@@ -1,7 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import type { Song } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
+import candidateSetsJson from "../test/fixtures/match-dataset/candidate-sets.json";
 import handWrittenJson from "../test/fixtures/match-dataset/hand-written.json";
 import musicbrainzJson from "../test/fixtures/match-dataset/musicbrainz.json";
+import { candidateSets } from "./cc0-tier.ts";
 import { isPositive, MatchCase, Rule, trapCategories } from "./match-case.ts";
 
 const handWritten = z.array(MatchCase).parse(handWrittenJson);
@@ -55,6 +58,33 @@ describe("the MusicBrainz cases", () => {
 		for (const c of musicbrainz.filter((c) => isPositive(c.category))) {
 			expect(c.a.isrc).toBeDefined();
 			expect(c.a.isrc).toBe(c.b.isrc as string);
+		}
+	});
+});
+
+describe("the candidate sets", () => {
+	const sets = candidateSets;
+	const traps = new Map(
+		musicbrainz.flatMap((c) =>
+			c.provenance.source === "musicbrainz"
+				? [[`${c.provenance.a.recording}|${c.provenance.b.recording}|${c.category}`, c] as const]
+				: [],
+		),
+	);
+
+	test("each come from a lookalike trap in the tier, with its two sides as the candidates", () => {
+		for (const set of sets) {
+			const trap = traps.get(`${set.trap.a}|${set.trap.b}|${set.category}`);
+			expect(trap).toBeDefined();
+			expect(set.candidates[set.original]).toEqual(trap?.a as Song);
+			expect(set.candidates[1 - set.original]).toEqual(trap?.b as Song);
+		}
+	});
+
+	test("hold only MusicBrainz core fields in the source", () => {
+		const core = ["title", "artists", "album", "date", "isrc", "durationMs"];
+		for (const set of candidateSetsJson) {
+			expect(Object.keys(set.source).filter((key) => !core.includes(key))).toEqual([]);
 		}
 	});
 });
