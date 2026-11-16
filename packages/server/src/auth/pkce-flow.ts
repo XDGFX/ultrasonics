@@ -244,7 +244,7 @@ export class PkceFlow {
 		clientId: string | undefined,
 	): Promise<{ accessToken: string }> {
 		const usable = await this.#usableGrant(spec, store, clientId);
-		if (this.#fresh(usable.expiresAt)) return { accessToken: usable.grant.accessToken };
+		if (this.#fresh(usable.stored.expiresAt)) return { accessToken: usable.grant.accessToken };
 		const key = accountKey(accountId, spec.service);
 		let flight = this.#refreshing.get(key);
 		if (!flight) {
@@ -262,7 +262,7 @@ export class PkceFlow {
 		if (clientId === undefined) throw noClientFailure(spec.service);
 		const checked = checkGrant(spec, stored.document, clientId);
 		if (!checked.ok) throw authFailure(spec.service, "reconnect", checked.reason);
-		return { grant: checked.grant, expiresAt: stored.expiresAt };
+		return { grant: checked.grant, stored };
 	}
 
 	#fresh(expiresAt: number | null): boolean {
@@ -275,8 +275,14 @@ export class PkceFlow {
 		clientId: string | undefined,
 	): Promise<string> {
 		// Read again inside the flight: a flight that just finished may have refreshed it already.
-		const { grant, expiresAt } = await this.#usableGrant(spec, store, clientId);
+		const { grant, stored } = await this.#usableGrant(spec, store, clientId);
+		const { expiresAt } = stored;
 		if (this.#fresh(expiresAt)) return grant.accessToken;
+		// Saves only over the grant this flight read: a reconnect since then wins, and its token is used.
+		const save = (document: PkceGrant, until: number | null) =>
+			store.credentials.putIfUnchanged(spec.service, stored, document, until);
+		const reconnected = async () =>
+			(await this.#usableGrant(spec, store, clientId)).grant.accessToken;
 		let answer: TokenAnswer;
 		try {
 			answer = await this.#token(spec.service, {
@@ -296,16 +302,14 @@ export class PkceFlow {
 				scope: tokens.scope ?? grant.scope,
 				clientId: grant.clientId,
 			};
-			await store.credentials.put(spec.service, refreshed, this.#now() + tokens.expires_in * 1000);
+			if (!(await save(refreshed, this.#now() + tokens.expires_in * 1000))) return reconnected();
 			return refreshed.accessToken;
 		}
 		if (answer.error === "invalid_grant") {
 			const message = `${spec.service} no longer accepts this connection; connect again`;
-			await store.credentials.put(
-				spec.service,
-				{ ...grant, failed: { at: this.#now(), message } },
-				expiresAt,
-			);
+			if (!(await save({ ...grant, failed: { at: this.#now(), message } }, expiresAt))) {
+				return reconnected();
+			}
 			throw authFailure(spec.service, "reconnect", message);
 		}
 		if (answer.error === "invalid_client") {

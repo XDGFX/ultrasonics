@@ -36,6 +36,46 @@ describe("store.credentials", () => {
 		expect(await credentials.get("spotify")).toBeUndefined();
 	});
 
+	describe("putIfUnchanged", () => {
+		const renewed = { accessToken: "renewed" };
+
+		test("writes over the grant it was given", async () => {
+			const { db, mine } = await twoAccounts();
+			const credentials = db.storeFor(mine).credentials;
+			await credentials.put("spotify", grant, 9_000);
+			const read = await credentials.get("spotify");
+			if (!read) throw new Error("no grant");
+
+			expect(await credentials.putIfUnchanged("spotify", read, renewed, 10_000)).toBe(true);
+			expect(await credentials.get("spotify")).toEqual({ document: renewed, expiresAt: 10_000 });
+		});
+
+		test("leaves a grant put since it was read", async () => {
+			const { db, mine } = await twoAccounts();
+			const credentials = db.storeFor(mine).credentials;
+			await credentials.put("spotify", grant, 9_000);
+			const read = await credentials.get("spotify");
+			if (!read) throw new Error("no grant");
+			const reconnected = { accessToken: "reconnected" };
+			await credentials.put("spotify", reconnected, 9_500);
+
+			expect(await credentials.putIfUnchanged("spotify", read, renewed, 10_000)).toBe(false);
+			expect(await credentials.get("spotify")).toEqual({ document: reconnected, expiresAt: 9_500 });
+		});
+
+		test("leaves a grant removed since it was read", async () => {
+			const { db, mine } = await twoAccounts();
+			const credentials = db.storeFor(mine).credentials;
+			await credentials.put("spotify", grant, 9_000);
+			const read = await credentials.get("spotify");
+			if (!read) throw new Error("no grant");
+			await credentials.remove("spotify");
+
+			expect(await credentials.putIfUnchanged("spotify", read, renewed, 10_000)).toBe(false);
+			expect(await credentials.get("spotify")).toBeUndefined();
+		});
+	});
+
 	test("the stored blob holds none of the plaintext", async () => {
 		const { db, mine, path } = await twoAccounts();
 		await db.storeFor(mine).credentials.put("spotify", grant, null);

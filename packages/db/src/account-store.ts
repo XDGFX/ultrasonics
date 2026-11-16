@@ -13,6 +13,12 @@ export const RUNS_KEPT_PER_APPLET = 100;
 
 export type AccountStore = ReturnType<typeof createAccountStore>;
 
+/** A grant as `credentials.get` reads it: the plain document and when its access expires. */
+export interface StoredGrant {
+	document: JsonObject;
+	expiresAt: number | null;
+}
+
 /** The scoped store (ADR-0009 §4): every method is bound to one account. */
 export function createAccountStore(connection: Connection, accountId: string) {
 	const { db } = connection;
@@ -180,9 +186,7 @@ export function createAccountStore(connection: Connection, accountId: string) {
 
 		/** Grants are encrypted at rest; callers only ever see the plain document (ADR-0009 §6). */
 		credentials: {
-			async get(
-				service: string,
-			): Promise<{ document: JsonObject; expiresAt: number | null } | undefined> {
+			async get(service: string): Promise<StoredGrant | undefined> {
 				const row = db.select().from(credentials).where(ownCredential(service)).get();
 				if (!row) return undefined;
 				const document = await decryptCredential(connection.encryptionKey, service, row.secret);
@@ -202,6 +206,32 @@ export function createAccountStore(connection: Connection, accountId: string) {
 						set: columns,
 					})
 					.run();
+			},
+
+			/**
+			 * Writes only while the row still holds `expected`, and returns whether it wrote. The update
+			 * matches the blob it decrypted, which every write reseals with a fresh nonce, so a write
+			 * landing while this one encrypts wins.
+			 */
+			async putIfUnchanged(
+				service: string,
+				expected: StoredGrant,
+				document: JsonObject,
+				expiresAt: number | null,
+			): Promise<boolean> {
+				const row = db.select().from(credentials).where(ownCredential(service)).get();
+				if (!row || row.expiresAt !== expected.expiresAt) return false;
+				const [current, secret] = await Promise.all([
+					decryptCredential(connection.encryptionKey, service, row.secret),
+					encryptCredential(connection.encryptionKey, JsonObject.parse(document)),
+				]);
+				if (!Bun.deepEquals(current, expected.document, true)) return false;
+				const written = db
+					.update(credentials)
+					.set({ expiresAt, keyVersion: CURRENT_KEY_VERSION, secret })
+					.where(and(ownCredential(service), eq(credentials.secret, row.secret)))
+					.returning({ service: credentials.service });
+				return affectedRows(written) > 0;
 			},
 
 			async remove(service: string): Promise<boolean> {
