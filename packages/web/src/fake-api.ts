@@ -25,6 +25,7 @@ import {
 	type RunSummary,
 	type SaveResult,
 	type ServiceStatus,
+	type V1ImportReport,
 } from "./api-client.ts";
 import { type RunScript, type ScriptedRun, scriptedRun } from "./scripted-run.ts";
 
@@ -56,6 +57,8 @@ export type FakeApplet = Applet & Partial<Pick<AppletListing, "state" | "lastRun
 export interface FakeSeed {
 	plugins: FakePlugin[];
 	exposure?: Exposure;
+	/** The v1 import's report; no import ran when absent. */
+	v1Import?: V1ImportReport;
 	applets?: FakeApplet[];
 	grants?: Partial<Record<Service, ServiceStatus["status"]>>;
 	/** Stored persistent settings by plugin name, which need not parse. */
@@ -129,6 +132,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 	);
 	const settings = new Map(Object.entries(seed.settings ?? {}));
 	let exposure = seed.exposure;
+	const v1Import = seed.v1Import && { ...seed.v1Import };
 	const grants = new Map(Object.entries(seed.grants ?? {})) as Map<
 		Service,
 		ServiceStatus["status"]
@@ -245,6 +249,13 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 		instance: async () => ({ exposure: exposure ?? null }),
 		dismissExposure: async () => {
 			exposure = undefined;
+		},
+		v1Import: {
+			get: async () => (v1Import ? { ...v1Import } : null),
+			dismiss: async () => {
+				if (!v1Import) throw new ApiError(404, "The v1 import was not found");
+				v1Import.dismissed = true;
+			},
 		},
 		plugins: async () => structuredClone(catalogue),
 		applets: {

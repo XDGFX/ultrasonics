@@ -3,6 +3,13 @@ import { authStore } from "@ultrasonics/db/auth-store";
 import { systemModule } from "@ultrasonics/db/system";
 import { v1ImportStore } from "@ultrasonics/db/v1-import";
 import { definition, journal, schedule, seed, useTempDir, useTwoAccounts } from "./test-support.ts";
+import type { V1ImportMarker } from "./v1-import-marker.ts";
+
+const marker: V1ImportMarker = {
+	importedAt: 1,
+	report: { imported: 1, skipped: 0, markdown: "# report" },
+	dismissed: false,
+};
 
 describe("systemModule", () => {
 	const twoAccounts = useTwoAccounts(useTempDir());
@@ -139,7 +146,7 @@ describe("v1ImportStore", () => {
 			],
 			pluginSettings: [{ plugin: "plex", value: { library: "3" } }],
 			grants: [{ service: "plex", document: { token: "sealed" } }],
-			marker: { importedAt: 1 },
+			marker,
 		};
 
 		expect(await store.commit(write)).toBe(true);
@@ -160,7 +167,7 @@ describe("v1ImportStore", () => {
 		]);
 		expect(await scoped.pluginSettings.get("plex")).toEqual({ library: "3" });
 		expect((await scoped.credentials.get("plex"))?.document).toEqual({ token: "sealed" });
-		expect(await store.marker()).toEqual({ importedAt: 1 });
+		expect(await store.marker()).toEqual(marker);
 	});
 
 	test("a failed write leaves no marker and no applet", async () => {
@@ -171,8 +178,8 @@ describe("v1ImportStore", () => {
 			applets: [{ name: "Fine", definition, schedule: null }],
 			pluginSettings: [],
 			grants: [],
-			// A marker that is not JSON fails inside the transaction, after the applet's insert.
-			marker: { importedAt: Number.NaN },
+			// A marker that fails its schema fails inside the transaction, after the applet's insert.
+			marker: { ...marker, importedAt: Number.NaN },
 		};
 
 		await expect(store.commit(write)).rejects.toThrow();
@@ -198,7 +205,7 @@ describe("v1ImportStore", () => {
 			applets: [],
 			pluginSettings: [{ plugin: "plex", value: { library: "v1" } }],
 			grants: [{ service: "plex", document: { token: "v1" } }],
-			marker: { importedAt: 1 },
+			marker,
 		});
 
 		expect(await scoped.pluginSettings.get("plex")).toEqual({ library: "v1" });

@@ -1,4 +1,4 @@
-import type { OpenDatabase } from "@ultrasonics/db";
+import { type OpenDatabase, V1_IMPORT_MARKER_KEY, V1ImportMarker } from "@ultrasonics/db";
 import { authStore } from "@ultrasonics/db/auth-store";
 import { type Service, withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
@@ -28,12 +28,14 @@ const clientKey = (service: Service) => `oauth-client:${service}`;
 const EXPOSURE_KEY = "exposure";
 
 /**
- * The operator's client credentials and the install's exposure record in `instance_settings`, and
- * nothing else. Writable by the install's account because Phase 1 refuses `AUTH_SOURCE=oauth`, so
- * that account is the operator (spec #134, decision 5).
+ * The operator's client credentials, the install's exposure record and the v1 import's marker in
+ * `instance_settings`, and nothing else. Writable by the install's account because Phase 1 refuses
+ * `AUTH_SOURCE=oauth`, so that account is the operator (spec #134, decision 5).
  */
 export function operatorSettings(db: OpenDatabase) {
 	const store = authStore(db);
+	const v1Import = async () =>
+		V1ImportMarker.safeParse(await store.instanceSettings.get(V1_IMPORT_MARKER_KEY)).data;
 	return {
 		async client(service: Service): Promise<OperatorClient | undefined> {
 			const parsed = OperatorClient.safeParse(await store.instanceSettings.get(clientKey(service)));
@@ -51,6 +53,15 @@ export function operatorSettings(db: OpenDatabase) {
 		},
 		async dismissExposure(): Promise<void> {
 			await store.instanceSettings.remove(EXPOSURE_KEY);
+		},
+		/** The v1 importer's marker, or `undefined` when no import ran. */
+		v1Import,
+		/** Sets `dismissed` and keeps the marker; returns false when no import ran. */
+		async dismissV1Import(): Promise<boolean> {
+			const marker = await v1Import();
+			if (!marker) return false;
+			await store.instanceSettings.put(V1_IMPORT_MARKER_KEY, { ...marker, dismissed: true });
+			return true;
 		},
 	};
 }

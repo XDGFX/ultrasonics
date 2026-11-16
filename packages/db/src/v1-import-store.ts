@@ -5,9 +5,7 @@ import { CURRENT_KEY_VERSION, encryptCredential } from "./credential-cipher.ts";
 import { JsonObject, JsonValue } from "./json.ts";
 import { Schedule } from "./schedule.ts";
 import { accounts, applets, credentials, instanceSettings, pluginSettings } from "./schema.ts";
-
-/** The `instance_settings` key whose presence means the v1 import has run (ADR-0017 §1). */
-const MARKER_KEY = "v1_import";
+import { V1_IMPORT_MARKER_KEY, V1ImportMarker } from "./v1-import-marker.ts";
 
 /** Everything one v1 import writes, for one account, beside its marker. */
 export interface V1ImportWrite {
@@ -15,7 +13,7 @@ export interface V1ImportWrite {
 	applets: { name: string; definition: AppletDefinition; schedule: Schedule | null }[];
 	pluginSettings: { plugin: string; value: JsonValue }[];
 	grants: { service: string; document: JsonObject }[];
-	marker: JsonValue;
+	marker: V1ImportMarker;
 }
 
 /**
@@ -28,7 +26,7 @@ export function v1ImportStore(handle: OpenDatabase) {
 		tx
 			.select({ value: instanceSettings.value })
 			.from(instanceSettings)
-			.where(eq(instanceSettings.key, MARKER_KEY))
+			.where(eq(instanceSettings.key, V1_IMPORT_MARKER_KEY))
 			.get()?.value;
 
 	return {
@@ -99,7 +97,7 @@ export function v1ImportStore(handle: OpenDatabase) {
 						.run();
 				}
 				tx.insert(instanceSettings)
-					.values({ key: MARKER_KEY, value: JsonValue.parse(write.marker) })
+					.values({ key: V1_IMPORT_MARKER_KEY, value: V1ImportMarker.parse(write.marker) })
 					.run();
 				return true;
 			});

@@ -21,3 +21,4 @@ export {
 	type RunTrigger,
 } from "./run.ts";
 export { Schedule } from "./schedule.ts";
+export { V1_IMPORT_MARKER_KEY, V1ImportMarker } from "./v1-import-marker.ts";

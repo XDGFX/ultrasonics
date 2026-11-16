@@ -53,6 +53,21 @@ export const InstanceInfo = z.object({
 });
 export type InstanceInfo = z.infer<typeof InstanceInfo>;
 
+/**
+ * `GET /api/instance/v1-import`: the v1 import's report, or `null` when none ran. The UI shows its
+ * notice until it is dismissed with `POST /api/instance/v1-import/dismiss` (ADR-0017 §6).
+ */
+export const V1ImportReport = z.object({
+	/** Epoch milliseconds. */
+	importedAt: z.number(),
+	imported: z.int().nonnegative(),
+	skipped: z.int().nonnegative(),
+	/** The same Markdown as `<DATA_DIR>/v1-import-report.md`. */
+	markdown: z.string(),
+	dismissed: z.boolean(),
+});
+export type V1ImportReport = z.infer<typeof V1ImportReport>;
+
 export const PluginInfo = z.object({
 	name: z.string(),
 	description: z.string(),
