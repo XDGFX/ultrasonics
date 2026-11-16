@@ -8,6 +8,18 @@ afterAll(() => server.stop());
 
 runConformance(plex, {
 	instanceSettings: {
+		inputs: {
+			valid: [
+				{ source: "all" },
+				{ source: "all", exclude: "All Music, Recently*" },
+				{ source: "chosen", playlists: "Gym*, Road trip" },
+			],
+			invalid: [
+				{ source: "chosen", playlists: " " },
+				{ source: "chosen", playlists: " , " },
+				{ source: "liked" },
+			],
+		},
 		outputs: {
 			valid: [{}, { library: "Music" }, { library: "1" }, { existing: "update" }],
 			invalid: [{ existing: "replace" }],

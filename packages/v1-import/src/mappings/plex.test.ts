@@ -39,15 +39,17 @@ describe("the Plex mapping", () => {
 		if (!accountId) throw new Error("no account");
 		const store = h.db.storeFor(accountId);
 		const markdown = readFileSync(join(h.dataDir, REPORT_FILE), "utf8");
-		const outputOf = async (name: string) =>
-			(await store.applets.list()).find((applet) => applet.name === name)?.definition.outputs;
-		return { h, outcome, store, markdown, outputOf };
+		const definitionOf = async (name: string) =>
+			(await store.applets.list()).find((applet) => applet.name === name)?.definition;
+		const outputOf = async (name: string) => (await definitionOf(name))?.outputs;
+		const inputOf = async (name: string) => (await definitionOf(name))?.inputs;
+		return { h, outcome, store, markdown, outputOf, inputOf };
 	};
 
 	test("maps a Plex output's library to its section id and existing playlists to existing", async () => {
 		const { outcome, outputOf } = await imported("v1-plex.sql");
 
-		expect(outcome).toMatchObject({ kind: "imported", imported: 3, skipped: 1 });
+		expect(outcome).toMatchObject({ kind: "imported", imported: 4, skipped: 0 });
 		expect(await outputOf("Chill to Plex")).toEqual([
 			{ plugin: "plex", settings: { library: "3", existing: "update" } },
 		]);
@@ -114,9 +116,38 @@ describe("the Plex mapping", () => {
 		}
 	});
 
-	test("skips an applet with a Plex input, whose mapping is not built yet", async () => {
-		const { markdown } = await imported("v1-plex.sql");
+	test("maps a Plex input with a blank filter to all, dropping its library", async () => {
+		const { outcome, inputOf } = await imported("v1-plex-input.sql");
 
-		expect(markdown).toMatch(/### From Plex\n\n[^\n]*Plex input/);
+		expect(outcome).toMatchObject({ kind: "imported", imported: 5, skipped: 0 });
+		expect(await inputOf("Every Plex playlist")).toEqual([
+			{ plugin: "plex", settings: { source: "all" } },
+		]);
+	});
+
+	test("maps a plain or convertible filter to chosen, matching anywhere in the title as v1 did", async () => {
+		const { inputOf } = await imported("v1-plex-input.sql");
+
+		expect(await inputOf("Gym playlists")).toEqual([
+			{ plugin: "plex", settings: { source: "chosen", playlists: "*gym*" } },
+		]);
+		expect(await inputOf("Chill or run")).toEqual([
+			{ plugin: "plex", settings: { source: "chosen", playlists: "chill*, *run" } },
+		]);
+		expect(await inputOf("Beta mix")).toEqual([
+			{ plugin: "plex", settings: { source: "chosen", playlists: "*Mix*" } },
+		]);
+	});
+
+	test("keeps a filter that won't convert as written, and reports it for a manual edit", async () => {
+		const { inputOf, markdown } = await imported("v1-plex-input.sql");
+
+		expect(await inputOf("Numbered gym")).toEqual([
+			{ plugin: "plex", settings: { source: "chosen", playlists: "gym \\d+" } },
+		]);
+		expect(markdown).toMatch(
+			/## Filters that need a manual edit\n[^#]*- Numbered gym: `gym \\d\+`/,
+		);
+		expect(markdown).not.toMatch(/Filters that need a manual edit[^#]*Gym playlists/);
 	});
 });

@@ -1,0 +1,123 @@
+{
+	"MediaContainer": {
+		"size": 2,
+		"composite": "/playlists/45/composite/1794791163",
+		"duration": 354,
+		"leafCount": 2,
+		"playlistType": "audio",
+		"ratingKey": "45",
+		"smart": true,
+		"title": "ultrasonics Plex test",
+		"Metadata": [
+			{
+				"ratingKey": "37",
+				"key": "/library/metadata/37",
+				"parentRatingKey": "36",
+				"grandparentRatingKey": "1",
+				"guid": "local://37",
+				"parentGuid": "local://36",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"type": "track",
+				"title": "Local Forecast",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/36",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "25 Years, Vol. 1",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"duration": 165224,
+				"addedAt": 1794790632,
+				"Media": [
+					{
+						"id": 20,
+						"duration": 165224,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 20,
+								"key": "/library/parts/20/1794790632/file.mp3",
+								"duration": 165224,
+								"file": "/music/main/Kevin MacLeod/25 Years, Vol. 1/01 - Local Forecast.mp3",
+								"size": 6610262,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Local Forecast",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			},
+			{
+				"ratingKey": "33",
+				"key": "/library/metadata/33",
+				"parentRatingKey": "32",
+				"grandparentRatingKey": "1",
+				"guid": "plex://track/5d07fbc6403c64029098f223",
+				"parentGuid": "plex://album/5d07cae3403c640290d7fb46",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"type": "track",
+				"title": "Local Forecast - Elevator",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/32",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Disco Ultralounge",
+				"summary": "",
+				"index": 13,
+				"parentIndex": 1,
+				"ratingCount": 100673,
+				"parentYear": 2014,
+				"thumb": "/library/metadata/32/thumb/1794790870",
+				"parentThumb": "/library/metadata/32/thumb/1794790870",
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"duration": 189205,
+				"addedAt": 1794790633,
+				"updatedAt": 1794791770,
+				"Media": [
+					{
+						"id": 18,
+						"duration": 189205,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 18,
+								"key": "/library/parts/18/1794790633/file.mp3",
+								"duration": 189205,
+								"file": "/music/main/Kevin MacLeod/Disco Ultralounge/01 - Local Forecast - Elevator.mp3",
+								"size": 7569490,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Local Forecast - Elevator",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			}
+		]
+	}
+}
