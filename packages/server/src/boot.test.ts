@@ -2,11 +2,11 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
+import { type AccountStore, openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
 import { defineAuth, definePlugin } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
-import { fixtureRegistry, plex, registryOf, source } from "../test/fixture-plugins.ts";
-import type { AppletListing } from "./api.ts";
+import { fixtureRegistry, holds, plex, registryOf, source } from "../test/fixture-plugins.ts";
+import type { Applet, AppletListing, RunNowResult } from "./api.ts";
 import { type BootResult, boot } from "./boot.ts";
 import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL } from "./configuration.ts";
 import { eventually, installAccountOf, recordingLogger } from "./test-support.ts";
@@ -34,6 +34,46 @@ async function bootWith(
 	booted = await boot({ env: env(overrides), registry, logger });
 	return booted;
 }
+
+async function post<T>(url: URL, path: string, body?: object): Promise<T> {
+	const response = await fetch(new URL(path, url), {
+		method: "POST",
+		headers: { "content-type": "application/json" },
+		...(body ? { body: JSON.stringify(body) } : {}),
+	});
+	return response.json() as Promise<T>;
+}
+
+/** Creates an applet whose input holds on {@link holds}, and runs it now. */
+async function runHeld(url: URL): Promise<{ appletId: string; runId: string }> {
+	const { id: appletId } = await post<Applet>(url, "/api/applets", {
+		name: "held",
+		enabled: true,
+		definition: {
+			inputs: [{ plugin: "held", settings: {} }],
+			modifiers: [],
+			outputs: [{ plugin: "sink", settings: {} }],
+		},
+	});
+	const result = await post<RunNowResult>(url, `/api/applets/${appletId}/run`);
+	if (result.kind !== "started") throw new Error(`run now answered ${result.kind}`);
+	return { appletId, runId: result.runId };
+}
+
+/** Uses the database in `dataDir` while no server holds it open for writing. */
+async function withStore<T>(read: (store: AccountStore) => Promise<T>): Promise<T> {
+	const path = join(dataDir, DATABASE_FILE);
+	const key = await resolveEncryptionKey(KEY, path);
+	if (!key.ok) throw key.error;
+	const db = await openDatabase({ path, encryptionKey: key.key });
+	try {
+		return await read(db.storeFor(installAccountOf(path)));
+	} finally {
+		db.close();
+	}
+}
+
+const storedRun = (runId: string) => withStore((store) => store.runs.get(runId));
 
 const settingsOf = (result: BootResult) => (result.ok ? [] : result.problems.map((p) => p.setting));
 
@@ -80,21 +120,18 @@ describe("configuration", () => {
 
 describe("boot", () => {
 	test("a run left running by the last process is interrupted, and the count logged", async () => {
-		const path = join(env({}).DATA_DIR, DATABASE_FILE);
-		const key = await resolveEncryptionKey(KEY, path);
-		if (!key.ok) throw key.error;
-		const db = await openDatabase({ path, encryptionKey: key.key });
-		const store = db.storeFor(installAccountOf(path));
-		const applet = await store.applets.create({
-			name: "left running",
-			definition: {
-				inputs: [{ plugin: "source", settings: { playlist: "a" } }],
-				modifiers: [],
-				outputs: [{ plugin: "plex", settings: {} }],
-			},
+		env({});
+		const runId = await withStore(async (store) => {
+			const applet = await store.applets.create({
+				name: "left running",
+				definition: {
+					inputs: [{ plugin: "source", settings: { playlist: "a" } }],
+					modifiers: [],
+					outputs: [{ plugin: "plex", settings: {} }],
+				},
+			});
+			return store.runs.start(applet.id, "manual");
 		});
-		const runId = await store.runs.start(applet.id, "manual");
-		db.close();
 
 		const logger = recordingLogger();
 		booted = await boot({
@@ -109,20 +146,7 @@ describe("boot", () => {
 	});
 
 	test("a slot missed while the server was down runs once, on the first tick at boot", async () => {
-		const path = join(env({}).DATA_DIR, DATABASE_FILE);
-		const key = await resolveEncryptionKey(KEY, path);
-		if (!key.ok) throw key.error;
-		const db = await openDatabase({ path, encryptionKey: key.key });
-		const store = db.storeFor(installAccountOf(path));
-		await store.pluginSettings.put("source", { region: "au" });
-		const applet = await store.applets.create({
-			name: "missed while down",
-			definition: {
-				inputs: [{ plugin: "source", settings: { playlist: "a" } }],
-				modifiers: [],
-				outputs: [{ plugin: "plex", settings: {} }],
-			},
-		});
+		env({});
 		const hourly = {
 			kind: "interval",
 			unit: "hour",
@@ -130,12 +154,23 @@ describe("boot", () => {
 			anchor: "2026-01-01T00:00",
 			timeZone: "UTC",
 		} as const;
-		// Three hourly slots ago, so three were missed.
-		await store.applets.setSchedule(applet.id, {
-			schedule: hourly,
-			nextRunAt: Date.now() - 3 * 3_600_000,
+		const appletId = await withStore(async (store) => {
+			await store.pluginSettings.put("source", { region: "au" });
+			const applet = await store.applets.create({
+				name: "missed while down",
+				definition: {
+					inputs: [{ plugin: "source", settings: { playlist: "a" } }],
+					modifiers: [],
+					outputs: [{ plugin: "plex", settings: {} }],
+				},
+			});
+			// Three hourly slots ago, so three were missed.
+			await store.applets.setSchedule(applet.id, {
+				schedule: hourly,
+				nextRunAt: Date.now() - 3 * 3_600_000,
+			});
+			return applet.id;
 		});
-		db.close();
 
 		booted = await boot({
 			env: { DATA_DIR: dataDir, PORT: "0", ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" },
@@ -150,13 +185,8 @@ describe("boot", () => {
 			expect(listing?.state).toBe("idle");
 			expect(listing?.lastRun).not.toBeNull();
 		});
-		const reopened = await openDatabase({ path, encryptionKey: key.key });
-		try {
-			const runs = await reopened.storeFor(installAccountOf(path)).runs.listForApplet(applet.id);
-			expect(runs.map((run) => run.trigger)).toEqual(["schedule"]);
-		} finally {
-			reopened.close();
-		}
+		const runs = await withStore((store) => store.runs.listForApplet(appletId));
+		expect(runs.map((run) => run.trigger)).toEqual(["schedule"]);
 	});
 
 	test("a settings schema outside the renderable subset aborts boot with its path", async () => {
@@ -197,6 +227,29 @@ describe("boot", () => {
 		);
 		expect(result.ok ? [] : result.problems).toEqual([
 			{ setting: "plugins", message: expect.stringMatching(/"other-plex".*"plex"/) },
+		]);
+	});
+
+	test("a stop interrupts a run still going after the grace period, keeping its journal", async () => {
+		booted = await boot({
+			env: env({ ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" }),
+			registry: fixtureRegistry,
+			logger: recordingLogger(),
+			shutdownGraceMs: 0,
+		});
+		if (!booted.ok) throw new Error(JSON.stringify(booted.problems));
+		const { runId } = await runHeld(booted.server.url);
+		const hold = await holds.next();
+
+		await booted.stop();
+		booted = undefined;
+		hold.release();
+
+		const run = await storedRun(runId);
+		expect(run?.status).toBe("interrupted");
+		expect(run?.stages).toEqual([
+			expect.objectContaining({ type: "stage", plugin: "held", state: "started" }),
+			expect.objectContaining({ type: "end", status: "interrupted" }),
 		]);
 	});
 

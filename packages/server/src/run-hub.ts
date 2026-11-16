@@ -35,11 +35,18 @@ export interface RunHub {
 	 * it comes, and returns the unsubscribe. `undefined` when the run isn't live: read its row.
 	 */
 	follow(runId: string, afterSeq: number, listener: RunListener): (() => void) | undefined;
+	/**
+	 * Ends every live run as `interrupted`, writing its journal, for a shutdown that cannot wait for
+	 * them. Settles once each end is on its row; the runner's later events are dropped.
+	 */
+	interruptAll(): Promise<void>;
 }
 
 interface LiveRun {
 	events: RunEvent[];
 	listeners: Set<RunListener>;
+	/** Emits `end` one `seq` past the last event, unless the run already ended; settles on `closed`. */
+	end(status: FinishedRunStatus): Promise<void>;
 }
 
 /**
@@ -53,7 +60,16 @@ export function createRunHub(deps: { logger: Logger; now?: () => number }): RunH
 
 	return {
 		open(runId, writer) {
-			const run: LiveRun = { events: [], listeners: new Set() };
+			const run: LiveRun = {
+				events: [],
+				listeners: new Set(),
+				end(status) {
+					const last = run.events.at(-1);
+					if (last?.type !== "end")
+						emit({ type: "end", status, seq: (last?.seq ?? 0) + 1, at: now() });
+					return closed;
+				},
+			};
 			live.set(runId, run);
 			let lastCheckpoint = Number.NEGATIVE_INFINITY;
 			let writes = Promise.resolve();
@@ -88,17 +104,11 @@ export function createRunHub(deps: { logger: Logger; now?: () => number }): RunH
 				}
 			};
 
-			return {
-				emit,
-				closed,
-				fail() {
-					const last = run.events.at(-1);
-					if (last?.type !== "end") {
-						emit({ type: "end", status: "failed", seq: (last?.seq ?? 0) + 1, at: now() });
-					}
-					return closed;
-				},
-			};
+			return { emit, closed, fail: () => run.end("failed") };
+		},
+
+		async interruptAll() {
+			await Promise.all([...live.values()].map((run) => run.end("interrupted")));
 		},
 
 		follow(runId, afterSeq, listener) {

@@ -19,7 +19,18 @@ export interface BootOptions {
 	webRoot?: string;
 	/** Where `oauth2-pkce` services authorise; the real services' when absent. */
 	oauth?: PkceFlowOptions;
+	/** How long `stop` waits for running runs; {@link SHUTDOWN_GRACE_MS} when absent. */
+	shutdownGraceMs?: number;
 }
+
+/**
+ * How long a stop waits for running runs to end, leaving Docker's 10 s room for the interrupted
+ * runs' writes on a slow disk before it kills the process.
+ */
+export const SHUTDOWN_GRACE_MS = 7_000;
+
+/** How the log line that boot is serving begins, which tests wait on. */
+export const LISTENING = "ultrasonics is listening on";
 
 /** What refused boot: a setting, or `plugins` for a build bug in the catalogue. */
 export type BootResult =
@@ -58,7 +69,7 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 			};
 		}
 
-		const { app, scheduler } = await createApp({
+		const { app, scheduler, runs } = await createApp({
 			configuration,
 			db,
 			registry: options.registry,
@@ -76,15 +87,14 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 			fetch: app.fetch,
 			idleTimeout: IDLE_TIMEOUT_SECONDS,
 		});
-		logger.info(
-			`ultrasonics is listening on ${server.url} (AUTH_SOURCE=${configuration.authSource})`,
-		);
+		logger.info(`${LISTENING} ${server.url} (AUTH_SOURCE=${configuration.authSource})`);
 		return {
 			ok: true,
 			server,
 			stop: async () => {
+				await server.stop(true);
 				await scheduler.stop();
-				server.stop(true);
+				await runs.drain(options.shutdownGraceMs ?? SHUTDOWN_GRACE_MS);
 				db.close();
 			},
 		};
