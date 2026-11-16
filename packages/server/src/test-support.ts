@@ -15,6 +15,7 @@ import type { BootableAuthSource } from "./configuration.ts";
 import { DATABASE_FILE } from "./configuration.ts";
 import { parseIpRange } from "./ip-range.ts";
 import type { Logger } from "./logger.ts";
+import type { Scheduler } from "./scheduler.ts";
 
 /** A logger that keeps every line, prefixed with its level, for a test to read. */
 export function recordingLogger(): Logger & { lines: string[] } {
@@ -62,6 +63,10 @@ export interface TestApp {
 	/** A second account seeded straight into the database, which no route may reach. */
 	theirs: string;
 	logger: ReturnType<typeof recordingLogger>;
+	/** The app's clock, in epoch milliseconds, which only the test moves. */
+	clock: { now: number };
+	/** The app's scheduler, never started: a test ticks it. */
+	scheduler: Scheduler;
 	/** Runs `use` on a raw connection to the database file, bypassing every module. */
 	raw<T>(use: (sqlite: Sqlite) => T): T;
 	/**
@@ -118,7 +123,8 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 		const catalogue = await loadCatalogue(registry);
 		if (!catalogue.ok) throw new Error(catalogue.problems.join("\n"));
 		const logger = recordingLogger();
-		const app = await createApp({
+		const clock = { now: Date.now() };
+		const { app, scheduler } = await createApp({
 			configuration: {
 				authSource: options.authSource ?? "bootstrapped",
 				trustedProxies: (options.trustedProxies ?? []).flatMap((text) => parseIpRange(text) ?? []),
@@ -133,6 +139,7 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 			logger,
 			webRoot: options.webRoot ?? join(dataDir, "no-web-root"),
 			...(options.pkce ? { pkce: options.pkce } : {}),
+			now: () => clock.now,
 		});
 		return {
 			app,
@@ -141,6 +148,8 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 			mine,
 			theirs,
 			logger,
+			clock,
+			scheduler,
 			raw,
 			listen: () => {
 				const server = Bun.serve({ port: 0, fetch: app.fetch });

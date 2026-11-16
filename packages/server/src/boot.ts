@@ -23,13 +23,13 @@ export interface BootOptions {
 
 /** What refused boot: a setting, or `plugins` for a build bug in the catalogue. */
 export type BootResult =
-	| { ok: true; server: Bun.Server<undefined>; stop(): void }
+	| { ok: true; server: Bun.Server<undefined>; stop(): Promise<void> }
 	| { ok: false; problems: ConfigurationProblem[] };
 
 /**
  * Boots in ADR-0015 §3's order: configuration, the database (backup, migrate, the account),
- * interrupt leftover runs, the plugin catalogue, then listen. A database failure throws, for the
- * caller to exit loudly.
+ * interrupt leftover runs, the plugin catalogue, the scheduler, then listen. A database failure
+ * throws, for the caller to exit loudly.
  */
 export async function boot(options: BootOptions): Promise<BootResult> {
 	const { logger } = options;
@@ -58,7 +58,7 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 			};
 		}
 
-		const app = await createApp({
+		const { app, scheduler } = await createApp({
 			configuration,
 			db,
 			registry: options.registry,
@@ -69,6 +69,8 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 			...(options.webRoot ? { webRoot: options.webRoot } : {}),
 			...(options.oauth ? { pkce: new PkceFlow(options.oauth) } : {}),
 		});
+		// The first tick is now, which is how a slot missed while the server was down runs once.
+		scheduler.start();
 		const server = Bun.serve({
 			port: configuration.port,
 			fetch: app.fetch,
@@ -80,7 +82,8 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 		return {
 			ok: true,
 			server,
-			stop: () => {
+			stop: async () => {
+				await scheduler.stop();
 				server.stop(true);
 				db.close();
 			},

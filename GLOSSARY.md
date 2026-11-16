@@ -83,8 +83,9 @@ _Avoid_: "trigger plugin" — v1's webhook and time-trigger plugins are not port
 
 **Schedule** — A trigger that fires an applet every N hours, days or weeks, counted from an
 **anchor** time in a named timezone. Days and weeks follow the local clock, so a daily schedule
-keeps its hour across a clock change. A due time missed while the server was down fires once when
-it returns; one passed while the applet was disabled does not (ADR-0018).
+keeps its hour across a clock change. Each due time is a **slot** on the anchor's grid. A due time
+missed while the server was down fires once when it returns; one passed while the applet was
+disabled does not (ADR-0018).
 _Avoid_: "cron", "timer" — a schedule is not a cron expression.
 
 **Run** — One execution of an applet, recorded with what triggered it (`schedule`, `webhook` or

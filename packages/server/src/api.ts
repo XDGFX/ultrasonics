@@ -117,6 +117,14 @@ export const RunNowResult = z.discriminatedUnion("kind", [
 ]);
 export type RunNowResult = z.infer<typeof RunNowResult>;
 
+/** A freshly generated webhook, the only time its token is shown (ADR-0018 §5). */
+export const WebhookUrl = z.object({ url: z.string() });
+export type WebhookUrl = z.infer<typeof WebhookUrl>;
+
+/** The inbound webhook's `202`: a run started, or one more queued behind the current run. */
+export const WebhookFired = z.object({ status: z.enum(["started", "queued"]) });
+export type WebhookFired = z.infer<typeof WebhookFired>;
+
 export const RunSummary = z.object({
 	id: z.string(),
 	appletId: z.string(),
