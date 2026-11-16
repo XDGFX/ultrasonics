@@ -64,6 +64,14 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/lastfm": {
+      "name": "@ultrasonics/plugin-lastfm",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/plugins/local-music-database": {
       "name": "@ultrasonics/plugin-local-music-database",
       "version": "0.0.0",
@@ -114,6 +122,7 @@
       "dependencies": {
         "@ultrasonics/plugin-custom-file": "workspace:*",
         "@ultrasonics/plugin-deezer": "workspace:*",
+        "@ultrasonics/plugin-lastfm": "workspace:*",
         "@ultrasonics/plugin-local-music-database": "workspace:*",
         "@ultrasonics/plugin-local-playlists": "workspace:*",
         "@ultrasonics/plugin-log-tracks": "workspace:*",
@@ -382,6 +391,8 @@
     "@ultrasonics/plugin-custom-file": ["@ultrasonics/plugin-custom-file@workspace:packages/plugins/custom-file"],
 
     "@ultrasonics/plugin-deezer": ["@ultrasonics/plugin-deezer@workspace:packages/plugins/deezer"],
+
+    "@ultrasonics/plugin-lastfm": ["@ultrasonics/plugin-lastfm@workspace:packages/plugins/lastfm"],
 
     "@ultrasonics/plugin-local-music-database": ["@ultrasonics/plugin-local-music-database@workspace:packages/plugins/local-music-database"],
 

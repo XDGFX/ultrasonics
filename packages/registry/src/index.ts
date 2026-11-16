@@ -12,6 +12,10 @@ export const officialPlugins = {
 		path: import.meta.resolve("@ultrasonics/plugin-deezer"),
 		load: () => import("@ultrasonics/plugin-deezer"),
 	},
+	lastfm: {
+		path: import.meta.resolve("@ultrasonics/plugin-lastfm"),
+		load: () => import("@ultrasonics/plugin-lastfm"),
+	},
 	"local-music-database": {
 		path: import.meta.resolve("@ultrasonics/plugin-local-music-database"),
 		load: () => import("@ultrasonics/plugin-local-music-database"),

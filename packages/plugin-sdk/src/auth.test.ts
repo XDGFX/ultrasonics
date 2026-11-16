@@ -32,9 +32,9 @@ const spotifyAuth = defineAuth({
 });
 
 describe("services", () => {
-	test("lists the Phase 1 services", () => {
-		expect(services).toEqual(["spotify", "plex"]);
-		expectTypeOf<Service>().toEqualTypeOf<"spotify" | "plex">();
+	test("lists each ported service", () => {
+		expect(services).toEqual(["spotify", "plex", "lastfm"]);
+		expectTypeOf<Service>().toEqualTypeOf<"spotify" | "plex" | "lastfm">();
 	});
 });
 
