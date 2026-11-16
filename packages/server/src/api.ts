@@ -86,6 +86,24 @@ export const Schedule = z.object({
 });
 export type Schedule = z.infer<typeof Schedule>;
 
+/** The most of each unit a schedule may step: a year, beyond which nobody syncs (ADR-0018 §1). */
+export const MAX_SCHEDULE_COUNT = { hour: 8_760, day: 365, week: 52 } as const;
+
+/** A refinement adding an issue at `count` when a schedule steps further than `MAX_SCHEDULE_COUNT`. */
+export function checkScheduleCount(
+	{ unit, count }: Pick<Schedule, "unit" | "count">,
+	ctx: z.RefinementCtx,
+): void {
+	const most = MAX_SCHEDULE_COUNT[unit];
+	if (count <= most) return;
+	ctx.addIssue({
+		code: "custom",
+		path: ["count"],
+		input: count,
+		message: `At most ${most} ${unit}s: a schedule repeats at least once a year`,
+	});
+}
+
 export const Applet = AppletDraft.extend({
 	id: z.string(),
 	schedule: Schedule.nullable(),

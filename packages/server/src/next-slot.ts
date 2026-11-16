@@ -28,6 +28,19 @@ export function nextSlot(schedule: Schedule, after: number): number {
 }
 
 /**
+ * `nextSlot`, or `undefined` for a stored schedule with none: a count from before the route's bound
+ * can step past the last date `Temporal` represents.
+ */
+export function nextSlotIfAny(schedule: Schedule, after: number): number | undefined {
+	try {
+		return nextSlot(schedule, after);
+	} catch (error) {
+		if (error instanceof RangeError) return undefined;
+		throw error;
+	}
+}
+
+/**
  * The instant a local date-time names in a zone. A time repeated by fall back is its first
  * occurrence; a time skipped by spring forward is the next valid instant, where the gap ends.
  */

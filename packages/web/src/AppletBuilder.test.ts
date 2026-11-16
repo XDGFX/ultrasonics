@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { Component } from "@ultrasonics/plugin-sdk";
+import { MAX_SCHEDULE_COUNT } from "@ultrasonics/server/api";
 import { mountApp, settle } from "../test/mount-app.ts";
 import type { FakeApplet, FakeSeed } from "./fake-api.ts";
 import { sentenceText, sentence as writeSentence } from "./sentence.ts";
@@ -198,10 +199,15 @@ describe("the builder", () => {
 			});
 		});
 
-		test("won't save a count below 1", async () => {
+		test.each([
+			["below 1", "day", 0],
+			["beyond a year of hours", "hour", MAX_SCHEDULE_COUNT.hour + 1],
+			["beyond a year of weeks", "week", MAX_SCHEDULE_COUNT.week + 1],
+		])("won't save a count %s", async (_, unit, count) => {
 			const { wrapper, api } = await open();
 			await click(wrapper, '[data-column="when"] [data-add="schedule"]');
-			await wrapper.get('.panel input[name="count"]').setValue("0");
+			await wrapper.get('.panel select[name="unit"]').setValue(unit);
+			await wrapper.get('.panel input[name="count"]').setValue(String(count));
 			await save(wrapper);
 			const field = wrapper.get('.panel input[name="count"]').element.closest(".field");
 			expect(field?.querySelector(".issue")?.textContent).toBeTruthy();
