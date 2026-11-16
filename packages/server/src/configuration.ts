@@ -10,7 +10,11 @@ export type AuthSource = z.infer<typeof AuthSource>;
 /** The sources Phase 1 boots with. */
 export type BootableAuthSource = Exclude<AuthSource, "oauth">;
 
-export const DATABASE_FILE = "ultrasonics.db";
+/** Named apart from {@link V1_DATABASE_FILE}, which shares the data directory under Docker. */
+export const DATABASE_FILE = "ultrasonics-v2.db";
+
+/** Where v1 keeps its database, which the importer reads and never changes (ADR-0017 §1). */
+export const V1_DATABASE_FILE = "ultrasonics.db";
 
 // Phase 5 must lock down `PUT /api/services/:service/client` before lifting this refusal: under
 // `oauth`, any hosted account could replace the operator's client for everyone.

@@ -25,11 +25,40 @@ const MigrationJournal = z.object({
 	entries: z.array(z.object({ when: z.number(), tag: z.string() })),
 });
 
+const MIGRATIONS_TABLE = "__drizzle_migrations";
+
+/** The tables v1's `database.py` creates; ADR-0017 §1 recognises a v1 database by them. */
+const V1_TABLES = ["ultrasonics", "plugins", "applets"];
+
+/** The file at `path` is v1's database, which v2 never migrates (ADR-0017 §1). */
+export class V1DatabaseError extends Error {
+	override readonly name = "V1DatabaseError";
+
+	constructor(readonly path: string) {
+		super(`${path} holds v1's tables and no migration table`);
+	}
+}
+
+function tablesIn(sqlite: Sqlite): Set<string> {
+	const rows = sqlite
+		.query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type = 'table'")
+		.all();
+	return new Set(rows.map((row) => row.name));
+}
+
+/** Read through a read-only connection, so a v1 file is refused without being written. */
+function looksLikeV1(path: string): boolean {
+	const sqlite = new Sqlite(path, { readonly: true });
+	try {
+		const tables = tablesIn(sqlite);
+		return !tables.has(MIGRATIONS_TABLE) && V1_TABLES.every((name) => tables.has(name));
+	} finally {
+		sqlite.close();
+	}
+}
+
 function lastAppliedMigration(sqlite: Sqlite): number | undefined {
-	const table = sqlite
-		.query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = '__drizzle_migrations'")
-		.get();
-	if (!table) return undefined;
+	if (!tablesIn(sqlite).has(MIGRATIONS_TABLE)) return undefined;
 	const row = sqlite
 		.query<{ created_at: number }, []>(
 			"SELECT created_at FROM __drizzle_migrations ORDER BY created_at DESC LIMIT 1",
@@ -56,11 +85,13 @@ function backUpBeforeMigrating(sqlite: Sqlite, path: string, migrationsFolder: s
 
 /**
  * The open step (ADR-0015 §3): back up the file if a migration is pending, apply pending
- * migrations, and make sure the install's account exists. A failed migration throws.
+ * migrations, and make sure the install's account exists. A failed migration throws, and a v1
+ * database throws {@link V1DatabaseError} before anything writes to it.
  */
 export async function openDatabase(options: OpenOptions): Promise<OpenDatabase> {
 	const migrationsFolder = options.migrationsFolder ?? MIGRATIONS_FOLDER;
 	const existed = existsSync(options.path);
+	if (existed && looksLikeV1(options.path)) throw new V1DatabaseError(options.path);
 	const sqlite = new Sqlite(options.path, { create: true, strict: true });
 	try {
 		sqlite.run("PRAGMA foreign_keys = ON");

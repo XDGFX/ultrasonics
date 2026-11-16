@@ -1,12 +1,17 @@
 import { getConnInfo } from "@hono/bun";
 import { createRunQueue } from "@ultrasonics/core";
-import { type OpenDatabase, openDatabase } from "@ultrasonics/db";
+import { type OpenDatabase, openDatabase, V1DatabaseError } from "@ultrasonics/db";
 import { systemModule } from "@ultrasonics/db/system";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import { createApp } from "./app.ts";
 import { PkceFlow, type PkceFlowOptions } from "./auth/pkce-flow.ts";
 import { loadCatalogue } from "./catalogue.ts";
-import { type ConfigurationProblem, parseConfiguration } from "./configuration.ts";
+import {
+	type ConfigurationProblem,
+	DATABASE_FILE,
+	parseConfiguration,
+	V1_DATABASE_FILE,
+} from "./configuration.ts";
 import type { Logger } from "./logger.ts";
 import { IDLE_TIMEOUT_SECONDS } from "./run-routes.ts";
 
@@ -32,6 +37,10 @@ export const SHUTDOWN_GRACE_MS = 7_000;
 /** How the log line that boot is serving begins, which tests wait on. */
 export const LISTENING = "ultrasonics is listening on";
 
+function v1DatabaseRefusal(path: string): string {
+	return `${path} is a v1 ultrasonics database, so v2 will not migrate it. v2 keeps its own database in ${DATABASE_FILE} and imports v1's from ${V1_DATABASE_FILE} in the same directory, reading it without modifying it. Keep v1's database as ${V1_DATABASE_FILE}; v2 creates its own beside it.`;
+}
+
 /** What refused boot: a setting, or `plugins` for a build bug in the catalogue. */
 export type BootResult =
 	| { ok: true; server: Bun.Server<undefined>; stop(): Promise<void> }
@@ -50,10 +59,19 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 	if (!parsed.ok) return parsed;
 	const { configuration } = parsed;
 
-	const db: OpenDatabase = await openDatabase({
-		path: configuration.databasePath,
-		encryptionKey: configuration.encryptionKey,
-	});
+	let db: OpenDatabase;
+	try {
+		db = await openDatabase({
+			path: configuration.databasePath,
+			encryptionKey: configuration.encryptionKey,
+		});
+	} catch (error) {
+		if (!(error instanceof V1DatabaseError)) throw error;
+		return {
+			ok: false,
+			problems: [{ setting: "DATA_DIR", message: v1DatabaseRefusal(error.path) }],
+		};
+	}
 	try {
 		const interrupted = await systemModule(db).interruptRunning(Date.now());
 		logger.info(
