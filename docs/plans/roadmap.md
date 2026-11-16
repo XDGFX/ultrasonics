@@ -92,8 +92,8 @@ rebuilt the matcher, and the held-out figures it reached are now the accepted ba
 held in `packages/matcher/src/floor.ts` as a floor that CI won't let a change regress.
 
 ## Phase 2 — Plugin parity (fan out)
-**Status:** opened by Cal on 2026-11-16, alongside Phase 1's last check. Specs are drafting on
-branches `drafts/phase-2-specs-local` and `drafts/phase-2-specs-services` · **Owner mix:** heavily
+**Status:** opened by Cal on 2026-11-16, alongside Phase 1's last check. Specs grilled and filed
+on 2026-11-16 on the [Phase 2 specs](https://github.com/XDGFX/ultrasonics/issues/176) map, each with its tickets · **Owner mix:** heavily
 parallel — one worktree + agent per plugin
 
 **Overlap with Phase 1.** Phases normally open only once the previous gate is green. Cal waived
@@ -101,10 +101,18 @@ that order for this one overlap: Phase 1 is built and its remaining checks wait 
 rate limit, so Phase 2's specs are drafted meanwhile. The waiver covers this overlap only, not
 later phase boundaries.
 
-Port the rest against the proven SDK: deezer, lastfm, local-music-database, local-playlists,
-playlist-merger, spotify-mixer, custom-file, log-tracks. Each plugin is an
-independent unit gated by the SDK **conformance test**. See `docs/reference/legacy-architecture.md`
-for per-plugin behaviour and the parity matrix.
+Port the rest against the proven SDK: the Spotify output, the Plex input, deezer (the
+public-playlist input only), lastfm, local-music-database, local-playlists, playlist-merger,
+custom-file, log-tracks. Each plugin is an independent unit gated by the SDK **conformance test**.
+See `docs/reference/legacy-architecture.md` for per-plugin behaviour and the parity matrix.
+
+**Name filters.** Every plugin that filters playlists by name uses one style: simple wildcards
+(`*` and `?`), case-insensitive, matched against the whole name, through one helper in the plugin
+SDK. There is no regex anywhere in v2. The importer converts v1 patterns that are plain text or
+equivalent to a simple wildcard, and reports the rest as needing a manual edit (Cal, 2026-11-16).
+
+**Filesystem plugins** (local-playlists, local-music-database, custom-file) get no folder
+restrictions in this phase. The container's mounts are the boundary, plus each plugin's own guards.
 
 **Not ported as plugins:** `webhook` and `time-trigger`. ADR-0011 makes triggers **server
 capabilities, not plugins** — the schedule and the inbound webhook route are Phase 1 server work
@@ -112,7 +120,9 @@ capabilities, not plugins** — the schedule and the inbound webhook route are P
 
 **Not ported:** `system-command` is **dropped** — arbitrary shell execution has no place in a
 hosted product many accounts share (ADR-0002/0003), and the self-host case is served by the webhook trigger and
-the CLI runner. `rickroll` and `skeleton` are v1 samples, not features. Subsonic is net-new, so it
+the CLI runner. `spotify-mixer`, the Deezer output and Deezer's private-playlist input are
+**dropped** too, for the reasons under Dropped below. `rickroll` and `skeleton` are v1 samples, not
+features. Subsonic is net-new, so it
 sits in Phase 3 with the other new services rather than under a parity gate.
 
 **First in this phase: the v1 importer** (ADR-0017), moved here from Phase 1. It reads a v1
@@ -136,6 +146,9 @@ conformance + a smoke test · every plugin's v1 import mapping tested against a 
 Ship what people keep asking for and v1 never delivered: **YouTube Music** (#43), **Tidal** (#44),
 **Apple Music** (#55), **Subsonic**. Reserve — don't fill — the AI seams:
 `matcher.strategy = "fuzzy" | "llm"` and a natural-language playlist plugin. Opt-in only (ADR-0002).
+
+**Idea, not yet planned:** a Last.fm `track.getSimilar` modifier, to stand in for the dropped
+`spotify-mixer` (see Dropped).
 
 Backlog triage happens *before* this phase, not in it ([Triage the v1 issue backlog](https://github.com/XDGFX/ultrasonics/issues/79)) — the point of triaging
 early is that Phases 1–2 get the evidence of what users actually hit.
@@ -165,6 +178,12 @@ ultrasonics-owned app credentials, accounts/billing (Stripe, subscription + free
 infra, per-service **kill-switch** flags, and the marketing site. Launches **cloud-services-only**;
 the **home agent** (A2 — CLI runner with remote dispatch) is a later addon.
 
+**Requirement:** the hosted plugin catalogue excludes the filesystem plugins (local-playlists,
+local-music-database, custom-file). They run with no folder restrictions beyond the container's
+mounts, which is safe for one self-hoster and not for accounts sharing a host (Cal, 2026-11-16).
+Which services the hosted tier can offer at all is
+[#135](https://github.com/XDGFX/ultrasonics/issues/135).
+
 **Exit gate:** hosted signup → connect Spotify → sync works end-to-end · Stripe subscription +
 freemium gate live · kill-switch verified · commercial-API approvals in hand for launch services.
 
@@ -188,3 +207,11 @@ map's destination, deliberately out of scope until a later phase makes it live.
 - **`system-command` plugin** — not ported. Arbitrary shell execution is incompatible with a
   hosted product many accounts share (ADR-0002/0003); the self-host use case is served by the webhook trigger and
   the CLI runner. Reversing this is a fresh decision with its own ADR, not an incidental port.
+- **`spotify-mixer` plugin** — dropped from Phase 2 parity (Cal, 2026-11-16). It was built on
+  Spotify's recommendations endpoint, which Spotify closed to apps created after 27 November 2024,
+  so no app a self-hoster registers now can call it. The v1 importer reports mixer applets with this
+  reason. A Last.fm `track.getSimilar` modifier is a Phase 3 idea in its place.
+- **The Deezer output and Deezer's private-playlist input** — dropped until Deezer reopens app
+  registration (Cal, 2026-11-16). Both need a user token, and Deezer accepts no new apps, so no
+  self-hoster can get one. Phase 2 ships the public-playlist input, which needs no service auth.
+  The v1 importer skips and reports every v1 Deezer applet.

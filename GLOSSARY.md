@@ -155,8 +155,8 @@ credentials, default, always works offline), **PKCE** (no client secret needed),
 
 **Service** — The thing a grant is *for* (`"spotify"`, `"plex"`), declared by a plugin as
 `defineAuth({ service })`. A **contract string, not a label**: it is the key of the stored
-credential row, so two plugins declaring the same service **share one grant by design** — this is
-how `spotify` and `spotify-mixer` share one connection, as they did in v1 (ADR-0013).
+credential row, so two plugins declaring the same service **share one grant by design**, as v1's
+`spotify` and `spotify mixer` shared one connection (ADR-0013).
 _Avoid_: treating `service` as a display name, or assuming one plugin means one grant.
 
 **Grant** — One account's stored credential for one service: the encrypted row keyed

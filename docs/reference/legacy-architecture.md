@@ -209,23 +209,25 @@ Writes a file with a per-song `pattern` supporting `{title}`, `{artist}`, `{albu
 
 ## Parity matrix
 
-| Plugin | Types | Mode | External dep | Needs proxy? | Port complexity |
-|---|---|---|---|---|---|
-| spotify | inputs, outputs | playlists (+saved) | spotipy, SQLite, bz2 cache | **yes** | hard |
-| spotify mixer | modifiers | playlists, songs | spotipy (recommendations) | **yes** | hard |
-| deezer | inputs, outputs | playlists | Deezer API (requests) | auth only | moderate–hard |
-| lastfm | inputs | songs | Last.fm API via proxy | **yes** | moderate |
-| plex | inputs, outputs | playlists | Plex XML API + mutagen | no | hard |
-| plex beta | inputs, outputs | playlists | PlexAPI + fuzzymatch | no | moderate |
-| local playlists | inputs, outputs | playlists | filesystem + mutagen | no | moderate |
-| local music database | modifiers | playlists | SQLite + mutagen + fuzzymatch | no | moderate |
-| playlist merger | modifiers | playlists | fuzzymatch | no | trivial–moderate |
-| custom file | outputs | songs, playlists | filesystem | no | trivial |
-| log tracks | outputs | playlists | none | no | trivial |
-| rickroll | modifiers | playlists | none | no | trivial |
-| ~~system command~~ | outputs | songs, playlists | OS shell | no | **dropped — not ported** |
-| webhook | triggers | playlists, songs | Flask/Werkzeug | no | moderate |
-| time trigger | triggers | playlists, songs | SQLite; blocking sleep | no | moderate |
+| Plugin | Types | Mode | External dep | Needs proxy? | Port complexity | v2 (Phase 2) |
+|---|---|---|---|---|---|---|
+| spotify | inputs, outputs | playlists (+saved) | spotipy, SQLite, bz2 cache | **yes** | hard | Input built in Phase 1 (#136). Output: #183 |
+| spotify mixer | modifiers | playlists, songs | spotipy (recommendations) | **yes** | hard | **Dropped** (roadmap, Dropped) |
+| deezer | inputs, outputs | playlists | Deezer API (requests) | auth only | moderate–hard | Public-playlist input only: #184. Output and private input **dropped** |
+| lastfm | inputs | songs | Last.fm API via proxy | **yes** | moderate | Input: #185 |
+| plex | inputs, outputs | playlists | Plex XML API + mutagen | no | hard | Output built in Phase 1 (#114). Input: #182 |
+| plex beta | inputs, outputs | playlists | PlexAPI + fuzzymatch | no | moderate | Merged into v2 `plex` (ADR-0017 §4) |
+| local playlists | inputs, outputs | playlists | filesystem + mutagen | no | moderate | Input and output: #178 |
+| local music database | modifiers | playlists | SQLite + mutagen + fuzzymatch | no | moderate | Modifier: #179 |
+| playlist merger | modifiers | playlists | fuzzymatch | no | trivial–moderate | Modifier: #186 |
+| custom file | outputs | songs, playlists | filesystem | no | trivial | Output: #180 |
+| log tracks | outputs | playlists | none | no | trivial | Output: #181 |
+| rickroll | modifiers | playlists | none | no | trivial | Sample, not ported |
+| ~~system command~~ | outputs | songs, playlists | OS shell | no | **dropped — not ported** | **Dropped** |
+| webhook | triggers | playlists, songs | Flask/Werkzeug | no | moderate | Server capability, built in Phase 1 (ADR-0011) |
+| time trigger | triggers | playlists, songs | SQLite; blocking sleep | no | moderate | Server capability, built in Phase 1 (ADR-0011, ADR-0018) |
+
+The v2 column links each plugin's spec on the [Phase 2 specs](https://github.com/XDGFX/ultrasonics/issues/176) map. The v1 importer is [#177](https://github.com/XDGFX/ultrasonics/issues/177). Mark a row complete when its spec's tickets close.
 
 ## Shared tools → dependents
 
@@ -236,6 +238,8 @@ Writes a file with a per-song `pattern` supporting `{title}`, `{artist}`, `{albu
 | **local_tags** | read tags via mutagen (mp3/m4a/flac); adds `location` | local-playlists, local-music-database, plex |
 | **api_key** | obfuscated rotating `ultrasonics_auth_hash` for the proxy | spotify, spotify-mixer (deezer imports, unused) |
 | **version_check** | decide if plugin settings migrate across a minor/patch bump | core settings/migration layer |
+
+v2 has no regex filter. `name_filter` becomes the plugin SDK's wildcard filter (`*` and `?`, case-insensitive, whole name), [#187](https://github.com/XDGFX/ultrasonics/issues/187).
 
 ## Port gotchas (flagged for v2)
 
