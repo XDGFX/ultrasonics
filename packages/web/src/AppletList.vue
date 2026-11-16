@@ -8,6 +8,7 @@ import { useLiveRefresh } from "./live-refresh.ts";
 import QueuedNote from "./QueuedNote.vue";
 import { useRunNow } from "./run-now.ts";
 import { sentence } from "./sentence.ts";
+import V1ImportNotice from "./V1ImportNotice.vue";
 
 type Status = AppletListing["state"] | NonNullable<AppletListing["lastRun"]>["status"] | "never-run";
 
@@ -77,6 +78,8 @@ async function remove(applet: AppletListing) {
 			<QueuedNote v-if="queued" />
 			<RouterLink :to="{ name: 'new-applet' }" class="btn primary">new applet</RouterLink>
 		</template>
+
+		<V1ImportNotice />
 
 		<p class="heading"><span class="key">applets:</span> <span class="muted count" :data-count="applets.length" :data-running="running">{{ applets.length }} · {{ running }} running</span></p>
 

@@ -4,6 +4,7 @@ import { type ServiceStatus, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import LogoLockup from "./LogoLockup.vue";
 import LogoMosaic from "./LogoMosaic.vue";
+import V1ImportNotice from "./V1ImportNotice.vue";
 
 const api = useApi();
 const services = ref<ServiceStatus[]>([]);
@@ -43,6 +44,7 @@ const steps = computed(() => {
 				<div class="hero-lockup"><LogoLockup /></div>
 				<p class="muted tagline">do more with your music.</p>
 				<p class="welcome">welcome. this ultrasonics is yours — nothing to log in to.</p>
+				<V1ImportNotice />
 				<ol class="steps">
 					<li
 						v-for="(step, index) in steps"

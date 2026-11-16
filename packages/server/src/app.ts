@@ -6,7 +6,7 @@ import type { RunQueue } from "@ultrasonics/core";
 import type { OpenDatabase } from "@ultrasonics/db";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import { Hono } from "hono";
-import type { InstanceInfo } from "./api.ts";
+import type { InstanceInfo, V1ImportReport } from "./api.ts";
 import type { AppEnv, ClientAddress } from "./app-env.ts";
 import { appletRoutes } from "./applet-routes.ts";
 import { PkceFlow } from "./auth/pkce-flow.ts";
@@ -92,6 +92,16 @@ export async function createApp(deps: AppDeps) {
 		)
 		.delete("/instance/exposure", async (c) => {
 			await operator.dismissExposure();
+			return c.body(null, 204);
+		})
+		.get("/instance/v1-import", async (c) => {
+			const marker = await operator.v1Import();
+			if (!marker) return c.json(null);
+			const { importedAt, report, dismissed } = marker;
+			return c.json({ importedAt, ...report, dismissed } satisfies V1ImportReport);
+		})
+		.post("/instance/v1-import/dismiss", async (c) => {
+			if (!(await operator.dismissV1Import())) notFound("The v1 import");
 			return c.body(null, 204);
 		})
 		.get("/plugins", (c) => c.json(catalogue.info))
