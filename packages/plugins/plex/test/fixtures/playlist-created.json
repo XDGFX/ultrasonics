@@ -3,20 +3,19 @@
 		"size": 1,
 		"Metadata": [
 			{
-				"ratingKey": "7100",
-				"key": "/playlists/7100/items",
-				"guid": "com.plexapp.agents.none://f6b1a3c2-0d4e-4f5a-9b8c-7d6e5f4a3b2c",
+				"ratingKey": "48",
+				"key": "/playlists/48/items",
+				"guid": "com.plexapp.agents.none://89ffbca0-8f62-412f-b18b-b59306d83a26",
 				"type": "playlist",
-				"title": "Created",
+				"title": "Twice",
 				"summary": "",
 				"smart": false,
 				"playlistType": "audio",
-				"composite": "/playlists/7100/composite/1763251200",
-				"viewCount": 0,
-				"leafCount": 2,
-				"addedAt": 1763251200,
-				"updatedAt": 1763251200,
-				"duration": 1003000
+				"composite": "/playlists/48/composite/1794791920",
+				"duration": 136000,
+				"leafCount": 1,
+				"addedAt": 1794791920,
+				"updatedAt": 1794791920
 			}
 		]
 	}

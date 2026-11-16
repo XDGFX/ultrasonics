@@ -1,0 +1,82 @@
+{
+	"MediaContainer": {
+		"size": 1,
+		"allowSync": true,
+		"identifier": "com.plexapp.plugins.library",
+		"librarySectionID": 1,
+		"librarySectionTitle": "Music",
+		"librarySectionUUID": "58d1a92c-3ecb-42ec-bc4c-08fb8d215904",
+		"mediaTagPrefix": "/system/bundle/media/flags/",
+		"mediaTagVersion": 1792751779,
+		"Metadata": [
+			{
+				"ratingKey": "25",
+				"key": "/library/metadata/25",
+				"parentRatingKey": "24",
+				"grandparentRatingKey": "1",
+				"guid": "local://25",
+				"parentGuid": "local://24",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"type": "track",
+				"title": "Sneaky Snitch",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/24",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Sneaky Snitch",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"duration": 136620,
+				"addedAt": 1794790634,
+				"Media": [
+					{
+						"id": 13,
+						"duration": 136620,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 13,
+								"key": "/library/parts/13/1794790634/file.mp3",
+								"duration": 136620,
+								"file": "/music/main/Kevin MacLeod/Sneaky Snitch/01 - Sneaky Snitch.mp3",
+								"size": 5466095,
+								"container": "mp3",
+								"Stream": [
+									{
+										"id": 13,
+										"streamType": 2,
+										"canNormalizeLoudness": false,
+										"selected": true,
+										"codec": "mp3",
+										"index": 0,
+										"channels": 2,
+										"bitrate": 320,
+										"audioChannelLayout": "stereo",
+										"samplingRate": 44100,
+										"displayTitle": "MP3 (Stereo)",
+										"extendedDisplayTitle": "MP3 (Stereo)"
+									}
+								]
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Sneaky Snitch",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			}
+		]
+	}
+}

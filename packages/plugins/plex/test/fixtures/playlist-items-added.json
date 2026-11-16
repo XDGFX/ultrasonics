@@ -1,24 +1,23 @@
 {
 	"MediaContainer": {
-		"leafCountAdded": 2,
-		"leafCountRequested": 2,
 		"size": 1,
+		"leafCountAdded": 1,
+		"leafCountRequested": 2,
 		"Metadata": [
 			{
-				"ratingKey": "7001",
-				"key": "/playlists/7001/items",
-				"guid": "com.plexapp.agents.none://0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",
+				"ratingKey": "48",
+				"key": "/playlists/48/items",
+				"guid": "com.plexapp.agents.none://89ffbca0-8f62-412f-b18b-b59306d83a26",
 				"type": "playlist",
-				"title": "Focus",
+				"title": "Twice",
 				"summary": "",
 				"smart": false,
 				"playlistType": "audio",
-				"composite": "/playlists/7001/composite/1763251200",
-				"viewCount": 0,
-				"leafCount": 4,
-				"addedAt": 1763251200,
-				"updatedAt": 1763251200,
-				"duration": 1003000
+				"composite": "/playlists/48/composite/1794791920",
+				"duration": 203000,
+				"leafCount": 2,
+				"addedAt": 1794791920,
+				"updatedAt": 1794791920
 			}
 		]
 	}

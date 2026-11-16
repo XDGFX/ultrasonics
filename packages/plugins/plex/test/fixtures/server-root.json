@@ -1,28 +1,180 @@
 {
 	"MediaContainer": {
-		"size": 0,
-		"allowCameraUpload": false,
+		"size": 25,
+		"allowCameraUpload": true,
 		"allowChannelAccess": true,
+		"allowMediaDeletion": true,
 		"allowSharing": true,
-		"allowSync": false,
+		"allowSync": true,
+		"allowTuners": true,
+		"apiVersion": "1.2.3",
 		"backgroundProcessing": true,
-		"certificate": false,
+		"certificate": true,
 		"companionProxy": true,
 		"countryCode": "aus",
 		"diagnostics": "logs,databases,streaminglogs",
 		"eventStream": true,
-		"friendlyName": "Fake Plex",
-		"livetv": 0,
-		"machineIdentifier": "3f1a2b4c5d6e7f8091a2b3c4d5e6f708192a3b4c",
-		"musicAnalysis": 2,
-		"myPlex": false,
+		"friendlyName": "plex-test",
+		"hubSearch": true,
+		"itemClusters": true,
+		"livetv": 7,
+		"machineIdentifier": "scrubbed-machine-identifier",
+		"mediaProviders": true,
+		"multiuser": true,
+		"myPlex": true,
+		"myPlexMappingState": "unknown",
+		"myPlexSigninState": "ok",
+		"myPlexSubscription": true,
+		"myPlexUsername": "plex-user@example.com",
 		"offlineTranscode": 1,
+		"ownerFeatures": "scrubbed",
 		"platform": "Linux",
-		"platformVersion": "6.1.0",
+		"platformVersion": "7.2.12-orbstack-00394-gbecdd6130068",
+		"pluginHost": true,
+		"pushNotifications": false,
+		"readOnlyLibraries": false,
+		"streamingBrainABRVersion": 3,
+		"streamingBrainVersion": 2,
+		"sync": true,
 		"transcoderActiveVideoSessions": 0,
 		"transcoderAudio": true,
-		"updatedAt": 1763251200,
-		"version": "1.41.3.9314-a0bfb8370",
-		"voiceSearch": true
+		"transcoderLyrics": true,
+		"transcoderPhoto": true,
+		"transcoderSubtitles": true,
+		"transcoderVideo": true,
+		"transcoderVideoBitrates": "64,96,208,320,720,1500,2000,3000,4000,8000,10000,12000,20000",
+		"transcoderVideoQualities": "0,1,2,3,4,5,6,7,8,9,10,11,12",
+		"transcoderVideoResolutions": "128,128,160,240,320,480,768,720,720,1080,1080,1080,1080",
+		"updatedAt": 1794791920,
+		"updater": true,
+		"version": "1.43.5.11079-b3b13e506",
+		"voiceSearch": true,
+		"Directory": [
+			{
+				"count": 1,
+				"key": "actions",
+				"title": "actions"
+			},
+			{
+				"count": 1,
+				"key": "activities",
+				"title": "activities"
+			},
+			{
+				"count": 1,
+				"key": "butler",
+				"title": "butler"
+			},
+			{
+				"count": 1,
+				"key": "channels",
+				"title": "channels"
+			},
+			{
+				"count": 1,
+				"key": "clients",
+				"title": "clients"
+			},
+			{
+				"count": 1,
+				"key": "devices",
+				"title": "devices"
+			},
+			{
+				"count": 1,
+				"key": "diagnostics",
+				"title": "diagnostics"
+			},
+			{
+				"count": 1,
+				"key": "downloadQueue",
+				"title": "downloadQueue"
+			},
+			{
+				"count": 1,
+				"key": "hubs",
+				"title": "hubs"
+			},
+			{
+				"count": 3,
+				"key": "library",
+				"title": "library"
+			},
+			{
+				"count": 3,
+				"key": "livetv",
+				"title": "livetv"
+			},
+			{
+				"count": 3,
+				"key": "media",
+				"title": "media"
+			},
+			{
+				"count": 1,
+				"key": "neighborhood",
+				"title": "neighborhood"
+			},
+			{
+				"count": 1,
+				"key": "playQueues",
+				"title": "playQueues"
+			},
+			{
+				"count": 1,
+				"key": "playlists",
+				"title": "playlists"
+			},
+			{
+				"count": 1,
+				"key": "resources",
+				"title": "resources"
+			},
+			{
+				"count": 1,
+				"key": "search",
+				"title": "search"
+			},
+			{
+				"count": 1,
+				"key": "server",
+				"title": "server"
+			},
+			{
+				"count": 1,
+				"key": "servers",
+				"title": "servers"
+			},
+			{
+				"count": 1,
+				"key": "service",
+				"title": "service"
+			},
+			{
+				"count": 1,
+				"key": "statistics",
+				"title": "statistics"
+			},
+			{
+				"count": 1,
+				"key": "system",
+				"title": "system"
+			},
+			{
+				"count": 1,
+				"key": "transcode",
+				"title": "transcode"
+			},
+			{
+				"count": 1,
+				"key": "updater",
+				"title": "updater"
+			},
+			{
+				"count": 1,
+				"key": "user",
+				"title": "user"
+			}
+		]
 	}
 }

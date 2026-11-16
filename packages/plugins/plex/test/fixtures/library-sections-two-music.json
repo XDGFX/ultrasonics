@@ -6,54 +6,81 @@
 		"Directory": [
 			{
 				"allowSync": true,
+				"filters": true,
+				"refreshing": false,
+				"key": "3",
+				"type": "movie",
+				"title": "Films",
+				"agent": "tv.plex.agents.movie",
+				"scanner": "Plex Movie",
+				"language": "en-US",
+				"metadataAgentProviderGroupId": 1,
+				"uuid": "bf056a26-50a1-4987-bd4c-980c26dee3ad",
+				"updatedAt": 1794791920,
+				"createdAt": 1794791920,
+				"scannedAt": 1794791920,
+				"content": true,
+				"directory": true,
+				"contentChangedAt": -1,
+				"hidden": 0,
+				"Location": [
+					{
+						"id": 3,
+						"path": "/transcode"
+					}
+				]
+			},
+			{
+				"allowSync": true,
+				"filters": true,
+				"refreshing": false,
 				"key": "1",
 				"type": "artist",
 				"title": "Music",
 				"agent": "tv.plex.agents.music",
 				"scanner": "Plex Music",
 				"language": "en-US",
-				"uuid": "6c1e5a0e-1f7b-4d55-9c3a-0f6f0a1b2c3d",
-				"updatedAt": 1763251200,
-				"createdAt": 1700000000,
-				"scannedAt": 1763251200,
+				"metadataAgentProviderGroupId": 3,
+				"uuid": "58d1a92c-3ecb-42ec-bc4c-08fb8d215904",
+				"updatedAt": 1794791767,
+				"createdAt": 1794790824,
+				"scannedAt": 1794791767,
 				"content": true,
 				"directory": true,
+				"contentChangedAt": 165,
 				"hidden": 0,
-				"Location": [{ "id": 1, "path": "/music" }]
+				"Location": [
+					{
+						"id": 1,
+						"path": "/music/main"
+					}
+				]
 			},
 			{
 				"allowSync": true,
+				"filters": true,
+				"refreshing": false,
 				"key": "2",
-				"type": "movie",
-				"title": "Films",
-				"agent": "tv.plex.agents.movie",
-				"scanner": "Plex Movie",
-				"language": "en-US",
-				"uuid": "0b9d8c7e-2a3b-4c5d-8e9f-1a2b3c4d5e6f",
-				"updatedAt": 1763251200,
-				"createdAt": 1700000000,
-				"scannedAt": 1763251200,
-				"content": true,
-				"directory": true,
-				"hidden": 0,
-				"Location": [{ "id": 2, "path": "/films" }]
-			},
-			{
-				"allowSync": true,
-				"key": "3",
 				"type": "artist",
-				"title": "Audiobooks",
+				"title": "Music 2",
 				"agent": "tv.plex.agents.music",
 				"scanner": "Plex Music",
 				"language": "en-US",
-				"uuid": "9a8b7c6d-5e4f-4a3b-2c1d-0e9f8a7b6c5d",
-				"updatedAt": 1763251200,
-				"createdAt": 1700000000,
-				"scannedAt": 1763251200,
+				"metadataAgentProviderGroupId": 3,
+				"uuid": "59739c66-f03b-4996-a2bb-625dd79a38d2",
+				"updatedAt": 1794791767,
+				"createdAt": 1794790831,
+				"scannedAt": 1794791767,
 				"content": true,
 				"directory": true,
+				"contentChangedAt": 194,
 				"hidden": 0,
-				"Location": [{ "id": 3, "path": "/audiobooks" }]
+				"Location": [
+					{
+						"id": 2,
+						"path": "/music/second"
+					}
+				]
 			}
 		]
 	}

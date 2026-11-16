@@ -6,49 +6,55 @@
 		"Directory": [
 			{
 				"allowSync": true,
-				"art": "/:/resources/artist-fanart.jpg",
-				"composite": "/library/sections/1/composite/1763251200",
 				"filters": true,
 				"refreshing": false,
-				"thumb": "/:/resources/artist.png",
+				"key": "3",
+				"type": "movie",
+				"title": "Films",
+				"agent": "tv.plex.agents.movie",
+				"scanner": "Plex Movie",
+				"language": "en-US",
+				"metadataAgentProviderGroupId": 1,
+				"uuid": "bf056a26-50a1-4987-bd4c-980c26dee3ad",
+				"updatedAt": 1794791920,
+				"createdAt": 1794791920,
+				"scannedAt": 1794791920,
+				"content": true,
+				"directory": true,
+				"contentChangedAt": -1,
+				"hidden": 0,
+				"Location": [
+					{
+						"id": 3,
+						"path": "/transcode"
+					}
+				]
+			},
+			{
+				"allowSync": true,
+				"filters": true,
+				"refreshing": false,
 				"key": "1",
 				"type": "artist",
 				"title": "Music",
 				"agent": "tv.plex.agents.music",
 				"scanner": "Plex Music",
 				"language": "en-US",
-				"uuid": "6c1e5a0e-1f7b-4d55-9c3a-0f6f0a1b2c3d",
-				"updatedAt": 1763251200,
-				"createdAt": 1700000000,
-				"scannedAt": 1763251200,
+				"metadataAgentProviderGroupId": 3,
+				"uuid": "58d1a92c-3ecb-42ec-bc4c-08fb8d215904",
+				"updatedAt": 1794791767,
+				"createdAt": 1794790824,
+				"scannedAt": 1794791767,
 				"content": true,
 				"directory": true,
-				"contentChangedAt": 4521,
+				"contentChangedAt": 165,
 				"hidden": 0,
-				"Location": [{ "id": 1, "path": "/music" }]
-			},
-			{
-				"allowSync": true,
-				"art": "/:/resources/movie-fanart.jpg",
-				"composite": "/library/sections/2/composite/1763251200",
-				"filters": true,
-				"refreshing": false,
-				"thumb": "/:/resources/movie.png",
-				"key": "2",
-				"type": "movie",
-				"title": "Films",
-				"agent": "tv.plex.agents.movie",
-				"scanner": "Plex Movie",
-				"language": "en-US",
-				"uuid": "0b9d8c7e-2a3b-4c5d-8e9f-1a2b3c4d5e6f",
-				"updatedAt": 1763251200,
-				"createdAt": 1700000000,
-				"scannedAt": 1763251200,
-				"content": true,
-				"directory": true,
-				"contentChangedAt": 812,
-				"hidden": 0,
-				"Location": [{ "id": 2, "path": "/films" }]
+				"Location": [
+					{
+						"id": 1,
+						"path": "/music/main"
+					}
+				]
 			}
 		]
 	}
