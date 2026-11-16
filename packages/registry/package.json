@@ -7,6 +7,7 @@
 		".": "./src/index.ts"
 	},
 	"dependencies": {
+		"@ultrasonics/plugin-custom-file": "workspace:*",
 		"@ultrasonics/plugin-deezer": "workspace:*",
 		"@ultrasonics/plugin-local-music-database": "workspace:*",
 		"@ultrasonics/plugin-local-playlists": "workspace:*",

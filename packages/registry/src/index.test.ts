@@ -6,6 +6,7 @@ test("each entry loads the plugin registered under its name", async () => {
 		expect((await entry.load()).default.name).toBe(name);
 	}
 	expect(Object.keys(officialPlugins)).toEqual([
+		"custom-file",
 		"deezer",
 		"local-music-database",
 		"local-playlists",

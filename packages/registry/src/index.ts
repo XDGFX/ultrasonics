@@ -4,6 +4,10 @@ import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 // specifier resolves from nowhere else (docs/research/worker-executor-preflight.md §8).
 /** Every official plugin, by name (ADR-0012 §4). */
 export const officialPlugins = {
+	"custom-file": {
+		path: import.meta.resolve("@ultrasonics/plugin-custom-file"),
+		load: () => import("@ultrasonics/plugin-custom-file"),
+	},
 	deezer: {
 		path: import.meta.resolve("@ultrasonics/plugin-deezer"),
 		load: () => import("@ultrasonics/plugin-deezer"),
