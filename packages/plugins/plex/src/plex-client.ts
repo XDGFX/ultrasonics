@@ -4,6 +4,12 @@ import { z } from "zod";
 /** A timeout is a network error like any other, and nothing retries (spec #114). */
 const timeoutMs = 30_000;
 
+/**
+ * The most of one response body that is read: room for a 10,000-track playlist's items (about
+ * 12 MiB), even from a richly tagged library.
+ */
+export const maxResponseBytes = 64 * 1024 * 1024;
+
 /** Fixed, so Plex lists ultrasonics as one device however many runs connect. */
 const clientIdentifier = "ultrasonics-plex-plugin";
 
@@ -207,12 +213,8 @@ export class PlexClient {
 	): Promise<z.output<T>> {
 		const body = await this.#send(method, path, query);
 		const parsed = schema.safeParse(body);
-		if (!parsed.success) {
-			throw new PlexError(
-				"service-error",
-				`Plex answered ${method} ${path} in an unexpected shape`,
-			);
-		}
+		if (!parsed.success)
+			throw new PlexError("service-error", unreadableMessage(`${method} ${path}`));
 		return parsed.data;
 	}
 
@@ -236,11 +238,7 @@ export class PlexClient {
 				tls: { rejectUnauthorized: this.#grant.verifyTls },
 			});
 		} catch (error) {
-			const reason = error instanceof Error ? error.message : String(error);
-			throw new PlexError(
-				"unreachable",
-				`Could not reach the Plex server at ${this.#base.origin} (${where}): ${this.#redact(reason)}`,
-			);
+			throw this.#unreachable(where, error);
 		}
 		if (response.status === 401) {
 			throw new PlexError(
@@ -250,11 +248,7 @@ export class PlexClient {
 			);
 		}
 		if (response.status >= 300 && response.status < 400) {
-			throw new PlexError(
-				"misconfigured",
-				this.#redirectMessage(where, url, response),
-				response.status,
-			);
+			throw new PlexError("misconfigured", this.#redirectMessage(where), response.status);
 		}
 		if (!response.ok) {
 			throw new PlexError(
@@ -263,31 +257,63 @@ export class PlexClient {
 				response.status,
 			);
 		}
-		const text = await response.text();
+		let text: string;
+		try {
+			text = await readCapped(response, where);
+		} catch (error) {
+			// A body cut off partway, by a reset or the timeout, is no answer at all.
+			throw error instanceof PlexError ? error : this.#unreachable(where, error);
+		}
 		if (text === "") return {};
 		try {
 			return JSON.parse(text) as unknown;
 		} catch {
-			throw new PlexError("service-error", `Plex answered ${where} with something other than JSON`);
+			throw new PlexError("service-error", unreadableMessage(where));
 		}
 	}
 
-	/** Names where a redirect pointed by origin alone, so no query the target carried is repeated. */
-	#redirectMessage(where: string, url: URL, response: Response): string {
-		const from = `The Plex server at ${this.#base.origin} redirected ${where}`;
-		const advice = "enter the address Plex answers on";
-		const location = response.headers.get("Location");
-		let target: string | undefined;
-		try {
-			target = location === null ? undefined : new URL(location, url).origin;
-		} catch {
-			target = undefined;
-		}
-		return target === undefined ? `${from}; ${advice}` : `${from} to ${target}; ${advice}`;
+	#unreachable(where: string, error: unknown): PlexError {
+		const reason = error instanceof Error ? error.message : String(error);
+		return new PlexError(
+			"unreachable",
+			`Could not reach the Plex server at ${this.#base.origin} (${where}): ${this.#redact(reason)}`,
+		);
+	}
+
+	/** Never names the redirect's target, which is the answer's own content. */
+	#redirectMessage(where: string): string {
+		return `The Plex server at ${this.#base.origin} redirected ${where}; enter the address Plex answers on`;
 	}
 
 	/** A message from the runtime may quote what it was given; the token is never repeated. */
 	#redact(message: string): string {
 		return message.replaceAll(this.#grant.token, "[token]");
 	}
+}
+
+/** One message for any answer that isn't Plex's, so what answered can't be told apart by it. */
+function unreadableMessage(where: string): string {
+	return `Plex answered ${where} with something that isn't a Plex response`;
+}
+
+/** The body as text, failing once it passes `maxResponseBytes` rather than reading on. */
+async function readCapped(response: Response, where: string): Promise<string> {
+	if (response.body === null) return "";
+	const reader = response.body.getReader();
+	const chunks: Uint8Array[] = [];
+	let length = 0;
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		length += value.byteLength;
+		if (length > maxResponseBytes) {
+			await reader.cancel().catch(() => {});
+			throw new PlexError(
+				"service-error",
+				`Plex answered ${where} with more than ${maxResponseBytes / 1024 / 1024} MiB`,
+			);
+		}
+		chunks.push(value);
+	}
+	return new TextDecoder().decode(Buffer.concat(chunks));
 }

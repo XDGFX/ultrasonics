@@ -124,6 +124,25 @@ close their own tickets, so the old denials had to go. Outside bypass mode each 
 first, because a permission rule cannot tell a ticket from a v1 user's thread. The rule for the
 latter is in `docs/agents/issue-tracker.md`.
 
+## Upgrading Bun
+
+Plugins run in Bun `Worker`s (ADR-0031), and Bun still calls worker termination experimental. So
+before any change to the `packageManager` pin in `package.json` (which CI and the `oven/bun` tag in
+`packages/server/Dockerfile` follow), re-run the pre-flight soak on the new version:
+
+1. Check out `research/worker-executor-preflight` in a worktree, and set its `packageManager` pin
+   to the new version.
+2. With the new Bun installed on the host, run from that worktree's root
+   `packages/core/experiment/worker-preflight/in-docker.sh soak-fetch.ts 5000 1`, then
+   `… soak-fetch.ts 2000 16`, then `… memory.ts per-run 5000`. The script runs each in
+   `oven/bun:<host version>`, so the host's Bun is the version under test.
+3. The upgrade passes only if no run crashes, no server socket or host descriptor survives the
+   soak, and the memory series grows no more than 1 MB per 100 runs over its second half.
+4. Record the results in a comment on the upgrade's ticket. A failure blocks the upgrade, and goes
+   to Cal.
+
+The method and the 1.4.2 baseline are in `docs/research/worker-executor-preflight.md`.
+
 ## Notes
 
 **Why PRs are optional.** `revival` is a working branch, not production, so the ceremony that

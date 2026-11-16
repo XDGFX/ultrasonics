@@ -1,0 +1,68 @@
+# An example ultrasonics install behind a login proxy: `docker compose -f compose.proxy.yaml up -d`.
+# The UI is then on http://<this machine>:8080, behind the proxy's login.
+#
+# In proxy mode ultrasonics believes the login header from any address in TRUSTED_PROXIES, so
+# nothing else may reach its port: it publishes none, and trusts the proxy's one fixed address,
+# never a subnet, which would also hold Docker's gateway (where published and host traffic can
+# appear to come from) and any other container that joins the network.
+#
+# Caddy with basic auth stands in for your proxy (Authelia, Authentik, …). It needs a user and a
+# bcrypt hash in a .env file beside this one, the hash single-quoted so its `$`s stay literal:
+#   PROXY_USER=me
+#   PROXY_PASSWORD_HASH='<the output of: docker run --rm caddy:2.10 caddy hash-password>'
+# It serves plain HTTP, so the password crosses your network unencrypted; give Caddy your domain in
+# place of `:80` and it serves HTTPS instead.
+services:
+  ultrasonics:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    restart: unless-stopped
+    # No `ports`: only the proxy, on the network below, can connect.
+    networks:
+      proxied:
+        ipv4_address: 172.30.0.10
+    volumes:
+      # The database (ultrasonics-v2.db), its key file and plugin data. Back this directory up.
+      - ./config:/config
+    environment:
+      # As in compose.yaml.
+      ENCRYPTION_KEY: auto
+      AUTH_SOURCE: proxy
+      # The proxy's address below, and nothing wider.
+      TRUSTED_PROXIES: 172.30.0.2
+
+  proxy:
+    image: caddy:2.10
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    networks:
+      proxied:
+        ipv4_address: 172.30.0.2
+    environment:
+      PROXY_USER: ${PROXY_USER:?set PROXY_USER in .env}
+      PROXY_PASSWORD_HASH: ${PROXY_PASSWORD_HASH:?set PROXY_PASSWORD_HASH in .env}
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
+
+networks:
+  proxied:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+configs:
+  caddyfile:
+    # `$$` is a literal `$` to compose; Caddy reads `{$NAME}` from its environment. `header_up`
+    # replaces any Remote-User a client sent with the user Caddy logged in.
+    content: |
+      :80 {
+        basic_auth {
+          {$$PROXY_USER} {$$PROXY_PASSWORD_HASH}
+        }
+        reverse_proxy ultrasonics:5000 {
+          header_up Remote-User {http.auth.user.id}
+        }
+      }

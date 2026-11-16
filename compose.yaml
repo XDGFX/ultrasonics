@@ -21,7 +21,6 @@ services:
       ENCRYPTION_KEY: auto
       # Who may use the app. `bootstrapped`: no login; whoever reaches port 5000 is the owner,
       # so keep it on a network you trust. `proxy`: a reverse proxy in front (Authelia,
-      # Authentik) logs people in; set TRUSTED_PROXIES to its address or CIDR too, e.g.
-      #   AUTH_SOURCE: proxy
-      #   TRUSTED_PROXIES: 172.18.0.0/16
+      # Authentik) logs people in. Port 5000 must then be unreachable except through the proxy,
+      # which compose.proxy.yaml sets up.
       AUTH_SOURCE: bootstrapped
