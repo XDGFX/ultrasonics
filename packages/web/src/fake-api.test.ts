@@ -10,7 +10,7 @@ const draft: AppletDraft = {
 	name: "weekly",
 	enabled: true,
 	definition: {
-		inputs: [{ plugin: "spotify", settings: { source: "saved" } }],
+		inputs: [{ plugin: "spotify", settings: { source: "all" } }],
 		modifiers: [],
 		outputs: [{ plugin: "plex", settings: {} }],
 	},
@@ -55,7 +55,7 @@ describe("the fake ApiClient", () => {
 		};
 		const result = await api.applets.create(bad);
 		expect(!result.ok && result.issues.map((issue) => issue.path)).toEqual([
-			["inputs", 0, "settings", "names"],
+			["inputs", 0, "settings", "playlists"],
 		]);
 	});
 

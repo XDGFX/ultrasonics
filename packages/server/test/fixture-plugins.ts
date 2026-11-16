@@ -69,11 +69,17 @@ export const plexMixer = definePlugin({
 	},
 });
 
+const spotifyAuth = defineAuth({
+	service: "spotify",
+	flow: "oauth2-pkce",
+	scopes: ["playlist-read-private"],
+});
+
 export const spotify = definePlugin({
 	...handshake,
 	name: "spotify",
 	mode: ["playlists"],
-	auth: defineAuth({ service: "spotify", flow: "oauth2-pkce", scopes: ["playlist-read-private"] }),
+	auth: spotifyAuth,
 	instanceSettings: { inputs: z.object({}) },
 	run: {
 		async inputs() {
@@ -82,9 +88,10 @@ export const spotify = definePlugin({
 	},
 });
 
-/** A run of `held` that has reached its hold: where it was told to keep files, and its release. */
+/** A run that has reached its hold: where it was told to keep files, any token, and its release. */
 export interface HeldRun {
 	configDir: string;
+	accessToken?: string;
 	release(): void;
 }
 
@@ -93,9 +100,9 @@ export const holds = (() => {
 	const arrived: HeldRun[] = [];
 	const waiting: ((run: HeldRun) => void)[] = [];
 	return {
-		hold(configDir: string): Promise<void> {
+		hold(configDir: string, accessToken?: string): Promise<void> {
 			const { promise, resolve } = Promise.withResolvers<void>();
-			const run = { configDir, release: resolve };
+			const run = { configDir, ...(accessToken ? { accessToken } : {}), release: resolve };
 			const waiter = waiting.shift();
 			if (waiter) waiter(run);
 			else arrived.push(run);
@@ -120,6 +127,22 @@ export const held = definePlugin({
 			for (let line = 0; line < (ctx.instance.lines ?? 0); line++) ctx.log.info(`line ${line}`);
 			await holds.hold(ctx.configDir);
 			return { playlists: [{ name: "Held", songs: [{ title: "Song", artists: ["Artist"] }] }] };
+		},
+	},
+});
+
+/** A `spotify` input that resolves its access token, then holds with it on {@link holds}. */
+export const heldSpotify = definePlugin({
+	...handshake,
+	name: "held-spotify",
+	mode: ["playlists"],
+	auth: spotifyAuth,
+	instanceSettings: { inputs: z.object({}) },
+	run: {
+		async inputs(ctx) {
+			const { accessToken } = await ctx.auth.get();
+			await holds.hold(ctx.configDir, accessToken);
+			return { playlists: [] };
 		},
 	},
 });

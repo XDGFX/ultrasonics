@@ -19,6 +19,7 @@ import {
 } from "./api.ts";
 import type { AppEnv } from "./app-env.ts";
 import { createLocalAuthProvider } from "./auth/local-auth-provider.ts";
+import { ConnectRefusedError, type PkceFlow } from "./auth/pkce-flow.ts";
 import type { Catalogue, CatalogueService } from "./catalogue.ts";
 import { notFound } from "./error-response.ts";
 import type { Logger } from "./logger.ts";
@@ -32,14 +33,22 @@ export interface ServiceRouteDeps {
 	catalogue: Catalogue;
 	dataDir: string;
 	logger: Logger;
+	pkce: PkceFlow;
 }
 
 /** Service auth: status, requirements, the operator's client, token test-and-save, and OAuth. */
 export function serviceRoutes(deps: ServiceRouteDeps) {
-	const { db, catalogue, dataDir, logger } = deps;
+	const { db, catalogue, dataDir, logger, pkce } = deps;
 	const operator = operatorSettings(db);
-	const providerFor = (accountId: string) =>
-		createLocalAuthProvider(db.storeFor(accountId), operator, catalogue.services.keys());
+	const providerFor = (accountId: string, origin?: string) =>
+		createLocalAuthProvider({
+			accountId,
+			db,
+			operator,
+			services: catalogue.services.keys(),
+			pkce,
+			...(origin === undefined ? {} : { origin }),
+		});
 	const serviceOf = (service: Service): CatalogueService =>
 		catalogue.services.get(service) ?? notFound(`A plugin using the service ${service}`);
 	/** The service's declared spec, and the provider bound to the session's account. */
@@ -163,12 +172,18 @@ export function serviceRoutes(deps: ServiceRouteDeps) {
 			return c.json(saved);
 		})
 		.post("/:service/begin", pathParams(ServiceParams), async (c) => {
-			const { spec, provider } = await bound(c.req.valid("param").service, c.var.session.accountId);
+			const { spec } = serviceOf(c.req.valid("param").service);
+			const provider = await providerFor(c.var.session.accountId, requestOrigin(c));
 			return c.json(await provider.begin(spec));
 		})
 		.post("/:service/complete", pathParams(ServiceParams), jsonBody(OAuthCallback), async (c) => {
 			const { spec, provider } = await bound(c.req.valid("param").service, c.var.session.accountId);
-			await provider.complete(spec, c.req.valid("json"));
+			try {
+				await provider.complete(spec, c.req.valid("json"));
+			} catch (error) {
+				if (!(error instanceof ConnectRefusedError)) throw error;
+				return c.json({ kind: "failed", message: error.message } satisfies ConnectOutcome);
+			}
 			return c.json({ kind: "connected" } satisfies ConnectOutcome);
 		});
 }

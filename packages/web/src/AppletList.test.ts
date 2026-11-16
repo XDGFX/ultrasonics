@@ -8,7 +8,7 @@ import { sentence, sentenceText } from "./sentence.ts";
 const base = {
 	enabled: true,
 	definition: {
-		inputs: [{ plugin: "spotify", settings: { source: "saved" } }],
+		inputs: [{ plugin: "spotify", settings: { source: "all" } }],
 		modifiers: [{ plugin: "deduplicate", settings: {} }],
 		outputs: [{ plugin: "plex", settings: {} }],
 	},

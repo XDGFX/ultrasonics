@@ -8,8 +8,18 @@ import {
 	type RunEvent,
 	toJournal,
 } from "@ultrasonics/core";
-import { holds } from "../test/fixture-plugins.ts";
-import { Applet, AppletListing, ErrorBody, RunNowResult, RunSummary } from "./api.ts";
+import { AuthChallenge } from "@ultrasonics/plugin-sdk";
+import { startFakeAccounts } from "../test/fake-spotify-accounts.ts";
+import { heldSpotify, holds, registryOf, sink, spotify } from "../test/fixture-plugins.ts";
+import {
+	Applet,
+	AppletListing,
+	ConnectOutcome,
+	ErrorBody,
+	RunNowResult,
+	RunSummary,
+} from "./api.ts";
+import { PkceFlow } from "./auth/pkce-flow.ts";
 import { bodyOf, eventually, runStreamOf, type TestApp, useTestApp } from "./test-support.ts";
 
 const testApp = useTestApp();
@@ -267,5 +277,46 @@ describe("the journal", () => {
 			expect.objectContaining({ source: "runner", text: omittedLines(LOG_CAP_LINES - keptOfHeld) }),
 		);
 		expect(events.at(-1)).toMatchObject({ type: "end", status: "succeeded" });
+	});
+});
+
+describe("service auth in a run", () => {
+	test("two runs on one account share one in-flight refresh of an expired token", async () => {
+		const accounts = startFakeAccounts();
+		try {
+			const clock = { now: Date.UTC(2026, 10, 16) };
+			const pkce = new PkceFlow({ endpoints: accounts.endpoints, now: () => clock.now });
+			const { call } = await testApp({ pkce, registry: registryOf(spotify, heldSpotify, sink) });
+			await call("PUT", "/api/services/spotify/client", {
+				clientId: "0123456789abcdef0123456789abcdef",
+			});
+			const { authoriseUrl } = await bodyOf(
+				await call("POST", "/api/services/spotify/begin", {}),
+				AuthChallenge,
+			);
+			const returned = await accounts.consent(authoriseUrl);
+			expect(
+				await bodyOf(
+					await call("POST", "/api/services/spotify/complete", returned),
+					ConnectOutcome,
+				),
+			).toEqual({ kind: "connected" });
+
+			clock.now += 3600 * 1000;
+			const before = accounts.tokenRequests.length;
+			const draft = heldDraft([{ plugin: "held-spotify", settings: {} }]);
+			const one = await bodyOf(await call("POST", "/api/applets", draft), Applet);
+			const two = await bodyOf(await call("POST", "/api/applets", draft), Applet);
+			await started(call, one.id);
+			await started(call, two.id);
+			const runs = [await holds.next(), await holds.next()];
+
+			expect(accounts.tokenRequests.length - before).toBe(1);
+			expect(accounts.tokenRequests.at(-1)?.get("grant_type")).toBe("refresh_token");
+			expect(runs.map((run) => run.accessToken)).toEqual([accounts.issued[2], accounts.issued[2]]);
+			for (const run of runs) run.release();
+		} finally {
+			await accounts.stop();
+		}
 	});
 });

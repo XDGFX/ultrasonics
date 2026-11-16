@@ -9,6 +9,7 @@ import { Hono } from "hono";
 import type { InstanceInfo } from "./api.ts";
 import type { AppEnv, ClientAddress } from "./app-env.ts";
 import { appletRoutes } from "./applet-routes.ts";
+import { PkceFlow } from "./auth/pkce-flow.ts";
 import type { Catalogue } from "./catalogue.ts";
 import type { Configuration } from "./configuration.ts";
 import { requireJson } from "./cross-site.ts";
@@ -40,6 +41,8 @@ export interface AppDeps {
 	logger: Logger;
 	/** The built UI; absent or missing on disk, only the API is served. */
 	webRoot?: string;
+	/** The server's one PKCE flow; the real services' when absent, a fake's in tests. */
+	pkce?: PkceFlow;
 }
 
 /**
@@ -48,6 +51,7 @@ export interface AppDeps {
  */
 export async function createApp(deps: AppDeps) {
 	const { configuration, db, registry, catalogue, queue, logger } = deps;
+	const pkce = deps.pkce ?? new PkceFlow();
 	const hub = createRunHub({ logger });
 	const runs = createRunStarter({
 		db,
@@ -55,6 +59,7 @@ export async function createApp(deps: AppDeps) {
 		catalogue,
 		queue,
 		hub,
+		pkce,
 		dataDir: configuration.dataDir,
 		logger,
 	});
@@ -73,7 +78,10 @@ export async function createApp(deps: AppDeps) {
 		.route("/applets", appletRoutes({ db, catalogue, queue, runs }))
 		.route("/runs", runRoutes({ db, hub }))
 		.route("/settings", settingsRoutes({ db, catalogue }))
-		.route("/services", serviceRoutes({ db, catalogue, dataDir: configuration.dataDir, logger }));
+		.route(
+			"/services",
+			serviceRoutes({ db, catalogue, dataDir: configuration.dataDir, logger, pkce }),
+		);
 
 	const app = new Hono<AppEnv>()
 		.use(requestSourceMiddleware(deps.clientAddress, configuration.trustedProxies))

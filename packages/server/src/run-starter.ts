@@ -3,6 +3,7 @@ import type { OpenDatabase, RunTrigger } from "@ultrasonics/db";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import type { RunNowResult } from "./api.ts";
 import { createLocalAuthProvider } from "./auth/local-auth-provider.ts";
+import type { PkceFlow } from "./auth/pkce-flow.ts";
 import type { Catalogue } from "./catalogue.ts";
 import type { Logger } from "./logger.ts";
 import { operatorSettings } from "./operator-settings.ts";
@@ -15,6 +16,8 @@ export interface RunStarterDeps {
 	catalogue: Catalogue;
 	queue: RunQueue;
 	hub: RunHub;
+	/** The server's one PKCE flow, so concurrent runs share a refresh and its rotated token. */
+	pkce: PkceFlow;
 	dataDir: string;
 	logger: Logger;
 }
@@ -33,7 +36,7 @@ export interface RunStarter {
 }
 
 export function createRunStarter(deps: RunStarterDeps): RunStarter {
-	const { db, registry, catalogue, queue, hub, dataDir, logger } = deps;
+	const { db, registry, catalogue, queue, hub, pkce, dataDir, logger } = deps;
 	const operator = operatorSettings(db);
 
 	/** One run, from its row to its end on the row; `begun` learns its id, or that there is none. */
@@ -63,7 +66,13 @@ export function createRunStarter(deps: RunStarterDeps): RunStarter {
 				trigger,
 				registry,
 				capabilities: {
-					auth: await createLocalAuthProvider(store, operator, catalogue.services.keys()),
+					auth: await createLocalAuthProvider({
+						accountId,
+						db,
+						operator,
+						services: catalogue.services.keys(),
+						pkce,
+					}),
 					persistentSettings: (plugin) => store.pluginSettings.get(plugin),
 					configDir: (plugin) => pluginConfigDir(dataDir, accountId, plugin),
 				},

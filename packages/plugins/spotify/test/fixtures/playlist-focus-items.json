@@ -1,0 +1,67 @@
+{
+	"items": [
+		{
+			"is_local": false,
+			"item": {
+				"type": "track",
+				"id": "2CY92qejUrhyPUASawNVRr",
+				"name": "  Strobe ",
+				"artists": [{ "name": "deadmau5" }, { "name": " " }],
+				"album": { "name": "For Lack of a Better Name", "release_date": "2009-09-22" },
+				"duration_ms": 637000,
+				"explicit": false,
+				"external_ids": { "isrc": "usus10900123" }
+			}
+		},
+		{ "is_local": false, "item": null },
+		{
+			"is_local": false,
+			"item": {
+				"type": "episode",
+				"id": "512ojhOuo1ktJprKbVcKyQ",
+				"name": "A podcast episode",
+				"duration_ms": 1800000,
+				"explicit": false
+			}
+		},
+		{
+			"is_local": false,
+			"item": {
+				"type": "track",
+				"id": "0eGsygTp906u18L0Oimnem",
+				"name": " ",
+				"artists": [{ "name": "Nobody" }],
+				"album": { "name": "Untitled", "release_date": "2001" },
+				"duration_ms": 200000,
+				"explicit": false,
+				"external_ids": {}
+			}
+		},
+		{
+			"is_local": true,
+			"item": {
+				"type": "track",
+				"id": null,
+				"name": "Demo take 3",
+				"artists": [{ "name": "Cal" }],
+				"album": { "name": "", "release_date": null },
+				"duration_ms": 0,
+				"explicit": false,
+				"external_ids": {}
+			}
+		},
+		{
+			"is_local": false,
+			"item": {
+				"type": "track",
+				"id": "6habFhsOp2NvshLv26DqMb",
+				"name": "Field recording",
+				"artists": [],
+				"album": { "name": "Ambient sketches", "release_date": "1998-03" },
+				"duration_ms": 95000,
+				"explicit": true,
+				"external_ids": { "isrc": "GB-AAA-98-00001" }
+			}
+		}
+	]
+}
