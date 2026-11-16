@@ -1,5 +1,5 @@
 import type { Song } from "@ultrasonics/plugin-sdk";
-import { lengthGapMs, lengthLevel, nonLatin, partScore } from "./agreement.ts";
+import { lengthGapMs, lengthLevel, nonLatin, partScore, similarityLevels } from "./agreement.ts";
 import { heaviestWeight } from "./fellegi-sunter.ts";
 import { fitted } from "./fitted-weights.ts";
 import { match } from "./match.ts";
@@ -130,11 +130,35 @@ function couldReachThreshold(a: Entry, b: Entry): boolean {
 	if (a.song.artists.length === 0 || b.song.artists.length === 0) return false;
 	if (a.markers !== b.markers) return false;
 	const length = lengthLevel(lengthGapMs(a.song, b.song));
-	const title = titleSimilarityAtMost(a, b);
-	const reaches = (artist: number) =>
-		heaviestWeight(fitted.weights, { title, artist, length }) >= fitted.matchThreshold;
+	const title = levelsReached(titleSimilarityAtMost(a, b));
+	const reaches = (artist: number) => reachesThreshold(length, title, artist);
 	// The title alone turns most pairs away, before the dearer artist bound is worked out.
-	return reaches(1) && reaches(artistSimilarityAtMost(a, b));
+	return reaches(similarityLevels.length) && reaches(levelsReached(artistSimilarityAtMost(a, b)));
+}
+
+/** How many similarity levels `s` reaches, which is all `heaviestWeight` reads of a similarity. */
+function levelsReached(s: number): number {
+	let reached = 0;
+	for (const [, least] of similarityLevels) if (least <= s) reached++;
+	return reached;
+}
+
+/** The least similarity that reaches exactly `reached` levels; the levels run highest first. */
+const reachingExactly = (reached: number) =>
+	reached === 0 ? Number.NEGATIVE_INFINITY : (similarityLevels.at(-reached)?.[1] ?? 1);
+
+const reached = new Map<string, boolean>();
+
+/** Whether the heaviest weight bounds this far apart allow reaches the threshold, worked out once per kind. */
+function reachesThreshold(length: string, title: number, artist: number): boolean {
+	const key = `${length} ${title} ${artist}`;
+	let reaches = reached.get(key);
+	if (reaches === undefined) {
+		const bounds = { title: reachingExactly(title), artist: reachingExactly(artist), length };
+		reaches = heaviestWeight(fitted.weights, bounds) >= fitted.matchThreshold;
+		reached.set(key, reaches);
+	}
+	return reaches;
 }
 
 /**
