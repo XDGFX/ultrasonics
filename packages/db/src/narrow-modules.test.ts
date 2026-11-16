@@ -42,7 +42,7 @@ describe("systemModule", () => {
 		expect(await system.appletForWebhookToken("unknown")).toBeUndefined();
 	});
 
-	test("interruptRunning marks only running runs interrupted, across accounts", async () => {
+	test("interruptRunning marks only running runs interrupted, finished at the time given, across accounts", async () => {
 		const { db, mine, theirs } = await twoAccounts();
 		const startIn = async (accountId: string) => {
 			const store = db.storeFor(accountId);
@@ -56,12 +56,20 @@ describe("systemModule", () => {
 		const finished = await startIn(mine);
 		await finished.store.runs.finish(finished.runId, "succeeded", journal);
 
-		expect(await systemModule(db).interruptRunning()).toBe(2);
+		const finishedBefore = (await finished.store.runs.get(finished.runId))?.finishedAt;
+		const bootedAt = 1_800_000_000_000;
+		expect(await systemModule(db).interruptRunning(bootedAt)).toBe(2);
 
 		for (const { store, runId } of [mineRunning, theirsRunning]) {
-			expect(await store.runs.get(runId)).toHaveProperty("status", "interrupted");
+			expect(await store.runs.get(runId)).toMatchObject({
+				status: "interrupted",
+				finishedAt: bootedAt,
+			});
 		}
-		expect(await finished.store.runs.get(finished.runId)).toHaveProperty("status", "succeeded");
+		expect(await finished.store.runs.get(finished.runId)).toMatchObject({
+			status: "succeeded",
+			finishedAt: finishedBefore,
+		});
 	});
 
 	test("sweepExpiredSessions deletes only sessions expired by now", async () => {

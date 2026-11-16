@@ -21,6 +21,7 @@ import {
 } from "./api.ts";
 import { PkceFlow } from "./auth/pkce-flow.ts";
 import { SHUTDOWN_GRACE_MS } from "./boot.ts";
+import { CHECKPOINT_INTERVAL_MS } from "./run-hub.ts";
 import { bodyOf, eventually, runStreamOf, type TestApp, useTestApp } from "./test-support.ts";
 
 const testApp = useTestApp();
@@ -257,6 +258,38 @@ describe("the journal", () => {
 			);
 		});
 		run.release();
+	});
+
+	test("holds an output's result from its stage finish, while the next output runs", async () => {
+		const t = await testApp();
+		const output = { plugin: "held-sink", settings: {} };
+		const id = await createApplet(t.call, {
+			name: "Two outputs",
+			enabled: true,
+			definition: { inputs: [held()], modifiers: [], outputs: [output, output] },
+		});
+		const runId = await started(t.call, id);
+		(await holds.next()).release();
+		const first = await holds.next();
+		t.clock.now += CHECKPOINT_INTERVAL_MS;
+		first.release();
+		const second = await holds.next();
+
+		// Were the process killed now, the row is all that would be kept.
+		await eventually(async () => {
+			const stored = fromJournal(await t.db.storeFor(t.mine).runs.get(runId));
+			expect(stored.filter((event) => event.type === "result")).toEqual([
+				expect.objectContaining({
+					index: 0,
+					outcome: {
+						ok: true,
+						playlists: [expect.objectContaining({ status: "written", playlist: 0 })],
+					},
+				}),
+			]);
+		});
+		second.release();
+		await eventually(async () => expect(await stateOf(t.call, id)).toBe("idle"));
 	});
 
 	test("skips a stage finish within the checkpoint interval of the last write", async () => {

@@ -362,16 +362,17 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 		}
 		const outcome = await runOutput(run, stage, songs);
 		const result = { type: "result" as const, index: stage.index, plugin: stage.plugin };
+		// The result comes first, so the checkpoint the stage's finish may take holds it (ADR-0026 §4).
 		if (!outcome.ok) {
 			problem = true;
-			run.finishStage(stage, received, outcome.error);
 			emit({ ...result, outcome: { ok: false, error: outcome.error } });
+			run.finishStage(stage, received, outcome.error);
 			continue;
 		}
 		written ||= outcome.playlists.some((entry) => entry.status === "written");
 		problem ||= outcome.playlists.some((entry) => entry.status === "failed");
-		run.finishStage(stage, received);
 		emit({ ...result, outcome: { ok: true, playlists: outcome.playlists } });
+		run.finishStage(stage, received);
 	}
 
 	return end(!problem ? "succeeded" : written ? "partial" : "failed");
