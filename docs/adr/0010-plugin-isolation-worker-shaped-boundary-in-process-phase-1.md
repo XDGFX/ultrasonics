@@ -1,6 +1,7 @@
 # ADR-0010 — Worker-shaped plugin boundary, in-process execution in Phase 1
 
-**Status:** Accepted
+**Status:** Accepted. Its warm-pool consequence is superseded by
+[ADR-0031](0031-plugins-run-in-workers-reused-only-within-one-account.md).
 **Date:** 2026-08-03
 **Refines:** ADR-0001 (which wanted isolation but did not choose a mechanism), ADR-0004 (the SDK
 contract this constrains)
@@ -146,8 +147,10 @@ So, per the repo's preference for machine-checked invariants over conventions:
   and enforces no heap cap (3 GB allocated unimpeded). If a hard memory bound is ever required, that
   is the subprocess conversation, not a Worker option.
 - **When `WorkerExecutor` lands**, three rules follow from the measurements: use the **web `Worker`**
-  API, never `await terminate()`, and prefer a **warm pool** with `terminate()` reserved as the
-  deadline escape hatch rather than worker-per-run.
+  API, never `await terminate()`, and ~~prefer a **warm pool** with `terminate()` reserved as the
+  deadline escape hatch rather than worker-per-run~~. *Superseded by
+  [ADR-0031](0031-plugins-run-in-workers-reused-only-within-one-account.md): worker-per-call ships,
+  and a worker is only ever reused within one account.*
 - **Pre-flight checks before that ships** are named in the reference doc's gaps section — chiefly a
   proper soak of terminate-mid-`fetch` (20 clean runs is far too light against ~25 open use-after-free
   PRs) and confirming RSS is actually returned after `terminate()` (111.7 MB of 114.5 MB was retained

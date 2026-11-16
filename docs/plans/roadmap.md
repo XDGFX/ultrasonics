@@ -131,10 +131,11 @@ sits in Phase 3 with the other new services rather than under a parity gate.
 **Also in this phase: adopt `WorkerExecutor`.** ADR-0010 freezes the plugin boundary as
 Worker-shaped but ships Phase 1 running plugins in-process, on the grounds that first-party reviewed
 plugins do not need isolation and Bun's `Worker` termination is still experimental. Fanning out to
-ten ported plugins is where that stops being true. The swap is a runner change, not an SDK change —
-but it has pre-flight checks (soak terminate-mid-`fetch`, confirm RSS is returned after
-`terminate()`, re-measure on Linux/Docker) listed in
-`../reference/plugin-isolation-research.md`.
+ten ported plugins is where that stops being true. The swap is a runner change, not an SDK change.
+Its pre-flight checks passed on Bun 1.4.2 (`../research/worker-executor-preflight.md`), and ADR-0031
+adopts it with that research's mitigations, reusing a worker only within one account. It is specced
+in [Spec: adopt WorkerExecutor](https://github.com/XDGFX/ultrasonics/issues/210). The plugin ports
+don't wait for it.
 
 **Exit gate:** feature parity with v1 *minus the dropped plugins above* · every plugin passes
 conformance + a smoke test · every plugin's v1 import mapping tested against a v1 fixture (ADR-0017
