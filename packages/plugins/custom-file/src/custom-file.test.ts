@@ -122,6 +122,7 @@ describe("settings", () => {
 	});
 
 	test.each([
+		["nothing", ""],
 		["a stray {", "{artist - {title}"],
 		["a stray }", "{artist} } {title}"],
 	])("rejects %s in the pattern", (_, pattern) => {
@@ -243,14 +244,14 @@ describe("file names", () => {
 		const folder = scratch();
 		const song = { title: "x", artists: ["y"] };
 		const { result } = await write({ dir: folder }, [
-			{ name: 'AC/DC: "Live" <at> River*Plate? | 1991. ', songs: [song] },
+			{ name: 'AC/DC: "Live" <at>\tRiver*Plate? | 1991. ', songs: [song] },
 			{ name: "con", songs: [song] },
 			{ name: "LPT1.backup", songs: [song] },
 			{ name: '/:*?"<>|. ', songs: [song] },
 		]);
 
 		expect(readdirSync(folder).sort()).toEqual(
-			["ACDC Live at RiverPlate  1991.txt", "_con.txt", "_LPT1.backup.txt"].sort(),
+			["ACDC Live at RiverPlate 1991.txt", "_con.txt", "_LPT1.backup.txt"].sort(),
 		);
 		expect(result.playlists[3]).toMatchObject({ status: "skipped", code: "invalid-name" });
 	});
@@ -276,6 +277,18 @@ describe("file names", () => {
 			"skipped",
 			"written",
 		]);
+	});
+
+	test("writes names that differ only in case or Unicode form into one file, so neither replaces the other", async () => {
+		const folder = scratch();
+		const { result } = await write({ dir: folder, pattern: "{title}" }, [
+			{ name: "Rock Café", songs: [{ title: "a", artists: [] }] },
+			{ name: "rock café", songs: [{ title: "b", artists: [] }] },
+		]);
+
+		expect(readdirSync(folder)).toEqual(["Rock Café.txt"]);
+		expect(read("Rock Café.txt")).toBe("a\nb\n");
+		expect(result.playlists.map((entry) => entry.status)).toEqual(["written", "written"]);
 	});
 });
 

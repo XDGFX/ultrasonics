@@ -2,7 +2,7 @@ import { isAbsolute } from "node:path";
 import { withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import { fileNameProblems } from "./file-name.ts";
-import { isSongPlaceholder } from "./song-line.ts";
+import { isSongPlaceholder, songPlaceholderList } from "./song-line.ts";
 import { parseTemplate, placeholdersOf } from "./template.ts";
 
 /** Why a line pattern can't render: a brace out of place, or placeholders it doesn't know. */
@@ -12,7 +12,7 @@ export function patternProblems(pattern: string): string[] {
 	const unknown = placeholdersOf(parsed.parts).filter((name) => !isSongPlaceholder(name));
 	if (unknown.length === 0) return [];
 	return [
-		`Unknown placeholder${unknown.length === 1 ? "" : "s"}: ${unknown.map((name) => `{${name}}`).join(", ")}. Use {title}, {artist}, {artists}, {album}, {date}, {isrc}, {location} or {id.<service>}.`,
+		`Unknown placeholder${unknown.length === 1 ? "" : "s"}: ${unknown.map((name) => `{${name}}`).join(", ")}. Use ${songPlaceholderList}.`,
 	];
 }
 
@@ -41,11 +41,14 @@ export const outputSettings = z.object({
 			"{name} becomes the playlist's name. Without {name}, every playlist goes into one file.",
 	}),
 	pattern: withMeta(
-		z.string().superRefine(reportEach(patternProblems)).default("{artist} - {title}"),
+		z
+			.string()
+			.min(1, "Enter a line pattern, such as {artist} - {title}")
+			.superRefine(reportEach(patternProblems))
+			.default("{artist} - {title}"),
 		{
 			title: "line pattern",
-			description:
-				"One line per song. Use {title}, {artist}, {artists}, {album}, {date}, {isrc}, {location} or {id.<service>}, such as {id.spotify}; {{ and }} write a brace. A song missing a field the pattern uses is left out.",
+			description: `One line per song. Use ${songPlaceholderList}, such as {id.spotify}; {{ and }} write a brace. A song missing a field the pattern uses is left out.`,
 		},
 	),
 	existing: withMeta(z.enum(["overwrite", "append"]).default("overwrite"), {

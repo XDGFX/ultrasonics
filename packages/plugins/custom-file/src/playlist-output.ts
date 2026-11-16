@@ -14,14 +14,14 @@ interface FileGroup {
 	playlists: { position: number; lines: string[]; unmatched: number[] }[];
 }
 
-const describe = (error: unknown) => (error instanceof Error ? error.message : String(error));
+const reasonOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 async function assertFolder(dir: string): Promise<void> {
 	let isFolder: boolean;
 	try {
 		isFolder = (await stat(dir)).isDirectory();
 	} catch (error) {
-		throw new Error(`The folder ${dir} can't be read: ${describe(error)}`);
+		throw new Error(`The folder ${dir} can't be read: ${reasonOf(error)}`);
 	}
 	if (!isFolder) throw new Error(`${dir} is not a folder`);
 }
@@ -116,9 +116,11 @@ export async function writePlaylists(
 			results.set(position, { status: "skipped", playlist: position, code: "no-lines", message });
 			continue;
 		}
-		const group = groups.get(file) ?? { file, playlists: [] };
+		// macOS and Windows treat names differing only in case or Unicode form as one file.
+		const key = file.normalize("NFC").toLowerCase();
+		const group = groups.get(key) ?? { file, playlists: [] };
 		group.playlists.push({ position, lines, unmatched });
-		groups.set(file, group);
+		groups.set(key, group);
 	}
 
 	for (const group of groups.values()) {
@@ -131,7 +133,7 @@ export async function writePlaylists(
 				results.set(position, { status: "written", playlist: position, unmatched });
 			}
 		} catch (error) {
-			const message = `${group.file} couldn't be written: ${describe(error)}`;
+			const message = `${group.file} couldn't be written: ${reasonOf(error)}`;
 			log.error(message);
 			for (const { position } of group.playlists) {
 				results.set(position, {

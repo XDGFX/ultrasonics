@@ -1,7 +1,8 @@
 import type { JsonObject } from "@ultrasonics/db";
 import type { Mapping } from "../mapping.ts";
 
-const EXISTING: Record<string, string> = { Overwrite: "overwrite", Append: "append" };
+/** v1's `existing_files` choices, as v2's `existing` values. */
+const V1_EXISTING_FILES: Record<string, string> = { Overwrite: "overwrite", Append: "append" };
 
 /**
  * v1's `custom file` output, at any version (spec #180, "v1 import mapping"). Values v2 refuses,
@@ -13,7 +14,7 @@ export const customFileMapping: Mapping = {
 	instance: (_, v1) => {
 		const existing =
 			typeof v1.existing_files === "string"
-				? (EXISTING[v1.existing_files] ?? v1.existing_files)
+				? (V1_EXISTING_FILES[v1.existing_files] ?? v1.existing_files)
 				: v1.existing_files;
 		const settings = {
 			dir: v1.dir,
