@@ -7,12 +7,15 @@
 		".": "./src/index.ts"
 	},
 	"scripts": {
+		"build-candidate-sets": "bun scripts/build-candidate-sets.ts",
 		"build-cc0-tier": "bun scripts/build-cc0-tier.ts",
+		"fit-weights": "bun scripts/fit-weights.ts",
 		"collect-service-tier": "bun scripts/collect-service-tier.ts",
 		"measure-service-tier": "bun scripts/measure-service-tier.ts"
 	},
 	"dependencies": {
 		"@ultrasonics/plugin-sdk": "workspace:*",
+		"any-ascii": "0.3.3",
 		"zod": "4.6.7"
 	}
 }

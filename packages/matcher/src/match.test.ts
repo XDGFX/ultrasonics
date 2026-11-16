@@ -1,11 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { Song, type SongInput } from "@ultrasonics/plugin-sdk";
-import { z } from "zod";
-import handWrittenJson from "../test/fixtures/match-dataset/hand-written.json";
-import musicbrainzJson from "../test/fixtures/match-dataset/musicbrainz.json";
-import { formatReport, measure } from "./harness.ts";
-import { durationToleranceMs, match, threshold } from "./match.ts";
-import { MatchCase, trapCategories } from "./match-case.ts";
+import { lengthVetoMs } from "./agreement.ts";
+import { bestMatch } from "./best-match.ts";
+import { candidateSets, handWrittenCases, musicbrainzCases } from "./cc0-tier.ts";
+import { floor } from "./floor.ts";
+import { formatReport, holds, measure, measureRanking, namedFigures } from "./harness.ts";
+import { match } from "./match.ts";
+import { heldOutCases, inTuningSplit } from "./split.ts";
+
+/** `match` accepts exactly when its score reaches this. */
+const threshold = 0.5;
 
 const song = (input: Partial<SongInput> = {}) =>
 	Song.parse({ title: "Strobe", artists: ["deadmau5"], ...input });
@@ -38,14 +42,14 @@ describe("match: ISRC", () => {
 		expect(match(a, b).matched).toBe(true);
 	});
 
-	test("an equal ISRC is still vetoed by a duration gap beyond the tolerance", () => {
+	test("an equal ISRC is still vetoed by a length gap beyond the veto", () => {
 		const a = song({ isrc: "USUM70900001", durationMs: 200_000 });
-		const b = song({ isrc: "USUM70900001", durationMs: 200_001 + durationToleranceMs });
+		const b = song({ isrc: "USUM70900001", durationMs: 200_001 + lengthVetoMs });
 		expect(match(a, b).matched).toBe(false);
 	});
 });
 
-describe("match: the title and artist threshold", () => {
+describe("match: the weighed threshold", () => {
 	test("the same title and artist match", () => {
 		expect(match(song(), song()).matched).toBe(true);
 	});
@@ -69,10 +73,12 @@ describe("match: the title and artist threshold", () => {
 		expect(match(song({ title: left }), song({ title: right })).matched).toBe(false);
 	});
 
-	test("a title that drops a subtitle still matches", () => {
+	test("a title that drops a subtitle matches when the lengths agree too", () => {
+		const [full, short] = ["Chacun sa mer… chacun son vent !", "Chacun sa mer"];
+		expect(match(song({ title: full }), song({ title: short })).matched).toBe(false);
+		const durationMs = 200_000;
 		expect(
-			match(song({ title: "Chacun sa mer… chacun son vent !" }), song({ title: "Chacun sa mer" }))
-				.matched,
+			match(song({ title: full, durationMs }), song({ title: short, durationMs })).matched,
 		).toBe(true);
 	});
 
@@ -158,6 +164,24 @@ describe("match: normalisation", () => {
 	test("lets a year agree with a full date", () => {
 		expect(pair({ date: "2016" }, { date: "2016-06-16" })).toBe(true);
 	});
+
+	test("compares a title and artist across scripts after transliteration", () => {
+		expect(
+			pair(
+				{ title: "Что за песни", artists: ["Алла Пугачёва"] },
+				{ title: "Chto za pesni", artists: ["Alla Pugacheva"] },
+			),
+		).toBe(true);
+	});
+
+	test("ignores album and year, which differ between releases of one recording", () => {
+		expect(
+			pair(
+				{ album: "Random Album Title", date: "2008" },
+				{ album: "5 Years of mau5", date: "2014" },
+			),
+		).toBe(true);
+	});
 });
 
 describe("match: vetoes", () => {
@@ -211,14 +235,16 @@ describe("match: vetoes", () => {
 		expect(pair({ explicit: left }, { explicit: right })).toBe(true);
 	});
 
-	test("vetoes a duration gap beyond the tolerance", () => {
-		expect(pair({ durationMs: 200_000 }, { durationMs: 200_001 + durationToleranceMs })).toBe(
-			false,
-		);
+	test("vetoes a length gap beyond the veto, however alike the rest", () => {
+		expect(pair({ durationMs: 200_000 }, { durationMs: 200_001 + lengthVetoMs })).toBe(false);
 	});
 
-	test("lets a duration gap within the tolerance match", () => {
-		expect(pair({ durationMs: 200_000 }, { durationMs: 200_000 + durationToleranceMs })).toBe(true);
+	test("lets a length gap of 3 s match", () => {
+		expect(pair({ durationMs: 200_000 }, { durationMs: 203_000 })).toBe(true);
+	});
+
+	test("weighs a gap just past 3 s against an otherwise equal pair, enough to reject it", () => {
+		expect(pair({ durationMs: 200_000 }, { durationMs: 203_001 })).toBe(false);
 	});
 
 	test("lets a missing duration on one side match", () => {
@@ -226,53 +252,26 @@ describe("match: vetoes", () => {
 	});
 });
 
-const handWritten = z.array(MatchCase).parse(handWrittenJson);
-const tier = [...z.array(MatchCase).parse(musicbrainzJson), ...handWritten];
-
 describe("each hand-written case", () => {
 	test.each(
-		handWritten.map(
+		handWrittenCases.map(
 			(c) => [c.provenance.source === "hand-written" ? c.provenance.name : "", c] as const,
 		),
 	)("%s", (_, c) => {
-		expect(measure(match, [c]).byCategory[c.category].met).toBe(true);
+		expect(measure(match, [c]).byCategory[c.category].rate).toBe(1);
 	});
 });
 
-/**
- * The staged-rules matcher's CC0 figures less two points, so a regression fails CI while #132
- * works towards the spec's targets, which the report still shows as met or not.
- */
-const baseline = {
-	recall: 0.74,
-	precision: 0.88,
-	rejection: {
-		cover: 0.98,
-		"same-title": 0.98,
-		edit: 0.94,
-		live: 0.92,
-		"re-recording": 0.71,
-		remix: 0.66,
-	},
-} as const satisfies {
-	recall: number;
-	precision: number;
-	rejection: Record<(typeof trapCategories)[number], number>;
-};
+describe("the CC0 tier, held out, holds its floor", () => {
+	const report = measure(match, heldOutCases([...musicbrainzCases, ...handWrittenCases]));
+	const ranking = measureRanking(
+		bestMatch,
+		candidateSets.filter((set) => !inTuningSplit({ ...set.trap, category: set.category })),
+	);
+	const figures = namedFigures(report, ranking);
+	if (!figures.every((f) => holds(f, floor))) console.log(formatReport(report, ranking, floor));
 
-describe("the CC0 tier", () => {
-	const report = measure(match, tier);
-	if (!report.allMet) console.log(formatReport(report));
-
-	test(`recall holds its baseline of ${baseline.recall * 100}%`, () => {
-		expect(report.recall.rate).toBeGreaterThanOrEqual(baseline.recall);
-	});
-
-	test.each([...trapCategories])("rejection of %s holds its baseline", (category) => {
-		expect(report.rejection[category].rate).toBeGreaterThanOrEqual(baseline.rejection[category]);
-	});
-
-	test(`precision holds its baseline of ${baseline.precision * 100}%`, () => {
-		expect(report.precision.rate).toBeGreaterThanOrEqual(baseline.precision);
+	test.each(figures.map((f) => [f.name, f] as const))("%s", (_, f) => {
+		expect(holds(f, floor)).toBe(true);
 	});
 });
