@@ -91,8 +91,28 @@ const PlexPlaylist = z.object({
 		.transform(Boolean)
 		.optional(),
 	playlistType: z.string().optional(),
+	summary: z.string().optional(),
 });
 export type PlexPlaylist = z.output<typeof PlexPlaylist>;
+
+/**
+ * Items read per request. Plex asks clients to page playlist items, and may answer with a
+ * different count than asked.
+ */
+export const itemsPageSize = 200;
+
+/** One page of a playlist's items, and how many it holds in all when Plex says. */
+const ItemsPage = z
+	.object({
+		MediaContainer: z.object({
+			totalSize: z.number().optional(),
+			Metadata: z.array(PlexTrack).optional(),
+		}),
+	})
+	.transform(({ MediaContainer }) => ({
+		items: MediaContainer.Metadata ?? [],
+		totalSize: MediaContainer.totalSize,
+	}));
 
 /** Plex leaves `Metadata` out of an empty container rather than sending `[]`. */
 function containerOf<T extends z.ZodType>(item: T, key: "Metadata" | "Directory") {
@@ -162,12 +182,23 @@ export class PlexClient {
 		}
 	}
 
-	async playlists(): Promise<PlexPlaylist[]> {
-		return this.#request(containerOf(PlexPlaylist, "Metadata"), "GET", "/playlists");
+	/** Every playlist, or only those of `playlistType`, which Plex filters itself. */
+	async playlists(playlistType?: "audio"): Promise<PlexPlaylist[]> {
+		const query: Record<string, string> = playlistType === undefined ? {} : { playlistType };
+		return this.#request(containerOf(PlexPlaylist, "Metadata"), "GET", "/playlists", query);
 	}
 
+	/** Every item of one playlist, in order, page by page until `totalSize` or an empty page. */
 	async playlistItems(playlistKey: string): Promise<PlexTrack[]> {
-		return this.#request(tracks, "GET", `/playlists/${playlistKey}/items`);
+		const items: PlexTrack[] = [];
+		for (;;) {
+			const page = await this.#request(ItemsPage, "GET", `/playlists/${playlistKey}/items`, {
+				"X-Plex-Container-Start": String(items.length),
+				"X-Plex-Container-Size": String(itemsPageSize),
+			});
+			items.push(...page.items);
+			if (page.items.length === 0 || items.length >= (page.totalSize ?? Infinity)) return items;
+		}
 	}
 
 	/** Creates an audio playlist holding `ratingKeys`, which must not be empty: Plex refuses that. */

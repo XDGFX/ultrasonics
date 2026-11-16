@@ -191,6 +191,24 @@ describe("writing playlists", () => {
 		expect(writes(server)).toEqual([]);
 	});
 
+	test("append reads an existing playlist Plex answers in two pages in full", async () => {
+		// The recorded pages: Carefree and Hitman, then Sneaky Snitch.
+		const pages: Record<string, string> = {
+			"0": "playlist-items-page-1.json",
+			"2": "playlist-items-page-2.json",
+		};
+		const server = serve(async (request) => {
+			const page = pages[request.query.get("X-Plex-Container-Start") ?? ""];
+			return request.method === "GET" && request.path === `/playlists/${existing.key}/items`
+				? Response.json(await fixture(page ?? "missing"))
+				: undefined;
+		});
+		const { result } = await runOutput(server, playlist(existing.title, [sneakySnitch]));
+
+		expect(result).toEqual({ playlists: [{ status: "written", playlist: 0, unmatched: [] }] });
+		expect(writes(server)).toEqual([]);
+	});
+
 	test("update leaves the playlist holding exactly the matches, in source order", async () => {
 		const server = serve();
 		// It holds Sneaky Snitch already, and Plex won't add a track a playlist holds.

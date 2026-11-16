@@ -1,5 +1,6 @@
 import type { JsonObject } from "@ultrasonics/db";
-import type { Mapping } from "../mapping.ts";
+import type { InstanceMapping, Mapping } from "../mapping.ts";
+import { convertV1Filter } from "../v1-filter.ts";
 
 /** v1's legacy Plex plugin, which wrote m3u files and asked for both sides' music paths. */
 const LEGACY = new Set(["plex", "plex legacy"]);
@@ -23,6 +24,24 @@ function textOf(settings: JsonObject, name: string): string {
 	return value.trim();
 }
 
+/**
+ * A Plex input reads every playlist when its filter is blank, else the playlists its converted
+ * filter chooses. A filter that won't convert is kept as written, so the applet survives and the
+ * report asks for an edit (spec #182, decision 1). v1's input never read `section_id`.
+ */
+function inputOf(v1: JsonObject): InstanceMapping {
+	const pattern = typeof v1.filter === "string" ? v1.filter : "";
+	if (pattern.trim() === "") return { settings: { source: "all" } };
+	// v1's Plex input ran `re.search`, so a match anywhere in the title was enough.
+	const converted = convertV1Filter(pattern, "search");
+	return converted.ok
+		? { settings: { source: "chosen", playlists: converted.filter }, notes: converted.notes }
+		: {
+				settings: { source: "chosen", playlists: pattern },
+				manualEdits: [{ pattern, reason: converted.reason }],
+			};
+}
+
 /** `plex` 1.0 and `plex beta` 1.0, and the legacy `plex` / `plex legacy` 0.1 (ADR-0017 §4). */
 export const plexMapping: Mapping = {
 	plugin: "plex",
@@ -39,7 +58,7 @@ export const plexMapping: Mapping = {
 		},
 	}),
 	instance: (component, v1, v1Persistent) => {
-		if (component !== "outputs") throw new Error("v2 can't import a Plex input yet.");
+		if (component === "inputs") return inputOf(v1);
 		const settings: JsonObject = {};
 		if (typeof v1.section_id === "string" && v1.section_id !== "")
 			settings.library = libraryOf(v1.section_id);

@@ -13,6 +13,12 @@ export const machineIdentifier = "scrubbed-machine-identifier";
 /** The one ordinary playlist in `playlists.json` with items: `playlist-items.json`'s. */
 export const existingPlaylistKey = "44";
 
+/** The smart playlist sharing its title, `playlist-items-smart.json`'s. */
+export const smartPlaylistKey = "45";
+
+/** The other playlists in `playlists.json`, whose items weren't recorded. */
+const unrecordedPlaylistKeys = ["48", "49", "50", "51"];
+
 export interface RecordedRequest {
 	method: string;
 	/** The path and query string, exactly as received. */
@@ -66,6 +72,33 @@ function container(metadata: unknown[]): Response {
 	return Response.json({ MediaContainer: { size: metadata.length, Metadata: metadata } });
 }
 
+/** Plex's 404, which is HTML whatever `Accept` asked for. */
+export function notFound(): Response {
+	return new Response(Bun.file(join(fixtures, "not-found.html")), {
+		status: 404,
+		headers: { "Content-Type": "text/html" },
+	});
+}
+
+/**
+ * A playlist's items as Plex answers them: all of them without paging headers, else one page with
+ * `totalSize` and `offset` (`playlist-items-page-1.json`).
+ */
+function itemsPage(items: unknown[], query: URLSearchParams): Response {
+	const start = query.get("X-Plex-Container-Start");
+	if (start === null) return container(items);
+	const size = Number(query.get("X-Plex-Container-Size") ?? items.length);
+	const page = items.slice(Number(start), Number(start) + size);
+	return Response.json({
+		MediaContainer: {
+			size: page.length,
+			totalSize: items.length,
+			offset: Number(start),
+			Metadata: page,
+		},
+	});
+}
+
 async function fixtureResponse(name: string): Promise<Response> {
 	return Response.json(await fixture(name));
 }
@@ -102,28 +135,34 @@ export const firstCreatedKey = "1000";
  */
 function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | undefined>) {
 	// `require` keeps the fake synchronous; the copy gives each fake its own items.
-	const seeded = (
-		require(join(fixtures, "playlist-items.json")) as {
-			MediaContainer: { Metadata: PlaylistItem[] };
-		}
-	).MediaContainer.Metadata.map((item) => ({ ...item }));
-	const playlists = new Map<string, PlaylistItem[]>([[existingPlaylistKey, seeded]]);
+	const seed = (name: string) =>
+		(
+			require(join(fixtures, name)) as { MediaContainer: { Metadata: PlaylistItem[] } }
+		).MediaContainer.Metadata.map((item) => ({ ...item }));
+	const seeded = seed("playlist-items.json");
+	const playlists = new Map<string, PlaylistItem[]>([
+		[existingPlaylistKey, seeded],
+		[smartPlaylistKey, seed("playlist-items-smart.json")],
+		// Their items weren't recorded, so they read as empty.
+		...unrecordedPlaylistKeys.map((key): [string, PlaylistItem[]] => [key, []]),
+	]);
+	// A smart playlist's items carry no `playlistItemID`.
 	let nextItemId = Math.max(...seeded.map((item) => item.playlistItemID)) + 1;
 	let nextPlaylistKey = Number(firstCreatedKey);
 	const created = new Map<string, string>();
 	const deleted = new Set<string>();
 
 	/** `playlists.json`, less what was deleted, plus what was created, in `playlist-created.json`'s shape. */
-	async function listing(): Promise<Response> {
+	async function listing(playlistType: string | null): Promise<Response> {
 		const recorded = (await fixture("playlists.json")) as {
-			MediaContainer: { Metadata: { ratingKey: string }[] };
+			MediaContainer: { Metadata: { ratingKey: string; playlistType: string }[] };
 		};
 		const template = (
 			(await fixture("playlist-created.json")) as {
 				MediaContainer: { Metadata: Record<string, unknown>[] };
 			}
 		).MediaContainer.Metadata[0];
-		const metadata = [
+		const metadata: Record<string, unknown>[] = [
 			...recorded.MediaContainer.Metadata.filter((playlist) => !deleted.has(playlist.ratingKey)),
 			...[...created].map(([key, title]) => ({
 				...template,
@@ -133,7 +172,12 @@ function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | unde
 				leafCount: playlists.get(key)?.length ?? 0,
 			})),
 		];
-		return container(metadata);
+		// Plex filters by `playlistType` itself.
+		return container(
+			playlistType === null
+				? metadata
+				: metadata.filter((playlist) => playlist.playlistType === playlistType),
+		);
 	}
 
 	/** Adds what Plex would of `keys` to `items`, and answers how many it added. */
@@ -197,7 +241,7 @@ function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | unde
 				? container([{ ...track, librarySectionID: music.section }])
 				: new Response("Not Found", { status: 404 });
 		}
-		if (method === "GET" && path === "/playlists") return listing();
+		if (method === "GET" && path === "/playlists") return listing(query.get("playlistType"));
 		if (method === "POST" && path === "/playlists") {
 			const key = String(nextPlaylistKey++);
 			const items: PlaylistItem[] = [];
@@ -211,10 +255,8 @@ function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | unde
 			/^\/playlists\/(?<playlistKey>\d+)\/items(?:\/(?<itemId>\d+)(?<move>\/move)?)?$/.exec(path)
 				?.groups ?? {};
 		const items = playlistKey === undefined ? undefined : playlists.get(playlistKey);
-		if (playlistKey === undefined || items === undefined) {
-			return new Response("Not Found", { status: 404 });
-		}
-		if (method === "GET" && itemId === undefined) return container(items);
+		if (playlistKey === undefined || items === undefined) return notFound();
+		if (method === "GET" && itemId === undefined) return itemsPage(items, query);
 		if (method === "PUT" && itemId === undefined) {
 			const keys = uriKeys(query);
 			const added = await add(items, keys);
