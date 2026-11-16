@@ -11,8 +11,11 @@ import type { Logger } from "./logger.ts";
 export const UNEXPECTED_ERROR_MESSAGE =
 	"Something went wrong on the server; its log has the details";
 
-/** Every error a route throws, as `{ message }`. A stack is logged, never returned. */
-export function errorResponse(logger: Logger): ErrorHandler {
+/**
+ * Every error a route throws, as `{ message }`. A stack is logged, never returned. `loggedPath`
+ * stands in for the request's path in the log, for a route whose path holds a credential.
+ */
+export function errorResponse(logger: Logger, loggedPath?: string): ErrorHandler {
 	return (error, c) => {
 		if (error instanceof HTTPException) return c.json({ message: error.message }, error.status);
 		if (error instanceof FlowMismatchError) return c.json({ message: error.message }, 400);
@@ -24,7 +27,7 @@ export function errorResponse(logger: Logger): ErrorHandler {
 			logger.error(error.message);
 			return c.json({ message: error.message }, 500);
 		}
-		logger.error(`${c.req.method} ${c.req.path} failed`, error);
+		logger.error(`${c.req.method} ${loggedPath ?? c.req.path} failed`, error);
 		return c.json({ message: UNEXPECTED_ERROR_MESSAGE }, 500);
 	};
 }
