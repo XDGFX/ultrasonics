@@ -98,7 +98,7 @@ or to "auto" to keep a key file beside the database, which a backup of the data 
 		problems.push({
 			setting: "TRUSTED_PROXIES",
 			message:
-				"AUTH_SOURCE=proxy needs TRUSTED_PROXIES: the addresses or CIDRs of your reverse proxy, such as 172.18.0.0/16. A login header from any other address is refused.",
+				"AUTH_SOURCE=proxy needs TRUSTED_PROXIES: your reverse proxy's own address, such as 172.30.0.2 in compose.proxy.yaml. Name that one address, not its subnet, and publish no port of ultrasonics' own: anything else that can reach the port from a trusted address is let in as the owner.",
 		});
 	}
 
