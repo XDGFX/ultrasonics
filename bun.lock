@@ -48,6 +48,14 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/custom-file": {
+      "name": "@ultrasonics/plugin-custom-file",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/plugins/deezer": {
       "name": "@ultrasonics/plugin-deezer",
       "version": "0.0.0",
@@ -102,6 +110,7 @@
       "name": "@ultrasonics/registry",
       "version": "0.0.0",
       "dependencies": {
+        "@ultrasonics/plugin-custom-file": "workspace:*",
         "@ultrasonics/plugin-deezer": "workspace:*",
         "@ultrasonics/plugin-lastfm": "workspace:*",
         "@ultrasonics/plugin-local-playlists": "workspace:*",
@@ -367,6 +376,8 @@
     "@ultrasonics/db": ["@ultrasonics/db@workspace:packages/db"],
 
     "@ultrasonics/matcher": ["@ultrasonics/matcher@workspace:packages/matcher"],
+
+    "@ultrasonics/plugin-custom-file": ["@ultrasonics/plugin-custom-file@workspace:packages/plugins/custom-file"],
 
     "@ultrasonics/plugin-deezer": ["@ultrasonics/plugin-deezer@workspace:packages/plugins/deezer"],
 
