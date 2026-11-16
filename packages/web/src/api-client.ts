@@ -1,115 +1,51 @@
-import type { FinishedRunStatus, RunEvent } from "@ultrasonics/core/run-events";
+import type { RunEvent } from "@ultrasonics/core/run-events";
+import type { JSONSchema, Service } from "@ultrasonics/plugin-sdk";
 import type {
+	Applet,
+	AppletDefinition,
+	AppletDraft,
+	AppletListing,
 	AuthChallenge,
-	AuthFailure,
 	AuthRequirement,
-	Component,
-	Flow,
-	JSONSchema,
-	Mode,
-	Service,
+	ConfigureResult,
+	ConnectOutcome,
+	InstanceInfo,
+	PluginInfo,
+	RunNowResult,
+	RunStatus,
+	RunSummary,
+	RunTrigger,
+	Schedule,
+	ServiceStatus,
+	Slot,
+	StoredSettings,
 	ValidationIssue,
-} from "@ultrasonics/plugin-sdk";
+	WebhookUrl,
+} from "@ultrasonics/server/api";
 import { type InjectionKey, inject } from "vue";
 
-// View types are web-local until the server spec fixes its schemas; the HTTP client reconciles them.
+// The wire types are the server's: `z.infer` of `@ultrasonics/server/api`.
+export type {
+	Applet,
+	AppletDefinition,
+	AppletDraft,
+	AppletListing,
+	ConfigureResult,
+	ConnectOutcome,
+	InstanceInfo,
+	PluginInfo,
+	RunNowResult,
+	RunStatus,
+	RunSummary,
+	RunTrigger,
+	Schedule,
+	ServiceStatus,
+	Slot,
+	StoredSettings,
+};
 
-export interface InstanceInfo {
-	/** Reachable from a public address while the session source is `bootstrapped` (ADR-0015 §6). */
-	exposed: boolean;
-}
-
-export interface PluginInfo {
-	name: string;
-	description: string;
-	version: string;
-	components: Component[];
-	mode: Mode[];
-	service?: Service;
-	/** Form JSON Schema from `toFormSchema`; absent when the plugin has no persistent settings. */
-	persistentSettings?: JSONSchema;
-	instanceSettings: Partial<Record<Component, JSONSchema>>;
-}
-
-export interface Slot {
-	plugin: string;
-	settings: unknown;
-}
-
-export interface AppletDefinition {
-	inputs: Slot[];
-	modifiers: Slot[];
-	outputs: Slot[];
-}
-
-/** ADR-0018 §1: every `count` `unit`s from a local `anchor`, in an IANA zone. */
-export interface Schedule {
-	kind: "interval";
-	unit: "hour" | "day" | "week";
-	count: number;
-	/** A local date-time without a zone, as `2026-11-01T07:00:00`. */
-	anchor: string;
-	timeZone: string;
-}
-
-export interface AppletDraft {
-	name: string;
-	enabled: boolean;
-	definition: AppletDefinition;
-}
-
-export interface Applet extends AppletDraft {
-	id: string;
-	schedule: Schedule | null;
-	hasWebhook: boolean;
-}
-
-export type RunStatus = "running" | FinishedRunStatus;
-export type RunTrigger = "schedule" | "webhook" | "manual";
-
-export interface AppletListing extends Applet {
-	state: "idle" | "running" | "queued";
-	lastRun: { id: string; status: RunStatus; at: number } | null;
-	/** Epoch milliseconds; null when nothing schedules the applet. */
-	nextRunAt: number | null;
-}
-
+/** A save's answer as the screens take it: the saved value, or the server's `422` issues. */
 export type SaveResult<T> = { ok: true; value: T } | { ok: false; issues: ValidationIssue[] };
-
-export type RunNowResult = { kind: "started"; runId: string } | { kind: "queued" };
-
-export interface RunSummary {
-	id: string;
-	appletId: string;
-	trigger: RunTrigger;
-	status: RunStatus;
-	startedAt: number;
-	finishedAt: number | null;
-}
-
-export interface StoredSettings {
-	value: unknown;
-	/** What the stored value fails today, as after a plugin update (ADR-0019 §7). */
-	issues: ValidationIssue[];
-}
-
-export interface ServiceStatus {
-	service: Service;
-	flow: Flow;
-	status:
-		| { kind: "connected" }
-		| { kind: "not-connected" }
-		| { kind: "failed"; failure: AuthFailure };
-	/** Names of the plugins that declare this service. */
-	usedBy: string[];
-}
-
-export type ConfigureResult =
-	| { kind: "saved" }
-	| { kind: "invalid"; issues: ValidationIssue[] }
-	| { kind: "test-failed"; message: string };
-
-export type ConnectOutcome = { kind: "connected" } | { kind: "failed"; message: string };
 
 /** Every server call the screens make. Screens never call `fetch` or `EventSource` themselves. */
 export interface ApiClient {
@@ -128,7 +64,7 @@ export interface ApiClient {
 		/** `null` clears the schedule. */
 		setSchedule(appletId: string, schedule: Schedule | null): Promise<SaveResult<Applet>>;
 		/** Replaces any existing token; the URL carries the token and is never returned again. */
-		generateWebhook(appletId: string): Promise<{ url: string }>;
+		generateWebhook(appletId: string): Promise<WebhookUrl>;
 		removeWebhook(appletId: string): Promise<void>;
 	};
 	runs: {
@@ -143,12 +79,9 @@ export interface ApiClient {
 	services: {
 		list(): Promise<ServiceStatus[]>;
 		requirements(service: Service): Promise<AuthRequirement[]>;
-		/** Open question 3 of spec #118: which server operation supplies this is undecided. */
+		/** The URI to register with the service; the provider chooses it from the wizard's origin. */
 		redirectUri(service: Service): Promise<string>;
-		/**
-		 * The form for a `client` requirement, and saving the operator's client credentials. Open
-		 * question 2 of spec #118: `AuthRequirement` carries no schema for it yet.
-		 */
+		/** The provider's fixed form for a `client` requirement, and saving the operator's client. */
 		clientForm(service: Service): Promise<JSONSchema>;
 		registerClient(service: Service, input: unknown): Promise<SaveResult<null>>;
 		configure(service: Service, input: unknown): Promise<ConfigureResult>;

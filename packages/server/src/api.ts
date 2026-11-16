@@ -19,7 +19,8 @@ import { z } from "zod";
 
 export { AuthChallenge, AuthRequirement };
 
-const JsonSchema = z.custom<JSONSchema>(
+/** A form JSON Schema from `toFormSchema`, as the plugin catalogue and the client form carry it. */
+export const JsonSchema = z.custom<JSONSchema>(
 	(value) => typeof value === "object" && value !== null && !Array.isArray(value),
 );
 

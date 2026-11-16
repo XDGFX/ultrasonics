@@ -51,11 +51,16 @@ export interface FakeSeed {
 	testFailures?: Partial<Record<Service, string>>;
 	/** `oauth2*` services whose operator has not registered an app. */
 	unregisteredClients?: Service[];
+	/** The redirect URI a service's provider chooses; the dev server's own origin when absent. */
+	redirectUris?: Partial<Record<Service, string>>;
 }
 
-/** A guess at the `client` step's form until open question 2 of spec #118 is settled. */
+/** A client ID the `oauth2-pkce` client form accepts: 32 hex characters, as Spotify's are. */
+export const EXAMPLE_CLIENT_ID = "0123456789abcdef0123456789abcdef";
+
+/** Shaped like the server's `oauth2-pkce` client form. */
 const clientCredentials = z.object({
-	clientId: withMeta(z.string().min(1), {
+	clientId: withMeta(z.string().regex(/^[0-9a-f]{32}$/), {
 		title: "client id",
 		description: "from your app's page on the service's developer dashboard",
 	}),
@@ -304,7 +309,8 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 					? [{ kind: "client", service }, { kind: "connect" }]
 					: [{ kind: "connect" }];
 			},
-			redirectUri: async (service) => `http://localhost:5173/services/${service}`,
+			redirectUri: async (service) =>
+				seed.redirectUris?.[service] ?? `http://localhost:5173/services/${service}`,
 			clientForm: async () => formSchema(clientCredentials, { auth: true }),
 			registerClient: async (service, input) => {
 				const parsed = clientCredentials.safeParse(input);
