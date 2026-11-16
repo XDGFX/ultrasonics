@@ -175,13 +175,25 @@ async function isLibraryTrack(target: Target, ratingKey: string): Promise<boolea
 	}
 }
 
-/** Searches by title, then once more cut before a bracket, dash or colon if that found nothing. */
+/**
+ * Searches by title, then cut before a bracket, dash or colon, then that cut without its quotes,
+ * stopping at the first that finds anything: Plex's search tells ' from ’.
+ */
 async function search(target: Target, title: string) {
 	const { client, library } = target;
-	const found = await client.searchTracks(library.key, title, searchLimit);
 	const cut = title.split(/[([{\-‐–—:]/)[0]?.trim() ?? "";
-	if (found.length > 0 || cut === "" || cut === title) return found;
-	return client.searchTracks(library.key, cut, searchLimit);
+	const unquoted = cut
+		.replace(/['‘’]\p{L}*/gu, "")
+		.replace(/["“”]/g, "")
+		.replace(/\s+/g, " ")
+		.trim();
+	const queries = [...new Set([title, cut, unquoted])].filter((query) => query !== "");
+	let found: Awaited<ReturnType<typeof client.searchTracks>> = [];
+	for (const query of queries) {
+		found = await client.searchTracks(library.key, query, searchLimit);
+		if (found.length > 0) break;
+	}
+	return found;
 }
 
 function batches(ratingKeys: string[]): string[][] {
@@ -206,12 +218,12 @@ async function append(client: PlexClient, playlistKey: string, ratingKeys: strin
 }
 
 /**
- * Adds the tracks the playlist lacks, removes the ones the source doesn't hold, then moves the rest
- * into source order. Adding first means a failure partway never leaves the playlist empty. Plex
- * won't add a track a playlist already holds, so shared tracks are kept, never re-added.
+ * Adds what's missing, removes the rest, then moves items into source order: adding first means a
+ * failure never leaves the playlist empty, and Plex won't add a track it already holds.
  */
 async function update(client: PlexClient, playlistKey: string, ratingKeys: string[]) {
-	const wanted = [...new Set(ratingKeys)];
+	const wantedSet = new Set(ratingKeys);
+	const wanted = [...wantedSet];
 	await append(client, playlistKey, wanted);
 
 	const kept = new Map<string, string>();
@@ -220,7 +232,7 @@ async function update(client: PlexClient, playlistKey: string, ratingKeys: strin
 		if (item.playlistItemID === undefined) {
 			throw new PlexError("service-error", "Plex listed a playlist item with no playlistItemID");
 		}
-		if (wanted.includes(item.ratingKey) && !kept.has(item.ratingKey)) {
+		if (wantedSet.has(item.ratingKey) && !kept.has(item.ratingKey)) {
 			kept.set(item.ratingKey, item.playlistItemID);
 		} else {
 			extra.push(item.playlistItemID);

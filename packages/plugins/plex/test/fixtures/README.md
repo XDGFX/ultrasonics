@@ -42,8 +42,10 @@ What the recording showed, and the fake reproduces:
   tracks to show whether an unpaged answer is ever cut short.
 - `PUT /playlists/<ratingKey>/items/<playlistItemID>/move?after=<playlistItemID>` moves an item; no
   `after` moves it to the top.
-- Search is accent-insensitive (`Antígua` finds `Antigua`) but not quote-insensitive (`Miri’s`
-  doesn't find `Miri's`).
+- The `title` filter matches each query word as the start of a title word, words split on spaces:
+  `Miri Magic` finds `Miri’s Magic Dance`, but `agic` and `s Magic Dance` don't. It ignores case
+  and accents (`Antigua` finds `Antígua`) but not quotes (`Miri's` doesn't find `Miri’s`). The
+  fake searches the same way.
 
 Tracks are addressed in writes as
 `server://<machineIdentifier>/com.plexapp.plugins.library/library/metadata/<ratingKey>,<ratingKey>…`.

@@ -64,6 +64,22 @@ async function fixtureResponse(name: string): Promise<Response> {
 	return Response.json(await fixture(name));
 }
 
+/**
+ * Plex's `title` filter, as the test server showed it: every word of the query begins a word of the
+ * title. Words split on spaces only, case and accents are ignored, and ' differs from ’.
+ */
+function titleMatches(title: string, query: string): boolean {
+	const words = (text: string) =>
+		text
+			.normalize("NFD")
+			.replace(/\p{M}/gu, "")
+			.toLowerCase()
+			.split(/\s+/)
+			.filter((word) => word !== "");
+	const titleWords = words(title);
+	return words(query).every((word) => titleWords.some((candidate) => candidate.startsWith(word)));
+}
+
 /** The rating keys a write names, from its `server://…/library/metadata/<keys>` URI. */
 function uriKeys(query: URLSearchParams): string[] {
 	return (query.get("uri") ?? "").replace(/^.*\/library\/metadata\//, "").split(",");
@@ -74,7 +90,7 @@ function uriKeys(query: URLSearchParams): string[] {
  * playlist's items are live, and an add skips a track it already holds, as Plex 1.43 does.
  */
 function recordedServer() {
-	// Read synchronously, so each fake starts with its own copy of the recorded items.
+	// `require` keeps the fake synchronous; the copy gives each fake its own items.
 	const items = (
 		require(join(fixtures, "playlist-items.json")) as {
 			MediaContainer: { Metadata: PlaylistItem[] };
@@ -92,11 +108,11 @@ function recordedServer() {
 		const section = /^\/library\/sections\/(\d+)\/all$/.exec(path);
 		if (method === "GET" && section && query.get("type") === "10") {
 			const music = await library();
-			const title = query.get("title")?.toLowerCase() ?? "";
+			const title = query.get("title") ?? "";
 			const size = Number(query.get("X-Plex-Container-Size") ?? Number.POSITIVE_INFINITY);
 			const found =
 				String(music.section) === section[1]
-					? music.tracks.filter((track) => track.title.toLowerCase().includes(title))
+					? music.tracks.filter((track) => titleMatches(track.title, title))
 					: [];
 			return container(found.slice(0, size));
 		}

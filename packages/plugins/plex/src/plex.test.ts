@@ -86,6 +86,13 @@ const sneakySnitch = { title: "Sneaky Snitch", artists: ["Kevin MacLeod"], durat
 const fluffingADuck = { title: "Fluffing a Duck", artists: ["Kevin MacLeod"] };
 const sneakySnitchKey = "25";
 const fluffingADuckKey = "27";
+/** The recorded traps: a curly apostrophe, a colon, a non-ASCII letter; and a plain title. */
+const trapKeys = {
+	mirisMagicDance: "12",
+	pixelPeekerPolka: "3",
+	bossaAntigua: "7",
+	wallpaper: "17",
+};
 
 /** The ordinary playlist the recorded server holds, and its title. */
 const existing = { key: existingPlaylistKey, title: "ultrasonics Plex test" };
@@ -358,6 +365,16 @@ describe("matching", () => {
 		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([sneakySnitchKey]);
 	});
 
+	test("a straight apostrophe finds a track titled with a curly one", async () => {
+		// Plex's title search tells ' from ’, as the fake's does.
+		const server = serve();
+		const song = { title: "Miri's Magic Dance", artists: ["Kevin MacLeod"] };
+		const { result } = await runOutput(server, playlist("Mix", [song]));
+
+		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
+		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([trapKeys.mirisMagicDance]);
+	});
+
 	test("a song with only a title and a file location can match (#49)", async () => {
 		const server = serve();
 		const song = {
@@ -368,7 +385,7 @@ describe("matching", () => {
 		const { result } = await runOutput(server, playlist("From m3u", [song]));
 
 		expect(result.playlists[0]).toEqual({ status: "written", playlist: 0, unmatched: [] });
-		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual(["17"]);
+		expect(keysOf(writes(server)[0]?.query.get("uri") ?? null)).toEqual([trapKeys.wallpaper]);
 	});
 
 	test("curly quotes, colons and non-ASCII names reach Plex intact", async () => {
@@ -381,7 +398,11 @@ describe("matching", () => {
 		expect(searchedTitles(server)).toEqual(titles);
 		const [create] = writes(server);
 		expect(create?.query.get("title")).toBe("Polka & Bossa — ünïcödé");
-		expect(keysOf(create?.query.get("uri") ?? null)).toEqual(["12", "3", "7"]);
+		expect(keysOf(create?.query.get("uri") ?? null)).toEqual([
+			trapKeys.mirisMagicDance,
+			trapKeys.pixelPeekerPolka,
+			trapKeys.bossaAntigua,
+		]);
 	});
 });
 
