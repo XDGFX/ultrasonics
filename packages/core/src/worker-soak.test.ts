@@ -64,11 +64,11 @@ afterAll(() => servers?.stop());
 const openSockets = async () =>
 	((await (await fetch(servers.stats)).json()) as { open: number }).open;
 
-/** Polls `read` until it returns `want`, for up to a few seconds, and returns its last value. */
-async function settlesTo(read: () => number | Promise<number>, want: number): Promise<number> {
+/** Polls `read` until it is at most `limit`, for up to a few seconds, and returns its last value. */
+async function fallsTo(read: () => number | Promise<number>, limit: number): Promise<number> {
 	const until = performance.now() + 3000;
 	let value = await read();
-	while (value !== want && performance.now() < until) {
+	while (value > limit && performance.now() < until) {
 		await Bun.sleep(50);
 		value = await read();
 	}
@@ -134,8 +134,9 @@ test(
 		expect(results).toHaveLength(SEQUENTIAL + BURSTS * BURST_SIZE);
 		expect(neverInFetch).toBe(0);
 		expect(results.filter((result) => result.ok || !result.timedOut)).toEqual([]);
-		expect(await settlesTo(openSockets, 0)).toBe(0);
-		expect(await settlesTo(descriptors, baseline)).toBe(baseline);
+		expect(await fallsTo(openSockets, 0)).toBe(0);
+		// At most the baseline: test files before this one share the process and may close theirs.
+		expect(await fallsTo(descriptors, baseline)).toBeLessThanOrEqual(baseline);
 		const fresh = await executor.run(
 			entry("probe"),
 			{ ...base, deadlineMs: far + calls, instance: { act: "songs", count: 1 } },
