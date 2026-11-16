@@ -16,6 +16,10 @@ export const officialPlugins = {
 		path: import.meta.resolve("@ultrasonics/plugin-lastfm"),
 		load: () => import("@ultrasonics/plugin-lastfm"),
 	},
+	"local-music-database": {
+		path: import.meta.resolve("@ultrasonics/plugin-local-music-database"),
+		load: () => import("@ultrasonics/plugin-local-music-database"),
+	},
 	"local-playlists": {
 		path: import.meta.resolve("@ultrasonics/plugin-local-playlists"),
 		load: () => import("@ultrasonics/plugin-local-playlists"),
@@ -23,6 +27,10 @@ export const officialPlugins = {
 	"log-tracks": {
 		path: import.meta.resolve("@ultrasonics/plugin-log-tracks"),
 		load: () => import("@ultrasonics/plugin-log-tracks"),
+	},
+	"playlist-merger": {
+		path: import.meta.resolve("@ultrasonics/plugin-playlist-merger"),
+		load: () => import("@ultrasonics/plugin-playlist-merger"),
 	},
 	plex: {
 		path: import.meta.resolve("@ultrasonics/plugin-plex"),
