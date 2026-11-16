@@ -3,7 +3,7 @@ import { afterEach, expect } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createRunQueue, RunEvent } from "@ultrasonics/core";
+import { createRunQueue, InProcessExecutor, RunEvent } from "@ultrasonics/core";
 import { type OpenDatabase, openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import type { z } from "zod";
@@ -138,6 +138,8 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 			registry,
 			catalogue: catalogue.catalogue,
 			queue: createRunQueue(),
+			// The fixtures' paths are made up, and the held ones wait on this thread.
+			executor: new InProcessExecutor(),
 			clientAddress: (c) => c.req.header(CLIENT_ADDRESS_HEADER),
 			logger,
 			webRoot: options.webRoot ?? join(dataDir, "no-web-root"),

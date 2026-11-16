@@ -1,5 +1,5 @@
 import { getConnInfo } from "@hono/bun";
-import { createRunQueue } from "@ultrasonics/core";
+import { createRunQueue, type PluginExecutor, WORKER_CAP, WorkerExecutor } from "@ultrasonics/core";
 import { type OpenDatabase, openDatabase, V1DatabaseError } from "@ultrasonics/db";
 import { systemModule } from "@ultrasonics/db/system";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
@@ -25,6 +25,11 @@ export interface BootOptions {
 	webRoot?: string;
 	/** Where `oauth2-pkce` services authorise; the real services' when absent. */
 	oauth?: PkceFlowOptions;
+	/**
+	 * Where plugin handlers run. A `WorkerExecutor` capped at `WORKER_CAP` when absent (ADR-0031);
+	 * tests whose fixture plugins have no real path pass the in-process one.
+	 */
+	executor?: PluginExecutor;
 	/** How long `stop` waits for running runs; {@link SHUTDOWN_GRACE_MS} when absent. */
 	shutdownGraceMs?: number;
 }
@@ -103,6 +108,8 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 			registry: options.registry,
 			catalogue: catalogue.catalogue,
 			queue: createRunQueue(),
+			// One for the whole server, so the cap holds across runs and accounts.
+			executor: options.executor ?? new WorkerExecutor({ cap: WORKER_CAP }),
 			clientAddress: (c) => getConnInfo(c).remote.address,
 			logger,
 			...(options.webRoot ? { webRoot: options.webRoot } : {}),

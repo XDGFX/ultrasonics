@@ -208,7 +208,10 @@ export const folder = definePlugin({
 	},
 });
 
-/** A registry entry for each plugin, by name. */
+/**
+ * A registry entry for each plugin, by name. Their paths are made up, so a run of them must use the
+ * in-process executor.
+ */
 export function registryOf(...plugins: Plugin[]): PluginRegistry {
 	return Object.fromEntries(
 		plugins.map((plugin) => [
@@ -217,6 +220,17 @@ export function registryOf(...plugins: Plugin[]): PluginRegistry {
 		]),
 	);
 }
+
+const exitsPath = new URL("./worker-plugins/exits.ts", import.meta.url).href;
+
+/**
+ * The `exits` plugin's entry, with a resolved path: the only fixture here that runs in a worker, so
+ * the only one whose `path` is read.
+ */
+export const exitsEntry: PluginRegistry[string] = {
+	path: exitsPath,
+	load: () => import(exitsPath),
+};
 
 export const fixtureRegistry = registryOf(
 	source,

@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serveStatic } from "@hono/bun";
-import type { RunQueue } from "@ultrasonics/core";
+import type { PluginExecutor, RunQueue } from "@ultrasonics/core";
 import type { OpenDatabase } from "@ultrasonics/db";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import { Hono } from "hono";
@@ -45,6 +45,8 @@ export interface AppDeps {
 	logger: Logger;
 	/** The built UI; absent or missing on disk, only the API is served. */
 	webRoot?: string;
+	/** Where every run's plugin handlers run: one for the whole server, so its worker cap is shared. */
+	executor: PluginExecutor;
 	/** The server's one PKCE flow; the real services' when absent, a fake's in tests. */
 	pkce?: PkceFlow;
 	/**
@@ -73,6 +75,7 @@ export async function createApp(deps: AppDeps) {
 		pkce,
 		dataDir: configuration.dataDir,
 		logger,
+		executor: deps.executor,
 	});
 	const operator = operatorSettings(db);
 	const session = await sessionMiddleware({
