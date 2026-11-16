@@ -12,7 +12,7 @@ export const plex = definePlugin({
 	run: {
 		async outputs(ctx) {
 			const grant = await ctx.auth.get();
-			return writePlaylists(grant, ctx.instance, ctx.songs.playlists, ctx.log);
+			return writePlaylists(grant, ctx.instance, ctx.songs.playlists, ctx.log, ctx);
 		},
 	},
 	async test(ctx): Promise<TestResult> {
