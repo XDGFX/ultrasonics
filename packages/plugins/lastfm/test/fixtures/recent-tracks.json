@@ -1,0 +1,71 @@
+{
+	"recenttracks": {
+		"track": [
+			{
+				"artist": { "mbid": "", "#text": "Aretha Franklin" },
+				"streamable": "0",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"mbid": "",
+				"album": { "mbid": "", "#text": "Who's Zoomin' Who?" },
+				"name": "Sisters Are Doing It For Themselves",
+				"url": "https://www.last.fm/music/Aretha+Franklin/_/Sisters+Are+Doing+It+For+Themselves",
+				"@attr": { "nowplaying": "true" }
+			},
+			{
+				"artist": { "mbid": "", "#text": "Dream Theater" },
+				"streamable": "0",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"mbid": "",
+				"album": { "mbid": "", "#text": "Six Degrees of Inner Turbulence" },
+				"name": "The Glass Prison",
+				"url": "https://www.last.fm/music/x/_/y",
+				"date": { "uts": "1763251000", "#text": "16 Nov 2025, 00:00" }
+			}
+,
+			{
+				"artist": { "mbid": "", "#text": "Sigur Rós" },
+				"streamable": "0",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"mbid": "",
+				"album": { "mbid": "", "#text": "Takk..." },
+				"name": "Hoppípolla",
+				"url": "https://www.last.fm/music/x/_/y",
+				"date": { "uts": "1763250000", "#text": "16 Nov 2025, 00:00" }
+			}
+,
+			{
+				"artist": { "mbid": "", "#text": "dream theater" },
+				"streamable": "0",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"mbid": "",
+				"album": { "mbid": "", "#text": "Six Degrees of Inner Turbulence" },
+				"name": "the glass prison",
+				"url": "https://www.last.fm/music/x/_/y",
+				"date": { "uts": "1763249000", "#text": "16 Nov 2025, 00:00" }
+			}
+,
+			{
+				"artist": { "mbid": "", "#text": "Aretha Franklin" },
+				"streamable": "0",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"mbid": "",
+				"album": { "mbid": "", "#text": "" },
+				"name": "Respect",
+				"url": "https://www.last.fm/music/x/_/y",
+				"date": { "uts": "1763248000", "#text": "16 Nov 2025, 00:00" }
+			}
+,
+			{
+				"artist": { "mbid": "", "#text": "Nobody" },
+				"streamable": "0",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"mbid": "",
+				"album": { "mbid": "", "#text": "Nothing" },
+				"name": "  ",
+				"url": "https://www.last.fm/music/x/_/y",
+				"date": { "uts": "1763247000", "#text": "16 Nov 2025, 00:00" }
+			}
+		],
+		"@attr": { "user": "rj", "totalPages": "1", "page": "1", "perPage": "50", "total": "5" }
+	}
+}

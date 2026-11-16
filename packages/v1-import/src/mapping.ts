@@ -2,6 +2,7 @@ import type { JsonObject, JsonValue } from "@ultrasonics/db";
 import type { Component } from "@ultrasonics/plugin-sdk";
 import type { officialPlugins } from "@ultrasonics/registry";
 import { customFile } from "./mappings/custom-file.ts";
+import { lastfmMapping } from "./mappings/lastfm.ts";
 import { logTracks } from "./mappings/log-tracks.ts";
 import { playlistMergerMapping } from "./mappings/playlist-merger.ts";
 import { plexMapping } from "./mappings/plex.ts";
@@ -52,6 +53,7 @@ export interface Mapping<Plugin extends string = keyof typeof officialPlugins> {
 /** Every v1 plugin the importer maps. Until a plugin's ticket lands, its applets skip as unknown. */
 export const MAPPINGS: readonly Mapping[] = [
 	customFile,
+	lastfmMapping,
 	logTracks,
 	playlistMergerMapping,
 	plexMapping,

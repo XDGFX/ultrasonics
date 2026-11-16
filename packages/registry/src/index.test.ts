@@ -8,6 +8,7 @@ test("each entry loads the plugin registered under its name", async () => {
 	expect(Object.keys(officialPlugins)).toEqual([
 		"custom-file",
 		"deezer",
+		"lastfm",
 		"local-playlists",
 		"log-tracks",
 		"playlist-merger",

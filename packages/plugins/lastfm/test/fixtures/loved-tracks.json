@@ -1,0 +1,34 @@
+{
+	"lovedtracks": {
+		"track": [
+			{
+				"artist": { "url": "https://www.last.fm/music/Dream+Theater", "name": "Dream Theater", "mbid": "28503ab7-8bf2-4666-a7bd-2644bfc7cb1d" },
+				"date": { "uts": "1763251200", "#text": "16 Nov 2025, 00:00" },
+				"mbid": "",
+				"url": "https://www.last.fm/music/Dream+Theater/_/The+Glass+Prison",
+				"name": "The Glass Prison",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"streamable": { "fulltrack": "0", "#text": "0" }
+			},
+			{
+				"artist": { "url": "https://www.last.fm/music/Aretha+Franklin", "name": "Aretha Franklin", "mbid": "2f9ecbed-27be-40e6-abca-6de49d50299e" },
+				"date": { "uts": "1763164800", "#text": "15 Nov 2025, 00:00" },
+				"mbid": "",
+				"url": "https://www.last.fm/music/Aretha+Franklin/_/Respect",
+				"name": " Respect ",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"streamable": { "fulltrack": "0", "#text": "0" }
+			},
+			{
+				"artist": { "url": "https://www.last.fm/music/Sigur+R%C3%B3s", "name": "Sigur Rós", "mbid": "f6f2326f-6b25-4170-b89d-e235b25508e8" },
+				"date": { "uts": "1763078400", "#text": "14 Nov 2025, 00:00" },
+				"mbid": "",
+				"url": "https://www.last.fm/music/Sigur+R%C3%B3s/_/Hopp%C3%ADpolla",
+				"name": "Hoppípolla",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"streamable": { "fulltrack": "0", "#text": "0" }
+			}
+		],
+		"@attr": { "user": "rj", "totalPages": "1", "page": "1", "perPage": "50", "total": "3" }
+	}
+}
