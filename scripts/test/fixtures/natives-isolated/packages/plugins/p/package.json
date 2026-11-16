@@ -1,0 +1,7 @@
+{
+	"name": "plugin-p",
+	"version": "0.0.0",
+	"dependencies": {
+		"sdk": "workspace:*"
+	}
+}

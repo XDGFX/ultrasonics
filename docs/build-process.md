@@ -72,7 +72,8 @@ The decisions are ADR-0014; this is how they run. The one-liners every session n
 | Script | What it runs | Where |
 |---|---|---|
 | `bun run check` | `biome check --write` + `tsc --noEmit` (+ `vue-tsc` once `packages/web` exists) | Local only; mutating |
-| `bun run check:ci` | `lint:check` · `format:check` · `type-check` · `cycle-check` | CI; read-only, fails rather than repairs |
+| `bun run check:ci` | `lint:check` · `format:check` · `type-check` · `cycle-check` · `native-check` | CI; read-only, fails rather than repairs |
+| `bun run native-check` | Fails if any plugin's installed runtime dependencies ship a native add-on or Wasm (ADR-0031, mitigation 4) | Both |
 | `bun run test` | `bun test` for the package you touched | Both |
 
 CI triggers on PRs **and** direct pushes to `revival`, since sequential work commits straight to the
@@ -108,7 +109,7 @@ of this.
 half that earns its keep.
 
 - **Allow** — `bun test`, `bun run test`, `bun run build`, `bun run check`, `bun run check:ci`, the
-  `:check` variants, `bun run cycle-check`, `bun install`;
+  `:check` variants, `bun run cycle-check`, `bun run native-check`, `bun install`;
   `git status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; `gh issue view`,
   `gh issue list`, `gh pr view`, `gh pr list`.
 - **Deny** — `gh pr comment`, `git push --force`, and any push to `master`. Option-prefixed

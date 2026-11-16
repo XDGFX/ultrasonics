@@ -144,6 +144,9 @@ retrofitting is annoying but bounded.
 
 ### 8. Scripts
 
+*Amended 2026-11-16: `check:ci` also runs `native-check`, which ADR-0031 (mitigation 4)
+commissions to keep native add-ons and Wasm out of plugins' dependencies.*
+
 - `bun run check` — `biome check --write` + `tsc --noEmit` (plus `vue-tsc` once `packages/web`
   exists). Mutating; local only.
 - `bun run check:ci` — the read-only `:check` variants (`lint:check`, `format:check`, `type-check`)
@@ -155,7 +158,7 @@ retrofitting is annoying but bounded.
 GitHub issues (`docs/agents/issue-tracker.md`).*
 
 Allow: `bun test`, `bun run test`, `bun run build`, `bun run check`, `bun run check:ci`, the `:check`
-variants, `bun run cycle-check`, `bun install`; `git`
+variants, `bun run cycle-check`, `bun run native-check`, `bun install`; `git`
 `status`/`diff`/`log`/`add`/`commit`/`branch`/`checkout`/`worktree`; and read-only `gh` —
 `issue view`, `issue list`, `pr view`, `pr list`.
 

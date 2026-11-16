@@ -1,0 +1,13 @@
+{
+	"name": "plugin-p",
+	"version": "0.0.0",
+	"dependencies": {
+		"a": "1.0.0"
+	},
+	"optionalDependencies": {
+		"absent": "1.0.0"
+	},
+	"devDependencies": {
+		"dev-native": "1.0.0"
+	}
+}

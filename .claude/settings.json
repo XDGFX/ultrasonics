@@ -11,6 +11,7 @@
       "Bash(bun run format:check *)",
       "Bash(bun run type-check *)",
       "Bash(bun run cycle-check *)",
+      "Bash(bun run native-check *)",
       "Bash(bun install *)",
       "Bash(git status *)",
       "Bash(git diff *)",
