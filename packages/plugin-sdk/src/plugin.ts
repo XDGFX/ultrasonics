@@ -105,5 +105,5 @@ export interface Plugin extends z.infer<typeof Handshake> {
 	test?(ctx: LiveTestContext): Promise<TestResult>;
 }
 
-/** Plugin name to its module path and loader; a later Worker receives the path (ADR-0012 §4). */
+/** Plugin name to its module and loader (ADR-0012 §4); `path` is the resolved URL a Worker loads. */
 export type PluginRegistry = Record<string, { path: string; load(): Promise<{ default: Plugin }> }>;

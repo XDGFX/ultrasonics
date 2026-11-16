@@ -15,7 +15,12 @@ import {
 	type ValidationIssue,
 	validateSongDict,
 } from "@ultrasonics/plugin-sdk";
-import { describeError, InProcessExecutor, type PluginExecutor } from "./plugin-executor.ts";
+import {
+	describeError,
+	InProcessExecutor,
+	type PluginExecutor,
+	type RegistryEntry,
+} from "./plugin-executor.ts";
 import type {
 	FinishedRunStatus,
 	ResultPlaylist,
@@ -62,6 +67,8 @@ type Unstamped = DistributiveOmit<RunEvent, "seq" | "at">;
 type Stage = StageSlot;
 
 interface PreparedStage extends Stage {
+	/** What the executor is handed; `loaded` is the host's own copy, for schemas, `mode` and `auth`. */
+	entry: RegistryEntry;
 	loaded: Plugin;
 	persistent: Record<string, unknown>;
 	instance: Record<string, unknown>;
@@ -152,6 +159,7 @@ async function prepare(
 		component,
 		index,
 		plugin: slot.plugin,
+		entry,
 		loaded,
 		persistent: persistent.data as Record<string, unknown>,
 		instance: instance.data as Record<string, unknown>,
@@ -185,7 +193,7 @@ async function execute(
 		stage.component === "inputs" || !songs
 			? { ...fields, component: "inputs" }
 			: { ...fields, component: stage.component, songs };
-	const result = await run.executor.run(stage.loaded, payload, {
+	const result = await run.executor.run(stage.entry, payload, {
 		credentials: async () => {
 			if (!auth) throw new Error(`"${stage.plugin}" declares no service auth`);
 			try {

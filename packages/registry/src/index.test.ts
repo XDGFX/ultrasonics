@@ -7,3 +7,10 @@ test("each entry loads the plugin registered under its name", async () => {
 	}
 	expect(Object.keys(officialPlugins)).toEqual(["deezer", "plex", "spotify"]);
 });
+
+test("each entry's path is a resolved file URL to the module its loader imports", async () => {
+	for (const entry of Object.values(officialPlugins)) {
+		expect(new URL(entry.path).protocol).toBe("file:");
+		expect(await import(entry.path)).toBe(await entry.load());
+	}
+});
