@@ -17,6 +17,7 @@ import {
 	type Applet,
 	type AppletDraft,
 	type AppletListing,
+	type CheckResult,
 	type PluginInfo,
 	type RunNowResult,
 	RunStreamError,
@@ -45,6 +46,8 @@ export interface FakePlugin {
 	auth?: AuthSpec;
 	persistentSettings?: SettingsSchema;
 	instanceSettings: Partial<Record<Component, SettingsSchema>>;
+	/** The plugin's `test()`, given its parsed persistent settings. */
+	test?: (persistent: unknown) => CheckResult;
 }
 
 export type FakeApplet = Applet & Partial<Pick<AppletListing, "state" | "lastRun" | "nextRunAt">>;
@@ -102,6 +105,7 @@ function pluginInfo(plugin: FakePlugin): PluginInfo {
 			? { persistentSettings: formSchema(plugin.persistentSettings) }
 			: {}),
 		instanceSettings,
+		checkable: !!plugin.test && !plugin.auth,
 	};
 }
 
@@ -298,6 +302,19 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 				if (!parsed.success) return { ok: false, issues: issuesOf(parsed.error) };
 				settings.set(plugin, structuredClone(value));
 				return { ok: true, value };
+			},
+			check: async (name) => {
+				const plugin = plugins.get(name);
+				if (!plugin) throw new ApiError(404, `The plugin ${name} was not found`);
+				if (!plugin.test || plugin.auth) {
+					return { ok: false, issues: [{ path: [], message: `${name} has no check` }] };
+				}
+				const parsed = plugin.persistentSettings?.safeParse(settings.get(name) ?? {}) ?? {
+					success: true as const,
+					data: {},
+				};
+				if (!parsed.success) return { ok: false, issues: issuesOf(parsed.error) };
+				return { ok: true, value: plugin.test(parsed.data) };
 			},
 		},
 		services: {

@@ -10,6 +10,7 @@ const plugin = (name: string, service?: PluginInfo["service"]): PluginInfo => ({
 	mode: ["playlists"],
 	...(service ? { service } : {}),
 	instanceSettings: {},
+	checkable: false,
 });
 const catalogue = [
 	plugin("spotify", "spotify"),

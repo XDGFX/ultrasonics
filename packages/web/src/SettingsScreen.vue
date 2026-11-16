@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ValidationIssue } from "@ultrasonics/plugin-sdk";
 import { computed, onMounted, ref } from "vue";
-import { type PluginInfo, type ServiceStatus, useApi } from "./api-client.ts";
+import { type CheckResult, type PluginInfo, type ServiceStatus, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import SettingsForm from "./SettingsForm.vue";
 import { statusDetail, wizardAction } from "./service-status.ts";
@@ -13,13 +13,25 @@ onMounted(async () => {
 	[services.value, catalogue.value] = await Promise.all([api.services.list(), api.plugins()]);
 });
 
-const configurable = computed(() => catalogue.value.filter((plugin) => plugin.persistentSettings));
+const configurable = computed(() =>
+	catalogue.value.filter((plugin) => plugin.persistentSettings || plugin.checkable),
+);
 
-const editing = ref<{ plugin: PluginInfo; value: unknown; issues: ValidationIssue[]; saved: boolean }>();
+/** A check's answer: the plugin's own result, or the issues that kept its `test()` from running. */
+type Checked = CheckResult | { ok: "issues" };
+
+const editing = ref<{
+	plugin: PluginInfo;
+	value: unknown;
+	issues: ValidationIssue[];
+	saved: boolean;
+	checking: boolean;
+	checked?: Checked;
+}>();
 
 async function edit(plugin: PluginInfo) {
 	const stored = await api.settings.get(plugin.name);
-	editing.value = { plugin, ...stored, saved: false };
+	editing.value = { plugin, ...stored, saved: false, checking: false };
 }
 
 async function save(value: Record<string, unknown>) {
@@ -28,7 +40,27 @@ async function save(value: Record<string, unknown>) {
 	const result = await api.settings.save(current.plugin.name, value);
 	current.issues = result.ok ? [] : result.issues;
 	current.saved = result.ok;
+	current.checked = undefined;
 }
+
+async function check() {
+	const current = editing.value;
+	if (!current) return;
+	current.checking = true;
+	try {
+		const result = await api.settings.check(current.plugin.name);
+		if (result.ok) current.checked = result.value;
+		else {
+			current.issues = result.issues;
+			current.checked = { ok: "issues" };
+		}
+	} finally {
+		current.checking = false;
+	}
+}
+
+const checkState = (checked: Checked) =>
+	checked.ok === true ? "ok" : checked.ok === "issues" ? "issues" : checked.code;
 </script>
 
 <template>
@@ -64,6 +96,23 @@ async function save(value: Record<string, unknown>) {
 				@submit="save"
 			/>
 			<p v-if="editing.saved" class="accent" role="status" data-saved>saved.</p>
+			<div v-if="editing.plugin.checkable" class="check">
+				<button type="button" class="btn" data-check :disabled="editing.checking" @click="check">
+					{{ editing.checking ? "checking…" : "check" }}
+				</button>
+				<p
+					v-if="editing.checked"
+					role="status"
+					:class="editing.checked.ok === true ? 'accent' : 'failed'"
+					:data-check-result="checkState(editing.checked)"
+				>
+					<template v-if="editing.checked.ok === true">ok.</template>
+					<template v-else-if="editing.checked.ok === 'issues'">fix the settings above first.</template>
+					<template v-else
+						><b>{{ editing.checked.code }}</b> · {{ editing.checked.message }}</template
+					>
+				</p>
+			</div>
 		</template>
 	</AppShell>
 </template>
@@ -80,4 +129,7 @@ h3.key:not(:first-child) { margin-top: 28px; }
 .acts { padding: 0; }
 .acts a, .acts button { padding: 8px 12px; color: #fff; background: none; border: 0; text-decoration: none; }
 .acts a:hover, .acts button:hover { background: var(--accent); color: var(--accent-fg); }
+.check { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
+.check p { margin: 0; }
+.check .failed { padding: 10px 12px; border: 1px solid var(--bad); border-radius: var(--radius); color: var(--bad); }
 </style>

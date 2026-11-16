@@ -88,7 +88,7 @@ export async function createApp(deps: AppDeps) {
 		.route("/applets", appletRoutes({ db, catalogue, queue, runs, now }))
 		.route("/applets", triggerRoutes({ db, now }))
 		.route("/runs", runRoutes({ db, hub }))
-		.route("/settings", settingsRoutes({ db, catalogue }))
+		.route("/settings", settingsRoutes({ db, catalogue, dataDir: configuration.dataDir, logger }))
 		.route(
 			"/services",
 			serviceRoutes({ db, catalogue, dataDir: configuration.dataDir, logger, pkce }),

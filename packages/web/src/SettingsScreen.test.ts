@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mountApp, settle } from "../test/mount-app.ts";
+import { catalogue, playlistFolder, plex, READABLE_FOLDER } from "./fake-catalogue.ts";
 import { wizardAction } from "./service-status.ts";
 
 afterEach(() => {
@@ -44,11 +45,60 @@ describe("settings", () => {
 		expect(spotify.get(".acts a").text()).toBe(wizardAction["not-connected"]);
 	});
 
-	test("lists only the plugins that have persistent settings", async () => {
-		const { wrapper } = await mountApp("/settings");
+	test("lists only the plugins that have persistent settings or a check", async () => {
+		const { persistentSettings: _, ...checkOnly } = { ...playlistFolder, name: "check-only" };
+		const { wrapper } = await mountApp("/settings", { plugins: [...catalogue, checkOnly] });
 		expect(wrapper.findAll("[data-plugin]").map((row) => row.attributes("data-plugin"))).toEqual([
-			"plex",
+			plex.name,
+			playlistFolder.name,
+			checkOnly.name,
 		]);
+	});
+
+	const openPlugin = async (wrapper: Wrapper, name: string) => {
+		await wrapper.get(`[data-plugin="${name}"] button`).trigger("click");
+		await settle();
+	};
+
+	test("offers a check only for a plugin with a test() and no service", async () => {
+		const { wrapper } = await mountApp("/settings");
+		await openPlugin(wrapper, plex.name);
+		expect(wrapper.find(".panel [data-check]").exists()).toBe(false);
+		await openPlugin(wrapper, playlistFolder.name);
+		expect(wrapper.find(".panel [data-check]").exists()).toBe(true);
+	});
+
+	test("shows ok, or the code and message, after a check", async () => {
+		const { wrapper } = await mountApp("/settings", {
+			settings: { [playlistFolder.name]: { folder: READABLE_FOLDER } },
+		});
+		await openPlugin(wrapper, playlistFolder.name);
+		await wrapper.get(".panel [data-check]").trigger("click");
+		await settle();
+		expect(wrapper.get(".panel [data-check-result]").attributes("data-check-result")).toBe("ok");
+
+		await wrapper.get('.panel input[name="folder"]').setValue("/elsewhere");
+		await wrapper.get(".panel form").trigger("submit");
+		await settle();
+		await wrapper.get(".panel [data-check]").trigger("click");
+		await settle();
+		const failed = wrapper.get(".panel [data-check-result]");
+		const expected = playlistFolder.test?.({ folder: "/elsewhere" });
+		if (expected?.ok !== false) throw new Error("the fixture's check should fail");
+		expect(failed.attributes("data-check-result")).toBe(expected.code);
+		expect(failed.text()).toContain(expected.message);
+	});
+
+	test("shows the issues of settings a check couldn't use", async () => {
+		const { wrapper } = await mountApp("/settings", {
+			settings: { [playlistFolder.name]: { folder: "" } },
+		});
+		await openPlugin(wrapper, playlistFolder.name);
+		await wrapper.get(".panel [data-check]").trigger("click");
+		await settle();
+		expect(wrapper.get(".panel [data-check-result]").attributes("data-check-result")).toBe(
+			"issues",
+		);
 	});
 
 	test("opens a plugin's stored settings in the side panel and saves them through the API", async () => {

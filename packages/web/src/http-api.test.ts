@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { RunEvent } from "@ultrasonics/core/run-events";
-import { GOOD_TOKEN, useContractServer } from "../test/contract-server.ts";
+import { CHECKED_REGION, GOOD_TOKEN, useContractServer } from "../test/contract-server.ts";
 import { type ApiClient, ApiError, type AppletDraft, RunStreamError } from "./api-client.ts";
 import { EXAMPLE_CLIENT_ID } from "./fake-api.ts";
 import { createHttpApi, type EventSourceLike } from "./http-api.ts";
@@ -217,6 +217,16 @@ describe("the HTTP client against the real server", () => {
 			value: { region: "au" },
 		});
 		expect(await api.settings.get("source")).toEqual({ value: { region: "au" }, issues: [] });
+	});
+
+	test("checks a plugin's stored settings, answering issues or its test's result", async () => {
+		const { api } = await client();
+		expect(await api.settings.check("source")).toEqual({
+			ok: false,
+			issues: [{ path: ["region"], message: expect.any(String) }],
+		});
+		await api.settings.save("source", { region: CHECKED_REGION });
+		expect(await api.settings.check("source")).toEqual({ ok: true, value: { ok: true } });
 	});
 
 	test("tests and saves a token service: invalid, test failed, then saved", async () => {
