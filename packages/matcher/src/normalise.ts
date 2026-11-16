@@ -9,6 +9,16 @@ export function normalise(text: string): string {
 		.trim();
 }
 
+/**
+ * `normalise`, except that text with no letters or digits ("?", "!!!", "💔") keeps its symbols, so
+ * two such names compare by what they hold rather than as two equal blanks (#162).
+ */
+export function normaliseName(text: string): string {
+	return (
+		normalise(text) || text.normalize("NFKC").replace(/\p{M}/gu, "").replace(/\s+/gu, " ").trim()
+	);
+}
+
 /** A credit for a guest or producer, which some services put in the title and others in `artists`. */
 const credit = /^(?:feat|ft|featuring|prod|produced)\b/i;
 
@@ -31,10 +41,10 @@ export function parseTitle(raw: string): Title {
 		return " ";
 	});
 	core = core.replace(unbracketedCredit, "");
-	const normalised = normalise(core);
+	const normalised = normaliseName(core);
 	// A title that is all decoration, such as "(untitled)", is its own name.
 	return normalised === ""
-		? { core: normalise(raw), decorations: [] }
+		? { core: normaliseName(raw), decorations: [] }
 		: { core: normalised, decorations };
 }
 
@@ -44,6 +54,6 @@ const separator = /\s*(?:[,;&/+]|\s(?:and|x|with|vs\.?|feat\.?|ft\.?|featuring|[
 export function artistNames(artists: readonly string[]): string[] {
 	return artists
 		.flatMap((artist) => artist.split(separator))
-		.map(normalise)
+		.map(normaliseName)
 		.filter((name) => name !== "");
 }

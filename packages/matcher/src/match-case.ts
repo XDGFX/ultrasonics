@@ -40,6 +40,7 @@ export const Rule = z.enum([
 	"re-recorded-marker",
 	"duration-gap",
 	"threshold",
+	"symbols-only",
 ]);
 export type Rule = z.output<typeof Rule>;
 

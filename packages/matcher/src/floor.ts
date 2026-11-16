@@ -6,11 +6,11 @@ import type { Floor } from "./harness.ts";
  * change that earns it; lowering one needs Cal's sign-off.
  */
 export const floor: Floor = {
-	recall: 500 / 631,
-	"recall: plain": 484 / 607,
+	recall: 506 / 637,
+	"recall: plain": 490 / 613,
 	"recall: remaster": 14 / 22,
 	"recall: clean-explicit": 2 / 2,
-	"recall: latin": 345 / 399,
+	"recall: latin": 351 / 405,
 	"recall: same-non-latin": 140 / 181,
 	"recall: cross-script": 15 / 51,
 	"rejection: cover": 72 / 72,
@@ -19,7 +19,7 @@ export const floor: Floor = {
 	"rejection: remix": 61 / 85,
 	"rejection: re-recording": 62 / 83,
 	"rejection: same-title": 72 / 72,
-	precision: 500 / 552,
+	precision: 506 / 558,
 	"bestMatch: picks the original": 185 / 223,
 	"bestMatch: picks the lookalike": 2 / 223,
 	"bestMatch, lookalike only: picks nothing": 183 / 223,

@@ -194,5 +194,47 @@
 		"label": "no-match",
 		"category": "same-title",
 		"provenance": { "source": "hand-written", "name": "a one-word title by an unrelated artist", "covers": ["threshold"] }
+	},
+	{
+		"a": { "title": "?", "artists": ["The Punctuators"], "durationMs": 184000 },
+		"b": { "title": "?", "artists": ["The Punctuators"], "durationMs": 184500 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "a title of one question mark", "covers": ["symbols-only"] }
+	},
+	{
+		"a": { "title": "Myth Takes", "artists": ["!!!"], "durationMs": 293000 },
+		"b": { "title": "Myth Takes", "artists": ["!!!"], "durationMs": 293000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "an artist named only in punctuation", "covers": ["symbols-only"] }
+	},
+	{
+		"a": { "title": "!!!", "artists": ["!!!"], "durationMs": 201000 },
+		"b": { "title": "!!!", "artists": ["!!!"], "durationMs": 201000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "a title and artist both only punctuation", "covers": ["symbols-only"] }
+	},
+	{
+		"a": { "title": "#1", "artists": ["Nelly"], "durationMs": 259000 },
+		"b": { "title": "#1", "artists": ["Nelly"], "durationMs": 259000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "a title of a symbol and a digit", "covers": ["symbols-only"] }
+	},
+	{
+		"a": { "title": "💔", "artists": ["The Punctuators"], "durationMs": 176000 },
+		"b": { "title": "💔️", "artists": ["The Punctuators"], "durationMs": 176000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "an emoji title, one side with a variation selector", "covers": ["symbols-only"] }
+	},
+	{
+		"a": { "title": "÷", "artists": ["The Punctuators"], "durationMs": 210000 },
+		"b": { "title": "÷ ", "artists": ["the punctuators"], "durationMs": 211000 },
+		"label": "match",
+		"category": "plain",
+		"provenance": { "source": "hand-written", "name": "a mathematical sign as the title", "covers": ["symbols-only"] }
 	}
 ]
