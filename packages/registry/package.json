@@ -10,6 +10,7 @@
 		"@ultrasonics/plugin-custom-file": "workspace:*",
 		"@ultrasonics/plugin-deezer": "workspace:*",
 		"@ultrasonics/plugin-lastfm": "workspace:*",
+		"@ultrasonics/plugin-local-music-database": "workspace:*",
 		"@ultrasonics/plugin-local-playlists": "workspace:*",
 		"@ultrasonics/plugin-log-tracks": "workspace:*",
 		"@ultrasonics/plugin-playlist-merger": "workspace:*",
