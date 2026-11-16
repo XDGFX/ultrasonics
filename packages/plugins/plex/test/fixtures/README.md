@@ -25,8 +25,8 @@ The fake server in `../fake-plex.ts` serves them:
 | `library-metadata.json` | `GET /library/metadata/25` | One track. Unlike a section listing, it names `librarySectionID` on the item |
 | `playlists.json` | `GET /playlists` | An ordinary and a smart audio playlist sharing a title, two ordinary playlists sharing a title, a smart and a video playlist sharing a title |
 | `playlist-items.json` | `GET /playlists/44/items` | The ordinary playlist's items, each with its `playlistItemID` |
-| `playlist-created.json` | `POST /playlists?uri=…&type=audio&title=…&smart=0` | The playlist Plex created |
-| `playlist-items-added.json` | `PUT /playlists/<ratingKey>/items?uri=…` | Plex's answer to an add of two tracks, one already held |
+| `playlist-created.json` | `POST /playlists?uri=…&type=audio&title=…&smart=0` | The playlist Plex created. It carries no `leafCountAdded`, even when Plex dropped a repeat. The fake answers every create from it, rekeyed and retitled |
+| `playlist-items-added.json` | `PUT /playlists/<ratingKey>/items?uri=…` | Plex's answer to an add of two tracks, one already held. The fake answers every add from it with the counts it actually added |
 | `unauthorised.html` | any, with no token | Plex's 401 body, which is HTML whatever `Accept` asked for |
 
 What the recording showed, and the fake reproduces:
@@ -35,8 +35,8 @@ What the recording showed, and the fake reproduces:
   `/library/metadata/<ratingKey>` names it on the item, as a number, beside `type: "track"`.
 - `smart` is a JSON boolean.
 - Plex won't add a track a playlist already holds: an add answers `leafCountAdded` below
-  `leafCountRequested`, and a create drops repeated rating keys. The fake's playlist `44` is live
-  and does the same.
+  `leafCountRequested`, both with a 200, and a create drops repeated rating keys silently. The
+  fake's playlist `44`, and each playlist it creates (from key `1000`), is live and does the same.
 - `GET /playlists/<ratingKey>/items` with no paging headers returned every item, with no
   `totalSize`. `X-Plex-Container-Start`/`-Size` page it and add `totalSize`. The server held too few
   tracks to show whether an unpaged answer is ever cut short.

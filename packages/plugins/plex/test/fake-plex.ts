@@ -32,6 +32,8 @@ export interface FakePlex {
 	requests: RecordedRequest[];
 	/** The rating keys the existing playlist holds now, in order, after any writes. */
 	existingPlaylist(): string[];
+	/** The rating keys the playlist `key` holds now, in order: none for a key it doesn't hold. */
+	playlist(key: string): string[];
 	stop(): Promise<void>;
 }
 
@@ -85,19 +87,60 @@ function uriKeys(query: URLSearchParams): string[] {
 	return (query.get("uri") ?? "").replace(/^.*\/library\/metadata\//, "").split(",");
 }
 
+/** The key the fake gives the first playlist it creates, clear of every key in `playlists.json`. */
+export const firstCreatedKey = "1000";
+
 /**
  * The recorded server: one music library, the playlists in `playlists.json`. The existing
- * playlist's items are live, and an add skips a track it already holds, as Plex 1.43 does.
+ * playlist and every playlist the fake creates are live. As Plex 1.43 does, a create or an add
+ * takes each track once, skips one the playlist already holds, and skips a key `resolve` doesn't
+ * know as a track.
  */
-function recordedServer() {
+function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | undefined>) {
 	// `require` keeps the fake synchronous; the copy gives each fake its own items.
-	const items = (
+	const seeded = (
 		require(join(fixtures, "playlist-items.json")) as {
 			MediaContainer: { Metadata: PlaylistItem[] };
 		}
 	).MediaContainer.Metadata.map((item) => ({ ...item }));
-	let nextItemId = Math.max(...items.map((item) => item.playlistItemID)) + 1;
-	const existing = `/playlists/${existingPlaylistKey}/items`;
+	const playlists = new Map<string, PlaylistItem[]>([[existingPlaylistKey, seeded]]);
+	let nextItemId = Math.max(...seeded.map((item) => item.playlistItemID)) + 1;
+	let nextPlaylistKey = Number(firstCreatedKey);
+
+	/** Adds what Plex would of `keys` to `items`, and answers how many it added. */
+	async function add(items: PlaylistItem[], keys: string[]): Promise<number> {
+		let added = 0;
+		for (const key of keys) {
+			if (items.some((item) => item.ratingKey === key)) continue;
+			const track = await resolve(key);
+			if (track === undefined) continue;
+			items.push({ ...track, playlistItemID: nextItemId++ });
+			added++;
+		}
+		return added;
+	}
+
+	/** A recorded playlist answer, retitled and rekeyed for `key`. */
+	async function playlistAnswer(
+		name: string,
+		key: string,
+		title: string,
+		counts: Record<string, number>,
+	): Promise<Response> {
+		const body = (await fixture(name)) as {
+			MediaContainer: { Metadata: Record<string, unknown>[] };
+		};
+		const metadata = body.MediaContainer.Metadata.map((playlist) => ({
+			...playlist,
+			ratingKey: key,
+			key: `/playlists/${key}/items`,
+			title,
+			leafCount: playlists.get(key)?.length ?? 0,
+		}));
+		return Response.json({
+			MediaContainer: { ...body.MediaContainer, ...counts, Metadata: metadata },
+		});
+	}
 
 	async function answer(request: RecordedRequest): Promise<Response> {
 		const { method, path, query } = request;
@@ -126,29 +169,37 @@ function recordedServer() {
 				: new Response("Not Found", { status: 404 });
 		}
 		if (method === "GET" && path === "/playlists") return fixtureResponse("playlists.json");
-		if (method === "GET" && path === existing) return container(items);
-		if (method === "POST" && path === "/playlists") return fixtureResponse("playlist-created.json");
-		if (method === "PUT" && path === existing) {
-			const { tracks } = await library();
-			for (const key of uriKeys(query)) {
-				const track = tracks.find((candidate) => candidate.ratingKey === key);
-				if (track && !items.some((item) => item.ratingKey === key)) {
-					items.push({ ...track, playlistItemID: nextItemId++ });
-				}
-			}
-			return fixtureResponse("playlist-items-added.json");
+		if (method === "POST" && path === "/playlists") {
+			const key = String(nextPlaylistKey++);
+			const items: PlaylistItem[] = [];
+			playlists.set(key, items);
+			await add(items, uriKeys(query));
+			// Plex's create answer carries no counts (`playlist-created.json`).
+			return playlistAnswer("playlist-created.json", key, query.get("title") ?? "", {});
 		}
-		if (method === "PUT" && /^\/playlists\/\d+\/items$/.test(path)) {
-			return fixtureResponse("playlist-items-added.json");
+		const { playlistKey, itemId, move } =
+			/^\/playlists\/(?<playlistKey>\d+)\/items(?:\/(?<itemId>\d+)(?<move>\/move)?)?$/.exec(path)
+				?.groups ?? {};
+		const items = playlistKey === undefined ? undefined : playlists.get(playlistKey);
+		if (playlistKey === undefined || items === undefined) {
+			return new Response("Not Found", { status: 404 });
 		}
-		const item = new RegExp(`^${existing}/(\\d+)(/move)?$`).exec(path);
-		const at = items.findIndex((candidate) => String(candidate.playlistItemID) === item?.[1]);
-		if (item && at === -1) return new Response("Not Found", { status: 404 });
-		if (method === "DELETE" && item && !item[2]) {
+		if (method === "GET" && itemId === undefined) return container(items);
+		if (method === "PUT" && itemId === undefined) {
+			const keys = uriKeys(query);
+			const added = await add(items, keys);
+			return playlistAnswer("playlist-items-added.json", playlistKey, "", {
+				leafCountAdded: added,
+				leafCountRequested: keys.length,
+			});
+		}
+		const at = items.findIndex((candidate) => String(candidate.playlistItemID) === itemId);
+		if (at === -1) return new Response("Not Found", { status: 404 });
+		if (method === "DELETE" && !move) {
 			items.splice(at, 1);
 			return container([]);
 		}
-		if (method === "PUT" && item?.[2]) {
+		if (method === "PUT" && move) {
 			const after = query.get("after");
 			const [moved] = items.splice(at, 1);
 			const to =
@@ -162,12 +213,39 @@ function recordedServer() {
 		return new Response("Not Found", { status: 404 });
 	}
 
-	return { answer, keys: () => items.map((item) => item.ratingKey) };
+	const keys = (key: string) => (playlists.get(key) ?? []).map((item) => item.ratingKey);
+	return { answer, keys };
 }
 
 /** Starts the fake on a free local port. `routes` are tried in order before the recorded server. */
 export function startFakePlex(routes: Route[] = []): FakePlex {
-	const recorded = recordedServer();
+	async function respond(request: RecordedRequest): Promise<Response> {
+		for (const route of routes) {
+			const response = await route(request);
+			if (response) return response;
+		}
+		return recorded.answer(request);
+	}
+	// A write resolves a key from `GET /library/metadata/<key>`, unrecorded: the first route to
+	// answer it with a track, else the recorded library, so a route that fails a lookup can't block a write.
+	const recorded = recordedServer(async (ratingKey) => {
+		const path = `/library/metadata/${ratingKey}`;
+		const request = {
+			method: "GET",
+			url: path,
+			path,
+			query: new URLSearchParams(),
+			headers: new Headers(),
+		};
+		for (const answer of [...routes, recorded.answer]) {
+			const response = await answer(request);
+			if (!response?.ok) continue;
+			const body = (await response.json()) as { MediaContainer: { Metadata?: PlexTrack[] } };
+			const track = body.MediaContainer.Metadata?.[0];
+			if (track !== undefined) return track;
+		}
+		return undefined;
+	});
 	const requests: RecordedRequest[] = [];
 	const server = Bun.serve({
 		port: 0,
@@ -188,17 +266,14 @@ export function startFakePlex(routes: Route[] = []): FakePlex {
 					headers: { "Content-Type": "text/html" },
 				});
 			}
-			for (const route of routes) {
-				const response = await route(request);
-				if (response) return response;
-			}
-			return recorded.answer(request);
+			return respond(request);
 		},
 	});
 	return {
 		url: server.url.href,
 		requests,
-		existingPlaylist: recorded.keys,
+		existingPlaylist: () => recorded.keys(existingPlaylistKey),
+		playlist: recorded.keys,
 		stop: () => server.stop(true),
 	};
 }
