@@ -3,6 +3,7 @@ import type { Component } from "@ultrasonics/plugin-sdk";
 import type { officialPlugins } from "@ultrasonics/registry";
 import { customFile } from "./mappings/custom-file.ts";
 import { lastfmMapping } from "./mappings/lastfm.ts";
+import { localMusicDatabase } from "./mappings/local-music-database.ts";
 import { localPlaylists } from "./mappings/local-playlists.ts";
 import { logTracks } from "./mappings/log-tracks.ts";
 import { playlistMergerMapping } from "./mappings/playlist-merger.ts";
@@ -55,6 +56,7 @@ export interface Mapping<Plugin extends string = keyof typeof officialPlugins> {
 export const MAPPINGS: readonly Mapping[] = [
 	customFile,
 	lastfmMapping,
+	localMusicDatabase,
 	localPlaylists,
 	logTracks,
 	playlistMergerMapping,

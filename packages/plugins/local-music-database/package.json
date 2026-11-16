@@ -1,0 +1,15 @@
+{
+	"name": "@ultrasonics/plugin-local-music-database",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"dependencies": {
+		"@ultrasonics/matcher": "workspace:*",
+		"@ultrasonics/plugin-local-playlists": "workspace:*",
+		"@ultrasonics/plugin-sdk": "workspace:*",
+		"zod": "4.6.7"
+	}
+}

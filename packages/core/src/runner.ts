@@ -31,7 +31,10 @@ import type {
 	StageSlot,
 } from "./run-event.ts";
 
-/** A run's wall-clock budget. Reported after the fact in Phase 1, not enforced (ADR-0010 #7). */
+/**
+ * A run's wall-clock budget (ADR-0010 #7). The `WorkerExecutor` stops a plugin at it; under the
+ * in-process executor it is only reported after the fact.
+ */
 export const RUN_DEADLINE_MS = 60 * 60 * 1000;
 
 /** Rejection events emitted per stage; the stage's `rejected` count carries the rest. */
@@ -84,6 +87,8 @@ interface Run {
 	finishStage(stage: Stage, counts: StageCounts, error?: StageError): void;
 	/** Plugins already warned about stripped keys: one warning per plugin per run (ADR-0021 §2). */
 	warnedStripped: Set<string>;
+	/** Set once a stage times out, which already reports the deadline. */
+	timedOut: boolean;
 }
 
 const components = ["inputs", "modifiers", "outputs"] as const satisfies Component[];
@@ -206,6 +211,11 @@ async function execute(
 		log: (entry) => run.log(entry.level, entry.message, stage.plugin),
 	});
 	if (result.ok) return result;
+	if (result.timedOut) {
+		run.timedOut = true;
+		const message = `Stopped at the run's ${RUN_DEADLINE_MS / 60_000}-minute deadline`;
+		return { ok: false, error: { code: "timed-out", message } };
+	}
 	return {
 		ok: false,
 		error: authFailure
@@ -308,9 +318,11 @@ export async function runApplet(options: RunAppletOptions): Promise<RunOutcome> 
 				...(error ? { error } : {}),
 			}),
 		warnedStripped: new Set(),
+		timedOut: false,
 	};
 	const end = (status: RunOutcome): RunOutcome => {
-		if (now() > deadlineMs)
+		// After the fact, for an executor that does not enforce the deadline.
+		if (!run.timedOut && now() > deadlineMs)
 			log("warn", `The run went past its ${RUN_DEADLINE_MS / 60_000}-minute deadline`);
 		emit({ type: "end", status });
 		return status;

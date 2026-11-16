@@ -16,6 +16,10 @@ export const officialPlugins = {
 		path: import.meta.resolve("@ultrasonics/plugin-lastfm"),
 		load: () => import("@ultrasonics/plugin-lastfm"),
 	},
+	"local-music-database": {
+		path: import.meta.resolve("@ultrasonics/plugin-local-music-database"),
+		load: () => import("@ultrasonics/plugin-local-music-database"),
+	},
 	"local-playlists": {
 		path: import.meta.resolve("@ultrasonics/plugin-local-playlists"),
 		load: () => import("@ultrasonics/plugin-local-playlists"),

@@ -1,7 +1,26 @@
 # Plex
 
-The `plex` plugin writes playlists to a Plex Media Server. Its contract is spec #114. This file
-records the rules a user of the output can see that the settings don't explain.
+The `plex` plugin reads playlists from a Plex Media Server and writes them to one. The output's
+contract is spec #114 and the input's is spec #182. This file records the rules a user can see
+that the settings don't explain.
+
+## Which Plex playlists the input reads
+
+- **Audio playlists only**, smart ones included. Plex leaves out video and photo playlists itself
+  (`GET /playlists?playlistType=audio`).
+- **Titles are filtered before any songs are read** (#15), with the shared name filter: `*` and
+  `?` wildcards, case ignored, against the whole title.
+- **`all`** reads every audio playlist in Plex's order, less those `exclude` matches.
+- **`chosen`** reads each pattern's matches in the order the patterns are given. A playlist two
+  patterns match is read once, at the first. A pattern that matches nothing is warned about. A
+  pattern without a wildcard that matches several playlists reads each of them, with a warning.
+- **Each playlist** is emitted with its title as `name`, its summary as `description` (none when
+  blank), and its rating key under `plex:<machine identifier>`. Its items are read 200 at a time
+  until Plex's `totalSize` is reached or a page comes back empty.
+- **Skipped:** an item that isn't a track or has no title, with one warning per playlist; and a
+  playlist deleted between the list and the read, with a warning. Any other failure fails the run.
+- **No MusicBrainz id.** Plex's `mbid://` Guid is a MusicBrainz *track* id, not the recording id
+  `id.musicbrainz` holds, so it isn't asked for (`includeGuids`) or carried.
 
 ## The server URL
 

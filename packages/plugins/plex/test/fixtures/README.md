@@ -10,6 +10,11 @@
   `plex-test`. The token never appears: Plex doesn't echo it.
 - **`library-sections.json`** is `library-sections-two-music.json` with "Music 2" removed, so it
   shows one music library beside a film library.
+- **The input's fixtures** (`playlist-items-page-*.json`, `playlist-items-smart.json`,
+  `not-found.html`) were recorded later the same day, after the test playlists had been rebuilt as
+  `66` (ordinary, the same three tracks) and `67` (smart). Each container's `ratingKey` and
+  `composite` were changed to `44` and `45` to match `playlists.json`. The fake holds `48`–`51`
+  empty, since their items weren't recorded.
 - **`playlists.json`** was recorded with two extra playlists made for it ("Twice" twice, a smart
   "Smart only") and has one entry added by hand: the video playlist `51`, "Smart only", cloned from
   the smart one. The test server has no video library to make a real one in.
@@ -25,6 +30,9 @@ The fake server in `../fake-plex.ts` serves them:
 | `library-metadata.json` | `GET /library/metadata/25` | One track. Unlike a section listing, it names `librarySectionID` on the item |
 | `playlists.json` | `GET /playlists` | An ordinary and a smart audio playlist sharing a title, two ordinary playlists sharing a title, a smart and a video playlist sharing a title |
 | `playlist-items.json` | `GET /playlists/44/items` | The ordinary playlist's items, each with its `playlistItemID` |
+| `playlist-items-page-1.json`, `-page-2.json` | `GET /playlists/44/items?X-Plex-Container-Start=0` / `=2`, `X-Plex-Container-Size=2` | The same items in two pages, each with `totalSize` and `offset` |
+| `playlist-items-smart.json` | `GET /playlists/45/items` | The smart playlist's items, which carry no `playlistItemID` |
+| `not-found.html` | `GET /playlists/<unknown>/items` | Plex's 404 body, HTML like the 401 |
 | `playlist-created.json` | `POST /playlists?uri=…&type=audio&title=…&smart=0` | The playlist Plex created. It carries no `leafCountAdded`, even when Plex dropped a repeat. The fake answers every create from it, rekeyed and retitled |
 | `playlist-items-added.json` | `PUT /playlists/<ratingKey>/items?uri=…` | Plex's answer to an add of two tracks, one already held. The fake answers every add from it with the counts it actually added |
 | `unauthorised.html` | any, with no token | Plex's 401 body, which is HTML whatever `Accept` asked for |
@@ -39,7 +47,10 @@ What the recording showed, and the fake reproduces:
   fake's playlist `44`, and each playlist it creates (from key `1000`), is live and does the same.
 - `GET /playlists/<ratingKey>/items` with no paging headers returned every item, with no
   `totalSize`. `X-Plex-Container-Start`/`-Size` page it and add `totalSize`. The server held too few
-  tracks to show whether an unpaged answer is ever cut short.
+  tracks to show whether an unpaged answer is ever cut short. A page past the end answers an empty
+  page with the same `totalSize`. The fake pages any playlist the same way.
+- `GET /playlists?playlistType=audio` leaves out every other type, and the fake filters likewise.
+  A 404 on a playlist's items is HTML.
 - `PUT /playlists/<ratingKey>/items/<playlistItemID>/move?after=<playlistItemID>` moves an item; no
   `after` moves it to the top.
 - The `title` filter matches each query word as the start of a title word, words split on spaces:

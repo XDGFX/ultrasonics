@@ -1,0 +1,69 @@
+{
+	"MediaContainer": {
+		"size": 1,
+		"totalSize": 3,
+		"offset": 2,
+		"composite": "/playlists/44/composite/1794791163",
+		"duration": 541,
+		"leafCount": 3,
+		"playlistType": "audio",
+		"ratingKey": "44",
+		"smart": false,
+		"title": "ultrasonics Plex test",
+		"Metadata": [
+			{
+				"ratingKey": "25",
+				"key": "/library/metadata/25",
+				"parentRatingKey": "24",
+				"grandparentRatingKey": "1",
+				"guid": "local://25",
+				"parentGuid": "local://24",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"type": "track",
+				"title": "Sneaky Snitch",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/24",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Sneaky Snitch",
+				"summary": "",
+				"index": 1,
+				"parentIndex": 1,
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"playlistItemID": 74,
+				"duration": 136620,
+				"addedAt": 1794790634,
+				"Media": [
+					{
+						"id": 13,
+						"duration": 136620,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 13,
+								"key": "/library/parts/13/1794790634/file.mp3",
+								"duration": 136620,
+								"file": "/music/main/Kevin MacLeod/Sneaky Snitch/01 - Sneaky Snitch.mp3",
+								"size": 5466095,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Sneaky Snitch",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			}
+		]
+	}
+}

@@ -1,0 +1,133 @@
+{
+	"MediaContainer": {
+		"size": 2,
+		"totalSize": 3,
+		"offset": 0,
+		"composite": "/playlists/44/composite/1794791163",
+		"duration": 541,
+		"leafCount": 3,
+		"playlistType": "audio",
+		"ratingKey": "44",
+		"smart": false,
+		"title": "ultrasonics Plex test",
+		"Metadata": [
+			{
+				"ratingKey": "23",
+				"key": "/library/metadata/23",
+				"parentRatingKey": "22",
+				"grandparentRatingKey": "1",
+				"guid": "plex://track/5d07fbc5403c64029098e1e9",
+				"parentGuid": "plex://album/5d07cae2403c640290d7f7a0",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"parentStudio": "incompetech",
+				"type": "track",
+				"title": "Carefree",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/22",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Calming",
+				"summary": "",
+				"index": 4,
+				"parentIndex": 1,
+				"ratingCount": 38522,
+				"parentYear": 2014,
+				"thumb": "/library/metadata/22/thumb/1794790870",
+				"parentThumb": "/library/metadata/22/thumb/1794790870",
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"playlistItemID": 72,
+				"duration": 205140,
+				"addedAt": 1794790635,
+				"updatedAt": 1794791770,
+				"Media": [
+					{
+						"id": 12,
+						"duration": 205140,
+						"bitrate": 256,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 12,
+								"key": "/library/parts/12/1794790635/file.mp3",
+								"duration": 205140,
+								"file": "/music/main/Kevin MacLeod/Calming/01 - Carefree.mp3",
+								"size": 6565526,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Carefree",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			},
+			{
+				"ratingKey": "9",
+				"key": "/library/metadata/9",
+				"parentRatingKey": "8",
+				"grandparentRatingKey": "1",
+				"guid": "plex://track/5d07fbc5403c64029098ddc5",
+				"parentGuid": "plex://album/5d07cae2403c640290d7f7a8",
+				"grandparentGuid": "plex://artist/5d07be5e403c640290686477",
+				"type": "track",
+				"title": "Hitman",
+				"grandparentKey": "/library/metadata/1",
+				"parentKey": "/library/metadata/8",
+				"librarySectionTitle": "Music",
+				"librarySectionID": 1,
+				"librarySectionKey": "/library/sections/1",
+				"grandparentTitle": "Kevin MacLeod",
+				"parentTitle": "Action Cuts",
+				"summary": "",
+				"index": 13,
+				"parentIndex": 1,
+				"ratingCount": 7582,
+				"parentYear": 2014,
+				"thumb": "/library/metadata/8/thumb/1794790853",
+				"parentThumb": "/library/metadata/8/thumb/1794790853",
+				"grandparentThumb": "/library/metadata/1/thumb/1794790632",
+				"playlistItemID": 73,
+				"duration": 200829,
+				"addedAt": 1794790636,
+				"updatedAt": 1794791769,
+				"Media": [
+					{
+						"id": 4,
+						"duration": 200829,
+						"bitrate": 320,
+						"audioChannels": 2,
+						"audioCodec": "mp3",
+						"container": "mp3",
+						"hasVoiceActivity": false,
+						"Part": [
+							{
+								"id": 4,
+								"key": "/library/parts/4/1794790636/file.mp3",
+								"duration": 200829,
+								"file": "/music/main/Kevin MacLeod/Action Cuts/01 - Hitman.mp3",
+								"size": 8034445,
+								"container": "mp3"
+							}
+						]
+					}
+				],
+				"Image": [
+					{
+						"alt": "Hitman",
+						"type": "coverPoster",
+						"url": "/library/metadata/1/thumb/1794790632"
+					}
+				]
+			}
+		]
+	}
+}
