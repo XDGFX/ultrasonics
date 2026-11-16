@@ -5,7 +5,9 @@ import {
 	type Field,
 	fields,
 	lengthGapMs,
+	lengthLevels,
 	pairwiseFields,
+	similarityLevels,
 } from "./agreement.ts";
 import { judge, withoutIsrc } from "./judgement.ts";
 import { isPositive, type MatchCase } from "./match-case.ts";
@@ -21,6 +23,52 @@ export interface Fitted {
 	readonly matchThreshold: number;
 	/** The least weight over every field at which `bestMatch` will consider a candidate. */
 	readonly mediumThreshold: number;
+	/**
+	 * The widest length gap at which a weighed pair can still reach `matchThreshold`, so a search
+	 * for matches need weigh only the songs this close in length (#230).
+	 */
+	readonly lengthWindowMs: number;
+}
+
+/**
+ * The most `field` can weigh when the two sides are at most `s` alike: the heaviest level any
+ * similarity up to `s` reaches, since the levels' weights need not rise with similarity.
+ */
+function heaviestLevelUpTo(weights: Weights, field: "title" | "artist", s: number): string {
+	const reachable = [
+		"below",
+		...similarityLevels.filter(([, least]) => least <= s).map(([level]) => level),
+	];
+	const weightOfLevel = (level: string) => weights[field][level] ?? 0;
+	return reachable.reduce((best, level) =>
+		weightOfLevel(level) > weightOfLevel(best) ? level : best,
+	);
+}
+
+/**
+ * The most a pair at `length` can weigh over `pairwiseFields`, given titles and artists at most
+ * this alike. Summed by `weigh` in its own order, so it bounds the real weight exactly.
+ */
+export function heaviestWeight(
+	weights: Weights,
+	bounds: { readonly title: number; readonly artist: number; readonly length: string },
+): number {
+	const agreed: Agreement = {
+		title: heaviestLevelUpTo(weights, "title", bounds.title),
+		artist: heaviestLevelUpTo(weights, "artist", bounds.artist),
+		length: bounds.length,
+		album: "missing",
+		year: "missing",
+	};
+	return weigh(agreed, weights, pairwiseFields);
+}
+
+/** The widest gap of any length level at which the best title and artist still reach `threshold`. */
+function lengthWindowFor(weights: Weights, threshold: number): number {
+	const reaching = lengthLevels.filter(
+		([level]) => heaviestWeight(weights, { title: 1, artist: 1, length: level }) >= threshold,
+	);
+	return Math.max(0, ...reaching.map(([, widest]) => widest));
 }
 
 /** The summed weight of `fieldsWeighed`; a level the fit never saw weighs nothing. */
@@ -61,7 +109,8 @@ export function fit(tuning: readonly MatchCase[]): Fitted {
 	const matchThreshold = lowestAtPrecision(scored(tuning, pairwiseFields), 0.9);
 	const band = scored(tuning.filter(notLeftToRanking), fields);
 	const mediumThreshold = Math.min(highestAtRecall(band, 0.95), lowestAtPrecision(band, 0.99));
-	return { weights, matchThreshold, mediumThreshold };
+	const lengthWindowMs = lengthWindowFor(weights, matchThreshold);
+	return { weights, matchThreshold, mediumThreshold, lengthWindowMs };
 }
 
 /**

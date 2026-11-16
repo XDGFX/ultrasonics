@@ -1,5 +1,5 @@
+import { MatchIndex } from "@ultrasonics/matcher";
 import type { Log, Playlist, Song } from "@ultrasonics/plugin-sdk";
-import { EarlierSongs } from "./earlier-songs.ts";
 
 /** Names that differ only in case or surrounding spaces belong to one playlist (#186 decision 2). */
 const nameKey = (name: string) => name.trim().toLocaleLowerCase("und");
@@ -19,13 +19,13 @@ export function mergeByName(playlists: readonly Playlist[], log: Log): Playlist[
 
 function mergeGroup(first: Playlist, later: readonly Playlist[], log: Log): Playlist {
 	const group = [first, ...later];
-	const earlier = new EarlierSongs();
-	earlier.addAll(first.songs);
+	const earlier = new MatchIndex();
+	earlier.add(first.songs);
 	const songs: Song[] = [...first.songs];
 	for (const playlist of later) {
 		// Compared with earlier playlists only, so a playlist's own repeats survive (story 6).
-		songs.push(...playlist.songs.filter((song) => !earlier.has(song)));
-		earlier.addAll(playlist.songs);
+		songs.push(...playlist.songs.filter((song) => !earlier.hasMatch(song)));
+		earlier.add(playlist.songs);
 	}
 
 	const songsIn = group.reduce((sum, playlist) => sum + playlist.songs.length, 0);

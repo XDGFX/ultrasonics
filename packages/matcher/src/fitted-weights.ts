@@ -40,4 +40,5 @@ export const fitted: Fitted = {
 	},
 	matchThreshold: 16.893,
 	mediumThreshold: 8.366,
+	lengthWindowMs: 3000,
 };

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { musicbrainzCases } from "./cc0-tier.ts";
 import { fit } from "./fellegi-sunter.ts";
 import { fitted } from "./fitted-weights.ts";
+import { match } from "./match.ts";
 import { tuningCases } from "./split.ts";
 
 describe("the fitted weights", () => {
@@ -22,5 +23,20 @@ describe("the fitted weights", () => {
 
 	test("set the medium band below the match threshold", () => {
 		expect(refit.mediumThreshold).toBeLessThan(refit.matchThreshold);
+	});
+});
+
+describe("the length window", () => {
+	const at = (durationMs: number) => ({
+		title: "Strobe",
+		artists: ["deadmau5"],
+		durationMs,
+		id: {},
+	});
+
+	test("is the widest gap at which an otherwise equal pair still matches", () => {
+		const { lengthWindowMs } = fitted;
+		expect(match(at(600_000), at(600_000 + lengthWindowMs)).matched).toBe(true);
+		expect(match(at(600_000), at(600_000 + lengthWindowMs + 1)).matched).toBe(false);
 	});
 });
