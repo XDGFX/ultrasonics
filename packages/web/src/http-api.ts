@@ -188,6 +188,7 @@ export function createHttpApi(options: HttpApiOptions): ApiClient {
 
 	return {
 		instance: () => read(InstanceInfo, "GET", "/instance"),
+		dismissExposure: () => act("DELETE", "/instance/exposure"),
 		plugins: () => read(z.array(PluginInfo), "GET", "/plugins"),
 		applets: {
 			list: () => read(z.array(AppletListing), "GET", "/applets"),

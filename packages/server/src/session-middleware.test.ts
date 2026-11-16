@@ -30,15 +30,56 @@ describe("bootstrapped", () => {
 		expect(raw((sqlite) => countRows(sqlite, "sessions"))).toBe(0);
 	});
 
-	test("a public address is flagged exposed and warned about once, never blocked", async () => {
+	const exposureSeenFrom = async (
+		call: Awaited<ReturnType<typeof testApp>>["call"],
+		address: string,
+	) =>
+		(await bodyOf(await call("GET", "/api/instance", undefined, from(address)), InstanceInfo))
+			.exposure;
+
+	test("a public address is warned about once and never blocked", async () => {
 		const { call, logger } = await testApp();
 		for (let i = 0; i < 2; i++) {
-			const response = await call("GET", "/api/instance", undefined, from("203.0.113.9"));
-			expect(await bodyOf(response, InstanceInfo)).toEqual({ exposed: true });
+			const response = await call("GET", "/api/applets", undefined, from("203.0.113.9"));
+			expect(response.status).toBe(200);
 		}
 		expect(logger.lines.filter((line) => line.includes("203.0.113.9"))).toEqual([
 			expect.stringMatching(/^warn:/),
 		]);
+	});
+
+	test("the first public request is shown to a private visitor, with when and from where", async () => {
+		const { call, clock } = await testApp();
+		const first = clock.now;
+		await call("GET", "/api/applets", undefined, from("203.0.113.9"));
+		clock.now += 60_000;
+		await call("GET", "/api/applets", undefined, from("198.51.100.4"));
+
+		expect(await exposureSeenFrom(call, "192.168.1.20")).toEqual({
+			at: first,
+			address: "203.0.113.9",
+		});
+	});
+
+	test("dismissing clears the record until the next public request", async () => {
+		const { call, clock } = await testApp();
+		await call("GET", "/api/applets", undefined, from("203.0.113.9"));
+
+		const dismissed = await call(
+			"DELETE",
+			"/api/instance/exposure",
+			undefined,
+			from("192.168.1.20"),
+		);
+		expect(dismissed.status).toBe(204);
+		expect(await exposureSeenFrom(call, "192.168.1.20")).toBeNull();
+
+		clock.now += 60_000;
+		await call("GET", "/api/applets", undefined, from("198.51.100.4"));
+		expect(await exposureSeenFrom(call, "192.168.1.20")).toEqual({
+			at: clock.now,
+			address: "198.51.100.4",
+		});
 	});
 
 	test.each([
@@ -52,17 +93,22 @@ describe("bootstrapped", () => {
 		"fe80::1",
 		"fd7a:115c:a1e0::1",
 		"::ffff:192.168.1.20",
-	])("%s is private and not flagged", async (address) => {
+	])("%s is private and not recorded", async (address) => {
 		const { call, logger } = await testApp();
-		const response = await call("GET", "/api/instance", undefined, from(address));
-		expect(await bodyOf(response, InstanceInfo)).toEqual({ exposed: false });
+		expect(await exposureSeenFrom(call, address)).toBeNull();
 		expect(logger.lines.filter((line) => line.includes(address))).toEqual([]);
 	});
 
-	test("a public IPv6 address is flagged exposed", async () => {
+	test("an IPv4 client of a dual-stack listener is recorded by its IPv4 address", async () => {
 		const { call } = await testApp();
-		const response = await call("GET", "/api/instance", undefined, from("2001:db8::7"));
-		expect(await bodyOf(response, InstanceInfo)).toEqual({ exposed: true });
+		expect(await exposureSeenFrom(call, "::ffff:203.0.113.9")).toMatchObject({
+			address: "203.0.113.9",
+		});
+	});
+
+	test("a public IPv6 address is recorded", async () => {
+		const { call } = await testApp();
+		expect(await exposureSeenFrom(call, "2001:db8::7")).toMatchObject({ address: "2001:db8::7" });
 	});
 });
 
@@ -78,7 +124,7 @@ describe("proxy", () => {
 				undefined,
 				from("172.18.0.2", { "Remote-User": user }),
 			);
-			expect(await bodyOf(response, InstanceInfo)).toEqual({ exposed: false });
+			expect(response.status).toBe(200);
 		}
 		expect(logger.lines.filter((line) => /"(cal|sam)"/.test(line))).toEqual([
 			expect.stringContaining('"cal"'),

@@ -18,6 +18,7 @@ import {
 	type AppletDraft,
 	type AppletListing,
 	type CheckResult,
+	type Exposure,
 	type PluginInfo,
 	type RunNowResult,
 	RunStreamError,
@@ -54,7 +55,7 @@ export type FakeApplet = Applet & Partial<Pick<AppletListing, "state" | "lastRun
 
 export interface FakeSeed {
 	plugins: FakePlugin[];
-	exposed?: boolean;
+	exposure?: Exposure;
 	applets?: FakeApplet[];
 	grants?: Partial<Record<Service, ServiceStatus["status"]>>;
 	/** Stored persistent settings by plugin name, which need not parse. */
@@ -127,6 +128,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 		(seed.applets ?? []).map((applet) => [applet.id, { ...neverRun, ...applet }]),
 	);
 	const settings = new Map(Object.entries(seed.settings ?? {}));
+	let exposure = seed.exposure;
 	const grants = new Map(Object.entries(seed.grants ?? {})) as Map<
 		Service,
 		ServiceStatus["status"]
@@ -240,7 +242,10 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 	};
 
 	return {
-		instance: async () => ({ exposed: seed.exposed ?? false }),
+		instance: async () => ({ exposure: exposure ?? null }),
+		dismissExposure: async () => {
+			exposure = undefined;
+		},
 		plugins: async () => structuredClone(catalogue),
 		applets: {
 			list: async () => structuredClone([...applets.values()]),

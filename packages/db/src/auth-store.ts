@@ -1,4 +1,5 @@
 import { asc, eq } from "drizzle-orm";
+import { affectedRows } from "./affected-rows.ts";
 import { connectionOf, type OpenDatabase } from "./connection.ts";
 import type { JsonValue } from "./json.ts";
 import { accounts, instanceSettings } from "./schema.ts";
@@ -34,6 +35,22 @@ export function authStore(handle: OpenDatabase) {
 					.values({ key, value })
 					.onConflictDoUpdate({ target: instanceSettings.key, set: { value } })
 					.run();
+			},
+			/** Writes only a key not yet set, and returns whether it wrote. */
+			async putIfAbsent(key: string, value: JsonValue): Promise<boolean> {
+				const written = db
+					.insert(instanceSettings)
+					.values({ key, value })
+					.onConflictDoNothing()
+					.returning({ key: instanceSettings.key });
+				return affectedRows(written) > 0;
+			},
+			async remove(key: string): Promise<boolean> {
+				const removed = db
+					.delete(instanceSettings)
+					.where(eq(instanceSettings.key, key))
+					.returning({ key: instanceSettings.key });
+				return affectedRows(removed) > 0;
 			},
 		},
 	};

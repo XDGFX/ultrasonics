@@ -15,6 +15,7 @@ import type { Configuration } from "./configuration.ts";
 import { requireJson } from "./cross-site.ts";
 import { errorResponse, notFound } from "./error-response.ts";
 import type { Logger } from "./logger.ts";
+import { operatorSettings } from "./operator-settings.ts";
 import { requestSourceMiddleware } from "./request-source.ts";
 import { createRunHub } from "./run-hub.ts";
 import { runRoutes } from "./run-routes.ts";
@@ -73,17 +74,26 @@ export async function createApp(deps: AppDeps) {
 		dataDir: configuration.dataDir,
 		logger,
 	});
+	const operator = operatorSettings(db);
 	const session = await sessionMiddleware({
 		db,
+		operator,
 		authSource: configuration.authSource,
 		proxyUserHeader: configuration.proxyUserHeader,
 		logger,
+		now,
 	});
 
 	const api = new Hono<AppEnv>()
 		.use(requireJson)
 		.use(session)
-		.get("/instance", (c) => c.json({ exposed: c.var.exposed } satisfies InstanceInfo))
+		.get("/instance", async (c) =>
+			c.json({ exposure: (await operator.exposure()) ?? null } satisfies InstanceInfo),
+		)
+		.delete("/instance/exposure", async (c) => {
+			await operator.dismissExposure();
+			return c.body(null, 204);
+		})
 		.get("/plugins", (c) => c.json(catalogue.info))
 		.route("/applets", appletRoutes({ db, catalogue, queue, runs, now }))
 		.route("/applets", triggerRoutes({ db, now }))

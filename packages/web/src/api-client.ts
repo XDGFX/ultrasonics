@@ -10,6 +10,7 @@ import type {
 	CheckResult,
 	ConfigureResult,
 	ConnectOutcome,
+	Exposure,
 	InstanceInfo,
 	PluginInfo,
 	RunNowResult,
@@ -34,6 +35,7 @@ export type {
 	CheckResult,
 	ConfigureResult,
 	ConnectOutcome,
+	Exposure,
 	InstanceInfo,
 	PluginInfo,
 	RunNowResult,
@@ -74,6 +76,7 @@ export class RunStreamError extends Error {
 /** Every server call the screens make. Screens never call `fetch` or `EventSource` themselves. */
 export interface ApiClient {
 	instance(): Promise<InstanceInfo>;
+	dismissExposure(): Promise<void>;
 	plugins(): Promise<PluginInfo[]>;
 	applets: {
 		list(): Promise<AppletListing[]>;
