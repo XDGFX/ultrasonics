@@ -209,6 +209,12 @@ describe("all my playlists", () => {
 		const { songs } = await readInputs(server, { source: "all", exclude: "gym,  FOCUS " });
 		expect(songs.playlists.map((playlist) => playlist.name)).toEqual(["Shared mix"]);
 	});
+
+	test("leaves out the playlists a wildcard in exclude matches", async () => {
+		const server = serve();
+		const { songs } = await readInputs(server, { source: "all", exclude: "*MIX, g?m" });
+		expect(songs.playlists.map((playlist) => playlist.name)).toEqual(["Focus"]);
+	});
 });
 
 test("liked songs come as one playlist with the chosen name, newest first", async () => {

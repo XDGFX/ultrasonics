@@ -1,4 +1,9 @@
-import type { Log, PlaylistInput, SongDictInput } from "@ultrasonics/plugin-sdk";
+import {
+	type Log,
+	nameFilter,
+	type PlaylistInput,
+	type SongDictInput,
+} from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 import { type InputSettings, listEntries, playlistIdOf } from "./input-settings.ts";
 import { type SpotifyClient, SpotifyError } from "./spotify-client.ts";
@@ -72,7 +77,7 @@ async function readChosen(
 
 async function readAll(client: SpotifyClient, exclude: string, log: Log): Promise<PlaylistInput[]> {
 	const me = await client.get(Me, "/me");
-	const excluded = new Set(listEntries(exclude).map((name) => name.toLowerCase()));
+	const excluded = nameFilter(exclude);
 	const listed = (await client.all("/me/playlists", { limit: pageSize })).flatMap((raw) => {
 		const parsed = ListedPlaylist.safeParse(raw);
 		return parsed.success ? [parsed.data] : [];
@@ -86,7 +91,7 @@ async function readAll(client: SpotifyClient, exclude: string, log: Log): Promis
 	);
 	const playlists: PlaylistInput[] = [];
 	for (const details of readable) {
-		if (excluded.has(details.name.trim().toLowerCase())) continue;
+		if (excluded(details.name.trim())) continue;
 		const playlist = await readPlaylist(client, details, log);
 		if (playlist) playlists.push(playlist);
 	}

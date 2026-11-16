@@ -73,7 +73,8 @@ const all = withMeta(
 		source: z.literal("all"),
 		exclude: withMeta(z.string().optional(), {
 			title: "leave out",
-			description: "Playlist names to skip, comma-separated. Case doesn't matter.",
+			description:
+				"Comma-separated names. * matches anything, ? one character. Case doesn't matter.",
 		}),
 	}),
 	{

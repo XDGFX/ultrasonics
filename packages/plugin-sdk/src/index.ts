@@ -10,6 +10,7 @@ export {
 	isAuthFailure,
 } from "./auth.ts";
 export { fromFileUri, toFileUri } from "./file-uri.ts";
+export { nameFilter } from "./name-filter.ts";
 export { normaliseDate, normaliseIsrc } from "./normalise.ts";
 export { OutputResult, outputResultIssues, PlaylistResult } from "./output-result.ts";
 export {
