@@ -1,0 +1,40 @@
+{
+	"toptracks": {
+		"track": [
+			{
+				"streamable": { "fulltrack": "0", "#text": "0" },
+				"mbid": "",
+				"name": "Learning to Live",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"artist": { "url": "https://www.last.fm/music/Dream+Theater", "name": "Dream Theater", "mbid": "28503ab7-8bf2-4666-a7bd-2644bfc7cb1d" },
+				"url": "https://www.last.fm/music/Dream+Theater/_/Learning+to+Live",
+				"duration": "690",
+				"@attr": { "rank": "1" },
+				"playcount": "42"
+			},
+			{
+				"streamable": { "fulltrack": "0", "#text": "0" },
+				"mbid": "",
+				"name": "Pull Me Under",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"artist": { "url": "https://www.last.fm/music/Dream+Theater", "name": "Dream Theater", "mbid": "28503ab7-8bf2-4666-a7bd-2644bfc7cb1d" },
+				"url": "https://www.last.fm/music/Dream+Theater/_/Pull+Me+Under",
+				"duration": "0",
+				"@attr": { "rank": "2" },
+				"playcount": "40"
+			},
+			{
+				"streamable": { "fulltrack": "0", "#text": "0" },
+				"mbid": "",
+				"name": "Hoppípolla",
+				"image": [{"size":"small","#text":"https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"medium","#text":"https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"large","#text":"https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png"},{"size":"extralarge","#text":"https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png"}],
+				"artist": { "url": "https://www.last.fm/music/Sigur+R%C3%B3s", "name": "Sigur Rós", "mbid": "f6f2326f-6b25-4170-b89d-e235b25508e8" },
+				"url": "https://www.last.fm/music/Sigur+R%C3%B3s/_/Hopp%C3%ADpolla",
+				"duration": "268",
+				"@attr": { "rank": "3" },
+				"playcount": "31"
+			}
+		],
+		"@attr": { "user": "rj", "totalPages": "1", "page": "1", "perPage": "50", "total": "3" }
+	}
+}
