@@ -31,7 +31,7 @@ function scriptsOf(song: Song): Set<string> {
 
 export function scriptLabel(a: Song, b: Song): ScriptLabel {
 	const [left, right] = [scriptsOf(a), scriptsOf(b)];
-	const nonLatin = (found: Set<string>) => [...found].filter((s) => s !== "Latin");
-	if (nonLatin(left).length === 0 && nonLatin(right).length === 0) return "latin";
-	return nonLatin(left).some((s) => right.has(s)) ? "same-non-latin" : "cross-script";
+	const leftNonLatin = [...left].filter((s) => s !== "Latin");
+	if (leftNonLatin.length === 0 && [...right].every((s) => s === "Latin")) return "latin";
+	return leftNonLatin.some((s) => right.has(s)) ? "same-non-latin" : "cross-script";
 }

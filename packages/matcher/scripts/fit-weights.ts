@@ -19,5 +19,7 @@ import type { Fitted } from "./fellegi-sunter.ts";
 
 export const fitted: Fitted = ${JSON.stringify(fitted, null, "\t")};
 `;
-await writeFile(join(import.meta.dir, "../src/fitted-weights.ts"), source);
-console.log(source);
+const target = join(import.meta.dir, "../src/fitted-weights.ts");
+await writeFile(target, source);
+Bun.spawnSync(["bunx", "biome", "format", "--write", target]);
+console.log(await Bun.file(target).text());

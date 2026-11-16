@@ -1,5 +1,6 @@
 import type { Song } from "@ultrasonics/plugin-sdk";
 import type { CandidateSet } from "./candidate-set.ts";
+import { withoutIsrc } from "./judgement.ts";
 import {
 	type Category,
 	isPositive,
@@ -67,10 +68,6 @@ function figure(successes: number, n: number): Figure {
 		rate: n === 0 ? undefined : successes / n,
 		interval: n === 0 ? undefined : wilson(successes, n),
 	};
-}
-
-function withoutIsrc({ isrc: _, ...song }: Song): Song {
-	return song;
 }
 
 /** Scores a pairwise function against a tier, hiding each side's ISRC (ADR-0022 §3). */

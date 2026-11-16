@@ -1,6 +1,13 @@
 import type { Song } from "@ultrasonics/plugin-sdk";
-import { type Agreement, agreement, type Field, pairwiseFields } from "./agreement.ts";
-import { judge } from "./judgement.ts";
+import {
+	type Agreement,
+	agreement,
+	type Field,
+	fields,
+	lengthGapMs,
+	pairwiseFields,
+} from "./agreement.ts";
+import { judge, withoutIsrc } from "./judgement.ts";
 import { isPositive, type MatchCase } from "./match-case.ts";
 import { versionMarkersIn } from "./version-marker.ts";
 
@@ -38,8 +45,6 @@ export function weightOf(
 	return weigh(judgement.agreement, weights, fieldsWeighed);
 }
 
-const withoutIsrc = ({ isrc: _, ...song }: Song): Song => song;
-
 /**
  * Fits the weights and both thresholds on `tuning`, the MusicBrainz cases of the tuning split.
  * Weights are rounded to three places before the thresholds are fitted, so the committed
@@ -52,17 +57,16 @@ export function fit(tuning: readonly MatchCase[]): Fitted {
 			score: weightOf(withoutIsrc(c.a), withoutIsrc(c.b), weights, fieldsWeighed),
 			positive: isPositive(c.category),
 		}));
-	// The shipped matcher's precision, so the rebuild trades none of it for recall (#132, P1).
+	// 90% is the staged-rules matcher's precision, so recall gains cost none of it.
 	const matchThreshold = lowestAtPrecision(scored(tuning, pairwiseFields), 0.9);
-	const band = scored(tuning.filter(inMatchFigure), [...pairwiseFields, "album", "year"]);
+	const band = scored(tuning.filter(notLeftToRanking), fields);
 	const mediumThreshold = Math.min(highestAtRecall(band, 0.95), lowestAtPrecision(band, 0.99));
 	return { weights, matchThreshold, mediumThreshold };
 }
 
 /**
- * m from the positives and u from random non-matching pairs, add-half smoothed. u never comes from
- * the traps: they are adversarial by construction, so weights fitted on them learn how the tier
- * was sampled (an equal title counts against a match), not how non-matches look.
+ * m from the positives and u from random non-matching pairs, add-half smoothed. Never u from the
+ * traps: they are adversarial by construction, so the fit would learn how the tier was sampled.
  */
 function fitWeights(tuning: readonly MatchCase[]): Weights {
 	const pairs: [Song, Song, boolean][] = [
@@ -121,17 +125,13 @@ function randomPairs(cases: readonly MatchCase[]): [Song, Song][] {
 }
 
 /**
- * Unmarked remix and re-recording traps within 3 s are left to ranking (#132), so the medium band
- * is fitted without them.
+ * False for an unmarked remix or re-recording trap within 3 s: only ranking can tell those from
+ * the original, so the medium band is fitted without them.
  */
-function inMatchFigure(c: MatchCase): boolean {
+function notLeftToRanking(c: MatchCase): boolean {
 	if (c.category !== "remix" && c.category !== "re-recording") return true;
 	const marked = versionMarkersIn(c.a.title).size + versionMarkersIn(c.b.title).size > 0;
-	const gap =
-		c.a.durationMs !== undefined && c.b.durationMs !== undefined
-			? Math.abs(c.a.durationMs - c.b.durationMs)
-			: 0;
-	return marked || gap > 3000;
+	return marked || (lengthGapMs(c.a, c.b) ?? 0) > 3000;
 }
 
 interface Scored {

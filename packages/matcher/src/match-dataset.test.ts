@@ -4,7 +4,7 @@ import { z } from "zod";
 import candidateSetsJson from "../test/fixtures/match-dataset/candidate-sets.json";
 import handWrittenJson from "../test/fixtures/match-dataset/hand-written.json";
 import musicbrainzJson from "../test/fixtures/match-dataset/musicbrainz.json";
-import { CandidateSet } from "./candidate-set.ts";
+import { candidateSets } from "./cc0-tier.ts";
 import { isPositive, MatchCase, Rule, trapCategories } from "./match-case.ts";
 
 const handWritten = z.array(MatchCase).parse(handWrittenJson);
@@ -63,7 +63,7 @@ describe("the MusicBrainz cases", () => {
 });
 
 describe("the candidate sets", () => {
-	const sets = z.array(CandidateSet).parse(candidateSetsJson);
+	const sets = candidateSets;
 	const traps = new Map(
 		musicbrainz.flatMap((c) =>
 			c.provenance.source === "musicbrainz"

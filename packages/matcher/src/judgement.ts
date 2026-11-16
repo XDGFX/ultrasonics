@@ -23,6 +23,11 @@ export function judge(a: Song, b: Song): Judgement {
 	return { kind: "weigh", agreement: agreement(a, b) };
 }
 
+/** The song as the CC0 tier is measured: with its ISRC hidden (ADR-0022 §3). */
+export function withoutIsrc({ isrc: _, ...song }: Song): Song {
+	return song;
+}
+
 function sharesId(a: Song, b: Song): boolean {
 	return Object.entries(a.id).some(([space, id]) => b.id[space] === id);
 }

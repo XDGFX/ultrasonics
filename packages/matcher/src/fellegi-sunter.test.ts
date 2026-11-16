@@ -16,7 +16,6 @@ describe("the fitted weights", () => {
 		expect(refit.weights.year.missing).toBe(0);
 	});
 
-	// Fitted against the traps, an equal title came out as evidence *against* a match (#132).
 	test("take u from random pairs, so an equal title counts for a match", () => {
 		expect(refit.weights.title.equal).toBeGreaterThan(0);
 	});
