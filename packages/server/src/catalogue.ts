@@ -9,6 +9,7 @@ import {
 } from "@ultrasonics/plugin-sdk";
 import type { z } from "zod";
 import type { PluginInfo } from "./api.ts";
+import type { TestablePlugin } from "./plugin-test.ts";
 
 /** A service as the official plugins declare it: one spec, shared by every plugin naming it. */
 export interface CatalogueService {
@@ -29,6 +30,10 @@ export interface Catalogue {
 export type CatalogueResult =
 	| { ok: true; catalogue: Catalogue }
 	| { ok: false; problems: string[] };
+
+/** A plugin the settings screen can check: a service's plugins are checked by its wizard instead. */
+export const isCheckable = (plugin: Plugin): plugin is TestablePlugin =>
+	!!plugin.test && !plugin.auth;
 
 /** What two declarations of one service must agree on, since one grant serves both. */
 const specKey = (spec: AuthSpec, fields: JSONSchema) =>
@@ -103,6 +108,7 @@ export async function loadCatalogue(registry: PluginRegistry): Promise<Catalogue
 			...(plugin.auth ? { service: plugin.auth.service } : {}),
 			...(persistentSettings ? { persistentSettings } : {}),
 			instanceSettings,
+			checkable: isCheckable(plugin),
 		});
 	}
 

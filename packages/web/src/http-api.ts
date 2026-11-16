@@ -4,6 +4,7 @@ import {
 	AppletListing,
 	AuthChallenge,
 	AuthRequirement,
+	CheckResult,
 	ConfigureResult,
 	ConnectOutcome,
 	ErrorBody,
@@ -208,6 +209,7 @@ export function createHttpApi(options: HttpApiOptions): ApiClient {
 		settings: {
 			get: (plugin) => read(StoredSettings, "GET", route`/settings/${plugin}`),
 			save: (plugin, value) => save(z.unknown(), "PUT", route`/settings/${plugin}`, value),
+			check: (plugin) => save(CheckResult, "POST", route`/settings/${plugin}/check`, undefined),
 		},
 		services: {
 			list: () => read(z.array(ServiceStatus), "GET", "/services"),

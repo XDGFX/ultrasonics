@@ -105,4 +105,23 @@ export const deduplicate: FakePlugin = {
 	instanceSettings: { modifiers: z.object({}) },
 };
 
-export const catalogue = [spotify, plex, deduplicate];
+/** The folder the fake `playlist-folder` check accepts; any other fails it. */
+export const READABLE_FOLDER = "/playlists";
+
+/** A plugin with no service whose `test()` checks its own settings, so settings offers a check. */
+export const playlistFolder: FakePlugin = {
+	name: "playlist-folder",
+	description: "reads m3u playlists from a folder",
+	version: "2.0.0",
+	mode: ["playlists"],
+	persistentSettings: z.object({
+		folder: withMeta(z.string().min(1).default(READABLE_FOLDER), { title: "playlist folder" }),
+	}),
+	instanceSettings: { inputs: z.object({}) },
+	test: (persistent) =>
+		(persistent as { folder: string }).folder === READABLE_FOLDER
+			? { ok: true }
+			: { ok: false, code: "misconfigured", message: "that folder can't be read" },
+};
+
+export const catalogue = [spotify, plex, deduplicate, playlistFolder];

@@ -14,6 +14,7 @@ import {
 	type JSONSchema,
 	Mode,
 	Service,
+	TestResult,
 } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 
@@ -54,6 +55,8 @@ export const PluginInfo = z.object({
 	/** Form JSON Schema; absent when the plugin has no persistent settings. */
 	persistentSettings: JsonSchema.optional(),
 	instanceSettings: z.partialRecord(Component, JsonSchema),
+	/** It defines `test()` and declares no `auth`, whose check is the service wizard's instead. */
+	checkable: z.boolean(),
 });
 export type PluginInfo = z.infer<typeof PluginInfo>;
 
@@ -161,6 +164,10 @@ export const StoredSettings = z.object({
 	issues: z.array(ValidationIssue),
 });
 export type StoredSettings = z.infer<typeof StoredSettings>;
+
+/** The answer of `POST /api/settings/:plugin/check`: the plugin's own `TestResult`, as plain data. */
+export const CheckResult = TestResult;
+export type CheckResult = z.infer<typeof CheckResult>;
 
 export const ServiceStatus = z.object({
 	service: Service,

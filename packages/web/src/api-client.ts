@@ -7,6 +7,7 @@ import type {
 	AppletListing,
 	AuthChallenge,
 	AuthRequirement,
+	CheckResult,
 	ConfigureResult,
 	ConnectOutcome,
 	InstanceInfo,
@@ -30,6 +31,7 @@ export type {
 	AppletDefinition,
 	AppletDraft,
 	AppletListing,
+	CheckResult,
 	ConfigureResult,
 	ConnectOutcome,
 	InstanceInfo,
@@ -97,6 +99,8 @@ export interface ApiClient {
 	settings: {
 		get(plugin: string): Promise<StoredSettings>;
 		save(plugin: string, value: unknown): Promise<SaveResult<unknown>>;
+		/** Runs a checkable plugin's `test()` on its stored settings; issues when they don't parse. */
+		check(plugin: string): Promise<SaveResult<CheckResult>>;
 	};
 	services: {
 		list(): Promise<ServiceStatus[]>;

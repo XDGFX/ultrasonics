@@ -178,6 +178,36 @@ export const heldSink = definePlugin({
 	},
 });
 
+/** The folder the fixture `folder` check accepts; any other path fails it as misconfigured. */
+export const GOOD_FOLDER = "/music";
+/** The folder that makes the fixture `folder` check throw, as a broken plugin would. */
+export const THROWING_FOLDER = "/throw";
+
+/** The folder each call of the fixture `folder` check received, in order. */
+export const folderChecks: string[] = [];
+
+/** An input with no service and a `test()` of its own settings: checkable from the settings screen. */
+export const folder = definePlugin({
+	...handshake,
+	name: "folder",
+	mode: ["playlists"],
+	persistentSettings: z.object({ path: z.string().regex(/^\//) }),
+	instanceSettings: { inputs: z.object({}) },
+	run: {
+		async inputs() {
+			return { playlists: [] };
+		},
+	},
+	async test(ctx) {
+		const { path } = ctx.persistent;
+		folderChecks.push(path);
+		if (path === THROWING_FOLDER) throw new Error("the fixture's test is broken");
+		return path === GOOD_FOLDER
+			? { ok: true }
+			: { ok: false, code: "misconfigured", message: `There is no folder at ${path}` };
+	},
+});
+
 /** A registry entry for each plugin, by name. */
 export function registryOf(...plugins: Plugin[]): PluginRegistry {
 	return Object.fromEntries(
@@ -188,4 +218,13 @@ export function registryOf(...plugins: Plugin[]): PluginRegistry {
 	);
 }
 
-export const fixtureRegistry = registryOf(source, plex, plexMixer, spotify, held, sink, heldSink);
+export const fixtureRegistry = registryOf(
+	source,
+	plex,
+	plexMixer,
+	spotify,
+	held,
+	sink,
+	heldSink,
+	folder,
+);

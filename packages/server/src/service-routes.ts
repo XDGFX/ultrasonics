@@ -1,13 +1,6 @@
 import type { OpenDatabase } from "@ultrasonics/db";
-import {
-	createTestContext,
-	issuesOf,
-	type Plugin,
-	type Service,
-	TestResult,
-} from "@ultrasonics/plugin-sdk";
+import { issuesOf, type Service, type TestResult } from "@ultrasonics/plugin-sdk";
 import { Hono } from "hono";
-import { HTTPException } from "hono/http-exception";
 import {
 	type ConfigureResult,
 	type ConnectOutcome,
@@ -24,7 +17,7 @@ import type { Catalogue, CatalogueService } from "./catalogue.ts";
 import { notFound } from "./error-response.ts";
 import type { Logger } from "./logger.ts";
 import { operatorSettings } from "./operator-settings.ts";
-import { pluginConfigDir } from "./plugin-config-dir.ts";
+import { runPluginTest, storedPersistent, type TestablePlugin } from "./plugin-test.ts";
 import { requestOrigin } from "./request-source.ts";
 import { jsonBody, pathParams } from "./validation.ts";
 
@@ -68,13 +61,9 @@ export function serviceRoutes(deps: ServiceRouteDeps) {
 	): Promise<TestResult | undefined> => {
 		const tester = service.usedBy
 			.map((name) => catalogue.plugins.get(name))
-			.find((plugin): plugin is Plugin & Required<Pick<Plugin, "test">> => !!plugin?.test);
+			.find((plugin): plugin is TestablePlugin => !!plugin?.test);
 		if (!tester) return undefined;
-		const raw = await db.storeFor(accountId).pluginSettings.get(tester.name);
-		const persistent = tester.persistentSettings?.safeParse(raw ?? {}) ?? {
-			success: true as const,
-			data: {},
-		};
+		const persistent = await storedPersistent(db, accountId, tester);
 		if (!persistent.success) {
 			return {
 				ok: false,
@@ -84,36 +73,13 @@ export function serviceRoutes(deps: ServiceRouteDeps) {
 					.join("; ")}`,
 			};
 		}
-		const context = createTestContext(
-			{
-				persistent: persistent.data as Record<string, unknown>,
-				configDir: pluginConfigDir(dataDir, accountId, tester.name),
-			},
-			{
-				credentials: async () => candidate,
-				log: (entry) =>
-					logger[entry.level === "debug" ? "info" : entry.level](
-						`${tester.name} test: ${entry.message}`,
-					),
-			},
-			{ declaresAuth: true },
+		return runPluginTest(
+			{ dataDir, logger },
+			accountId,
+			tester,
+			persistent.data,
+			async () => candidate,
 		);
-		let result: unknown;
-		try {
-			result = await tester.test(context);
-		} catch (error) {
-			logger.error(`${tester.name}'s test() threw`, error);
-			throw new HTTPException(500, {
-				message: `The ${tester.name} plugin is broken: its connection test threw`,
-			});
-		}
-		const parsed = TestResult.safeParse(result);
-		if (!parsed.success) {
-			throw new HTTPException(500, {
-				message: `The ${tester.name} plugin is broken: its connection test returned no result`,
-			});
-		}
-		return parsed.data;
 	};
 
 	return new Hono<AppEnv>()

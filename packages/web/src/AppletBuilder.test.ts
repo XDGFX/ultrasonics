@@ -86,7 +86,7 @@ describe("the builder", () => {
 			await click(wrapper, `[data-column="${component}"] [data-add]`);
 			return wrapper.findAll(".panel [data-offer]").map((offer) => offer.attributes("data-offer"));
 		};
-		expect(await offered("inputs")).toEqual(["spotify"]);
+		expect(await offered("inputs")).toEqual(["spotify", "playlist-folder"]);
 		expect(await offered("modifiers")).toEqual(["deduplicate"]);
 		expect(await offered("outputs")).toEqual(["plex"]);
 	});

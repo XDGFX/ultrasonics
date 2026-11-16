@@ -17,6 +17,9 @@ import { z } from "zod";
 
 const handshake = { description: "A contract fixture", version: "1.0.0" } as const;
 
+/** The region the fixture `source` check accepts; any other fails it. */
+export const CHECKED_REGION = "au";
+
 /** The token the fixture `plex` test accepts; any other fails it. */
 export const GOOD_TOKEN = "good-token";
 
@@ -37,6 +40,11 @@ export const source = definePlugin({
 			}));
 			return { playlists: [{ name: "Mix", songs: playlist }] };
 		},
+	},
+	async test(ctx) {
+		return ctx.persistent.region === CHECKED_REGION
+			? { ok: true }
+			: { ok: false, code: "unreachable", message: "No catalogue in that region" };
 	},
 });
 
