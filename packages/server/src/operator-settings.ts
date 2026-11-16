@@ -2,6 +2,7 @@ import type { OpenDatabase } from "@ultrasonics/db";
 import { authStore } from "@ultrasonics/db/auth-store";
 import { type Service, withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
+import { Exposure } from "./api.ts";
 
 /**
  * The operator's own app on an `oauth2-pkce` service (ADR-0013 §7): a client ID and never a secret
@@ -24,11 +25,12 @@ export const OperatorClient = z.object({
 export type OperatorClient = z.infer<typeof OperatorClient>;
 
 const clientKey = (service: Service) => `oauth-client:${service}`;
+const EXPOSURE_KEY = "exposure";
 
 /**
- * The operator's client credentials in `instance_settings`, and nothing else. Writable by the
- * install's account because Phase 1 refuses `AUTH_SOURCE=oauth`, so that account is the operator
- * (spec #134, decision 5).
+ * The operator's client credentials and the install's exposure record in `instance_settings`, and
+ * nothing else. Writable by the install's account because Phase 1 refuses `AUTH_SOURCE=oauth`, so
+ * that account is the operator (spec #134, decision 5).
  */
 export function operatorSettings(db: OpenDatabase) {
 	const store = authStore(db);
@@ -39,6 +41,16 @@ export function operatorSettings(db: OpenDatabase) {
 		},
 		async registerClient(service: Service, client: OperatorClient): Promise<void> {
 			await store.instanceSettings.put(clientKey(service), OperatorClient.parse(client));
+		},
+		async exposure(): Promise<Exposure | undefined> {
+			return Exposure.safeParse(await store.instanceSettings.get(EXPOSURE_KEY)).data;
+		},
+		/** Keeps the first public request until it is dismissed, so later ones never replace it. */
+		async recordExposure(exposure: Exposure): Promise<void> {
+			await store.instanceSettings.putIfAbsent(EXPOSURE_KEY, Exposure.parse(exposure));
+		},
+		async dismissExposure(): Promise<void> {
+			await store.instanceSettings.remove(EXPOSURE_KEY);
 		},
 	};
 }

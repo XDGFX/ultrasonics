@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mountApp } from "../test/mount-app.ts";
+import { mountApp, settle } from "../test/mount-app.ts";
 import type { Applet } from "./api-client.ts";
+import { formatWhen } from "./clock.ts";
 import { MARK } from "./logo-assets.ts";
 
 const applet: Applet = {
@@ -43,12 +44,21 @@ describe("the shell", () => {
 		expect(crumbs.get("a").attributes("href")).toBe("/");
 	});
 
-	test("shows the exposure banner only when the instance is exposed", async () => {
-		const exposed = await mountApp("/", { applets: [applet], exposed: true });
-		expect(exposed.wrapper.find('[data-banner="exposed"]').exists()).toBe(true);
-		document.body.innerHTML = "";
-		const local = await mountApp("/", { applets: [applet] });
-		expect(local.wrapper.find('[data-banner="exposed"]').exists()).toBe(false);
+	test("shows the exposure banner, with where and when, until it is dismissed", async () => {
+		const exposure = { at: Date.now() - 60_000, address: "203.0.113.9" };
+		const { wrapper } = await mountApp("/", { applets: [applet], exposure });
+		const banner = wrapper.get('[data-banner="exposed"]');
+		expect(banner.get('[data-exposure="address"]').text()).toBe(exposure.address);
+		expect(banner.get('[data-exposure="at"]').text()).toBe(formatWhen(exposure.at));
+
+		await banner.get('[data-action="dismiss-exposure"]').trigger("click");
+		await settle();
+		expect(wrapper.find('[data-banner="exposed"]').exists()).toBe(false);
+	});
+
+	test("shows no exposure banner when nothing public was seen", async () => {
+		const { wrapper } = await mountApp("/", { applets: [applet] });
+		expect(wrapper.find('[data-banner="exposed"]').exists()).toBe(false);
 	});
 });
 

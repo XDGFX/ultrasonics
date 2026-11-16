@@ -3,14 +3,17 @@ import { authStore } from "@ultrasonics/db/auth-store";
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "./app-env.ts";
 import type { BootableAuthSource } from "./configuration.ts";
-import { isPrivateAddress } from "./ip-range.ts";
+import { displayAddress, isPrivateAddress } from "./ip-range.ts";
 import type { Logger } from "./logger.ts";
+import type { OperatorSettings } from "./operator-settings.ts";
 
 export interface SessionOptions {
 	db: OpenDatabase;
+	operator: OperatorSettings;
 	authSource: BootableAuthSource;
 	proxyUserHeader: string;
 	logger: Logger;
+	now: () => number;
 }
 
 export const PROXY_REFUSAL_MESSAGE =
@@ -32,15 +35,17 @@ export async function sessionMiddleware(
 		/** Public addresses already warned about, once each per boot, so the log is not flooded. */
 		const warned = new Set<string>();
 		return async (c, next) => {
-			const { address } = c.var.source;
-			const exposed = address !== undefined && !isPrivateAddress(address);
-			if (exposed && !warned.has(address)) {
-				warned.add(address);
-				logger.warn(
-					`A request reached this bootstrapped install from the public address ${address}. Anyone who can reach it can use it; put a login in front with AUTH_SOURCE=proxy if that is not what you want.`,
-				);
+			const { address: source } = c.var.source;
+			if (source !== undefined && !isPrivateAddress(source)) {
+				const address = displayAddress(source);
+				await options.operator.recordExposure({ at: options.now(), address });
+				if (!warned.has(address)) {
+					warned.add(address);
+					logger.warn(
+						`A request reached this bootstrapped install from the public address ${address}. Anyone who can reach it can use it; put a login in front with AUTH_SOURCE=proxy if that is not what you want.`,
+					);
+				}
 			}
-			c.set("exposed", exposed);
 			c.set("session", session);
 			await next();
 		};
@@ -53,7 +58,6 @@ export async function sessionMiddleware(
 		}
 		// The proxy authorises; it does not identify (ADR-0015 §5). Logged for audit, never stored.
 		logger.info(`proxy user "${user}": ${c.req.method} ${c.req.path}`);
-		c.set("exposed", false);
 		c.set("session", session);
 		await next();
 	};

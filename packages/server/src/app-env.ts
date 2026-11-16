@@ -17,8 +17,6 @@ export interface AppEnv {
 	Variables: {
 		source: RequestSource;
 		session: Session;
-		/** A `bootstrapped` request from a public address (ADR-0015 §6). */
-		exposed: boolean;
 	};
 }
 

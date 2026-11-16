@@ -56,6 +56,13 @@ function parseAddress(text: string): Address | undefined {
 	return { family: 6, value };
 }
 
+/** An address as a person reads it: an IPv4-mapped IPv6 address as its IPv4 address. */
+export function displayAddress(text: string): string {
+	const address = parseAddress(text);
+	if (address?.family !== 4) return text.trim();
+	return [24n, 16n, 8n, 0n].map((shift) => (address.value >> shift) & 0xffn).join(".");
+}
+
 function maskOf(family: 4 | 6, prefix: number): bigint {
 	const width = BigInt(bits(family));
 	return ((1n << BigInt(prefix)) - 1n) << (width - BigInt(prefix));

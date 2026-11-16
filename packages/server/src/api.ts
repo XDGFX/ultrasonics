@@ -39,9 +39,17 @@ export type ErrorBody = z.infer<typeof ErrorBody>;
 export const IssuesBody = z.object({ issues: z.array(ValidationIssue) });
 export type IssuesBody = z.infer<typeof IssuesBody>;
 
+/** The first request a `bootstrapped` install served to a public address (ADR-0015 §6). */
+export const Exposure = z.object({
+	/** Epoch milliseconds. */
+	at: z.number(),
+	address: z.string(),
+});
+export type Exposure = z.infer<typeof Exposure>;
+
 export const InstanceInfo = z.object({
-	/** Reached from a public address while the session source is `bootstrapped` (ADR-0015 §6). */
-	exposed: z.boolean(),
+	/** Shown to everyone until dismissed with `DELETE /api/instance/exposure`. */
+	exposure: Exposure.nullable(),
 });
 export type InstanceInfo = z.infer<typeof InstanceInfo>;
 

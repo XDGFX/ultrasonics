@@ -333,6 +333,6 @@ describe("boot", () => {
 		const result = await bootWith({ ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" });
 		if (!result.ok) throw new Error(JSON.stringify(result.problems));
 		const response = await fetch(new URL("/api/instance", result.server.url));
-		expect(await response.json()).toEqual({ exposed: false });
+		expect(await response.json()).toEqual({ exposure: null });
 	});
 });

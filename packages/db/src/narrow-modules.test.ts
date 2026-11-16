@@ -108,4 +108,18 @@ describe("authStore", () => {
 
 		expect(await settings.get("spotify.clientId")).toBe("def456");
 	});
+
+	test("putIfAbsent writes a key only while it is unset, and remove unsets it", async () => {
+		const { db } = await twoAccounts();
+		const settings = authStore(db).instanceSettings;
+
+		expect(await settings.putIfAbsent("first", "a")).toBe(true);
+		expect(await settings.putIfAbsent("first", "b")).toBe(false);
+		expect(await settings.get("first")).toBe("a");
+
+		expect(await settings.remove("first")).toBe(true);
+		expect(await settings.remove("first")).toBe(false);
+		expect(await settings.putIfAbsent("first", "c")).toBe(true);
+		expect(await settings.get("first")).toBe("c");
+	});
 });

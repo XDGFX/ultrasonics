@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { type RouteLocationRaw, useRoute } from "vue-router";
-import { useApi } from "./api-client.ts";
+import { type Exposure, useApi } from "./api-client.ts";
+import { formatWhen } from "./clock.ts";
 import { MARK } from "./logo-assets.ts";
 
 export interface Crumb {
@@ -13,10 +14,15 @@ defineProps<{ crumbs: Crumb[] }>();
 
 const api = useApi();
 const route = useRoute();
-const exposed = ref(false);
+const exposure = ref<Exposure | null>(null);
 onMounted(async () => {
-	exposed.value = (await api.instance()).exposed;
+	exposure.value = (await api.instance()).exposure;
 });
+
+async function dismiss() {
+	await api.dismissExposure();
+	exposure.value = null;
+}
 
 const section = computed(() => route.meta.section);
 </script>
@@ -35,10 +41,15 @@ const section = computed(() => route.meta.section);
 			</RouterLink>
 		</nav>
 		<div class="main">
-			<p v-if="exposed" class="banner" role="status" data-banner="exposed">
-				⚠ this instance is reachable from a public address and asks nobody to log in. anyone who
-				finds it can use it.
-			</p>
+			<div v-if="exposure" class="banner" role="status" data-banner="exposed">
+				<p>
+					⚠ this instance was reached from the public address
+					<code data-exposure="address">{{ exposure.address }}</code> at
+					<span data-exposure="at">{{ formatWhen(exposure.at) }}</span>, while it asked nobody to log
+					in. anyone who could reach it could use it.
+				</p>
+				<button type="button" class="btn" data-action="dismiss-exposure" @click="dismiss">dismiss</button>
+			</div>
 			<header class="bar">
 				<nav aria-label="breadcrumb">
 					<ol class="crumbs">
@@ -68,7 +79,8 @@ const section = computed(() => route.meta.section);
 .r small { font-size: 9px; }
 .r:hover, .r.on { background: var(--surface-2); color: var(--fg); }
 .main { display: grid; grid-template-rows: auto 48px 1fr; min-width: 0; }
-.banner { margin: 0; padding: 8px 16px; border-bottom: 1px solid var(--warn); color: var(--warn); background: var(--surface-1); }
+.banner { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--warn); color: var(--warn); background: var(--surface-1); }
+.banner p { flex: 1; margin: 0; }
 .bar { grid-row: 2; display: flex; align-items: center; gap: 8px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgb(17 17 17 / 0.85); }
 .crumbs { display: flex; gap: 8px; margin: 0; padding: 0; list-style: none; color: var(--muted); }
 .crumbs li + li::before { content: "›"; margin-right: 8px; }

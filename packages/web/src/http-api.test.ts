@@ -85,7 +85,8 @@ async function collect(events: AsyncIterable<RunEvent>): Promise<RunEvent[]> {
 describe("the HTTP client against the real server", () => {
 	test("reads the instance and the plugin catalogue", async () => {
 		const { api } = await client();
-		expect(await api.instance()).toEqual({ exposed: false });
+		expect(await api.instance()).toEqual({ exposure: null });
+		await api.dismissExposure();
 		const plugins = await api.plugins();
 		expect(plugins.map((plugin) => plugin.name).sort()).toEqual([
 			"plex",
