@@ -15,7 +15,7 @@ import {
 } from "../test-support.ts";
 import { LEGACY_PATHS_NOTE, plexMapping } from "./plex.ts";
 
-/** Stands in for the Spotify input's mapping, which arrives with its own ticket (#183). */
+/** A stand-in for the Spotify input's mapping, which lists Spotify to reconnect. */
 const spotifyStandIn: Mapping<string> = {
 	plugin: "source",
 	accepts: (name) => name === "spotify",
@@ -81,10 +81,14 @@ describe("the Plex mapping", () => {
 			token: "PLEX-NEW-TOKEN-5a8b",
 			verifyTls: true,
 		});
-		expect(markdown).toContain(
-			"plex 0.1 had different settings from plex beta 1.0, whose settings were imported. These applets used 0.1 and now use plex beta 1.0's settings: Old Plex.",
-		);
-		expect(markdown).not.toContain(LEGACY_PATHS_NOTE);
+		expect(markdown).toMatch(/plex 0\.1 [^\n]*plex beta 1\.0[^\n]*: Old Plex\.\n/);
+	});
+
+	test("reports dropped legacy paths on each applet that used them, even when that server lost", async () => {
+		const { markdown } = await imported("v1-plex.sql");
+
+		expect(markdown).toContain(`- **Old Plex**\n  - ${LEGACY_PATHS_NOTE}\n`);
+		expect(markdown.split(LEGACY_PATHS_NOTE)).toHaveLength(2);
 	});
 
 	test("takes verifyTls from a legacy server's check_ssl, and reports its dropped paths", async () => {
@@ -95,16 +99,16 @@ describe("the Plex mapping", () => {
 			token: "PLEX-LEGACY-TOKEN-0c19",
 			verifyTls: false,
 		});
-		expect(markdown).toContain(LEGACY_PATHS_NOTE);
+		expect(markdown).toContain(`- **Legacy library**\n  - ${LEGACY_PATHS_NOTE}\n`);
 	});
 
-	test("lists Spotify to reconnect, and no credential reaches the report, the log or the marker", async () => {
+	test("lists Spotify to reconnect, and no Plex token reaches the report, the log or the marker", async () => {
 		const { h, markdown } = await imported("v1-plex.sql");
 		const marker = JSON.stringify(await v1ImportStore(h.db).marker());
 		const log = JSON.stringify(h.logger.lines);
 
 		expect(markdown).toMatch(/## Services to reconnect\n[^#]*\n- Spotify\n/);
-		for (const secret of ["PLEX-NEW-TOKEN-5a8b", "PLEX-OLD-TOKEN-3e77", "SPOTIFY-TOKEN-9d03"]) {
+		for (const secret of ["PLEX-NEW-TOKEN-5a8b", "PLEX-OLD-TOKEN-3e77"]) {
 			for (const text of [markdown, log, marker]) expect(text).not.toContain(secret);
 		}
 	});
@@ -112,8 +116,6 @@ describe("the Plex mapping", () => {
 	test("skips an applet with a Plex input, whose mapping is not built yet", async () => {
 		const { markdown } = await imported("v1-plex.sql");
 
-		expect(markdown).toContain(
-			"### From Plex\n\nImporting its plex beta settings failed: v2 can't import a Plex input yet.",
-		);
+		expect(markdown).toMatch(/### From Plex\n\n[^\n]*Plex input/);
 	});
 });

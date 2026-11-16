@@ -28,35 +28,27 @@ export const plexMapping: Mapping = {
 	plugin: "plex",
 	accepts: (name, version) =>
 		isLegacy(name, version) || (["plex", "plex beta"].includes(name) && version === "1.0"),
-	persistent: (v1) => {
-		const legacyPaths = ["plex_prepend", "ultrasonics_prepend"].some(
-			(name) => typeof v1[name] === "string" && v1[name] !== "",
-		);
-		return {
-			grant: {
-				service: "plex",
-				fields: {
-					serverUrl: textOf(v1, "server_url"),
-					token: textOf(v1, "plex_token"),
-					verifyTls: v1.check_ssl === undefined ? true : v1.check_ssl === "Yes",
-				},
+	persistent: (v1) => ({
+		grant: {
+			service: "plex",
+			fields: {
+				serverUrl: textOf(v1, "server_url"),
+				token: textOf(v1, "plex_token"),
+				verifyTls: v1.check_ssl === undefined ? true : v1.check_ssl === "Yes",
 			},
-			notes: legacyPaths ? [LEGACY_PATHS_NOTE] : [],
-		};
-	},
-	instance: (component, v1) => {
+		},
+	}),
+	instance: (component, v1, v1Persistent) => {
 		if (component !== "outputs") throw new Error("v2 can't import a Plex input yet.");
 		const settings: JsonObject = {};
 		if (typeof v1.section_id === "string" && v1.section_id !== "")
 			settings.library = libraryOf(v1.section_id);
-		const existing = v1.existing_playlists;
 		// Only the legacy output lacks the setting, and it always replaced a playlist's tracks.
-		settings.existing =
-			existing === undefined
-				? "update"
-				: typeof existing === "string"
-					? (EXISTING[existing] ?? existing)
-					: existing;
-		return { settings };
+		const existing = v1.existing_playlists ?? "Update";
+		settings.existing = typeof existing === "string" ? (EXISTING[existing] ?? existing) : existing;
+		const legacyPaths = ["plex_prepend", "ultrasonics_prepend"].some(
+			(name) => typeof v1Persistent?.[name] === "string" && v1Persistent[name] !== "",
+		);
+		return { settings, notes: legacyPaths ? [LEGACY_PATHS_NOTE] : [] };
 	},
 };
