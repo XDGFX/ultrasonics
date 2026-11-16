@@ -112,6 +112,8 @@ export interface ImportHarness {
 	v2Path: string;
 	db: OpenDatabase;
 	logger: ReturnType<typeof recordingLogger>;
+	/** The options {@link run} passes, for a test that calls `importWith` with its own mappings. */
+	options(overrides?: Partial<V1ImportOptions>): V1ImportOptions;
 	run(overrides?: Partial<V1ImportOptions>): ReturnType<typeof importWith>;
 }
 
@@ -133,26 +135,24 @@ export function useImport(): () => Promise<ImportHarness> {
 			rmSync(dataDir, { recursive: true, force: true });
 		};
 		const logger = recordingLogger();
+		const options = (overrides: Partial<V1ImportOptions> = {}): V1ImportOptions => ({
+			db,
+			plugins: fixturePlugins,
+			dataDir,
+			env: {},
+			authSource: "bootstrapped",
+			logger,
+			now: () => Date.UTC(2026, 10, 16, 2, 48, 52),
+			...overrides,
+		});
 		return {
 			dataDir,
 			v1Path: join(dataDir, "ultrasonics.db"),
 			v2Path,
 			db,
 			logger,
-			run: (overrides = {}) =>
-				importWith(
-					{
-						db,
-						plugins: fixturePlugins,
-						dataDir,
-						env: {},
-						authSource: "bootstrapped",
-						logger,
-						now: () => Date.UTC(2026, 10, 16, 2, 48, 52),
-						...overrides,
-					},
-					fixtureMappings,
-				),
+			options,
+			run: (overrides) => importWith(options(overrides), fixtureMappings),
 		};
 	};
 }
