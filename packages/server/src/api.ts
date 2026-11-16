@@ -110,6 +110,13 @@ export const AppletListing = Applet.extend({
 });
 export type AppletListing = z.infer<typeof AppletListing>;
 
+/** Run now's answer: the run it started, or `queued` behind the applet's current run (ADR-0026 §5). */
+export const RunNowResult = z.discriminatedUnion("kind", [
+	z.object({ kind: z.literal("started"), runId: z.string() }),
+	z.object({ kind: z.literal("queued") }),
+]);
+export type RunNowResult = z.infer<typeof RunNowResult>;
+
 export const RunSummary = z.object({
 	id: z.string(),
 	appletId: z.string(),

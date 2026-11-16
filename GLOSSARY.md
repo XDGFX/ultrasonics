@@ -97,6 +97,16 @@ component starting or finishing with its song counts, a rejection, an output's r
 A finished run's record is the run events it produced (ADR-0026).
 _Avoid_: "run log" for the whole stream; the log is only its log lines.
 
+**Journal** — A run's run events as its row stores them, with the log capped. Written while the
+run goes on, so an interrupted run keeps everything up to its last write (ADR-0026 §4).
+
+**Run hub** — The server's in-memory holder of each live run's events. It writes the journal and
+hands the events to every run stream following the run, then forgets the run once it ends.
+
+**Run stream** — The server-sent event stream of one run's events (`/api/runs/:id/events`). A
+reconnecting browser resumes after the last event it saw; a finished run replays its journal.
+_Avoid_: "websocket", "socket" — the stream only flows from server to browser.
+
 **Mode** — Whether a plugin operates on whole **playlists** or on a flat list of **songs**. A
 songs-mode plugin contributes a single synthetic playlist to the flow. Mixing many playlists
 into a songs-mode output is unsupported and should warn.

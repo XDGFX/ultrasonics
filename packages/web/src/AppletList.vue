@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { type AppletListing, type PluginInfo, useApi } from "./api-client.ts";
 import AppShell from "./AppShell.vue";
 import { formatWhen } from "./clock.ts";
+import { useLiveRefresh } from "./live-refresh.ts";
 import QueuedNote from "./QueuedNote.vue";
 import { useRunNow } from "./run-now.ts";
 import { sentence } from "./sentence.ts";
@@ -32,6 +33,13 @@ async function load() {
 onMounted(load);
 
 const running = computed(() => applets.value.filter((applet) => applet.state === "running").length);
+
+useLiveRefresh(
+	computed(() => applets.value.some((applet) => applet.state !== "idle")),
+	async () => {
+		applets.value = await api.applets.list();
+	},
+);
 
 function statusOf(applet: AppletListing): Exclude<Status, "idle"> {
 	if (applet.state !== "idle") return applet.state;

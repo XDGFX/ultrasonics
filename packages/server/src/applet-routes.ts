@@ -7,6 +7,7 @@ import { type Applet, AppletDraft, type AppletListing } from "./api.ts";
 import type { AppEnv } from "./app-env.ts";
 import type { Catalogue } from "./catalogue.ts";
 import { notFound } from "./error-response.ts";
+import type { RunStarter } from "./run-starter.ts";
 import { jsonBody, pathParams } from "./validation.ts";
 
 const IdParams = z.object({ id: z.string() });
@@ -59,8 +60,13 @@ function checkDraft(catalogue: Catalogue, draft: AppletDraft): ValidationIssue[]
 	return issues;
 }
 
-export function appletRoutes(deps: { db: OpenDatabase; catalogue: Catalogue; queue: RunQueue }) {
-	const { db, catalogue, queue } = deps;
+export function appletRoutes(deps: {
+	db: OpenDatabase;
+	catalogue: Catalogue;
+	queue: RunQueue;
+	runs: RunStarter;
+}) {
+	const { db, catalogue, queue, runs } = deps;
 	const storeOf = (accountId: string) => db.storeFor(accountId);
 
 	return new Hono<AppEnv>()
@@ -100,6 +106,14 @@ export function appletRoutes(deps: { db: OpenDatabase; catalogue: Catalogue; que
 			if (issues.length > 0) return c.json({ issues }, 422);
 			const row = await store.applets.update(id, draft);
 			return c.json(appletOf(row ?? notFound("The applet")));
+		})
+		.post("/:id/run", pathParams(IdParams), async (c) => {
+			// Disabled only stops the triggers; run now still runs it (spec #134, decision 10).
+			const { accountId } = c.var.session;
+			const { id } = c.req.valid("param");
+			if (!(await storeOf(accountId).applets.get(id))) notFound("The applet");
+			const result = await runs.submit(accountId, id, "manual");
+			return c.json(result ?? notFound("The applet"), 202);
 		})
 		.delete("/:id", pathParams(IdParams), async (c) => {
 			// Its runs go with it, by cascade (ADR-0009 §5).

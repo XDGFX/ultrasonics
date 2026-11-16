@@ -69,15 +69,99 @@ export const plexMixer = definePlugin({
 	},
 });
 
+const spotifyAuth = defineAuth({
+	service: "spotify",
+	flow: "oauth2-pkce",
+	scopes: ["playlist-read-private"],
+});
+
 export const spotify = definePlugin({
 	...handshake,
 	name: "spotify",
 	mode: ["playlists"],
-	auth: defineAuth({ service: "spotify", flow: "oauth2-pkce", scopes: ["playlist-read-private"] }),
+	auth: spotifyAuth,
 	instanceSettings: { inputs: z.object({}) },
 	run: {
 		async inputs() {
 			return { playlists: [] };
+		},
+	},
+});
+
+/** A run that has reached its hold: where it was told to keep files, any token, and its release. */
+export interface HeldRun {
+	configDir: string;
+	accessToken?: string;
+	release(): void;
+}
+
+/** Each run of `held` waits here until the test releases it, so a run can be held mid-flight. */
+export const holds = (() => {
+	const arrived: HeldRun[] = [];
+	const waiting: ((run: HeldRun) => void)[] = [];
+	return {
+		hold(configDir: string, accessToken?: string): Promise<void> {
+			const { promise, resolve } = Promise.withResolvers<void>();
+			const run = { configDir, ...(accessToken ? { accessToken } : {}), release: resolve };
+			const waiter = waiting.shift();
+			if (waiter) waiter(run);
+			else arrived.push(run);
+			return promise;
+		},
+		/** The next run to reach its hold, in arrival order. */
+		next(): Promise<HeldRun> {
+			const run = arrived.shift();
+			return run ? Promise.resolve(run) : new Promise((resolve) => waiting.push(resolve));
+		},
+	};
+})();
+
+/** An input that logs `lines` lines, then waits on {@link holds} before returning one playlist. */
+export const held = definePlugin({
+	...handshake,
+	name: "held",
+	mode: ["playlists"],
+	instanceSettings: { inputs: z.object({ lines: z.number().int().min(0).optional() }) },
+	run: {
+		async inputs(ctx) {
+			for (let line = 0; line < (ctx.instance.lines ?? 0); line++) ctx.log.info(`line ${line}`);
+			await holds.hold(ctx.configDir);
+			return { playlists: [{ name: "Held", songs: [{ title: "Song", artists: ["Artist"] }] }] };
+		},
+	},
+});
+
+/** A `spotify` input that resolves its access token, then holds with it on {@link holds}. */
+export const heldSpotify = definePlugin({
+	...handshake,
+	name: "held-spotify",
+	mode: ["playlists"],
+	auth: spotifyAuth,
+	instanceSettings: { inputs: z.object({}) },
+	run: {
+		async inputs(ctx) {
+			const { accessToken } = await ctx.auth.get();
+			await holds.hold(ctx.configDir, accessToken);
+			return { playlists: [] };
+		},
+	},
+});
+
+/** An output with no service, which accepts every playlist. */
+export const sink = definePlugin({
+	...handshake,
+	name: "sink",
+	mode: ["playlists"],
+	instanceSettings: { outputs: z.object({}) },
+	run: {
+		async outputs(ctx) {
+			return {
+				playlists: ctx.songs.playlists.map((_, playlist) => ({
+					status: "written" as const,
+					playlist,
+					unmatched: [],
+				})),
+			};
 		},
 	},
 });
@@ -92,4 +176,4 @@ export function registryOf(...plugins: Plugin[]): PluginRegistry {
 	);
 }
 
-export const fixtureRegistry = registryOf(source, plex, plexMixer, spotify);
+export const fixtureRegistry = registryOf(source, plex, plexMixer, spotify, held, sink);
