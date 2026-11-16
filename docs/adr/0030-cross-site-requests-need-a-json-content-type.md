@@ -1,6 +1,6 @@
 # ADR-0030 — Cross-site requests need a JSON content type
 
-**Status:** Proposed
+**Status:** Accepted (Cal, 2026-11-16)
 **Date:** 2026-11-16
 **Builds on:** ADR-0015 §3 and §6 (`bootstrapped` has no login; an exposed install gets a warning,
 not a block), ADR-0018 §5 (the inbound webhook)
@@ -27,6 +27,10 @@ authenticates by its token alone (ADR-0018 §5).
 page same-origin with the install, and this check doesn't stop that. It is accepted in the spirit of
 ADR-0015 §6: whoever runs `bootstrapped` chose it in writing, and the control that matters is that
 choice.
+
+**A WebSocket route would need its own guard.** Browsers open WebSockets cross-origin with no
+preflight, so the content-type check doesn't protect one. Any future WebSocket must reject an
+`Origin` that isn't the install's own.
 
 ## Considered options
 
