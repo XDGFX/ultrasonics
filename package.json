@@ -9,8 +9,9 @@
 	],
 	"scripts": {
 		"check": "biome check --write && bun run type-check",
-		"check:ci": "bun run lint:check && bun run format:check && bun run type-check && bun run cycle-check",
+		"check:ci": "bun run lint:check && bun run format:check && bun run type-check && bun run cycle-check && bun run native-check",
 		"cycle-check": "bun scripts/cycle-check.ts",
+		"native-check": "bun scripts/native-check.ts",
 		"lint:check": "biome check --formatter-enabled=false",
 		"format:check": "biome format",
 		"type-check": "tsc --noEmit -p tsconfig.json && bun run --cwd packages/web type-check",

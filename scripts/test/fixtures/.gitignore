@@ -1,0 +1,4 @@
+# The native-check fixtures are installed dependency trees, so keep every part of them.
+!node_modules/
+!build/
+!dist/

@@ -45,7 +45,7 @@ export class ManifestError extends Error {
 	}
 }
 
-async function readManifest<T>(path: string, schema: z.ZodType<T>): Promise<T> {
+export async function readManifest<T>(path: string, schema: z.ZodType<T>): Promise<T> {
 	try {
 		return schema.parse(JSON.parse(await Bun.file(path).text()));
 	} catch (cause) {

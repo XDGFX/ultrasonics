@@ -47,7 +47,7 @@
 	"overrides": [
 		{
 			"includes": ["packages/plugins/**"],
-			"plugins": ["./lint/no-unkillable-block.grit"]
+			"plugins": ["./lint/no-worker-unsafe-code.grit"]
 		},
 		{
 			"includes": [

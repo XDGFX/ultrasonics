@@ -1,0 +1,30 @@
+language js
+
+or {
+	or {
+		`Bun.sleepSync`,
+		`Atomics.wait`
+	} as $blocker where {
+		register_diagnostic(span=$blocker, message="A Worker's terminate() cannot interrupt this block (ADR-0010 constraint 9); await a timer instead.", severity="error")
+	},
+	`WebAssembly` as $wasm where {
+		register_diagnostic(span=$wasm, message="Plugins may not use WebAssembly: a terminated Worker can keep running Wasm (ADR-0031, mitigation 4).", severity="error")
+	},
+	`process.dlopen` as $dlopen where {
+		register_diagnostic(span=$dlopen, message="Plugins may not load native add-ons: terminate() during an add-on load aborts the server (ADR-0031, mitigation 4).", severity="error")
+	},
+	or {
+		JsModuleSource(),
+		`import($_)`,
+		`require($_)`
+	} as $source where {
+		or {
+			$source <: contains r"[\"'`]bun:ffi[\"'`]" where {
+				register_diagnostic(span=$source, message="Plugins may not import bun:ffi: native code is out of a Worker's terminate() reach (ADR-0031, mitigation 4).", severity="error")
+			},
+			$source <: contains r"[\"'`][^\"'`]*\.node[\"'`]" where {
+				register_diagnostic(span=$source, message="Plugins may not import a native add-on: terminate() during an add-on load aborts the server (ADR-0031, mitigation 4).", severity="error")
+			}
+		}
+	}
+}
