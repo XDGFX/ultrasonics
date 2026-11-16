@@ -1,0 +1,9 @@
+﻿#EXTM3U
+#EXTINF:1,Ada Lovelace - Quiet Room
+../music/tagged.mp3
+
+../music/tagged.m4a
+https://stream.example.com/live.mp3
+../music/gone.mp3
+../music/tagged.mp3
+../music/untagged.mp3
