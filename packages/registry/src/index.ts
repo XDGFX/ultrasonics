@@ -1,14 +1,19 @@
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 
+// Each `path` is resolved here, where the package is a dependency: under isolated installs the bare
+// specifier resolves from nowhere else (docs/research/worker-executor-preflight.md §8).
 /** Every official plugin, by name (ADR-0012 §4). */
 export const officialPlugins = {
 	deezer: {
-		path: "@ultrasonics/plugin-deezer",
+		path: import.meta.resolve("@ultrasonics/plugin-deezer"),
 		load: () => import("@ultrasonics/plugin-deezer"),
 	},
-	plex: { path: "@ultrasonics/plugin-plex", load: () => import("@ultrasonics/plugin-plex") },
+	plex: {
+		path: import.meta.resolve("@ultrasonics/plugin-plex"),
+		load: () => import("@ultrasonics/plugin-plex"),
+	},
 	spotify: {
-		path: "@ultrasonics/plugin-spotify",
+		path: import.meta.resolve("@ultrasonics/plugin-spotify"),
 		load: () => import("@ultrasonics/plugin-spotify"),
 	},
 } as const satisfies PluginRegistry;
