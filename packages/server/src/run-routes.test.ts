@@ -8,6 +8,7 @@ import {
 	type RunEvent,
 	toJournal,
 } from "@ultrasonics/core";
+import type { RunTrigger } from "@ultrasonics/db";
 import { AuthChallenge } from "@ultrasonics/plugin-sdk";
 import { startFakeAccounts } from "../test/fake-spotify-accounts.ts";
 import { heldSpotify, holds, registryOf, sink, spotify } from "../test/fixture-plugins.ts";
@@ -127,6 +128,60 @@ describe("run now", () => {
 			expect(logger.lines).toContain(`info: Applet ${id} was deleted before its queued run`),
 		);
 		expect(logger.lines.filter((line) => line.startsWith("error"))).toEqual([]);
+	});
+
+	describe("an applet disabled while a run is queued", () => {
+		/** Holds a run, queues `queued` behind it, then disables the applet and lets the run end. */
+		async function disableWithQueued(queued: RunTrigger[]) {
+			const app = await testApp();
+			const { call, runs, mine } = app;
+			const id = await createApplet(call);
+			await started(call, id);
+			const run = await holds.next();
+			for (const trigger of queued) {
+				expect(await runs.submit(mine, id, trigger)).toEqual({ kind: "queued" });
+			}
+			const disabled = await call("PUT", `/api/applets/${id}`, heldDraft([held()], false));
+			expect(disabled.status).toBe(200);
+			run.release();
+			return { ...app, id };
+		}
+
+		const runsOf = async (app: TestApp, id: string) =>
+			app.db.storeFor(app.mine).runs.listForApplet(id);
+
+		for (const trigger of ["schedule", "webhook"] as const) {
+			test(`drops a queued ${trigger} run, saying so`, async () => {
+				const app = await disableWithQueued([trigger]);
+				await eventually(() =>
+					expect(app.logger.lines).toContain(
+						`info: Applet ${app.id} was disabled before its queued ${trigger} run`,
+					),
+				);
+				await eventually(async () => expect(await stateOf(app.call, app.id)).toBe("idle"));
+				expect((await runsOf(app, app.id)).map((run) => run.trigger)).toEqual(["manual"]);
+			});
+		}
+
+		test("still starts a queued run now", async () => {
+			const app = await disableWithQueued(["manual"]);
+			(await holds.next()).release();
+			await eventually(async () =>
+				expect((await runsOf(app, app.id)).map((run) => run.trigger)).toEqual(["manual", "manual"]),
+			);
+		});
+
+		test("still starts a run now absorbed behind a queued scheduled run", async () => {
+			const app = await disableWithQueued(["schedule", "manual"]);
+			(await holds.next()).release();
+			// The queued run records the first trigger it absorbed (ADR-0018 §6).
+			await eventually(async () =>
+				expect((await runsOf(app, app.id)).map((run) => run.trigger).sort()).toEqual([
+					"manual",
+					"schedule",
+				]),
+			);
+		});
 	});
 
 	test("a drain lets the running run end and never starts the one queued behind it", async () => {
