@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"@ultrasonics/plugin-deezer": "workspace:*",
+		"@ultrasonics/plugin-local-music-database": "workspace:*",
 		"@ultrasonics/plugin-local-playlists": "workspace:*",
 		"@ultrasonics/plugin-log-tracks": "workspace:*",
 		"@ultrasonics/plugin-plex": "workspace:*",

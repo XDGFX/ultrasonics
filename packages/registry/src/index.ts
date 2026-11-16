@@ -8,6 +8,10 @@ export const officialPlugins = {
 		path: import.meta.resolve("@ultrasonics/plugin-deezer"),
 		load: () => import("@ultrasonics/plugin-deezer"),
 	},
+	"local-music-database": {
+		path: import.meta.resolve("@ultrasonics/plugin-local-music-database"),
+		load: () => import("@ultrasonics/plugin-local-music-database"),
+	},
 	"local-playlists": {
 		path: import.meta.resolve("@ultrasonics/plugin-local-playlists"),
 		load: () => import("@ultrasonics/plugin-local-playlists"),
