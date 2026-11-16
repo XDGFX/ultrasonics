@@ -18,6 +18,8 @@ services:
       context: .
       dockerfile: packages/server/Dockerfile
     restart: unless-stopped
+    # As in compose.yaml: Bun can't cap a plugin worker's heap, so this stops one taking the host's.
+    mem_limit: 1g
     # No `ports`: only the proxy, on the network below, can connect.
     networks:
       proxied:
