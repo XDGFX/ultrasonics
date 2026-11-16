@@ -15,6 +15,7 @@ import type { BootableAuthSource } from "./configuration.ts";
 import { DATABASE_FILE } from "./configuration.ts";
 import { parseIpRange } from "./ip-range.ts";
 import type { Logger } from "./logger.ts";
+import type { RunStarter } from "./run-starter.ts";
 import type { Scheduler } from "./scheduler.ts";
 
 /** A logger that keeps every line, prefixed with its level, for a test to read. */
@@ -67,6 +68,8 @@ export interface TestApp {
 	clock: { now: number };
 	/** The app's scheduler, never started: a test ticks it. */
 	scheduler: Scheduler;
+	/** The run starter every trigger shares, which a test drains as shutdown does. */
+	runs: RunStarter;
 	/** Runs `use` on a raw connection to the database file, bypassing every module. */
 	raw<T>(use: (sqlite: Sqlite) => T): T;
 	/**
@@ -124,7 +127,7 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 		if (!catalogue.ok) throw new Error(catalogue.problems.join("\n"));
 		const logger = recordingLogger();
 		const clock = { now: Date.now() };
-		const { app, scheduler } = await createApp({
+		const { app, scheduler, runs } = await createApp({
 			configuration: {
 				authSource: options.authSource ?? "bootstrapped",
 				trustedProxies: (options.trustedProxies ?? []).flatMap((text) => parseIpRange(text) ?? []),
@@ -150,6 +153,7 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 			logger,
 			clock,
 			scheduler,
+			runs,
 			raw,
 			listen: () => {
 				const server = Bun.serve({ port: 0, fetch: app.fetch });

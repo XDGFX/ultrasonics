@@ -52,7 +52,8 @@ export interface AppDeps {
 
 /**
  * The whole HTTP surface as one Hono app, built from its dependencies so tests drive it in-process
- * with `app.request()` (ADR-0024), and the scheduler, unstarted, that fires runs beside it.
+ * with `app.request()` (ADR-0024), the scheduler, unstarted, that fires runs beside it, and the run
+ * starter they share, which shutdown drains.
  */
 export async function createApp(deps: AppDeps) {
 	const { configuration, db, registry, catalogue, queue, logger } = deps;
@@ -111,7 +112,7 @@ export async function createApp(deps: AppDeps) {
 	}
 	// Built here because it submits through the same run starter as run now and the webhook.
 	const scheduler = createScheduler({ db, runs, now, logger });
-	return { app, scheduler };
+	return { app, scheduler, runs };
 }
 
 export type App = Awaited<ReturnType<typeof createApp>>["app"];

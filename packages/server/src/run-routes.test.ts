@@ -20,6 +20,7 @@ import {
 	RunSummary,
 } from "./api.ts";
 import { PkceFlow } from "./auth/pkce-flow.ts";
+import { SHUTDOWN_GRACE_MS } from "./boot.ts";
 import { bodyOf, eventually, runStreamOf, type TestApp, useTestApp } from "./test-support.ts";
 
 const testApp = useTestApp();
@@ -125,6 +126,22 @@ describe("run now", () => {
 			expect(logger.lines).toContain(`info: Applet ${id} was deleted before its queued run`),
 		);
 		expect(logger.lines.filter((line) => line.startsWith("error"))).toEqual([]);
+	});
+
+	test("a drain lets the running run end and never starts the one queued behind it", async () => {
+		const { call, db, mine, runs } = await testApp();
+		const id = await createApplet(call);
+		const runId = await started(call, id);
+		const run = await holds.next();
+		expect((await runNow(call, id)).kind).toBe("queued");
+
+		const drained = runs.drain(SHUTDOWN_GRACE_MS);
+		run.release();
+		await drained;
+
+		await eventually(async () => expect(await stateOf(call, id)).toBe("idle"));
+		const stored = await db.storeFor(mine).runs.listForApplet(id);
+		expect(stored.map((row) => [row.id, row.status])).toEqual([[runId, "succeeded"]]);
 	});
 
 	test("an unknown applet is a 404", async () => {

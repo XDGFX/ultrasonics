@@ -33,11 +33,18 @@ export interface RunStarter {
 		appletId: string,
 		trigger: RunTrigger,
 	): Promise<RunNowResult | undefined>;
+	/**
+	 * For shutdown: starts no more runs, so a queued one is lost as in a crash (ADR-0018 §4), and
+	 * waits up to `graceMs` for the running ones to end before ending the rest as `interrupted`.
+	 */
+	drain(graceMs: number): Promise<void>;
 }
 
 export function createRunStarter(deps: RunStarterDeps): RunStarter {
 	const { db, registry, catalogue, queue, hub, pkce, dataDir, logger } = deps;
 	const operator = operatorSettings(db);
+	const active = new Set<Promise<void>>();
+	let draining = false;
 
 	/** One run, from its row to its end on the row; `begun` learns its id, or that there is none. */
 	async function start(
@@ -46,6 +53,10 @@ export function createRunStarter(deps: RunStarterDeps): RunStarter {
 		trigger: RunTrigger,
 		begun: (runId: string | undefined) => void,
 	): Promise<void> {
+		if (draining) {
+			logger.info(`Dropped a queued run of applet ${appletId}: the server is stopping`);
+			return begun(undefined);
+		}
 		const store = db.storeFor(accountId);
 		const applet = await store.applets.get(appletId);
 		const runId = applet && (await store.runs.start(appletId, trigger));
@@ -91,15 +102,31 @@ export function createRunStarter(deps: RunStarterDeps): RunStarter {
 			const { promise: begun, resolve, reject } = Promise.withResolvers<string | undefined>();
 			// A queued run's id is awaited by nobody; its failure is logged below, not unhandled.
 			begun.catch(() => {});
-			const kind = queue.submit(appletId, trigger, (queued) =>
-				start(accountId, appletId, queued, resolve).catch((error) => {
+			const kind = queue.submit(appletId, trigger, (queued) => {
+				const run = start(accountId, appletId, queued, resolve).catch((error) => {
 					logger.error(`Starting a run of applet ${appletId} failed`, error);
 					reject(error);
-				}),
-			);
+				});
+				active.add(run);
+				return run.finally(() => active.delete(run));
+			});
 			if (kind === "queued") return { kind };
 			const runId = await begun;
 			return runId === undefined ? undefined : { kind, runId };
+		},
+
+		async drain(graceMs) {
+			draining = true;
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const graceOver = new Promise<"late">((resolve) => {
+				timer = setTimeout(() => resolve("late"), graceMs);
+			});
+			const ended = Promise.all(active).then(() => "ended" as const);
+			if ((await Promise.race([ended, graceOver])) === "late") {
+				logger.warn(`Interrupting ${active.size} run(s) still going at shutdown`);
+				await hub.interruptAll();
+			}
+			clearTimeout(timer);
 		},
 	};
 }
