@@ -8,8 +8,9 @@ COPY package.json bun.lock tsconfig.base.json tsconfig.json ./
 COPY packages ./packages
 RUN bun install --frozen-lockfile && bun run --cwd packages/web build
 
-# Holds the database, its pre-migration copies, the `auto` key file and plugin config dirs. Runs as
-# root, so a bind mount that Docker creates root-owned on a Linux host stays writable.
+# Holds `ultrasonics-v2.db`, its pre-migration copies, the `auto` key file and plugin config dirs,
+# beside any v1 `ultrasonics.db`, which v2 never changes. Runs as root, so a bind mount that Docker
+# creates root-owned on a Linux host stays writable.
 ENV DATA_DIR=/config PORT=5000
 VOLUME ["/config"]
 EXPOSE 5000

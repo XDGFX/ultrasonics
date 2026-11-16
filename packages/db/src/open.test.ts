@@ -2,7 +2,7 @@ import { SQLiteError } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
 import { cpSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { openDatabase } from "@ultrasonics/db";
+import { openDatabase, V1DatabaseError } from "@ultrasonics/db";
 import { authStore } from "@ultrasonics/db/auth-store";
 import { keyFrom, TEST_KEY_HEX, useTempDir, withRawSqlite } from "./test-support.ts";
 
@@ -40,6 +40,42 @@ describe("openDatabase", () => {
 		expect(await authStore(second).installAccount()).toBe(accountId);
 		second.close();
 		expect(countAccounts(path)).toBe(1);
+	});
+
+	describe("a v1 database", () => {
+		const V1_SCHEMA = readFileSync(
+			join(import.meta.dir, "..", "test", "fixtures", "v1-database.sql"),
+			"utf8",
+		);
+
+		function v1DatabaseAt(path: string) {
+			withRawSqlite(path, (raw) => raw.run(V1_SCHEMA));
+			return readFileSync(path);
+		}
+
+		test("is refused before anything touches it", async () => {
+			const path = join(tempDir(), "ultrasonics-v2.db");
+			const before = v1DatabaseAt(path);
+
+			const opening = key().then((encryptionKey) => openDatabase({ path, encryptionKey }));
+
+			await expect(opening).rejects.toBeInstanceOf(V1DatabaseError);
+			await expect(opening).rejects.toMatchObject({ path });
+			expect(readFileSync(path)).toEqual(before);
+			expect(readdirSync(tempDir())).toEqual(["ultrasonics-v2.db"]);
+		});
+
+		test("is opened once v2's migration table exists beside v1's names", async () => {
+			const path = join(tempDir(), "ultrasonics-v2.db");
+			(await openDatabase({ path, encryptionKey: await key() })).close();
+			withRawSqlite(path, (raw) =>
+				raw.run(
+					"CREATE TABLE ultrasonics (key TEXT, value TEXT); CREATE TABLE plugins (id INTEGER)",
+				),
+			);
+
+			(await openDatabase({ path, encryptionKey: await key() })).close();
+		});
 	});
 
 	describe("with a second migration pending", () => {

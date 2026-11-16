@@ -10,7 +10,8 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # The database, its key file and plugin data. Back this directory up.
+      # The database (ultrasonics-v2.db), its key file and plugin data. Back this directory up.
+      # Upgrading from v1 keeps v1's directory here: v2 reads v1's ultrasonics.db and never changes it.
       - ./config:/config
     environment:
       # Encrypts your service credentials at rest. `auto` keeps a generated key in

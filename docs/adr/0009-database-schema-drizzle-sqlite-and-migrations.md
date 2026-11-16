@@ -5,7 +5,8 @@
 **Refines:** ADR-0001 (names the "real ORM" it left unnamed), ADR-0003 and ADR-0007 (expresses the
 account scope concretely), ADR-0008 (spends the schema it handed over)
 **Amended by:** [ADR-0020](0020-outputs-return-a-result.md) — `runs` gains `results` and a defined set of outcomes;
-[ADR-0026](0026-run-events-are-server-sent-events.md) — structured log lines and a `stages` column
+[ADR-0026](0026-run-events-are-server-sent-events.md) — structured log lines and a `stages` column;
+[#173](https://github.com/XDGFX/ultrasonics/issues/173) — the file is `ultrasonics-v2.db` (§7)
 
 ## Context
 
@@ -206,7 +207,7 @@ worth covering, and it is not the stronger guarantee the word "encrypted" tends 
 
 ### 7. Migrations apply automatically on boot, after a file copy
 
-Pending migrations run at startup, preceded by copying `ultrasonics.db` to `ultrasonics.db.pre-<version>`,
+Pending migrations run at startup, preceded by copying `ultrasonics-v2.db` to `ultrasonics-v2.db.pre-<version>`,
 aborting the boot loudly on failure so the operator finds an intact database rather than a
 half-migrated one.
 
@@ -215,6 +216,11 @@ running `docker compose pull && up -d` it is a step that will not be taken, leav
 to start or running against a stale schema. This is the "minimise friction where reasonable" case —
 distinct from the over-read corrected in the Context above — and it is safe here precisely because §2
 chose SQLite: the pre-migration backup is a file copy.
+
+> **Amended by [#173](https://github.com/XDGFX/ultrasonics/issues/173):** v2's file is
+> `ultrasonics-v2.db`, because under Docker v1's `ultrasonics.db` sits in the same
+> directory and ADR-0017 §1 promises never to change it. The open step refuses a file that holds
+> v1's tables and no migration table, before taking any copy.
 
 **Backup pruning and downgrade/rollback are out of Phase 0.** Accumulating `.pre-` files are a minor
 disk annoyance; rollback needs a real answer not worth guessing before a single user is on v2.

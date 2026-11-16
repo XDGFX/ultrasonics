@@ -1,5 +1,6 @@
+import { Database } from "bun:sqlite";
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type AccountStore, openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
@@ -8,7 +9,7 @@ import { z } from "zod";
 import { fixtureRegistry, holds, plex, registryOf, source } from "../test/fixture-plugins.ts";
 import { type Applet, type AppletListing, type RunNowResult, RunSummary } from "./api.ts";
 import { type BootResult, boot } from "./boot.ts";
-import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL } from "./configuration.ts";
+import { DATABASE_FILE, HOSTED_LOGIN_REFUSAL, V1_DATABASE_FILE } from "./configuration.ts";
 import { eventually, installAccountOf, recordingLogger, runStreamOf } from "./test-support.ts";
 
 const KEY = "ab".repeat(32);
@@ -292,6 +293,40 @@ describe("boot", () => {
 			expect.objectContaining({ type: "stage", plugin: "held", state: "started" }),
 			expect.objectContaining({ type: "end", status: "interrupted" }),
 		]);
+	});
+
+	describe("beside a v1 install", () => {
+		/** Writes a database with v1's three tables at `name` in a fresh data directory. */
+		function withV1Database(name: string) {
+			const overrides = env({ ENCRYPTION_KEY: KEY, AUTH_SOURCE: "bootstrapped" });
+			const path = join(dataDir, name);
+			const v1 = new Database(path);
+			v1.run(`CREATE TABLE ultrasonics (key TEXT, value TEXT);
+				CREATE TABLE plugins (id INTEGER PRIMARY KEY, plugin TEXT, version FLOAT, settings TEXT);
+				CREATE TABLE applets (id TEXT PRIMARY KEY, lastrun TEXT, data TEXT);
+				INSERT INTO applets VALUES ('a1', 'False', '{}');`);
+			v1.close();
+			return { overrides, path, before: readFileSync(path) };
+		}
+
+		test("v1's database is left as it was", async () => {
+			const { overrides, path, before } = withV1Database(V1_DATABASE_FILE);
+			booted = await boot({ env: overrides, registry: fixtureRegistry, logger: recordingLogger() });
+
+			expect(booted.ok).toBe(true);
+			expect(readFileSync(path)).toEqual(before);
+			expect(existsSync(join(dataDir, DATABASE_FILE))).toBe(true);
+		});
+
+		test("a v1 database where v2's belongs refuses boot, naming the file", async () => {
+			const { overrides, path } = withV1Database(DATABASE_FILE);
+			booted = await boot({ env: overrides, registry: fixtureRegistry, logger: recordingLogger() });
+
+			if (booted.ok) throw new Error("booted on a v1 database");
+			expect(booted.problems).toEqual([
+				{ setting: "DATA_DIR", message: expect.stringContaining(path) },
+			]);
+		});
 	});
 
 	test("a configured boot listens and serves the API", async () => {

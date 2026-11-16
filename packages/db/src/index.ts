@@ -11,7 +11,7 @@ export {
 	resolveEncryptionKey,
 } from "./encryption-key.ts";
 export { JsonObject, JsonValue } from "./json.ts";
-export { type OpenOptions, openDatabase } from "./open.ts";
+export { type OpenOptions, openDatabase, V1DatabaseError } from "./open.ts";
 export {
 	type FinishedRunStatus,
 	Run,
