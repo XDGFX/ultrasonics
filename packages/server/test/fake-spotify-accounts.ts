@@ -23,6 +23,8 @@ export interface FakeAccounts {
 	refreshAnswers: RefreshAnswer[];
 	/** What the next code exchange grants; Spotify's own answer echoes the requested scope. */
 	grantScope?: string;
+	/** Holds the next refresh unanswered until the returned release is called. */
+	holdNextRefresh(): () => void;
 	/** Follows a `begin` URL as the browser would after consent: the return's query. */
 	consent(authoriseUrl: string, answer?: "allow" | "deny"): Promise<Record<string, string>>;
 	stop(): Promise<void>;
@@ -34,6 +36,7 @@ export function startFakeAccounts(): FakeAccounts {
 	const codes = new Map<string, Issued>();
 	const refreshTokens = new Map<string, string>(); // refresh token -> client id
 	let serial = 0;
+	let held: Promise<void> | undefined;
 	const next = (prefix: string) => `${prefix}-${++serial}-${crypto.randomUUID()}`;
 
 	const fake: FakeAccounts = {
@@ -41,6 +44,11 @@ export function startFakeAccounts(): FakeAccounts {
 		tokenRequests: [],
 		issued: [],
 		refreshAnswers: [],
+		holdNextRefresh() {
+			const { promise, resolve } = Promise.withResolvers<void>();
+			held = promise;
+			return resolve;
+		},
 		async consent(authoriseUrl, answer = "allow") {
 			const response = await fetch(`${authoriseUrl}&fake_answer=${answer}`, { redirect: "manual" });
 			const location = response.headers.get("Location");
@@ -122,6 +130,9 @@ export function startFakeAccounts(): FakeAccounts {
 					return tokens(clientId, fake.grantScope ?? issued.scope, true);
 				}
 				if (form.get("grant_type") === "refresh_token") {
+					const hold = held;
+					held = undefined;
+					await hold;
 					const answer = fake.refreshAnswers.shift() ?? "rotate";
 					if (answer === "server-error") return new Response("upstream", { status: 503 });
 					if (answer === "invalid_client") {

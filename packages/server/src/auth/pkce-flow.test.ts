@@ -8,10 +8,14 @@ import {
 	defineAuth,
 	isAuthFailure,
 } from "@ultrasonics/plugin-sdk";
-import { type FakeAccounts, startFakeAccounts } from "../../test/fake-spotify-accounts.ts";
+import {
+	type FakeAccounts,
+	type RefreshAnswer,
+	startFakeAccounts,
+} from "../../test/fake-spotify-accounts.ts";
 import { ConnectOutcome, ErrorBody, IssuesBody, RedirectUri, ServiceStatus } from "../api.ts";
 import { operatorSettings } from "../operator-settings.ts";
-import { bodyOf, type TestApp, useTestApp } from "../test-support.ts";
+import { bodyOf, eventually, type TestApp, useTestApp } from "../test-support.ts";
 import { createLocalAuthProvider } from "./local-auth-provider.ts";
 import {
 	ConnectRefusedError,
@@ -378,6 +382,36 @@ describe("resolve", () => {
 		expect((await h.db.storeFor(h.mine).credentials.get("spotify"))?.document).not.toHaveProperty(
 			"failed",
 		);
+	});
+
+	describe("a reconnect while a refresh is in flight", () => {
+		/** Holds a refresh open across a reconnect, then lets it finish with `answer`. */
+		async function reconnectDuringRefresh(answer: RefreshAnswer) {
+			const h = await harness();
+			await h.connect();
+			h.accounts.refreshAnswers.push(answer);
+			h.clock.now += 3600 * 1000;
+			const release = h.accounts.holdNextRefresh();
+			const requests = h.accounts.tokenRequests.length;
+			const resolving = (await h.provider()).resolve(spec);
+			await eventually(() => expect(h.accounts.tokenRequests).toHaveLength(requests + 1));
+
+			const returned = await h.accounts.consent((await begin(h)).authoriseUrl);
+			expect(await complete(h, returned)).toEqual({ kind: "connected" });
+			const reconnect = await h.db.storeFor(h.mine).credentials.get("spotify");
+			release();
+			return { h, resolved: await resolving, reconnect };
+		}
+
+		for (const answer of ["rotate", "invalid_grant"] as const) {
+			test(`a refresh answered ${answer} leaves the reconnect's grant`, async () => {
+				const { h, resolved, reconnect } = await reconnectDuringRefresh(answer);
+
+				expect(await h.db.storeFor(h.mine).credentials.get("spotify")).toEqual(reconnect);
+				expect(resolved).toEqual({ accessToken: reconnect?.document.accessToken });
+				expect(await h.statusOf()).toEqual({ kind: "connected" });
+			});
+		}
 	});
 
 	test("a 5xx on refresh fails without marking the grant", async () => {
