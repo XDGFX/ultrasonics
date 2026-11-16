@@ -4,6 +4,7 @@ import { type OpenDatabase, openDatabase } from "@ultrasonics/db";
 import { systemModule } from "@ultrasonics/db/system";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import { createApp } from "./app.ts";
+import { PkceFlow, type PkceFlowOptions } from "./auth/pkce-flow.ts";
 import { loadCatalogue } from "./catalogue.ts";
 import { type ConfigurationProblem, parseConfiguration } from "./configuration.ts";
 import type { Logger } from "./logger.ts";
@@ -15,6 +16,8 @@ export interface BootOptions {
 	/** Where data lives when `DATA_DIR` is unset: `/config` in the image, `./data` outside it. */
 	defaultDataDir?: string;
 	webRoot?: string;
+	/** Where `oauth2-pkce` services authorise; the real services' when absent. */
+	oauth?: PkceFlowOptions;
 }
 
 /** What refused boot: a setting, or `plugins` for a build bug in the catalogue. */
@@ -62,6 +65,7 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 			clientAddress: (c) => getConnInfo(c).remote.address,
 			logger,
 			...(options.webRoot ? { webRoot: options.webRoot } : {}),
+			...(options.oauth ? { pkce: new PkceFlow(options.oauth) } : {}),
 		});
 		const server = Bun.serve({ port: configuration.port, fetch: app.fetch });
 		logger.info(

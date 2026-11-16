@@ -1,0 +1,5 @@
+{
+	"items": [
+		{ "is_local": false, "item": { "type": "track", "id": "1zQZ1mRHoRN20R6F7yPZVH", "name": "Together", "artists": [{ "name": "Duo" }], "album": { "name": "Pair", "release_date": "2020-06-06" }, "duration_ms": 200000, "explicit": false, "external_ids": { "isrc": "USAAA2000006" } } }
+	]
+}

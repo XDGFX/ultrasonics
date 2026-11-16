@@ -126,7 +126,8 @@ describe("forwarded headers", () => {
 			from("192.168.1.20", { Host: "192.168.1.50:5000", ...forwarded }),
 		);
 		expect(await bodyOf(response, RedirectUri)).toEqual({
-			redirectUri: "http://192.168.1.50:5000/services/spotify",
+			// The plain LAN origin, so Spotify's rule sends the return to loopback (spec #136).
+			redirectUri: "http://127.0.0.1:5000/services/spotify",
 		});
 	});
 });

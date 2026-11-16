@@ -9,26 +9,57 @@ export const spotify: FakePlugin = {
 	description: "playlists from your spotify library",
 	version: "2.0.0",
 	mode: ["playlists"],
-	auth: defineAuth({ service: "spotify", flow: "oauth2-pkce", scopes: ["playlist-read-private"] }),
+	auth: defineAuth({
+		service: "spotify",
+		flow: "oauth2-pkce",
+		scopes: ["playlist-read-private", "playlist-read-collaborative", "user-library-read"],
+	}),
+	// The real plugin's union (spec #136), by link rather than by name.
 	instanceSettings: {
 		inputs: z.discriminatedUnion("source", [
 			withMeta(
 				z.object({
-					source: withMeta(z.literal("saved"), { title: "which playlists" }),
-					includeLiked: withMeta(z.boolean().default(false), { title: "include liked songs" }),
+					source: withMeta(z.literal("all"), { title: "which playlists" }),
+					exclude: withMeta(z.string().optional(), {
+						title: "leave out",
+						description: "playlist names to skip, comma-separated",
+					}),
 				}),
-				{ title: "all saved playlists", description: "every playlist in your library" },
+				{
+					title: "all my playlists",
+					description: "every playlist you own or collaborate on",
+					warning:
+						"playlists you only follow can't be read: spotify's development mode reads only playlists you own or collaborate on.",
+				},
 			),
 			withMeta(
 				z.object({
 					source: z.literal("chosen"),
-					names: withMeta(z.string().min(1), {
-						title: "playlist names",
-						description: "comma-separated, as they appear in spotify",
-						placeholder: "discover weekly, release radar",
+					playlists: withMeta(z.string().trim().min(1), {
+						title: "playlist links",
+						description:
+							"comma-separated. in spotify, choose share, then copy link to playlist. a uri or an id works too.",
+						placeholder: "https://open.spotify.com/playlist/…",
 					}),
 				}),
-				{ title: "playlists i choose", description: "only the playlists you name" },
+				{
+					title: "playlists i choose",
+					description:
+						"only the playlists you link. playlists you only follow can't be read in spotify's development mode.",
+				},
+			),
+			withMeta(
+				z.object({
+					source: z.literal("liked"),
+					name: withMeta(z.string().trim().min(1).default("liked songs"), {
+						title: "playlist name",
+					}),
+				}),
+				{
+					title: "liked songs",
+					description: "your liked songs, as one playlist",
+					warning: "songs come newest first, by when you liked them.",
+				},
 			),
 		]),
 	},

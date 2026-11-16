@@ -9,6 +9,7 @@ import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import type { z } from "zod";
 import { fixtureRegistry } from "../test/fixture-plugins.ts";
 import { type App, createApp } from "./app.ts";
+import type { PkceFlow } from "./auth/pkce-flow.ts";
 import { loadCatalogue } from "./catalogue.ts";
 import type { BootableAuthSource } from "./configuration.ts";
 import { DATABASE_FILE } from "./configuration.ts";
@@ -49,6 +50,7 @@ export interface TestAppOptions {
 	trustedProxies?: string[];
 	registry?: PluginRegistry;
 	webRoot?: string;
+	pkce?: PkceFlow;
 }
 
 export interface TestApp {
@@ -121,6 +123,7 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 			clientAddress: (c) => c.req.header(CLIENT_ADDRESS_HEADER),
 			logger,
 			webRoot: options.webRoot ?? join(dataDir, "no-web-root"),
+			...(options.pkce ? { pkce: options.pkce } : {}),
 		});
 		return {
 			app,
