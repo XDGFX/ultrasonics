@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, jest, spyOn, test } from "bun:test";
 import { mountApp, settle } from "../test/mount-app.ts";
 import type { AppletListing } from "./api-client.ts";
 import type { FakeApplet } from "./fake-api.ts";
+import { LIVE_REFRESH_MS } from "./live-refresh.ts";
 import { sentence, sentenceText } from "./sentence.ts";
 
 const base = {
@@ -135,5 +136,58 @@ describe("the applet list", () => {
 		await wrapper.get('[role="alertdialog"] button.confirm').trigger("click");
 		await settle();
 		expect(router.currentRoute.value.name).toBe("first-run");
+	});
+});
+
+describe("live status", () => {
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
+	const tick = async (times = 1) => {
+		for (let i = 0; i < times; i++) {
+			jest.advanceTimersByTime(LIVE_REFRESH_MS);
+			await settle();
+		}
+	};
+
+	test.each(["running", "queued"] as const)(
+		"re-fetches the list every interval while a row is %s, and stops once none is",
+		async (state) => {
+			jest.useFakeTimers();
+			const live = { ...base, id: "l", name: "live", state, ...ran("running", "l") };
+			const idle = { ...base, id: "s", name: "succeeded", ...ran("succeeded", "s") };
+			const { wrapper, api } = await mountApp("/", { applets: [live, idle] });
+			const list = spyOn(api.applets, "list");
+
+			await tick();
+			expect(list).toHaveBeenCalledTimes(1);
+
+			list.mockResolvedValue([{ ...live, state: "idle", ...ran("succeeded", "l") }, idle]);
+			await tick();
+			expect(row(wrapper, "live").get(".st").attributes("data-status")).toBe("succeeded");
+			await tick(3);
+			expect(list).toHaveBeenCalledTimes(2);
+		},
+	);
+
+	test("leaves a list with nothing running alone", async () => {
+		jest.useFakeTimers();
+		const { api } = await mountApp("/", { applets: applets.filter((a) => a.state === "idle") });
+		const list = spyOn(api.applets, "list");
+		await tick(3);
+		expect(list).not.toHaveBeenCalled();
+	});
+
+	test("stops re-fetching once the list is left", async () => {
+		jest.useFakeTimers();
+		const { wrapper, api, router } = await mountApp("/", { applets });
+		const list = spyOn(api.applets, "list");
+		await row(wrapper, "failed").get('a[title="edit"]').trigger("click");
+		await settle();
+		expect(router.currentRoute.value.name).not.toBe("applets");
+		list.mockClear();
+		await tick(3);
+		expect(list).not.toHaveBeenCalled();
 	});
 });

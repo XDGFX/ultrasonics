@@ -78,7 +78,7 @@ export function serviceRoutes(deps: ServiceRouteDeps) {
 		const context = createTestContext(
 			{
 				persistent: persistent.data as Record<string, unknown>,
-				configDir: await pluginConfigDir(dataDir, accountId, tester.name),
+				configDir: pluginConfigDir(dataDir, accountId, tester.name),
 			},
 			{
 				credentials: async () => candidate,

@@ -7,6 +7,7 @@ import { createApp } from "./app.ts";
 import { loadCatalogue } from "./catalogue.ts";
 import { type ConfigurationProblem, parseConfiguration } from "./configuration.ts";
 import type { Logger } from "./logger.ts";
+import { IDLE_TIMEOUT_SECONDS } from "./run-routes.ts";
 
 export interface BootOptions {
 	env: Record<string, string | undefined>;
@@ -57,13 +58,18 @@ export async function boot(options: BootOptions): Promise<BootResult> {
 		const app = await createApp({
 			configuration,
 			db,
+			registry: options.registry,
 			catalogue: catalogue.catalogue,
 			queue: createRunQueue(),
 			clientAddress: (c) => getConnInfo(c).remote.address,
 			logger,
 			...(options.webRoot ? { webRoot: options.webRoot } : {}),
 		});
-		const server = Bun.serve({ port: configuration.port, fetch: app.fetch });
+		const server = Bun.serve({
+			port: configuration.port,
+			fetch: app.fetch,
+			idleTimeout: IDLE_TIMEOUT_SECONDS,
+		});
 		logger.info(
 			`ultrasonics is listening on ${server.url} (AUTH_SOURCE=${configuration.authSource})`,
 		);

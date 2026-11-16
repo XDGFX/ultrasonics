@@ -3,7 +3,7 @@ import { afterEach, expect } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createRunQueue } from "@ultrasonics/core";
+import { createRunQueue, RunEvent } from "@ultrasonics/core";
 import { type OpenDatabase, openDatabase, resolveEncryptionKey } from "@ultrasonics/db";
 import type { PluginRegistry } from "@ultrasonics/plugin-sdk";
 import type { z } from "zod";
@@ -62,6 +62,11 @@ export interface TestApp {
 	logger: ReturnType<typeof recordingLogger>;
 	/** Runs `use` on a raw connection to the database file, bypassing every module. */
 	raw<T>(use: (sqlite: Sqlite) => T): T;
+	/**
+	 * Serves the app on a real port, for what `app.request()` can't hold open, and returns a `GET`
+	 * against it from a LAN address. The server stops after the test.
+	 */
+	listen(): (path: string, headers?: Record<string, string>) => Promise<Response>;
 	/** A request as the UI makes it: JSON in, from a LAN address unless the headers say otherwise. */
 	call(
 		method: string,
@@ -77,7 +82,9 @@ export interface TestApp {
  */
 export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 	const opened: { db: OpenDatabase; dir: string }[] = [];
+	const servers: Bun.Server<undefined>[] = [];
 	afterEach(() => {
+		for (const server of servers.splice(0)) server.stop(true);
 		for (const { db, dir } of opened.splice(0)) {
 			db.close();
 			rmSync(dir, { recursive: true, force: true });
@@ -105,7 +112,8 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 				.query("INSERT INTO accounts (id, created_at) VALUES (?, ?)")
 				.run(theirs, Date.now() + 1),
 		);
-		const catalogue = await loadCatalogue(options.registry ?? fixtureRegistry);
+		const registry = options.registry ?? fixtureRegistry;
+		const catalogue = await loadCatalogue(registry);
 		if (!catalogue.ok) throw new Error(catalogue.problems.join("\n"));
 		const logger = recordingLogger();
 		const app = await createApp({
@@ -116,6 +124,7 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 				dataDir,
 			},
 			db,
+			registry,
 			catalogue: catalogue.catalogue,
 			queue: createRunQueue(),
 			clientAddress: (c) => c.req.header(CLIENT_ADDRESS_HEADER),
@@ -130,6 +139,14 @@ export function useTestApp(): (options?: TestAppOptions) => Promise<TestApp> {
 			theirs,
 			logger,
 			raw,
+			listen: () => {
+				const server = Bun.serve({ port: 0, fetch: app.fetch });
+				servers.push(server);
+				return (path, headers = {}) =>
+					fetch(new URL(path, server.url), {
+						headers: { [CLIENT_ADDRESS_HEADER]: "192.168.1.20", ...headers },
+					});
+			},
 			call: async (method, path, body, headers = {}) =>
 				app.request(path, {
 					method,
@@ -154,4 +171,72 @@ export async function bodyOf<T extends z.ZodType>(
 	const text = await response.text();
 	expect(text).not.toMatch(/accountId|webhookTokenHash|account_id|webhook_token_hash/);
 	return schema.parse(JSON.parse(text));
+}
+
+/** A run stream read as the browser's `EventSource` reads it, checking each `id` is its `seq`. */
+export function runStreamOf(response: Response) {
+	if (!response.body) throw new Error("the run stream has no body");
+	const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+	let buffer = "";
+
+	/** The next event, or `undefined` once the server closes the stream. Comments are skipped. */
+	async function next(): Promise<RunEvent | undefined> {
+		for (;;) {
+			const end = buffer.indexOf("\n\n");
+			if (end >= 0) {
+				const lines = buffer.slice(0, end).split("\n");
+				buffer = buffer.slice(end + 2);
+				const field = (name: string) =>
+					lines
+						.find((line) => line.startsWith(`${name}:`))
+						?.slice(name.length + 1)
+						.trim();
+				const data = field("data");
+				if (data === undefined) continue;
+				const event = RunEvent.parse(JSON.parse(data));
+				expect(field("id")).toBe(String(event.seq));
+				return event;
+			}
+			const { value, done } = await reader.read();
+			if (done) return undefined;
+			buffer += value;
+		}
+	}
+
+	return {
+		next,
+		/** Every event up to and including the first that `stop` accepts. */
+		async until(stop: (event: RunEvent) => boolean): Promise<RunEvent[]> {
+			const events: RunEvent[] = [];
+			for (;;) {
+				const event = await next();
+				if (!event) throw new Error(`the stream closed after ${events.length} events`);
+				events.push(event);
+				if (stop(event)) return events;
+			}
+		},
+		/** Every event until the server closes the stream. */
+		async rest(): Promise<RunEvent[]> {
+			const events: RunEvent[] = [];
+			for (let event = await next(); event; event = await next()) events.push(event);
+			return events;
+		},
+		/**
+		 * Drops the connection, as a browser losing the network would. Not awaited: the cancel can
+		 * settle only once the server notices.
+		 */
+		close: () => void reader.cancel(),
+	};
+}
+
+/** Retries `check` until it stops throwing, for state another task writes. */
+export async function eventually(check: () => Promise<void> | void): Promise<void> {
+	for (let attempt = 0; ; attempt++) {
+		try {
+			return await check();
+		} catch (error) {
+			if (attempt >= 100) throw error;
+			await Bun.sleep(10);
+		}
+	}
 }

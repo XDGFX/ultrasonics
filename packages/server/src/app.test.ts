@@ -82,6 +82,8 @@ describe("scoping (ADR-0003 at the API)", () => {
 			["PUT", `/api/applets/${applet.id}`, draft],
 			["DELETE", `/api/applets/${applet.id}`],
 			["GET", `/api/runs/${runId}`],
+			["GET", `/api/runs/${runId}/events`],
+			["POST", `/api/applets/${applet.id}/run`],
 		] as const) {
 			const response = await call(method, path, body);
 			expect({ method, path, status: response.status }).toEqual({ method, path, status: 404 });
