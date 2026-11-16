@@ -10,6 +10,7 @@ test("each entry loads the plugin registered under its name", async () => {
 		"deezer",
 		"local-playlists",
 		"log-tracks",
+		"playlist-merger",
 		"plex",
 		"spotify",
 	]);

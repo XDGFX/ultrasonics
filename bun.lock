@@ -81,6 +81,15 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/playlist-merger": {
+      "name": "@ultrasonics/plugin-playlist-merger",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/matcher": "workspace:*",
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/plugins/plex": {
       "name": "@ultrasonics/plugin-plex",
       "version": "0.0.0",
@@ -106,6 +115,7 @@
         "@ultrasonics/plugin-deezer": "workspace:*",
         "@ultrasonics/plugin-local-playlists": "workspace:*",
         "@ultrasonics/plugin-log-tracks": "workspace:*",
+        "@ultrasonics/plugin-playlist-merger": "workspace:*",
         "@ultrasonics/plugin-plex": "workspace:*",
         "@ultrasonics/plugin-sdk": "workspace:*",
         "@ultrasonics/plugin-spotify": "workspace:*",
@@ -375,6 +385,8 @@
     "@ultrasonics/plugin-local-playlists": ["@ultrasonics/plugin-local-playlists@workspace:packages/plugins/local-playlists"],
 
     "@ultrasonics/plugin-log-tracks": ["@ultrasonics/plugin-log-tracks@workspace:packages/plugins/log-tracks"],
+
+    "@ultrasonics/plugin-playlist-merger": ["@ultrasonics/plugin-playlist-merger@workspace:packages/plugins/playlist-merger"],
 
     "@ultrasonics/plugin-plex": ["@ultrasonics/plugin-plex@workspace:packages/plugins/plex"],
 

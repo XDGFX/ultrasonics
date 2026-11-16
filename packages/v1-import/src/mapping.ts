@@ -3,6 +3,7 @@ import type { Component } from "@ultrasonics/plugin-sdk";
 import type { officialPlugins } from "@ultrasonics/registry";
 import { customFile } from "./mappings/custom-file.ts";
 import { logTracks } from "./mappings/log-tracks.ts";
+import { playlistMergerMapping } from "./mappings/playlist-merger.ts";
 import { plexMapping } from "./mappings/plex.ts";
 
 /** A v1 setting the importer could not convert, shown in the report beside why. */
@@ -49,4 +50,9 @@ export interface Mapping<Plugin extends string = keyof typeof officialPlugins> {
 }
 
 /** Every v1 plugin the importer maps. Until a plugin's ticket lands, its applets skip as unknown. */
-export const MAPPINGS: readonly Mapping[] = [customFile, logTracks, plexMapping];
+export const MAPPINGS: readonly Mapping[] = [
+	customFile,
+	logTracks,
+	playlistMergerMapping,
+	plexMapping,
+];
