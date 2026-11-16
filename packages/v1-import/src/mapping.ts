@@ -5,6 +5,7 @@ import { customFile } from "./mappings/custom-file.ts";
 import { lastfmMapping } from "./mappings/lastfm.ts";
 import { localPlaylists } from "./mappings/local-playlists.ts";
 import { logTracks } from "./mappings/log-tracks.ts";
+import { playlistMergerMapping } from "./mappings/playlist-merger.ts";
 import { plexMapping } from "./mappings/plex.ts";
 
 /** A v1 setting the importer could not convert, shown in the report beside why. */
@@ -56,5 +57,6 @@ export const MAPPINGS: readonly Mapping[] = [
 	lastfmMapping,
 	localPlaylists,
 	logTracks,
+	playlistMergerMapping,
 	plexMapping,
 ];

@@ -24,6 +24,10 @@ export const officialPlugins = {
 		path: import.meta.resolve("@ultrasonics/plugin-log-tracks"),
 		load: () => import("@ultrasonics/plugin-log-tracks"),
 	},
+	"playlist-merger": {
+		path: import.meta.resolve("@ultrasonics/plugin-playlist-merger"),
+		load: () => import("@ultrasonics/plugin-playlist-merger"),
+	},
 	plex: {
 		path: import.meta.resolve("@ultrasonics/plugin-plex"),
 		load: () => import("@ultrasonics/plugin-plex"),
