@@ -17,20 +17,81 @@ export const ServiceTier = z.object({
 });
 export type ServiceTier = z.output<typeof ServiceTier>;
 
+/**
+ * Each lookup already made, keyed `service:ISRC`, with `null` for a track the service lacks; the
+ * collector's progress, so a rerun asks no service twice.
+ */
+export const Lookups = z.record(z.string(), Song.nullable());
+export type Lookups = z.output<typeof Lookups>;
+
 /** A request a service refused or failed, which would otherwise read as a missing track. */
 export class ServiceRequestError extends Error {
-	constructor(service: ServiceName, status: number) {
-		super(`${service} answered ${status}; stopping rather than counting cases as missing.`);
+	constructor(
+		service: ServiceName,
+		status: number,
+		/** The wait a rate-limited service asked for, past the collector's cap. */
+		readonly retryAfterMs?: number,
+	) {
+		const asked = retryAfterMs === undefined ? "" : `, asking to wait ${retryAfterMs / 1000} s`;
+		super(`${service} answered ${status}${asked}; stopping rather than counting cases as missing.`);
 		this.name = "ServiceRequestError";
 	}
 }
 
 type Env = Record<string, string | undefined>;
 
+/** The longest a single request may wait out rate limits before the collector gives up. */
+export const maxRateLimitWaitMs = 10 * 60 * 1000;
+
+/** The first wait when a service limits without saying how long; it doubles on each retry. */
+export const initialBackoffMs = 5000;
+
 export interface CollectOptions {
 	/** A pause after each case, to stay inside the services' rate limits. */
 	pauseMs?: number;
 	now?: () => number;
+	sleep?: (ms: number) => Promise<void>;
+	/** Where waits are reported; stderr by default. */
+	log?: (message: string) => void;
+	/** Lookups from an earlier run, reused and added to in place. */
+	lookups?: Lookups;
+	/** Called after each case, to save `lookups`. */
+	checkpoint?: () => Promise<void>;
+}
+
+type Send = () => Promise<Response>;
+type Waiting = Required<Pick<CollectOptions, "sleep" | "log">>;
+
+/**
+ * Sends a request, waiting out each rate limit and retrying, so a limited lookup is never read as
+ * a missing track. `limited` reports a limit the service signals in the body rather than a 429.
+ */
+function requestWithRetry(
+	service: ServiceName,
+	{ sleep, log }: Waiting,
+	limited: (body: unknown) => boolean = () => false,
+) {
+	return async (send: Send): Promise<unknown> => {
+		let waited = 0;
+		let backoff = initialBackoffMs;
+		for (;;) {
+			const response = await send();
+			if (response.status !== 429) {
+				if (!response.ok) throw new ServiceRequestError(service, response.status);
+				const body = await response.json();
+				if (!limited(body)) return body;
+			}
+			// A zero or unreadable Retry-After would retry at once, forever; back off instead.
+			const seconds = Number(response.headers.get("Retry-After"));
+			const asked = Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : undefined;
+			const wait = asked ?? backoff;
+			if (asked === undefined) backoff *= 2;
+			if (waited + wait > maxRateLimitWaitMs) throw new ServiceRequestError(service, 429, wait);
+			log(`${service} is rate-limiting; waiting ${Math.ceil(wait / 1000)} s before retrying.`);
+			await sleep(wait);
+			waited += wait;
+		}
+	};
 }
 
 interface Service {
@@ -67,26 +128,32 @@ function song(fields: z.input<typeof Song>): Song | undefined {
 	return Song.safeParse(fields).data;
 }
 
-async function json(service: ServiceName, response: Response): Promise<unknown> {
-	if (!response.ok) throw new ServiceRequestError(service, response.status);
-	return response.json();
-}
+// Deezer signals its quota with 200 and an error body of code 4.
+const DeezerQuota = z.object({ error: z.object({ code: z.literal(4) }) });
 
-function spotify(env: Env, fetcher: typeof fetch, now: () => number): Service | undefined {
+function spotify(
+	env: Env,
+	fetcher: typeof fetch,
+	now: () => number,
+	waiting: Waiting,
+): Service | undefined {
 	const { SPOTIFY_CLIENT_ID: id, SPOTIFY_CLIENT_SECRET: secret } = env;
 	if (!id || !secret) return undefined;
+	const request = requestWithRetry("spotify", waiting);
 	let token: { value: string; expiresAt: number } | undefined;
 	const bearer = async () => {
 		if (!token || now() >= token.expiresAt) {
-			const response = await fetcher("https://accounts.spotify.com/api/token", {
-				method: "POST",
-				headers: {
-					Authorization: `Basic ${btoa(`${id}:${secret}`)}`,
-					"Content-Type": "application/x-www-form-urlencoded",
-				},
-				body: "grant_type=client_credentials",
-			});
-			const granted = SpotifyToken.parse(await json("spotify", response));
+			const body = await request(() =>
+				fetcher("https://accounts.spotify.com/api/token", {
+					method: "POST",
+					headers: {
+						Authorization: `Basic ${btoa(`${id}:${secret}`)}`,
+						"Content-Type": "application/x-www-form-urlencoded",
+					},
+					body: "grant_type=client_credentials",
+				}),
+			);
+			const granted = SpotifyToken.parse(body);
 			token = { value: granted.access_token, expiresAt: now() + granted.expires_in * 1000 };
 		}
 		return token.value;
@@ -97,7 +164,7 @@ function spotify(env: Env, fetcher: typeof fetch, now: () => number): Service | 
 			const url = new URL("https://api.spotify.com/v1/search");
 			url.search = new URLSearchParams({ q: `isrc:${isrc}`, type: "track", limit: "1" }).toString();
 			const headers = { Authorization: `Bearer ${await bearer()}` };
-			const body = await json("spotify", await fetcher(url, { headers }));
+			const body = await request(() => fetcher(url, { headers }));
 			const track = SpotifySearch.safeParse(body).data?.tracks.items[0];
 			return (
 				track &&
@@ -115,12 +182,17 @@ function spotify(env: Env, fetcher: typeof fetch, now: () => number): Service | 
 	};
 }
 
-function deezer(fetcher: typeof fetch): Service {
+function deezer(fetcher: typeof fetch, waiting: Waiting): Service {
+	const request = requestWithRetry(
+		"deezer",
+		waiting,
+		(body) => DeezerQuota.safeParse(body).success,
+	);
 	return {
 		name: "deezer",
 		async find(isrc) {
 			// Deezer answers a missing track with 200 and an error body, which fails the parse.
-			const body = await json("deezer", await fetcher(`https://api.deezer.com/track/isrc:${isrc}`));
+			const body = await request(() => fetcher(`https://api.deezer.com/track/isrc:${isrc}`));
 			const track = DeezerTrack.safeParse(body).data;
 			return (
 				track &&
@@ -155,13 +227,30 @@ export async function collectServiceTier(
 	cases: readonly MatchCase[],
 	env: Env,
 	fetcher: typeof fetch,
-	{ pauseMs = 0, now = Date.now }: CollectOptions = {},
+	{
+		pauseMs = 0,
+		now = Date.now,
+		sleep = (ms) => Bun.sleep(ms),
+		log = (message) => console.error(message),
+		lookups = {},
+		checkpoint = async () => {},
+	}: CollectOptions = {},
 ): Promise<ServiceTier> {
-	const keyed = spotify(env, fetcher, now);
+	const waiting = { sleep, log };
+	const keyed = spotify(env, fetcher, now, waiting);
 	// With one service left there is no cross-service pair to make.
 	if (!keyed) return { cases: [], dropped: 0, skipped: ["spotify"] };
-	const services = [keyed, deezer(fetcher)];
+	const services = [keyed, deezer(fetcher, waiting)];
 	const tier: ServiceTier = { cases: [], dropped: 0, skipped: [] };
+	let asked = false;
+	const find = async (service: Service, isrc: string) => {
+		const key = `${service.name}:${isrc}`;
+		if (!(key in lookups)) {
+			lookups[key] = (await service.find(isrc)) ?? null;
+			asked = true;
+		}
+		return lookups[key] ?? undefined;
+	};
 
 	const sources = cases.flatMap((c) =>
 		c.provenance.source === "musicbrainz" ? [{ ...c, provenance: c.provenance }] : [],
@@ -170,9 +259,13 @@ export async function collectServiceTier(
 		const { a: sideA, b: sideB } = c.provenance;
 		const serviceA = services[index % services.length] as Service;
 		const serviceB = services[(index + 1) % services.length] as Service;
-		const a = sideA.isrc ? await serviceA.find(sideA.isrc) : undefined;
-		const b = sideB.isrc && a ? await serviceB.find(sideB.isrc) : undefined;
-		if (pauseMs) await Bun.sleep(pauseMs);
+		asked = false;
+		const a = sideA.isrc ? await find(serviceA, sideA.isrc) : undefined;
+		const b = sideB.isrc && a ? await find(serviceB, sideB.isrc) : undefined;
+		if (asked) {
+			await checkpoint();
+			if (pauseMs) await sleep(pauseMs);
+		}
 		if (!a?.isrc || !b?.isrc) {
 			tier.dropped++;
 			continue;

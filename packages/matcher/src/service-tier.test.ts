@@ -5,7 +5,10 @@ import { join } from "node:path";
 import { MatchCase, type MatchCaseInput } from "./match-case.ts";
 import {
 	collectServiceTier,
+	initialBackoffMs,
+	Lookups,
 	loadServiceTier,
+	maxRateLimitWaitMs,
 	ServiceRequestError,
 	type ServiceTier,
 } from "./service-tier.ts";
@@ -161,8 +164,8 @@ describe("collectServiceTier", () => {
 	});
 
 	test("stops on a failed request rather than counting the case as missing", async () => {
-		const limited = (async () => new Response("", { status: 429 })) as unknown as typeof fetch;
-		await expect(collectServiceTier([positive], keys, limited)).rejects.toThrow(
+		const failing = (async () => new Response("", { status: 500 })) as unknown as typeof fetch;
+		await expect(collectServiceTier([positive], keys, failing)).rejects.toThrow(
 			ServiceRequestError,
 		);
 	});
@@ -196,6 +199,49 @@ describe("collectServiceTier", () => {
 	});
 });
 
+describe("collectServiceTier resuming", () => {
+	test("a rerun with the saved lookups asks no service again", async () => {
+		const lookups: Lookups = {};
+		const first = await collectServiceTier(
+			[positive, sameTitle, missingOnDeezer],
+			keys,
+			fakeFetch(),
+			{
+				lookups,
+			},
+		);
+		const calls: string[] = [];
+		const again = await collectServiceTier(
+			[positive, sameTitle, missingOnDeezer],
+			keys,
+			fakeFetch(calls),
+			{ lookups: Lookups.parse(JSON.parse(JSON.stringify(lookups))) },
+		);
+		expect(calls).toEqual([]);
+		expect(again).toEqual(first);
+	});
+
+	test("saves progress after each case, so a stopped run keeps what it fetched", async () => {
+		const saved: string[][] = [];
+		const lookups: Lookups = {};
+		const fetcher = fakeFetch();
+		let searches = 0;
+		// The second case asks Spotify for its side B, which fails.
+		const stopping = (async (input: string | URL | Request, init?: RequestInit) => {
+			if (new URL(String(input)).hostname === "api.spotify.com" && searches++ === 1)
+				return new Response("", { status: 500 });
+			return fetcher(input, init);
+		}) as typeof fetch;
+		await expect(
+			collectServiceTier([positive, sameTitle], keys, stopping, {
+				lookups,
+				checkpoint: async () => void saved.push(Object.keys(lookups)),
+			}),
+		).rejects.toThrow(ServiceRequestError);
+		expect(saved).toEqual([["spotify:GBAAA0000001", "deezer:GBAAA0000001"]]);
+	});
+});
+
 describe("loadServiceTier", () => {
 	test("reports a missing cache rather than an empty tier", async () => {
 		const dir = await mkdtemp(join(tmpdir(), "service-tier-"));
@@ -208,5 +254,97 @@ describe("loadServiceTier", () => {
 		const tier: ServiceTier = await collectServiceTier([positive], keys, fakeFetch());
 		await writeFile(file, JSON.stringify(tier));
 		expect(await loadServiceTier(file)).toEqual({ kind: "loaded", tier });
+	});
+});
+
+/** Answers each request with the next queued response, then defers to `fallback`. */
+function queued(responses: Response[], fallback: typeof fetch, calls: string[] = []): typeof fetch {
+	return (async (input: string | URL | Request, init?: RequestInit) => {
+		const next = responses.shift();
+		if (next) {
+			calls.push(new URL(String(input)).hostname);
+			return next;
+		}
+		return fallback(input, init);
+	}) as typeof fetch;
+}
+
+const tooMany = (retryAfter?: string) =>
+	new Response("", { status: 429, headers: retryAfter ? { "Retry-After": retryAfter } : {} });
+
+describe("collectServiceTier when rate-limited", () => {
+	test("waits as long as Retry-After asks, then retries the same request", async () => {
+		const waits: number[] = [];
+		const tier = await collectServiceTier([positive], keys, queued([tooMany("2")], fakeFetch()), {
+			sleep: async (ms) => void waits.push(ms),
+			log: () => {},
+		});
+		expect(waits).toEqual([2000]);
+		expect(tier.cases).toHaveLength(1);
+		expect(tier.dropped).toBe(0);
+	});
+
+	test("backs off, doubling, when Retry-After is missing or zero", async () => {
+		const waits: number[] = [];
+		const limited = queued([tooMany(), tooMany("0")], fakeFetch());
+		await collectServiceTier([positive], keys, limited, {
+			sleep: async (ms) => void waits.push(ms),
+			log: () => {},
+		});
+		expect(waits).toEqual([initialBackoffMs, initialBackoffMs * 2]);
+	});
+
+	test("stops rather than wait longer than the cap for one request", async () => {
+		const waits: number[] = [];
+		const seconds = String(maxRateLimitWaitMs / 1000 + 1);
+		const limited = queued([tooMany(seconds)], fakeFetch());
+		const error = await collectServiceTier([positive], keys, limited, {
+			sleep: async (ms) => void waits.push(ms),
+			log: () => {},
+		}).catch((e: unknown) => e);
+		expect(error).toBeInstanceOf(ServiceRequestError);
+		expect((error as ServiceRequestError).retryAfterMs).toBe(maxRateLimitWaitMs + 1000);
+		expect(waits).toEqual([]);
+	});
+
+	test("stops once repeated backoff for one request would pass the cap", async () => {
+		const forever = (async () => tooMany()) as unknown as typeof fetch;
+		let waited = 0;
+		await expect(
+			collectServiceTier([positive], keys, forever, {
+				sleep: async (ms) => {
+					waited += ms;
+				},
+				log: () => {},
+			}),
+		).rejects.toThrow(ServiceRequestError);
+		expect(waited).toBeLessThanOrEqual(maxRateLimitWaitMs);
+	});
+
+	test("retries a Deezer quota error rather than counting the track as missing", async () => {
+		const calls: string[] = [];
+		const quota = Response.json({ error: { type: "Exception", code: 4 } });
+		// Positive's side B is fetched from Deezer, after Spotify's token and search.
+		const fetcher = fakeFetch(calls);
+		let deezerCalls = 0;
+		const once = (async (input: string | URL | Request, init?: RequestInit) => {
+			if (new URL(String(input)).hostname === "api.deezer.com" && deezerCalls++ === 0) return quota;
+			return fetcher(input, init);
+		}) as typeof fetch;
+		const tier = await collectServiceTier([positive], keys, once, {
+			sleep: async () => {},
+			log: () => {},
+		});
+		expect(deezerCalls).toBe(2);
+		expect(tier.dropped).toBe(0);
+	});
+
+	test("reports each wait", async () => {
+		const messages: string[] = [];
+		await collectServiceTier([positive], keys, queued([tooMany("1"), tooMany()], fakeFetch()), {
+			sleep: async () => {},
+			log: (message) => void messages.push(message),
+		});
+		expect(messages).toHaveLength(2);
 	});
 });
