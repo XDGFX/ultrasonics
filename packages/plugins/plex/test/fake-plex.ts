@@ -34,6 +34,10 @@ export interface FakePlex {
 	existingPlaylist(): string[];
 	/** The rating keys the playlist `key` holds now, in order: none for a key it doesn't hold. */
 	playlist(key: string): string[];
+	/** The ordinary audio playlists the fake has created, by key, with their titles. */
+	created(): { key: string; title: string }[];
+	/** Deletes the playlist `key` as a user would in Plex: it leaves the list and its items go. */
+	deletePlaylist(key: string): void;
 	stop(): Promise<void>;
 }
 
@@ -106,6 +110,31 @@ function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | unde
 	const playlists = new Map<string, PlaylistItem[]>([[existingPlaylistKey, seeded]]);
 	let nextItemId = Math.max(...seeded.map((item) => item.playlistItemID)) + 1;
 	let nextPlaylistKey = Number(firstCreatedKey);
+	const created = new Map<string, string>();
+	const deleted = new Set<string>();
+
+	/** `playlists.json`, less what was deleted, plus what was created, in `playlist-created.json`'s shape. */
+	async function listing(): Promise<Response> {
+		const recorded = (await fixture("playlists.json")) as {
+			MediaContainer: { Metadata: { ratingKey: string }[] };
+		};
+		const template = (
+			(await fixture("playlist-created.json")) as {
+				MediaContainer: { Metadata: Record<string, unknown>[] };
+			}
+		).MediaContainer.Metadata[0];
+		const metadata = [
+			...recorded.MediaContainer.Metadata.filter((playlist) => !deleted.has(playlist.ratingKey)),
+			...[...created].map(([key, title]) => ({
+				...template,
+				ratingKey: key,
+				key: `/playlists/${key}/items`,
+				title,
+				leafCount: playlists.get(key)?.length ?? 0,
+			})),
+		];
+		return container(metadata);
+	}
 
 	/** Adds what Plex would of `keys` to `items`, and answers how many it added. */
 	async function add(items: PlaylistItem[], keys: string[]): Promise<number> {
@@ -168,11 +197,12 @@ function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | unde
 				? container([{ ...track, librarySectionID: music.section }])
 				: new Response("Not Found", { status: 404 });
 		}
-		if (method === "GET" && path === "/playlists") return fixtureResponse("playlists.json");
+		if (method === "GET" && path === "/playlists") return listing();
 		if (method === "POST" && path === "/playlists") {
 			const key = String(nextPlaylistKey++);
 			const items: PlaylistItem[] = [];
 			playlists.set(key, items);
+			created.set(key, query.get("title") ?? "");
 			await add(items, uriKeys(query));
 			// Plex's create answer carries no counts (`playlist-created.json`).
 			return playlistAnswer("playlist-created.json", key, query.get("title") ?? "", {});
@@ -214,7 +244,13 @@ function recordedServer(resolve: (ratingKey: string) => Promise<PlexTrack | unde
 	}
 
 	const keys = (key: string) => (playlists.get(key) ?? []).map((item) => item.ratingKey);
-	return { answer, keys };
+	const createdPlaylists = () => [...created].map(([key, title]) => ({ key, title }));
+	function deletePlaylist(key: string) {
+		playlists.delete(key);
+		created.delete(key);
+		deleted.add(key);
+	}
+	return { answer, keys, created: createdPlaylists, deletePlaylist };
 }
 
 /** Starts the fake on a free local port. `routes` are tried in order before the recorded server. */
@@ -274,6 +310,8 @@ export function startFakePlex(routes: Route[] = []): FakePlex {
 		requests,
 		existingPlaylist: () => recorded.keys(existingPlaylistKey),
 		playlist: recorded.keys,
+		created: recorded.created,
+		deletePlaylist: recorded.deletePlaylist,
 		stop: () => server.stop(true),
 	};
 }

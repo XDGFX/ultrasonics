@@ -1,4 +1,7 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
 	createRunContext,
 	createTestContext,
@@ -33,9 +36,15 @@ function grant(credentials: Record<string, unknown>): unknown {
 }
 
 let fake: FakePlex | undefined;
+/** The plugin's config directory; every run in one test shares it, as one install's runs do. */
+let configDir: string;
+beforeEach(() => {
+	configDir = mkdtempSync(join(tmpdir(), "ultrasonics-plex-test-"));
+});
 afterEach(async () => {
 	await fake?.stop();
 	fake = undefined;
+	rmSync(configDir, { recursive: true, force: true });
 });
 
 function serve(...routes: Route[]) {
@@ -53,14 +62,15 @@ async function runOutput(
 	songs: SongDictInput,
 	instance: Record<string, unknown> = {},
 	credentials: Record<string, unknown> = { serverUrl: server.url, token: fakeToken },
+	appletId = "applet",
 ): Promise<Run> {
 	const logs: LogEntry[] = [];
 	const payload = RunPayload.parse({
 		component: "outputs",
-		appletId: "applet",
+		appletId,
 		runId: "run",
 		deadlineMs: Date.now() + 60_000,
-		configDir: "/nonexistent",
+		configDir,
 		persistent: {},
 		instance: plex.instanceSettings.outputs.parse(instance),
 		songs,
@@ -258,6 +268,199 @@ describe("writing playlists", () => {
 		const sent = writes(server);
 		expect(sent.map((request) => request.method)).toEqual(["POST", "PUT"]);
 		expect(sent.flatMap((request) => keysOf(request.query.get("uri")))).toEqual(keys);
+	});
+});
+
+describe("linking source playlists to Plex playlists", () => {
+	const modes = ["append", "update"] as const;
+
+	/** Two source playlists both called `name`, with their own ids, one song each. */
+	function sameName(name: string): SongDictInput {
+		return {
+			playlists: [
+				{ name, id: { spotify: "a" }, songs: [sneakySnitch] },
+				{ name, id: { spotify: "b" }, songs: [fluffingADuck] },
+			],
+		};
+	}
+
+	for (const mode of modes) {
+		test(`two source playlists sharing a name not in Plex each get their own (${mode})`, async () => {
+			const server = serve();
+			const { result, logs } = await runOutput(server, sameName("Mix"), { existing: mode });
+
+			expect(result.playlists).toEqual([
+				{ status: "written", playlist: 0, unmatched: [] },
+				{ status: "written", playlist: 1, unmatched: [] },
+			]);
+			const [first, second] = server.created();
+			expect(server.created().map((created) => created.title)).toEqual(["Mix", "Mix"]);
+			expect(server.playlist(first?.key ?? "")).toEqual([sneakySnitchKey]);
+			expect(server.playlist(second?.key ?? "")).toEqual([fluffingADuckKey]);
+			expect(warnings(logs)).toEqual([expect.stringContaining('"Mix"')]);
+		});
+
+		test(`two source playlists sharing an existing Plex title: the first takes it, the second gets its own (${mode})`, async () => {
+			const server = serve();
+			const before = server.existingPlaylist();
+			// The existing playlist holds Sneaky Snitch, not Fluffing a Duck.
+			const { result, logs } = await runOutput(
+				server,
+				{
+					playlists: [
+						{ name: existing.title, id: { spotify: "a" }, songs: [fluffingADuck] },
+						{ name: existing.title, id: { spotify: "b" }, songs: [sneakySnitch] },
+					],
+				},
+				{ existing: mode },
+			);
+
+			expect(result.playlists).toEqual([
+				{ status: "written", playlist: 0, unmatched: [] },
+				{ status: "written", playlist: 1, unmatched: [] },
+			]);
+			expect(server.existingPlaylist()).toEqual(
+				mode === "append" ? [...before, fluffingADuckKey] : [fluffingADuckKey],
+			);
+			const [own, ...rest] = server.created();
+			expect(rest).toEqual([]);
+			expect(own?.title).toBe(existing.title);
+			expect(server.playlist(own?.key ?? "")).toEqual([sneakySnitchKey]);
+			expect(warnings(logs)).toEqual([expect.stringContaining(`"${existing.title}"`)]);
+		});
+	}
+
+	test("a later run follows the links, so a shared title is never ambiguous", async () => {
+		const server = serve();
+		await runOutput(server, sameName("Mix"));
+		const [first, second] = server.created();
+		const { result } = await runOutput(server, {
+			playlists: [
+				{ name: "Mix", id: { spotify: "a" }, songs: [sneakySnitch, fluffingADuck] },
+				{ name: "Mix", id: { spotify: "b" }, songs: [fluffingADuck] },
+			],
+		});
+
+		expect(result.playlists.map((entry) => entry.status)).toEqual(["written", "written"]);
+		expect(server.created()).toHaveLength(2);
+		expect(server.playlist(first?.key ?? "")).toEqual([sneakySnitchKey, fluffingADuckKey]);
+		expect(server.playlist(second?.key ?? "")).toEqual([fluffingADuckKey]);
+	});
+
+	test("a source playlist renamed since is still written to its linked playlist", async () => {
+		const server = serve();
+		await runOutput(server, {
+			playlists: [{ name: "Old name", id: { spotify: "a" }, songs: [sneakySnitch] }],
+		});
+		const { result } = await runOutput(server, {
+			playlists: [{ name: "New name", id: { spotify: "a" }, songs: [fluffingADuck] }],
+		});
+
+		expect(result.playlists[0]?.status).toBe("written");
+		const [linked, ...rest] = server.created();
+		expect(rest).toEqual([]);
+		expect(server.playlist(linked?.key ?? "")).toEqual([sneakySnitchKey, fluffingADuckKey]);
+	});
+
+	test("a linked playlist deleted in Plex is found by name again, and the new one linked", async () => {
+		const server = serve();
+		const mix = { name: "Mix", id: { spotify: "a" }, songs: [sneakySnitch] };
+		await runOutput(server, { playlists: [mix] });
+		const [gone] = server.created();
+		server.deletePlaylist(gone?.key ?? "");
+
+		await runOutput(server, { playlists: [mix] });
+		const [replacement, ...rest] = server.created();
+		expect(rest).toEqual([]);
+		expect(replacement?.key).not.toBe(gone?.key);
+
+		await runOutput(server, { playlists: [{ ...mix, name: "Renamed" }] });
+		expect(server.created()).toEqual([{ key: replacement?.key ?? "", title: "Mix" }]);
+	});
+
+	test("a linked playlist deleted in Plex falls back to an existing playlist of that name", async () => {
+		const server = serve();
+		const source = { name: "Elsewhere", id: { spotify: "a" }, songs: [sneakySnitch] };
+		await runOutput(server, { playlists: [source] });
+		const [gone] = server.created();
+		server.deletePlaylist(gone?.key ?? "");
+		const before = server.existingPlaylist();
+
+		await runOutput(server, {
+			playlists: [{ ...source, name: existing.title, songs: [fluffingADuck] }],
+		});
+		expect(server.created()).toEqual([]);
+		expect(server.existingPlaylist()).toEqual([...before, fluffingADuckKey]);
+	});
+
+	test("a source playlist with no id is found by name every run", async () => {
+		const server = serve();
+		await runOutput(server, playlist("Mix", [sneakySnitch]));
+		await runOutput(server, playlist("Mix", [fluffingADuck]));
+
+		const [mix, ...rest] = server.created();
+		expect(rest).toEqual([]);
+		expect(server.playlist(mix?.key ?? "")).toEqual([sneakySnitchKey, fluffingADuckKey]);
+		expect(readdirSync(configDir)).toEqual([]);
+	});
+
+	test("a Plex playlist linked to one source playlist is never taken by name for another", async () => {
+		const server = serve();
+		await runOutput(server, {
+			playlists: [{ name: "Mix", id: { spotify: "a" }, songs: [sneakySnitch] }],
+		});
+		const { logs } = await runOutput(server, {
+			playlists: [{ name: "Mix", id: { spotify: "b" }, songs: [fluffingADuck] }],
+		});
+
+		const [first, second] = server.created();
+		expect(server.playlist(first?.key ?? "")).toEqual([sneakySnitchKey]);
+		expect(server.playlist(second?.key ?? "")).toEqual([fluffingADuckKey]);
+		expect(warnings(logs)).toEqual([expect.stringContaining('"Mix"')]);
+	});
+
+	test("the link is kept under the ID space that sorts first", async () => {
+		const server = serve();
+		await runOutput(server, {
+			playlists: [{ name: "Mix", id: { spotify: "s", deezer: "d" }, songs: [sneakySnitch] }],
+		});
+		// Only the `deezer` id survives into the next run, under a new name.
+		await runOutput(server, {
+			playlists: [{ name: "Renamed", id: { deezer: "d" }, songs: [fluffingADuck] }],
+		});
+
+		expect(server.created()).toHaveLength(1);
+	});
+
+	test("links belong to one applet", async () => {
+		const server = serve();
+		const source = { name: "Mix", id: { spotify: "a" }, songs: [sneakySnitch] };
+		await runOutput(server, { playlists: [source] }, {}, undefined, "first-applet");
+		await runOutput(
+			server,
+			{ playlists: [{ ...source, name: "Renamed" }] },
+			{},
+			undefined,
+			"second-applet",
+		);
+
+		expect(server.created().map((created) => created.title)).toEqual(["Mix", "Renamed"]);
+	});
+
+	test("a links file that can't be read is started afresh, with a warning", async () => {
+		const server = serve();
+		const source = { name: "Mix", id: { spotify: "a" }, songs: [sneakySnitch] };
+		await runOutput(server, { playlists: [source] });
+		const [file] = readdirSync(join(configDir, "playlist-links"));
+		writeFileSync(join(configDir, "playlist-links", file ?? ""), "{ not json");
+
+		const { result, logs } = await runOutput(server, { playlists: [source] });
+		expect(result.playlists[0]?.status).toBe("written");
+		expect(warnings(logs)).toHaveLength(1);
+		// Found by name, so it was written to the playlist it made before, and linked again.
+		expect(server.created()).toHaveLength(1);
+		await runOutput(server, { playlists: [{ ...source, name: "Renamed" }] });
+		expect(server.created()).toHaveLength(1);
 	});
 });
 
