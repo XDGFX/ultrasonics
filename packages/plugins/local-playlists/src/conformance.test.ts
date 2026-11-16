@@ -1,5 +1,5 @@
-import { afterAll } from "bun:test";
-import { cpSync, mkdtempSync, rmSync } from "node:fs";
+import { afterAll, expect, test } from "bun:test";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runConformance } from "@ultrasonics/plugin-sdk/conformance";
@@ -10,6 +10,8 @@ const root = mkdtempSync(join(tmpdir(), "ultrasonics-local-playlists-conformance
 afterAll(() => rmSync(root, { recursive: true, force: true }));
 cpSync(join(import.meta.dir, "../test/fixtures"), root, { recursive: true });
 const playlists = join(root, "playlists");
+const written = join(root, "written");
+mkdirSync(written);
 
 runConformance(localPlaylists, {
 	persistentSettings: {
@@ -35,5 +37,19 @@ runConformance(localPlaylists, {
 			],
 			invalid: [{ dir: "" }, { dir: "playlists" }, { dir: "/playlists", recursive: "yes" }, {}],
 		},
+		outputs: {
+			valid: [{ dir: written }, { dir: "D:\\Playlists", backups: "0" }, { dir: "/playlists" }],
+			invalid: [
+				{ dir: "playlists" },
+				{ dir: "/playlists", backups: "4" },
+				{ dir: "/p", backups: 3 },
+			],
+		},
 	},
+});
+
+test("the default song dict's song with a location is written as a path", () => {
+	expect(readFileSync(join(written, "Running.m3u8"), "utf8")).toEndWith(
+		"#EXTINF:-1,Untagged\n/music/untagged.mp3\n",
+	);
 });

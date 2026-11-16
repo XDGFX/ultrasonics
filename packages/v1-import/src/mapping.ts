@@ -4,6 +4,7 @@ import type { officialPlugins } from "@ultrasonics/registry";
 import { customFile } from "./mappings/custom-file.ts";
 import { lastfmMapping } from "./mappings/lastfm.ts";
 import { localMusicDatabase } from "./mappings/local-music-database.ts";
+import { localPlaylists } from "./mappings/local-playlists.ts";
 import { logTracks } from "./mappings/log-tracks.ts";
 import { plexMapping } from "./mappings/plex.ts";
 
@@ -55,6 +56,7 @@ export const MAPPINGS: readonly Mapping[] = [
 	customFile,
 	lastfmMapping,
 	localMusicDatabase,
+	localPlaylists,
 	logTracks,
 	plexMapping,
 ];
