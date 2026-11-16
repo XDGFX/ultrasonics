@@ -8,8 +8,13 @@ import {
 /** One plugin's registry entry: its resolved module URL and its loader. */
 export type RegistryEntry = PluginRegistry[string];
 
-/** What one handler call came to. Never a rejection: a throw arrives as `ok: false`. */
-export type ExecutionResult = { ok: true; value: unknown } | { ok: false; message: string };
+/**
+ * What one handler call came to. Never a rejection: a throw arrives as `ok: false`, and a call
+ * stopped at the run's deadline carries `timedOut`.
+ */
+export type ExecutionResult =
+	| { ok: true; value: unknown }
+	| { ok: false; message: string; timedOut?: true };
 
 /**
  * Runs one plugin handler across the plugin boundary (ADR-0010 §2). Phase 2's `WorkerExecutor`

@@ -35,25 +35,69 @@ export type FromWorker = z.infer<typeof FromWorker>;
 
 const pluginWorker = new URL("./plugin-worker.ts", import.meta.url).href;
 
+/** The most plugin workers running at once, server-wide: about 60 MB of live workers (ADR-0031). */
+export const WORKER_CAP = 4;
+
+/** Resolves when `deadlineMs` arrives, or never once `signal` aborts. */
+export type DeadlineTimer = (deadlineMs: number, signal: AbortSignal) => Promise<void>;
+
+const atDeadline: DeadlineTimer = (deadlineMs, signal) =>
+	new Promise((resolve) => {
+		const timer = setTimeout(resolve, Math.max(0, deadlineMs - Date.now()));
+		signal.addEventListener("abort", () => clearTimeout(timer), { once: true });
+	});
+
+export interface WorkerExecutorOptions {
+	/** The most workers running at once. A call beyond it waits for a slot, in arrival order. */
+	cap?: number;
+	/** When a call's deadline arrives. The soak replaces it to stop each call at a moment it picks. */
+	deadline?: DeadlineTimer;
+}
+
+const TIMED_OUT: ExecutionResult = {
+	ok: false,
+	message: "The plugin was still running at the run's deadline",
+	timedOut: true,
+};
+
 /**
  * Runs each handler call in its own web `Worker`, loading the plugin from the entry's resolved
  * `path` (ADR-0031). A fresh worker per call means no module state outlives a call, so none can
- * cross between accounts.
+ * cross between accounts. A call still running at the payload's `deadlineMs` is stopped and settles
+ * as timed out, and no more than the cap run at once.
  */
 export class WorkerExecutor implements PluginExecutor {
+	readonly #cap: number;
+	readonly #deadline: DeadlineTimer;
+	#running = 0;
+	/** Calls waiting for a slot, oldest first. */
+	readonly #waiting: (() => void)[] = [];
+
+	constructor({ cap = WORKER_CAP, deadline = atDeadline }: WorkerExecutorOptions = {}) {
+		this.#cap = cap;
+		this.#deadline = deadline;
+	}
+
 	run(entry: RegistryEntry, payload: RunPayload, host: HostPort): Promise<ExecutionResult> {
 		return new Promise((resolve) => {
-			const worker = new Worker(pluginWorker, { ref: false });
 			const listening = new AbortController();
 			const { signal } = listening;
+			let worker: Worker | undefined;
+			let holdsSlot = false;
 			let settled = false;
 
-			/** Settles the call once. The worker is told to stop but never awaited (ADR-0010). */
+			/**
+			 * Settles the call once, by result, crash or deadline. Removing the listeners drops anything
+			 * the worker sends after this (ADR-0031, mitigation 1). The worker is told to stop but never
+			 * awaited (ADR-0010), and its slot is free at once.
+			 */
 			const settle = (result: ExecutionResult) => {
 				if (settled) return;
 				settled = true;
 				listening.abort();
-				worker.terminate();
+				worker?.terminate();
+				if (holdsSlot) this.#release();
+				else this.#abandon(start);
 				resolve(result);
 			};
 			const fail = (message: string) => settle({ ok: false, message });
@@ -68,55 +112,88 @@ export class WorkerExecutor implements PluginExecutor {
 				}
 				if (settled) return;
 				try {
-					worker.postMessage({ kind: "credentials", id, reply } satisfies ToWorker);
+					worker?.postMessage({ kind: "credentials", id, reply } satisfies ToWorker);
 				} catch (error) {
 					fail(`Could not pass the plugin its credentials: ${describeError(error)}`);
 				}
 			};
 
-			worker.addEventListener(
-				"message",
-				(event: MessageEvent) => {
-					const parsed = FromWorker.safeParse(event.data);
-					if (!parsed.success)
-						return fail(
-							`The plugin sent a message the host does not accept: ${kindOf(event.data)}`,
-						);
-					const message = parsed.data;
-					switch (message.kind) {
-						case "result":
-							return settle(message.result);
-						case "crashed":
-							return crashed(message.message);
-						case "credentials":
-							void answerCredentials(message.id);
-							return;
-						case "log":
-							host.log(message.entry);
-							return;
-					}
-				},
-				{ signal },
-			);
-			// The plugin side reports a crash itself; these catch one it could not report.
-			worker.addEventListener(
-				"error",
-				(event: ErrorEvent) => crashed(event.message || "an uncaught error"),
-				{ signal },
-			);
-			worker.addEventListener(
-				"messageerror",
-				() => fail("The plugin sent a message that could not be read"),
-				{ signal },
-			);
-			worker.addEventListener(
-				"close",
-				(event: CloseEvent) =>
-					fail(`The plugin exited with code ${event.code} before returning a result`),
-				{ signal },
-			);
-			worker.postMessage({ kind: "run", path: entry.path, payload } satisfies ToWorker);
+			/** Runs the call once it holds a slot, unless its deadline passed while it waited. */
+			const start = () => {
+				holdsSlot = true;
+				if (Date.now() >= payload.deadlineMs) return settle(TIMED_OUT);
+				try {
+					worker = new Worker(pluginWorker, { ref: false });
+				} catch (error) {
+					return fail(`Could not start the plugin's worker: ${describeError(error)}`);
+				}
+				worker.addEventListener(
+					"message",
+					(event: MessageEvent) => {
+						const parsed = FromWorker.safeParse(event.data);
+						if (!parsed.success)
+							return fail(
+								`The plugin sent a message the host does not accept: ${kindOf(event.data)}`,
+							);
+						const message = parsed.data;
+						switch (message.kind) {
+							case "result":
+								return settle(message.result);
+							case "crashed":
+								return crashed(message.message);
+							case "credentials":
+								void answerCredentials(message.id);
+								return;
+							case "log":
+								host.log(message.entry);
+								return;
+						}
+					},
+					{ signal },
+				);
+				// The plugin side reports a crash itself; these catch one it could not report.
+				worker.addEventListener(
+					"error",
+					(event: ErrorEvent) => crashed(event.message || "an uncaught error"),
+					{ signal },
+				);
+				worker.addEventListener(
+					"messageerror",
+					() => fail("The plugin sent a message that could not be read"),
+					{ signal },
+				);
+				worker.addEventListener(
+					"close",
+					(event: CloseEvent) =>
+						fail(`The plugin exited with code ${event.code} before returning a result`),
+					{ signal },
+				);
+				worker.postMessage({ kind: "run", path: entry.path, payload } satisfies ToWorker);
+			};
+
+			void this.#deadline(payload.deadlineMs, signal).then(() => settle(TIMED_OUT));
+			this.#acquire(start);
 		});
+	}
+
+	#acquire(start: () => void): void {
+		if (this.#running < this.#cap) {
+			this.#running++;
+			start();
+		} else this.#waiting.push(start);
+	}
+
+	/** Hands a settled call's slot to the oldest waiting call, or frees it. */
+	#release(): void {
+		const next = this.#waiting.shift();
+		if (next) next();
+		else this.#running--;
+	}
+
+	/** Drops a call that settled while it waited. */
+	#abandon(start: () => void): void {
+		const index = this.#waiting.indexOf(start);
+		if (index !== -1) this.#waiting.splice(index, 1);
 	}
 }
 

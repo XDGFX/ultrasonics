@@ -31,7 +31,10 @@ import type {
 	StageSlot,
 } from "./run-event.ts";
 
-/** A run's wall-clock budget. Reported after the fact in Phase 1, not enforced (ADR-0010 #7). */
+/**
+ * A run's wall-clock budget (ADR-0010 #7). The `WorkerExecutor` stops a plugin at it; under the
+ * in-process executor it is only reported after the fact.
+ */
 export const RUN_DEADLINE_MS = 60 * 60 * 1000;
 
 /** Rejection events emitted per stage; the stage's `rejected` count carries the rest. */
@@ -206,6 +209,10 @@ async function execute(
 		log: (entry) => run.log(entry.level, entry.message, stage.plugin),
 	});
 	if (result.ok) return result;
+	if (result.timedOut) {
+		const message = `Stopped at the run's ${RUN_DEADLINE_MS / 60_000}-minute deadline`;
+		return { ok: false, error: { code: "timed-out", message } };
+	}
 	return {
 		ok: false,
 		error: authFailure

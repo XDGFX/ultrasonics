@@ -15,6 +15,7 @@ export const StageErrorCode = z.enum([
 	"settings-invalid",
 	"threw",
 	"contract",
+	"timed-out",
 	...AuthFailure.shape.code.options,
 ]);
 export type StageErrorCode = z.infer<typeof StageErrorCode>;

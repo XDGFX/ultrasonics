@@ -33,4 +33,4 @@ export {
 	type RunOutcome,
 	runApplet,
 } from "./runner.ts";
-export { WorkerExecutor } from "./worker-executor.ts";
+export { WORKER_CAP, WorkerExecutor } from "./worker-executor.ts";
