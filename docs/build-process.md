@@ -114,7 +114,8 @@ half that earns its keep.
   `gh issue list`, `gh pr view`, `gh pr list`.
 - **Deny** — `gh pr comment`, `git push --force`, and any push to `master`. Option-prefixed
   pushes are caught only as `git -C * push`, because a bare `git * push` also matched commit
-  messages containing "push".
+  messages containing "push". `pkill` and `killall` are denied too (Cal, 2026-11-16): killing by
+  name hits other agents' servers, so stop only a process you started, by its PID.
 
 `gh pr merge` is no longer denied. An agent merges its own PR into `revival` once `/implement`'s
 steps and `/code-review` pass and CI is green; Cal does not review code (Cal, 2026-11-16). Merging

@@ -27,6 +27,10 @@
       "Bash(gh pr list *)"
     ],
     "deny": [
+      "Bash(pkill *)",
+      "Bash(* pkill *)",
+      "Bash(killall *)",
+      "Bash(* killall *)",
       "Bash(gh pr comment *)",
       "Bash(gh pr * comment *)",
       "Bash(gh * pr comment *)",
