@@ -8,7 +8,7 @@ const Settings = z.record(z.string(), z.unknown());
 const RunFields = z.object({
 	appletId: z.string(),
 	runId: z.string(),
-	/** The run's wall-clock deadline, in epoch milliseconds; nothing enforces it yet. */
+	/** The run's wall-clock deadline, in epoch milliseconds. A worker still running at it is stopped. */
 	deadlineMs: z.number(),
 	/** A path, never a handle (ADR-0010 #8). */
 	configDir: z.string(),

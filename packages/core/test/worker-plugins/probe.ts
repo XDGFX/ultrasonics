@@ -30,8 +30,16 @@ export const Act = z.enum([
 	"floating-rejection",
 	"exit",
 	"post-garbage",
+	"spin",
+	"hang",
+	"log-late",
+	"pause",
 ]);
 export type Act = z.infer<typeof Act>;
+
+/** What `pause` logs as it starts, and how long it then holds its worker. */
+export const STARTED = "started";
+export const PAUSE_MS = 50;
 
 export default definePlugin({
 	name: "probe",
@@ -41,7 +49,7 @@ export default definePlugin({
 	auth: defineAuth({ service: "plex", flow: "token", fields: z.object({ token: z.string() }) }),
 	instanceSettings: {
 		inputs: z.object({ act: Act, count: z.number().default(1) }),
-		outputs: z.object({}),
+		outputs: z.object({ act: z.enum(["write", "hang"]).default("write") }),
 	},
 	run: {
 		async inputs(ctx) {
@@ -74,9 +82,22 @@ export default definePlugin({
 				case "post-garbage":
 					postMessage({ kind: "gibberish" });
 					return new Promise<never>(() => {});
+				case "spin":
+					while (true) {}
+				case "hang":
+					return new Promise<never>(() => {});
+				case "log-late":
+					setInterval(() => ctx.log.info("late"), 1);
+					return new Promise<never>(() => {});
+				case "pause":
+					// Says when it starts, so a test can count the workers running at once.
+					ctx.log.info(STARTED);
+					await Bun.sleep(PAUSE_MS);
+					return songs(1);
 			}
 		},
 		async outputs(ctx) {
+			if (ctx.instance.act === "hang") return new Promise<never>(() => {});
 			return {
 				playlists: ctx.songs.playlists.map((_, playlist) => ({
 					status: "written",
