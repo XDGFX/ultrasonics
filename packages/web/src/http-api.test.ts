@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { RunEvent } from "@ultrasonics/core/run-events";
 import { GOOD_TOKEN, useContractServer } from "../test/contract-server.ts";
-import type { ApiClient, AppletDraft } from "./api-client.ts";
+import { type ApiClient, ApiError, type AppletDraft, RunStreamError } from "./api-client.ts";
 import { EXAMPLE_CLIENT_ID } from "./fake-api.ts";
-import { ApiError, createHttpApi, type EventSourceLike, RunStreamError } from "./http-api.ts";
+import { createHttpApi, type EventSourceLike } from "./http-api.ts";
 
 const serve = useContractServer();
 

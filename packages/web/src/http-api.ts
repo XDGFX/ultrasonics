@@ -19,18 +19,7 @@ import {
 	WebhookUrl,
 } from "@ultrasonics/server/api";
 import { z } from "zod";
-import type { ApiClient, SaveResult } from "./api-client.ts";
-
-/** A response the UI didn't expect: the server's `{ message }`, or what was wrong with the reply. */
-export class ApiError extends Error {
-	constructor(
-		readonly status: number,
-		message: string,
-	) {
-		super(message);
-		this.name = "ApiError";
-	}
-}
+import { type ApiClient, ApiError, RunStreamError, type SaveResult } from "./api-client.ts";
 
 /** The part of the browser's `EventSource` the run stream uses, so tests can pass another. */
 export interface EventSourceLike {
@@ -48,17 +37,6 @@ export interface HttpApiOptions {
 		url: string,
 	) => EventSourceLike;
 	fetch?: typeof fetch;
-}
-
-/** A run's event stream that stopped before the run's `end`, or sent something that isn't an event. */
-export class RunStreamError extends Error {
-	constructor(
-		readonly reason: "closed" | "malformed",
-		message: string,
-	) {
-		super(message);
-		this.name = "RunStreamError";
-	}
 }
 
 /** `EventSource.CLOSED`: the browser has given up and won't reconnect, as after a `404`. */

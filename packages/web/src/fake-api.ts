@@ -11,18 +11,30 @@ import {
 	withMeta,
 } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
-import type {
-	ApiClient,
-	Applet,
-	AppletDraft,
-	AppletListing,
-	PluginInfo,
-	RunNowResult,
-	RunSummary,
-	SaveResult,
-	ServiceStatus,
+import {
+	type ApiClient,
+	ApiError,
+	type Applet,
+	type AppletDraft,
+	type AppletListing,
+	type PluginInfo,
+	type RunNowResult,
+	RunStreamError,
+	type RunSummary,
+	type SaveResult,
+	type ServiceStatus,
 } from "./api-client.ts";
 import { type RunScript, type ScriptedRun, scriptedRun } from "./scripted-run.ts";
+
+/** A stream that fails at once, as the browser's does for an unknown run. */
+const refused = (id: string): AsyncIterable<never> => ({
+	[Symbol.asyncIterator]: () => ({
+		next: () =>
+			Promise.reject(
+				new RunStreamError("closed", `The event stream of run ${id} closed before its end`),
+			),
+	}),
+});
 
 /** A plugin as the fake holds it: Zod schemas, which the fake serves through `toFormSchema`. */
 export interface FakePlugin {
@@ -162,8 +174,9 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 		return { kind: "started", runId };
 	};
 
-	for (const { events, pace, ...summary } of seed.runs ?? []) {
-		startRun({ ...summary }, { events, ...(pace ? { pace } : {}) }, false);
+	for (const { events, pace, failAfter, ...summary } of seed.runs ?? []) {
+		const script = { events, ...(pace ? { pace } : {}), ...(failAfter ? { failAfter } : {}) };
+		startRun({ ...summary }, script, false);
 	}
 
 	const script = (runId: string): ScriptedRun => {
@@ -249,10 +262,14 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 		runs: {
 			get: async (id) => {
 				const run = runs.get(id);
-				if (!run) throw new Error(`No run ${id}`);
+				if (!run) throw new ApiError(404, `No run ${id}`);
 				return structuredClone(run);
 			},
-			events: (id, signal) => script(id).follow(signal),
+			events: (id, signal) => {
+				// The server answers an unknown run's stream with a `404`, and the browser gives up.
+				if (!scripts.has(id)) return refused(id);
+				return script(id).follow(signal);
+			},
 		},
 		scripts: {
 			advance: (runId, count) => script(runId).advance(count),

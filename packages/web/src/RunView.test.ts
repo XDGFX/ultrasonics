@@ -153,6 +153,35 @@ describe("the run view", () => {
 		expect(api.scripts.connections("r")).toBe(connections);
 	});
 
+	test("keeps what it had when the stream fails, says so, and retry replays the run", async () => {
+		const failAfter = 3;
+		const { wrapper, api } = await mountApp("/runs/r", {
+			applets: [applet],
+			runs: [{ ...summary("r"), events: succeededRun, pace: "stepped", failAfter }],
+		});
+		api.scripts.advance("r", failAfter - 1);
+		await settle();
+		expect(wrapper.find("[data-failure]").exists()).toBe(false);
+		const before = wrapper.get(".flow").html();
+		api.scripts.advance("r");
+		await settle();
+		expect(wrapper.get("[data-failure]").attributes("data-failure")).toBe("stream-failed");
+		expect(wrapper.get(".flow").html()).toBe(before);
+		expect(wrapper.findAll(".stage")).not.toHaveLength(0);
+
+		api.scripts.advance("r", succeededRun.length);
+		await wrapper.get("button.retry").trigger("click");
+		await settle();
+		expect(wrapper.find("[data-failure]").exists()).toBe(false);
+		expect(wrapper.get("[data-status]").attributes("data-status")).toBe("succeeded");
+	});
+
+	test("says an unknown run doesn't exist, with no retry", async () => {
+		const { wrapper } = await mountApp("/runs/nope", { applets: [applet] });
+		expect(wrapper.get("[data-failure]").attributes("data-failure")).toBe("not-found");
+		expect(wrapper.find("button.retry").exists()).toBe(false);
+	});
+
 	test("closes the stream of a live run when the view is left", async () => {
 		const { api, router } = await openRun(succeededRun, "stepped");
 		api.scripts.advance("r");

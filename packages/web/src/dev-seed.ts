@@ -41,6 +41,8 @@ export function devSeed(firstRun: boolean): FakeSeed {
 					{ ...run("r3", "a1", now - 60_000), events: succeededRun, pace: live },
 					{ ...run("r2", "a2", now - 26 * hour), events: partialRun },
 					{ ...run("r1", "a3", now - 400 * hour), events: authFailedRun },
+					// Not listed anywhere: open /runs/r0 to see the view when its stream fails partway.
+					{ ...run("r0", "a1", now - 30_000), events: succeededRun, pace: live, failAfter: 4 },
 				],
 		runScripts: Object.fromEntries(
 			["a1", "a2", "a3"].map((id) => [id, { events: succeededRun, pace: live }]),
