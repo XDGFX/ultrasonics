@@ -9,6 +9,7 @@ test("each entry loads the plugin registered under its name", async () => {
 		"custom-file",
 		"deezer",
 		"local-playlists",
+		"log-tracks",
 		"plex",
 		"spotify",
 	]);

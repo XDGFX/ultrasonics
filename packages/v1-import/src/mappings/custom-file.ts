@@ -8,7 +8,7 @@ const V1_EXISTING_FILES: Record<string, string> = { Overwrite: "overwrite", Appe
  * v1's `custom file` output, at any version (spec #180, "v1 import mapping"). Values v2 refuses,
  * such as a `.db` file name, are imported as written, so the schema check reports them.
  */
-export const customFileMapping: Mapping = {
+export const customFile: Mapping = {
 	plugin: "custom-file",
 	accepts: (name) => name === "custom file",
 	instance: (_, v1) => {

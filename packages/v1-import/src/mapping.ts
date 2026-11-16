@@ -1,7 +1,8 @@
 import type { JsonObject, JsonValue } from "@ultrasonics/db";
 import type { Component } from "@ultrasonics/plugin-sdk";
 import type { officialPlugins } from "@ultrasonics/registry";
-import { customFileMapping } from "./mappings/custom-file.ts";
+import { customFile } from "./mappings/custom-file.ts";
+import { logTracks } from "./mappings/log-tracks.ts";
 
 /** A v1 setting the importer could not convert, shown in the report beside why. */
 export interface ManualEdit {
@@ -47,4 +48,4 @@ export interface Mapping<Plugin extends string = keyof typeof officialPlugins> {
 }
 
 /** Every v1 plugin the importer maps. Until a plugin's ticket lands, its applets skip as unknown. */
-export const MAPPINGS: readonly Mapping[] = [customFileMapping];
+export const MAPPINGS: readonly Mapping[] = [customFile, logTracks];

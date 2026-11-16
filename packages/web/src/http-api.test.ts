@@ -87,6 +87,9 @@ describe("the HTTP client against the real server", () => {
 		const { api } = await client();
 		expect(await api.instance()).toEqual({ exposure: null });
 		await api.dismissExposure();
+		expect(await api.v1Import.get()).toBeNull();
+		// A 404, not the 415 a mutation without JSON gets: the dismissal reached its route.
+		expect(await api.v1Import.dismiss().catch((error: ApiError) => error.status)).toBe(404);
 		const plugins = await api.plugins();
 		expect(plugins.map((plugin) => plugin.name).sort()).toEqual([
 			"plex",

@@ -21,6 +21,7 @@ import type {
 	ServiceStatus,
 	Slot,
 	StoredSettings,
+	V1ImportReport,
 	ValidationIssue,
 	WebhookUrl,
 } from "@ultrasonics/server/api";
@@ -46,6 +47,7 @@ export type {
 	ServiceStatus,
 	Slot,
 	StoredSettings,
+	V1ImportReport,
 };
 
 /** A save's answer as the screens take it: the saved value, or the server's `422` issues. */
@@ -77,6 +79,12 @@ export class RunStreamError extends Error {
 export interface ApiClient {
 	instance(): Promise<InstanceInfo>;
 	dismissExposure(): Promise<void>;
+	v1Import: {
+		/** The v1 import's report, dismissed or not; `null` when no import ran. */
+		get(): Promise<V1ImportReport | null>;
+		/** Hides the notice for good; the report stays readable. */
+		dismiss(): Promise<void>;
+	};
 	plugins(): Promise<PluginInfo[]>;
 	applets: {
 		list(): Promise<AppletListing[]>;
