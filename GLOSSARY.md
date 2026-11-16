@@ -17,7 +17,9 @@ _Avoid_: "track list", "payload" — it is always the *song dict*.
 
 **Song** — One entry in a playlist: `{ title, artists: [string], album?, date?, isrc?, durationMs?,
 explicit?, location?, id }`. `title` is non-empty; `artists` may be empty. `date` is a partial ISO
-date, `location` a `file://` URI. Blank optional fields count as absent (ADR-0023).
+date, `location` a `file://` URI. Blank optional fields count as absent (ADR-0023). A `location` is
+the path as the plugin that set it can open it: for the local plugins, ultrasonics' own view of the
+file, not the path a player's playlist names (spec #178, decision 4).
 
 **ID space** — A key in a song's or playlist's `id` map: what the ID is unique within, such as
 `spotify`, `musicbrainz` or `plex:<server id>`. Not a plugin name (ADR-0023).
