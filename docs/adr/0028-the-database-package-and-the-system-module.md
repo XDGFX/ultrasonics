@@ -31,6 +31,10 @@ call `storeFor(accountId)`. The auth store keeps ADR-0009's scope.
 The two narrow modules are separate subpath exports. A lint rule allows each one only in the server
 files that need it, so an import anywhere else fails in CI rather than relying on review.
 
+_Amended 2026-11-16 (Cal, via [#177](https://github.com/XDGFX/ultrasonics/issues/177)):_ a fourth
+narrow module, `@ultrasonics/db/v1-import`, writes the v1 importer's applets, settings, grants and
+marker in one transaction. The same lint rule allows it only in `@ultrasonics/v1-import`.
+
 **The applet `definition` column** is `{ inputs, modifiers, outputs }`. Each is an ordered list of
 `{ plugin, settings }` slots, with at least one input and one output. `settings` is stored raw and
 checked against the plugin's schema by the server (ADR-0019 §7). A slot is addressed by component
