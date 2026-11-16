@@ -1,6 +1,6 @@
 import type { Song } from "@ultrasonics/plugin-sdk";
 import anyAscii from "any-ascii";
-import { artistNames, normalise, parseTitle } from "./normalise.ts";
+import { artistNames, normalise, normaliseName, parseTitle } from "./normalise.ts";
 import { byLength, containsWords, opens, similarity } from "./similarity.ts";
 
 /**
@@ -30,7 +30,13 @@ const nonLatin = /(?![\p{Script=Latin}])\p{L}/u;
 
 /** Folds every script to ASCII with the any-ascii table, then the matcher's own folding. */
 function fold(text: string): string {
-	return normalise(anyAscii(text.normalize("NFKC")));
+	return normaliseName(anyAscii(text.normalize("NFKC")));
+}
+
+/** Symbols alone are too few to be near one another, so they agree exactly or not at all (#162). */
+function nameSimilarity(a: string, b: string): number {
+	const symbolic = (text: string) => normalise(text) === "";
+	return symbolic(a) || symbolic(b) ? Number(a === b) : similarity(a, b);
 }
 
 /** any-ascii spaces some scripts syllable by syllable, so folded text is compared unspaced. */
@@ -38,17 +44,17 @@ const squash = (text: string) => text.replace(/ /g, "");
 
 export function titleSimilarity(a: Song, b: Song): number {
 	const [left, right] = [parseTitle(a.title).core, parseTitle(b.title).core];
-	const plain = Math.max(similarity(left, right), opens(left, right) ? partScore : 0);
+	const plain = Math.max(nameSimilarity(left, right), opens(left, right) ? partScore : 0);
 	if (!nonLatin.test(a.title) && !nonLatin.test(b.title)) return plain;
 	const [l, r] = [fold(left), fold(right)];
-	return Math.max(plain, similarity(squash(l), squash(r)), opens(l, r) ? partScore : 0);
+	return Math.max(plain, nameSimilarity(squash(l), squash(r)), opens(l, r) ? partScore : 0);
 }
 
 /** How well the shorter list is found in the longer, so a guest on one side only costs nothing. */
 function listSimilarity(left: readonly string[], right: readonly string[]): number {
 	const [fewer, more] = byLength(left, right);
 	if (fewer.length === 0) return 0;
-	const found = fewer.map((name) => Math.max(...more.map((other) => similarity(name, other))));
+	const found = fewer.map((name) => Math.max(...more.map((other) => nameSimilarity(name, other))));
 	const listed = found.reduce((sum, s) => sum + s, 0) / fewer.length;
 	return Math.max(listed, containsWords(fewer.join(" "), more.join(" ")) ? partScore : 0);
 }

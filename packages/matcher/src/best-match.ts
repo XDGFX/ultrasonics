@@ -3,7 +3,7 @@ import { fields, yearOf } from "./agreement.ts";
 import { weightOf } from "./fellegi-sunter.ts";
 import { fitted } from "./fitted-weights.ts";
 import { match } from "./match.ts";
-import { normalise } from "./normalise.ts";
+import { normaliseName } from "./normalise.ts";
 import { isRemastered } from "./version-marker.ts";
 
 /** The candidate chosen as the same recording as the song, and where it sat in the list. */
@@ -46,7 +46,7 @@ export function bestMatch(song: Song, candidates: readonly Song[]): BestMatch | 
 const sameAlbum = (song: Song, candidate: Song) =>
 	song.album !== undefined &&
 	candidate.album !== undefined &&
-	normalise(song.album) === normalise(candidate.album);
+	normaliseName(song.album) === normaliseName(candidate.album);
 
 /** Compares ranks in order; a full tie keeps the earlier candidate. */
 function outranks(a: readonly number[], b: readonly number[]): boolean {

@@ -252,6 +252,44 @@ describe("match: vetoes", () => {
 	});
 });
 
+describe("match: titles and artists with no letters or digits (#162)", () => {
+	const symbolic = (title: string, artists = ["Artist"]) =>
+		song({ title, artists, durationMs: 200_000 });
+
+	test.each([
+		["?", "!"],
+		["💔", "?"],
+		["?", "??"],
+		["!!", "!!!"],
+	])("a title of %p is a different song from %p", (left, right) => {
+		expect(match(symbolic(left), symbolic(right)).matched).toBe(false);
+	});
+
+	test.each([["???"], ["!!"]])("an artist of %p is a different artist from !!!", (other) => {
+		const a = symbolic("Myth Takes", ["!!!"]);
+		expect(match(a, symbolic("Myth Takes", [other])).matched).toBe(false);
+	});
+
+	test("a symbol title keeps its decorations, so a remaster still matches", () => {
+		expect(match(symbolic("?"), symbolic("? (Remastered 2011)")).matched).toBe(true);
+	});
+
+	test("a symbol title keeps its version marker, so a live take is vetoed", () => {
+		expect(match(symbolic("?"), symbolic("? (Live)")).score).toBe(0);
+	});
+
+	test("bestMatch picks the candidate whose symbols agree", () => {
+		const candidates = [symbolic("!"), symbolic("?")];
+		expect(bestMatch(symbolic("?"), candidates)?.index).toBe(1);
+	});
+
+	test("bestMatch counts an album of other symbols as a different album", () => {
+		const onAlbum = (album: string, date: string) => song({ album, date, durationMs: 200_000 });
+		const candidates = [onAlbum("!", "2000"), onAlbum("?", "2010")];
+		expect(bestMatch(onAlbum("?", "2010"), candidates)?.index).toBe(1);
+	});
+});
+
 describe("each hand-written case", () => {
 	test.each(
 		handWrittenCases.map(
