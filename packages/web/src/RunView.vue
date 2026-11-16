@@ -21,7 +21,7 @@ const summary = ref<RunSummary | null>(null);
 const catalogue = ref<PluginInfo[]>([]);
 const state = ref(emptyRunView());
 /** Why the view stopped following: the run doesn't exist, or its progress couldn't be loaded. */
-const failure = ref<"not-found" | "stream-failed" | null>(null);
+const unavailable = ref<"not-found" | "stream-failed" | null>(null);
 
 // Aborting a superseded or unmounted follow closes its stream, so it folds nothing more.
 let following = new AbortController();
@@ -29,7 +29,8 @@ async function follow(id: string) {
 	following.abort();
 	const { signal } = (following = new AbortController());
 	state.value = emptyRunView();
-	failure.value = null;
+	summary.value = null;
+	unavailable.value = null;
 	queued.value = false;
 	try {
 		const [run, plugins] = await Promise.all([api.runs.get(id), api.plugins()]);
@@ -42,7 +43,7 @@ async function follow(id: string) {
 		}
 	} catch (error) {
 		if (signal.aborted) return;
-		failure.value = error instanceof ApiError && error.status === 404 ? "not-found" : "stream-failed";
+		unavailable.value = error instanceof ApiError && error.status === 404 ? "not-found" : "stream-failed";
 	}
 }
 watch(() => props.id, follow, { immediate: true });
@@ -83,9 +84,9 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 			</button>
 		</template>
 
-		<div v-if="failure === 'not-found'" class="run">
+		<div v-if="unavailable === 'not-found'" class="run">
 			<h2>run {{ id }}</h2>
-			<p class="failure" role="alert" data-failure="not-found">
+			<p class="unavailable" role="alert" data-unavailable="not-found">
 				there's no run {{ id }}. it may have been deleted with its applet.
 			</p>
 			<RouterLink class="btn" :to="{ name: 'applets' }">back to applets</RouterLink>
@@ -93,7 +94,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 
 		<div v-else class="run">
 			<h2>{{ title }}</h2>
-			<div v-if="failure === 'stream-failed'" class="failure" role="alert" data-failure="stream-failed">
+			<div v-if="unavailable === 'stream-failed'" class="unavailable" role="alert" data-unavailable="stream-failed">
 				<p>couldn't load this run's progress, so what's shown may be out of date.</p>
 				<button type="button" class="btn retry" @click="follow(id)">retry</button>
 			</div>
@@ -172,7 +173,7 @@ const playlistLabel = (playlist: number, name?: string) => name ?? `playlist ${p
 			</section>
 		</div>
 
-		<div v-if="failure !== 'not-found'" class="console" role="log" aria-label="run log">
+		<div v-if="unavailable !== 'not-found'" class="console" role="log" aria-label="run log">
 			<div v-for="line in state.log" :key="line.seq" :data-level="line.level" class="line"><span class="ts">{{ formatClock(line.at) }}</span> {{ line.level }} {{ line.source }} {{ line.text }}</div>
 		</div>
 	</AppShell>
@@ -193,9 +194,9 @@ h2 { margin: 0 0 8px; font-size: 20px; font-weight: 500; }
 .wire { padding: 0 10px; color: var(--accent); font-size: 11px; border-bottom: 2px solid var(--line); }
 .warn { color: var(--warn); }
 .error { color: var(--bad); }
-.failure { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 20px; padding: 10px 12px; border: 1px solid var(--bad); border-radius: var(--radius); color: var(--bad); }
-.failure p { margin: 0; flex: 1; }
-.failure .retry { border-color: var(--bad); color: var(--bad); }
+.unavailable { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 20px; padding: 10px 12px; border: 1px solid var(--bad); border-radius: var(--radius); color: var(--bad); }
+.unavailable p { margin: 0; flex: 1; }
+.unavailable .retry { border-color: var(--bad); color: var(--bad); }
 .reconnect { margin-top: 6px; border-color: var(--p2); color: var(--p2); text-decoration: none; }
 .output h3 { font-size: 13px; font-weight: 400; }
 table { width: 100%; border-collapse: collapse; }

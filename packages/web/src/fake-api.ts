@@ -175,7 +175,11 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 	};
 
 	for (const { events, pace, failAfter, ...summary } of seed.runs ?? []) {
-		const script = { events, ...(pace ? { pace } : {}), ...(failAfter ? { failAfter } : {}) };
+		const script = {
+			events,
+			...(pace ? { pace } : {}),
+			...(failAfter !== undefined ? { failAfter } : {}),
+		};
 		startRun({ ...summary }, script, false);
 	}
 
