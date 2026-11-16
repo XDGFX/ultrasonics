@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { authStore } from "@ultrasonics/db/auth-store";
 import { systemModule } from "@ultrasonics/db/system";
-import { definition, journal, seed, useTempDir, useTwoAccounts } from "./test-support.ts";
+import { v1ImportStore } from "@ultrasonics/db/v1-import";
+import { definition, journal, schedule, seed, useTempDir, useTwoAccounts } from "./test-support.ts";
 
 describe("systemModule", () => {
 	const twoAccounts = useTwoAccounts(useTempDir());
@@ -121,5 +122,89 @@ describe("authStore", () => {
 		expect(await settings.remove("first")).toBe(false);
 		expect(await settings.putIfAbsent("first", "c")).toBe(true);
 		expect(await settings.get("first")).toBe("c");
+	});
+});
+
+describe("v1ImportStore", () => {
+	const twoAccounts = useTwoAccounts(useTempDir());
+
+	test("commits applets disabled, settings, a sealed grant and the marker, then refuses a second commit", async () => {
+		const { db, mine } = await twoAccounts();
+		const store = v1ImportStore(db);
+		const write = {
+			accountId: mine,
+			applets: [
+				{ name: "First", definition, schedule },
+				{ name: "Second", definition, schedule: null },
+			],
+			pluginSettings: [{ plugin: "plex", value: { library: "3" } }],
+			grants: [{ service: "plex", document: { token: "sealed" } }],
+			marker: { importedAt: 1 },
+		};
+
+		expect(await store.commit(write)).toBe(true);
+		expect(await store.commit(write)).toBe(false);
+
+		const scoped = db.storeFor(mine);
+		const imported = await scoped.applets.list();
+		expect(
+			imported.map(({ name, enabled, schedule, nextRunAt }) => ({
+				name,
+				enabled,
+				schedule,
+				nextRunAt,
+			})),
+		).toEqual([
+			{ name: "First", enabled: false, schedule, nextRunAt: null },
+			{ name: "Second", enabled: false, schedule: null, nextRunAt: null },
+		]);
+		expect(await scoped.pluginSettings.get("plex")).toEqual({ library: "3" });
+		expect((await scoped.credentials.get("plex"))?.document).toEqual({ token: "sealed" });
+		expect(await store.marker()).toEqual({ importedAt: 1 });
+	});
+
+	test("a failed write leaves no marker and no applet", async () => {
+		const { db, mine } = await twoAccounts();
+		const store = v1ImportStore(db);
+		const write = {
+			accountId: mine,
+			applets: [{ name: "Fine", definition, schedule: null }],
+			pluginSettings: [],
+			grants: [],
+			// A marker that is not JSON fails inside the transaction, after the applet's insert.
+			marker: { importedAt: Number.NaN },
+		};
+
+		await expect(store.commit(write)).rejects.toThrow();
+		expect(await store.marker()).toBeUndefined();
+		expect(await db.storeFor(mine).applets.list()).toEqual([]);
+	});
+
+	test("accountIds reads at most two", async () => {
+		const { db, path } = await twoAccounts();
+		seed(path, "INSERT INTO accounts (id, created_at) VALUES (?, ?)", "third", Date.now());
+
+		expect(await v1ImportStore(db).accountIds()).toHaveLength(2);
+	});
+
+	test("an imported setting and grant replace the ones v2 already holds", async () => {
+		const { db, mine } = await twoAccounts();
+		const scoped = db.storeFor(mine);
+		await scoped.pluginSettings.put("plex", { library: "v2" });
+		await scoped.credentials.put("plex", { token: "v2" }, 1);
+
+		await v1ImportStore(db).commit({
+			accountId: mine,
+			applets: [],
+			pluginSettings: [{ plugin: "plex", value: { library: "v1" } }],
+			grants: [{ service: "plex", document: { token: "v1" } }],
+			marker: { importedAt: 1 },
+		});
+
+		expect(await scoped.pluginSettings.get("plex")).toEqual({ library: "v1" });
+		expect(await scoped.credentials.get("plex")).toEqual({
+			document: { token: "v1" },
+			expiresAt: null,
+		});
 	});
 });

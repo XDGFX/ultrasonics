@@ -17,6 +17,7 @@
 		"@ultrasonics/db": "workspace:*",
 		"@ultrasonics/plugin-sdk": "workspace:*",
 		"@ultrasonics/registry": "workspace:*",
+		"@ultrasonics/v1-import": "workspace:*",
 		"hono": "4.13.18",
 		"zod": "4.6.7"
 	}

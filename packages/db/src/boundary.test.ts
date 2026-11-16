@@ -30,14 +30,15 @@ describe("the narrow subpaths", () => {
 	}
 
 	test.each([
-		["a feature route", "packages/server/src/routes/applets.ts", 2],
-		["the runner", "packages/core/src/applet-runner.ts", 2],
+		["a feature route", "packages/server/src/routes/applets.ts", 3],
+		["the runner", "packages/core/src/applet-runner.ts", 3],
 		["boot", "packages/server/src/boot.ts", 0],
-		["the session middleware", "packages/server/src/session-middleware.ts", 1],
-		["the operator settings", "packages/server/src/operator-settings.ts", 1],
-		["the scheduler", "packages/server/src/scheduler.ts", 1],
-		["the webhook route", "packages/server/src/webhook-route.ts", 1],
-	])("importing both from %s (%s) gives %i lint errors", (_, path, errors) => {
+		["the session middleware", "packages/server/src/session-middleware.ts", 2],
+		["the operator settings", "packages/server/src/operator-settings.ts", 2],
+		["the scheduler", "packages/server/src/scheduler.ts", 2],
+		["the webhook route", "packages/server/src/webhook-route.ts", 2],
+		["the v1 importer", "packages/v1-import/src/import-v1.ts", 2],
+	])("importing all three from %s (%s) gives %i lint errors", (_, path, errors) => {
 		expect(restrictedImportsAt(path)).toHaveLength(errors);
 	});
 });

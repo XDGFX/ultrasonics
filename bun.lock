@@ -93,7 +93,18 @@
         "@ultrasonics/db": "workspace:*",
         "@ultrasonics/plugin-sdk": "workspace:*",
         "@ultrasonics/registry": "workspace:*",
+        "@ultrasonics/v1-import": "workspace:*",
         "hono": "4.13.18",
+        "zod": "4.6.7",
+      },
+    },
+    "packages/v1-import": {
+      "name": "@ultrasonics/v1-import",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/db": "workspace:*",
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "@ultrasonics/registry": "workspace:*",
         "zod": "4.6.7",
       },
     },
@@ -334,6 +345,8 @@
     "@ultrasonics/registry": ["@ultrasonics/registry@workspace:packages/registry"],
 
     "@ultrasonics/server": ["@ultrasonics/server@workspace:packages/server"],
+
+    "@ultrasonics/v1-import": ["@ultrasonics/v1-import@workspace:packages/v1-import"],
 
     "@ultrasonics/web": ["@ultrasonics/web@workspace:packages/web"],
 
