@@ -235,7 +235,7 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 			},
 			generateWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = true;
-				return { url: `http://localhost:5173/hooks/${appletId}/${crypto.randomUUID()}` };
+				return { url: `http://localhost:5173/api/hooks/${webhookToken()}` };
 			},
 			removeWebhook: async (appletId) => {
 				existing(appletId).hasWebhook = false;
@@ -330,6 +330,15 @@ export function createFakeApi(seed: FakeSeed): ApiClient & { scripts: ScriptCont
 			},
 		},
 	};
+}
+
+/** Shaped like the server's: 32 random bytes, base64url (ADR-0018 §5). */
+function webhookToken(): string {
+	const bytes = crypto.getRandomValues(new Uint8Array(32));
+	return btoa(String.fromCharCode(...bytes))
+		.replaceAll("+", "-")
+		.replaceAll("/", "_")
+		.replace(/=+$/, "");
 }
 
 function appletOf({ id, name, enabled, definition, schedule, hasWebhook }: Applet): Applet {

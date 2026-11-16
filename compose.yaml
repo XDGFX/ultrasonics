@@ -1,0 +1,26 @@
+# An example ultrasonics install. `docker compose up -d` builds and starts it; the UI is then on
+# http://<this machine>:5000. Upgrading is `docker compose build --pull && docker compose up -d`:
+# migrations run at boot, after a copy of the database is kept beside it.
+services:
+  ultrasonics:
+    build:
+      context: .
+      dockerfile: packages/server/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # The database, its key file and plugin data. Back this directory up.
+      - ./config:/config
+    environment:
+      # Encrypts your service credentials at rest. `auto` keeps a generated key in
+      # ./config/ultrasonics.key, so a backup of ./config carries it. To keep the key apart from
+      # the data instead, set 64 hex characters (`openssl rand -hex 32`) and store them safely:
+      # without the key, saved connections cannot be read.
+      ENCRYPTION_KEY: auto
+      # Who may use the app. `bootstrapped`: no login; whoever reaches port 5000 is the owner,
+      # so keep it on a network you trust. `proxy`: a reverse proxy in front (Authelia,
+      # Authentik) logs people in; set TRUSTED_PROXIES to its address or CIDR too, e.g.
+      #   AUTH_SOURCE: proxy
+      #   TRUSTED_PROXIES: 172.18.0.0/16
+      AUTH_SOURCE: bootstrapped

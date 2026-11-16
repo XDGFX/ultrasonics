@@ -1,0 +1,23 @@
+{
+	"name": "@ultrasonics/server",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./api": "./src/api.ts"
+	},
+	"scripts": {
+		"start": "bun src/main.ts"
+	},
+	"dependencies": {
+		"@hono/bun": "1.0.1",
+		"@hono/zod-validator": "0.9.1",
+		"@ultrasonics/core": "workspace:*",
+		"@ultrasonics/db": "workspace:*",
+		"@ultrasonics/plugin-sdk": "workspace:*",
+		"@ultrasonics/registry": "workspace:*",
+		"hono": "4.13.18",
+		"zod": "4.6.7"
+	}
+}

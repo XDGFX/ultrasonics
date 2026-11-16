@@ -80,11 +80,61 @@
 			}
 		},
 		{
+			"includes": ["packages/server/src/api.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"noRestrictedImports": {
+							"level": "error",
+							"options": {
+								"paths": {
+									"@ultrasonics/db": {
+										"message": "@ultrasonics/server/api may import only the db's schema exports, never what opens the database.",
+										"allowImportNames": [
+											"Applet",
+											"AppletChanges",
+											"AppletDefinition",
+											"FinishedRunStatus",
+											"JsonObject",
+											"JsonValue",
+											"NewApplet",
+											"Run",
+											"RunJournal",
+											"RunStatus",
+											"RunSummary",
+											"RunTrigger",
+											"Schedule",
+											"Slot"
+										]
+									}
+								},
+								"patterns": [
+									{
+										"group": [
+											"**",
+											"!zod",
+											"!@ultrasonics/plugin-sdk",
+											"!@ultrasonics/db",
+											"!@ultrasonics/core/run-events"
+										],
+										"message": "@ultrasonics/server/api is imported by the UI: it may reach only Zod, the SDK, the db's schema exports and @ultrasonics/core/run-events."
+									}
+								]
+							}
+						}
+					}
+				}
+			}
+		},
+		{
 			"includes": ["packages/db/**", "packages/server/src/boot.ts"],
 			"linter": { "rules": { "style": { "noRestrictedImports": "off" } } }
 		},
 		{
-			"includes": ["packages/server/src/session-middleware.ts"],
+			"includes": [
+				"packages/server/src/session-middleware.ts",
+				"packages/server/src/operator-settings.ts"
+			],
 			"linter": {
 				"rules": {
 					"style": {
@@ -126,8 +176,15 @@
 							"level": "error",
 							"options": {
 								"paths": {
-									"@ultrasonics/core": "The UI reaches core only through @ultrasonics/core/run-events, which holds no runner code."
-								}
+									"@ultrasonics/core": "The UI reaches core only through @ultrasonics/core/run-events, which holds no runner code.",
+									"@ultrasonics/server": "The UI reaches the server only through @ultrasonics/server/api, which holds only its schemas."
+								},
+								"patterns": [
+									{
+										"group": ["@ultrasonics/server/**", "!@ultrasonics/server/api"],
+										"message": "The UI reaches the server only through @ultrasonics/server/api, which holds only its schemas."
+									}
+								]
 							}
 						}
 					}

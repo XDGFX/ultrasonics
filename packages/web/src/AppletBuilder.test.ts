@@ -243,7 +243,8 @@ describe("the builder", () => {
 			const first = await open();
 			await click(first.wrapper, '[data-column="when"] [data-add="webhook"]');
 			const url = first.wrapper.get(".panel [data-copy] code").text();
-			expect(url).toMatch(/\/hooks\/a1\/.+/);
+			// ADR-0018 §5: the token alone names the applet, so the URL carries no applet id.
+			expect(url).toMatch(/\/api\/hooks\/[\w-]{43}$/);
 			expect(first.wrapper.find(".panel [data-shown-once]").exists()).toBe(true);
 			expect(sentence(first.wrapper)).toStartWith("when on webhook");
 
@@ -260,7 +261,7 @@ describe("the builder", () => {
 			const { wrapper, api } = await open({ applets: [{ ...applet, hasWebhook: true }] });
 			await click(wrapper, '[data-column="when"] [data-trigger="webhook"] .select');
 			await click(wrapper, ".panel button", "regenerate");
-			expect(wrapper.get(".panel [data-copy] code").text()).toMatch(/\/hooks\/a1\/.+/);
+			expect(wrapper.get(".panel [data-copy] code").text()).toMatch(/\/api\/hooks\/[\w-]{43}$/);
 
 			await click(wrapper, ".panel button", "remove webhook");
 			expect((await api.applets.get("a1")).hasWebhook).toBe(false);
