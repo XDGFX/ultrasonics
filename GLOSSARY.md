@@ -136,6 +136,10 @@ weights and regexes are reference only (ADR-0022, `docs/reference/legacy-archite
 (they share an ISRC, which the test hides from the matcher), or different recordings that look
 alike. The matcher's accuracy is measured on it (ADR-0022).
 
+**Match index** — Songs indexed so that `match` is asked only of pairs it could accept, which
+finds exactly what comparing every pair finds. Record linkage calls this **blocking**; the
+**length window** is the widest length gap at which a weighed pair can still match (ADR-0032).
+
 **Matcher strategy** — A proposed choice between matching approaches, such as `"fuzzy"` or
 `"llm"`. v2 has none: there is one matcher, and any future alternative replaces or sits behind
 its interface.

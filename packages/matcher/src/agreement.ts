@@ -23,10 +23,10 @@ export type Agreement = Record<Field, string>;
 export const lengthVetoMs = 30_000;
 
 /** The score of a title that opens the other, or an artist credit inside the other, short of an equal one. */
-const partScore = 0.9;
+export const partScore = 0.9;
 
 /** Letters in any script but Latin, read after NFKC, so `Что` and `譚詠麟` count and `é` doesn't. */
-const nonLatin = /(?![\p{Script=Latin}])\p{L}/u;
+export const nonLatin = /(?![\p{Script=Latin}])\p{L}/u;
 
 /** Folds every script to ASCII with the any-ascii table, then the matcher's own folding. */
 function fold(text: string): string {
@@ -42,6 +42,7 @@ function nameSimilarity(a: string, b: string): number {
 /** any-ascii spaces some scripts syllable by syllable, so folded text is compared unspaced. */
 const squash = (text: string) => text.replace(/ /g, "");
 
+// `match-index.ts` bounds this and `artistSimilarity` from above; a change here must keep its bounds sound.
 export function titleSimilarity(a: Song, b: Song): number {
 	const [left, right] = [parseTitle(a.title).core, parseTitle(b.title).core];
 	const plain = Math.max(nameSimilarity(left, right), opens(left, right) ? partScore : 0);
@@ -75,13 +76,28 @@ export function lengthGapMs(a: Song, b: Song): number | undefined {
 export const yearOf = (date: string | undefined): number | undefined =>
 	date === undefined ? undefined : Number(date.slice(0, 4));
 
-const similarityLevel = (s: number) =>
-	s >= 0.999 ? "equal" : s >= 0.9 ? "0.9" : s >= 0.75 ? "0.75" : s >= 0.5 ? "0.5" : "below";
+/** Each similarity level and the least similarity that reaches it; below the last is `below`. */
+export const similarityLevels = [
+	["equal", 0.999],
+	["0.9", 0.9],
+	["0.75", 0.75],
+	["0.5", 0.5],
+] as const;
 
-function lengthLevel(gap: number | undefined): string {
+const similarityLevel = (s: number) =>
+	similarityLevels.find(([, least]) => s >= least)?.[0] ?? "below";
+
+/** Each length level and the widest gap it covers; past the last is `over`, which is vetoed. */
+export const lengthLevels = [
+	["1s", 1000],
+	["3s", 3000],
+	["10s", 10_000],
+	["30s", lengthVetoMs],
+] as const;
+
+export function lengthLevel(gap: number | undefined): string {
 	if (gap === undefined) return "missing";
-	if (gap > lengthVetoMs) return "over";
-	return gap <= 1000 ? "1s" : gap <= 3000 ? "3s" : gap <= 10_000 ? "10s" : "30s";
+	return lengthLevels.find(([, widest]) => gap <= widest)?.[0] ?? "over";
 }
 
 function albumLevel(a: Song, b: Song): string {
