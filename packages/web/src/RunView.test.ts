@@ -13,7 +13,7 @@ const applet: FakeApplet = {
 	name: "weekly",
 	enabled: true,
 	definition: {
-		inputs: [{ plugin: "spotify", settings: { source: "saved" } }],
+		inputs: [{ plugin: "spotify", settings: { source: "all" } }],
 		modifiers: [],
 		outputs: [{ plugin: "plex", settings: {} }],
 	},

@@ -16,7 +16,9 @@ const applet: FakeApplet = {
 	name: "weekly",
 	enabled: true,
 	definition: {
-		inputs: [{ plugin: "spotify", settings: { source: "chosen", names: "discover weekly" } }],
+		inputs: [
+			{ plugin: "spotify", settings: { source: "chosen", playlists: "1AbCdEfGhIjKlMnOpQrStU" } },
+		],
 		modifiers: [{ plugin: "deduplicate", settings: {} }],
 		outputs: [{ plugin: "plex", settings: { update: "replace" } }],
 	},
@@ -73,7 +75,7 @@ describe("the builder", () => {
 		const spotify = placed(wrapper, "inputs", 0);
 		expect(spotify.get(".title").text()).toContain("spotify");
 		expect(spotify.get(".version").text()).toBe("v2.0.0");
-		expect(spotify.get(".summary").text()).toBe("chosen · discover weekly");
+		expect(spotify.get(".summary").text()).toBe("chosen · 1AbCdEfGhIjKlMnOpQrStU");
 		expect(placed(wrapper, "modifiers", 0).get(".summary").text()).toBe("removes repeated songs");
 	});
 
@@ -100,8 +102,8 @@ describe("the builder", () => {
 
 		const saved = await api.applets.get("a1");
 		expect(saved.definition.inputs).toEqual([
-			{ plugin: "spotify", settings: { source: "saved", includeLiked: false } },
-			{ plugin: "spotify", settings: { source: "chosen", names: "discover weekly" } },
+			{ plugin: "spotify", settings: { source: "all" } },
+			{ plugin: "spotify", settings: { source: "chosen", playlists: "1AbCdEfGhIjKlMnOpQrStU" } },
 		]);
 		expect(saved.definition.modifiers).toEqual([]);
 	});
@@ -109,14 +111,16 @@ describe("the builder", () => {
 	test("opens a slot's instance settings in the side panel, and saves what is edited there", async () => {
 		const { wrapper, api } = await open();
 		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
-		const names = wrapper.get('.panel input[name="names"]');
-		expect((names.element as HTMLInputElement).value).toBe("discover weekly");
-		await names.setValue("release radar");
-		expect(placed(wrapper, "inputs", 0).get(".summary").text()).toBe("chosen · release radar");
+		const names = wrapper.get('.panel input[name="playlists"]');
+		expect((names.element as HTMLInputElement).value).toBe("1AbCdEfGhIjKlMnOpQrStU");
+		await names.setValue("2BcDeFgHiJkLmNoPqRsTuV");
+		expect(placed(wrapper, "inputs", 0).get(".summary").text()).toBe(
+			"chosen · 2BcDeFgHiJkLmNoPqRsTuV",
+		);
 		await save(wrapper);
 		expect((await api.applets.get("a1")).definition.inputs[0]?.settings).toEqual({
 			source: "chosen",
-			names: "release radar",
+			playlists: "2BcDeFgHiJkLmNoPqRsTuV",
 		});
 	});
 
@@ -138,14 +142,14 @@ describe("the builder", () => {
 	test("places each issue a save returns on its slot and field", async () => {
 		const { wrapper, api } = await open();
 		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
-		await wrapper.get('.panel input[name="names"]').setValue("");
+		await wrapper.get('.panel input[name="playlists"]').setValue("");
 		await click(wrapper, '[data-column="outputs"] [data-slot] .select');
 		await save(wrapper);
 
 		expect(placed(wrapper, "inputs", 0).attributes("data-issues")).toBe("1");
 		expect(placed(wrapper, "outputs", 0).attributes("data-issues")).toBe("0");
 		await click(wrapper, '[data-column="inputs"] [data-slot] .select');
-		const field = wrapper.get('.panel input[name="names"]').element.closest(".field");
+		const field = wrapper.get('.panel input[name="playlists"]').element.closest(".field");
 		expect(field?.querySelector(".issue")?.textContent).toBeTruthy();
 		expect((await api.applets.get("a1")).definition.inputs[0]?.settings).toEqual(
 			applet.definition.inputs[0]?.settings,

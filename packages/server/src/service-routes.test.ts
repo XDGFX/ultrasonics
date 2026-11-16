@@ -50,7 +50,10 @@ describe("status", () => {
 		const { call, db, mine } = await testApp();
 		const store = db.storeFor(mine);
 		await store.credentials.put("plex", plexFields, null);
-		await store.credentials.put("spotify", { accessToken: "a" }, null);
+		const clientId = "0123456789abcdef0123456789abcdef";
+		const grant = { accessToken: "a", refreshToken: "r", scope: "playlist-read-private", clientId };
+		// Expired: the list still answers from stored state, without refreshing.
+		await store.credentials.put("spotify", grant, 0);
 		const outbound: string[] = [];
 		globalThis.fetch = Object.assign(
 			async (input: string | URL | Request) => {
@@ -65,9 +68,7 @@ describe("status", () => {
 			kind: "failed",
 			failure: { service: "spotify", code: "misconfigured", message: expect.any(String) },
 		});
-		expect((await call("PUT", "/api/services/spotify/client", { clientId: "abc" })).status).toBe(
-			204,
-		);
+		expect((await call("PUT", "/api/services/spotify/client", { clientId })).status).toBe(204);
 		expect(await statusOf(call, "spotify")).toEqual({ kind: "connected" });
 		expect(outbound).toEqual([]);
 	});
@@ -214,9 +215,25 @@ describe("the operator's client and OAuth", () => {
 		}
 	});
 
-	test("begin and complete wait for the Spotify spec", async () => {
-		const { call } = await testApp({ registry: registryOf(spotify) });
-		expect((await call("POST", "/api/services/spotify/begin", {})).status).toBe(501);
-		expect((await call("POST", "/api/services/spotify/complete", { code: "x" })).status).toBe(501);
+	test("an oauth2 flow with a client secret waits for a plugin that needs one", async () => {
+		const secretful = definePlugin({
+			...spotify,
+			name: "secretful",
+			auth: defineAuth({ service: "spotify", flow: "oauth2", scopes: [] }),
+		});
+		const { call } = await testApp({ registry: registryOf(secretful) });
+		for (const [method, path] of [
+			["GET", "requirements"],
+			["GET", "client-form"],
+			["POST", "begin"],
+			["POST", "complete"],
+		] as const) {
+			const response = await call(
+				method,
+				`/api/services/spotify/${path}`,
+				method === "GET" ? undefined : {},
+			);
+			expect({ path, status: response.status }).toEqual({ path, status: 501 });
+		}
 	});
 });

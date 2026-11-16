@@ -5,7 +5,15 @@ import { authFailedRun, partialRun, succeededRun } from "./fake-runs.ts";
 const hour = 3_600_000;
 const now = Date.now();
 const definition = {
-	inputs: [{ plugin: "spotify", settings: { source: "chosen", names: "discover weekly" } }],
+	inputs: [
+		{
+			plugin: "spotify",
+			settings: {
+				source: "chosen",
+				playlists: "https://open.spotify.com/playlist/1AbCdEfGhIjKlMnOpQrStU",
+			},
+		},
+	],
 	modifiers: [{ plugin: "deduplicate", settings: {} }],
 	outputs: [{ plugin: "plex", settings: { update: "replace" } }],
 };
@@ -42,7 +50,7 @@ export function devSeed(firstRun: boolean): FakeSeed {
 			: [
 					{
 						id: "a1",
-						name: "discover weekly to plex",
+						name: "focus to plex",
 						enabled: true,
 						definition,
 						schedule: {
@@ -59,7 +67,7 @@ export function devSeed(firstRun: boolean): FakeSeed {
 					},
 					{
 						id: "a2",
-						name: "release radar",
+						name: "road trip",
 						enabled: true,
 						definition,
 						schedule: null,

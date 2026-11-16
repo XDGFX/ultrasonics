@@ -1,10 +1,26 @@
 import type { OpenDatabase } from "@ultrasonics/db";
 import { authStore } from "@ultrasonics/db/auth-store";
-import type { Service } from "@ultrasonics/plugin-sdk";
+import { type Service, withMeta } from "@ultrasonics/plugin-sdk";
 import { z } from "zod";
 
-/** The operator's own app on a service, which BYO `oauth2*` flows need (ADR-0013 §7). */
-export const OperatorClient = z.object({ clientId: z.string().trim().min(1) });
+/**
+ * The operator's own app on an `oauth2-pkce` service (ADR-0013 §7): a client ID and never a secret
+ * (ADR-0005; spec #136, decision 2).
+ */
+export const OperatorClient = z.object({
+	clientId: withMeta(
+		z
+			.string()
+			.trim()
+			.regex(/^[0-9a-fA-F]{32}$/, "A client ID is 32 characters, each 0–9 or a–f"),
+		{
+			title: "client id",
+			description:
+				"From your app's page at developer.spotify.com/dashboard. Development mode allows five users, each added under User Management, and the app's owner needs Spotify Premium.",
+			placeholder: "32 characters, 0–9 and a–f",
+		},
+	),
+});
 export type OperatorClient = z.infer<typeof OperatorClient>;
 
 const clientKey = (service: Service) => `oauth-client:${service}`;

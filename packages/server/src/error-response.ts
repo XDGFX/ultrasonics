@@ -1,7 +1,11 @@
 import { CredentialKeyMismatchError } from "@ultrasonics/db";
 import type { ErrorHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { FlowMismatchError, NotYetAvailableError } from "./auth/local-auth-provider.ts";
+import {
+	AuthFailureError,
+	FlowMismatchError,
+	NotYetAvailableError,
+} from "./auth/local-auth-provider.ts";
 import type { Logger } from "./logger.ts";
 
 export const UNEXPECTED_ERROR_MESSAGE =
@@ -13,6 +17,8 @@ export function errorResponse(logger: Logger): ErrorHandler {
 		if (error instanceof HTTPException) return c.json({ message: error.message }, error.status);
 		if (error instanceof FlowMismatchError) return c.json({ message: error.message }, 400);
 		if (error instanceof NotYetAvailableError) return c.json({ message: error.message }, 501);
+		// `begin` before the operator registered a client: the wizard's `client` step comes first.
+		if (error instanceof AuthFailureError) return c.json({ message: error.message }, 409);
 		if (error instanceof CredentialKeyMismatchError) {
 			// A lost key is the operator's problem, not a reconnect (#109).
 			logger.error(error.message);

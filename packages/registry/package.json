@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"@ultrasonics/plugin-plex": "workspace:*",
+		"@ultrasonics/plugin-spotify": "workspace:*",
 		"@ultrasonics/plugin-sdk": "workspace:*"
 	}
 }

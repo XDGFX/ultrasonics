@@ -1,0 +1,9 @@
+{
+	"items": [
+		{ "id": "1AbCdEfGhIjKlMnOpQrStU", "name": "Focus", "description": "Cal&#x27;s deep work &amp; nothing else", "collaborative": false, "owner": { "id": "cal-listens" } },
+		{ "id": "3CdEfGhIjKlMnOpQrStUvW", "name": "Shared mix", "description": "", "collaborative": true, "owner": { "id": "a-friend" } },
+		{ "id": "4DeFgHiJkLmNoPqRsTuVwX", "name": "Someone else's hits", "description": "Followed, not owned", "collaborative": false, "owner": { "id": "a-friend" } },
+		{ "id": "5EfGhIjKlMnOpQrStUvWxY", "name": "Gym", "description": "", "collaborative": false, "owner": { "id": "cal-listens" } },
+		{ "id": "6FgHiJkLmNoPqRsTuVwXyZ", "name": "Big label playlist", "description": "", "collaborative": false, "owner": { "id": "spotify" } }
+	]
+}

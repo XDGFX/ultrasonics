@@ -56,12 +56,21 @@
         "zod": "4.6.7",
       },
     },
+    "packages/plugins/spotify": {
+      "name": "@ultrasonics/plugin-spotify",
+      "version": "0.0.0",
+      "dependencies": {
+        "@ultrasonics/plugin-sdk": "workspace:*",
+        "zod": "4.6.7",
+      },
+    },
     "packages/registry": {
       "name": "@ultrasonics/registry",
       "version": "0.0.0",
       "dependencies": {
         "@ultrasonics/plugin-plex": "workspace:*",
         "@ultrasonics/plugin-sdk": "workspace:*",
+        "@ultrasonics/plugin-spotify": "workspace:*",
       },
     },
     "packages/server": {
@@ -305,6 +314,8 @@
     "@ultrasonics/plugin-plex": ["@ultrasonics/plugin-plex@workspace:packages/plugins/plex"],
 
     "@ultrasonics/plugin-sdk": ["@ultrasonics/plugin-sdk@workspace:packages/plugin-sdk"],
+
+    "@ultrasonics/plugin-spotify": ["@ultrasonics/plugin-spotify@workspace:packages/plugins/spotify"],
 
     "@ultrasonics/registry": ["@ultrasonics/registry@workspace:packages/registry"],
 
