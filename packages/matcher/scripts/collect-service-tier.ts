@@ -30,7 +30,8 @@ const save = async () => {
 };
 
 const tier = await collectServiceTier(cases, process.env, fetch, {
-	pauseMs: 250,
+	// Each case asks Spotify once; at 250 ms a development-mode app was banned for a day after ~700.
+	pauseMs: 1500,
 	lookups,
 	checkpoint: save,
 }).finally(save);
